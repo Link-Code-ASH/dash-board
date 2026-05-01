@@ -991,10 +991,13 @@ function SchedulePanel({ calendar, selectedDate }) {
           "div",
           { className: "schedule-week", key: `week-${weekIndex}` },
           h("div", { className: "schedule-week-title" }, weekIndex === 0 ? "This Week" : "Next Week"),
-          h("div", { className: "schedule-weekdays" }, weekDays.map((day) => h("span", { key: day.key }, day.label))),
           h(
             "div",
-            { className: "schedule-week-grid" },
+            { className: "schedule-week-scroll" },
+            h("div", { className: "schedule-weekdays" }, weekDays.map((day) => h("span", { key: day.key }, day.label))),
+            h(
+              "div",
+              { className: "schedule-week-grid" },
           week.map((dateKey) => {
             const schedule = calendar[dateKey]?.trim() || "";
             const lines = schedule.split(/\n+/).filter(Boolean);
@@ -1010,6 +1013,7 @@ function SchedulePanel({ calendar, selectedDate }) {
               ),
             );
           }),
+            ),
           ),
         ),
       ),

@@ -865,6 +865,11 @@ input::placeholder {
   gap: 8px;
 }
 
+.schedule-week-scroll {
+  display: grid;
+  gap: 8px;
+}
+
 .schedule-weekdays span {
   min-height: 30px;
   display: grid;
@@ -2123,8 +2128,11 @@ input::placeholder {
   .schedule-weekdays,
   .schedule-week-grid {
     grid-template-columns: repeat(7, minmax(118px, 1fr));
+  }
+
+  .schedule-week-scroll {
     overflow-x: auto;
-    padding-bottom: 2px;
+    padding-bottom: 4px;
   }
 
   .preset-grid {
