@@ -712,9 +712,17 @@ function App() {
     "main",
     { className: "app-shell" },
     h(Topbar, { selectedDate, setSelectedDate, shiftDate }),
-    h(SchedulePanel, { calendar: data.calendar, selectedDate }),
-    h(MemoPanel, { memo, updateMemo }),
-    h(ScorePanel, { entryCount: entries.length, scoreInfo }),
+    h(
+      "div",
+      { className: "daily-workspace" },
+      h(
+        "div",
+        { className: "daily-left-rail" },
+        h(SchedulePanel, { calendar: data.calendar, selectedDate }),
+        h(ScorePanel, { entryCount: entries.length, scoreInfo }),
+      ),
+      h(MemoPanel, { memo, updateMemo }),
+    ),
     h(TodayPlanPanel, {
       categories: data.categories,
       entries,
