@@ -2,6 +2,9 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 
 const STORAGE_KEY = "routine-scoreboard-clean-v1";
 const SYNC_BACKEND_KEY = "dashboard-sync-backend-v1";
+const SYNC_ID_KEY = `${SYNC_BACKEND_KEY}:sync-id`;
+const SYNC_PIN_KEY = `${SYNC_BACKEND_KEY}:pin`;
+const SYNC_REMEMBER_KEY = `${SYNC_BACKEND_KEY}:remember-device`;
 const SYNC_KDF_ITERATIONS = 250000;
 
 const h = React.createElement;
@@ -281,16 +284,18 @@ function App() {
   const [openMonths, setOpenMonths] = useState(() => new Set([new Date().getMonth()]));
   const [sync, setSync] = useState({
     backend: loadSyncBackend(),
-    pin: "",
-    syncId: localStorage.getItem(`${SYNC_BACKEND_KEY}:sync-id`) || "",
+    pin: localStorage.getItem(SYNC_REMEMBER_KEY) === "true" ? localStorage.getItem(SYNC_PIN_KEY) || "" : "",
+    rememberDevice: localStorage.getItem(SYNC_REMEMBER_KEY) === "true",
+    syncId: localStorage.getItem(SYNC_ID_KEY) || "",
     busy: false,
-    status: "Not connected.",
+    status: localStorage.getItem(SYNC_REMEMBER_KEY) === "true" ? "Ready to auto connect." : "Not connected.",
   });
 
   const dataRef = useRef(data);
   const syncRef = useRef(sync);
   const pushTimerRef = useRef(null);
   const pollTimerRef = useRef(null);
+  const autoConnectRef = useRef(false);
 
   useEffect(() => {
     dataRef.current = data;
@@ -394,7 +399,7 @@ function App() {
 
   const pushSyncData = async ({ silent = false } = {}) => {
     if (!syncBackendReady() || !syncIdentityReady()) {
-      if (!silent) setSyncStatus("Enter cloud setup, Sync ID, and PIN first.");
+      if (!silent) setSyncStatus("Enter Supabase URL, Public Key, Sync ID, and PIN first.");
       return;
     }
     updateSync((current) => ({ ...current, busy: true, status: silent ? current.status : "Encrypting and pushing..." }));
@@ -412,7 +417,7 @@ function App() {
 
   const pullSyncData = async ({ silent = false, force = true } = {}) => {
     if (!syncBackendReady() || !syncIdentityReady()) {
-      if (!silent) setSyncStatus("Enter cloud setup, Sync ID, and PIN first.");
+      if (!silent) setSyncStatus("Enter Supabase URL, Public Key, Sync ID, and PIN first.");
       return false;
     }
     updateSync((current) => ({ ...current, busy: true, status: silent ? current.status : "Pulling and decrypting..." }));
@@ -436,7 +441,7 @@ function App() {
       setSyncStatus(`Pulled at ${new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}`);
       return true;
     } catch {
-      setSyncStatus("Pull failed. Check Sync ID, PIN, and cloud setup.");
+      setSyncStatus("Pull failed. Check Supabase setup, Sync ID, and PIN.");
       return false;
     } finally {
       updateSync((current) => ({ ...current, busy: false }));
@@ -658,30 +663,48 @@ function App() {
   const connectSync = async () => {
     const nextSyncId = normalizeSyncId(syncRef.current.syncId);
     updateSync((current) => ({ ...current, syncId: nextSyncId }));
-    localStorage.setItem(`${SYNC_BACKEND_KEY}:sync-id`, nextSyncId);
+    localStorage.setItem(SYNC_BACKEND_KEY, JSON.stringify(syncRef.current.backend));
+    localStorage.setItem(SYNC_ID_KEY, nextSyncId);
     if (!syncBackendReady()) {
-      setSyncStatus("Cloud setup required.");
+      setSyncStatus("Enter Supabase URL and Public Key.");
       return;
     }
     if (!syncIdentityReady()) {
       setSyncStatus("Enter Sync ID and PIN.");
       return;
     }
+    if (syncRef.current.rememberDevice) {
+      localStorage.setItem(SYNC_REMEMBER_KEY, "true");
+      localStorage.setItem(SYNC_PIN_KEY, syncRef.current.pin);
+    } else {
+      localStorage.removeItem(SYNC_REMEMBER_KEY);
+      localStorage.removeItem(SYNC_PIN_KEY);
+    }
     startAutoSyncPolling();
     const pulled = await pullSyncData({ force: true });
     if (!pulled) await pushSyncData();
   };
 
+  useEffect(() => {
+    if (autoConnectRef.current) return;
+    if (!sync.rememberDevice || !sync.backend.supabaseUrl || !sync.backend.supabaseAnonKey || !sync.syncId || !sync.pin) return;
+    autoConnectRef.current = true;
+    setSyncStatus("Auto connecting...");
+    connectSync();
+  }, []);
+
   const forgetThisDevice = () => {
     const confirmed = window.confirm(
-      "This will remove local app data, Sync ID, Supabase URL, and public key from this browser only. Cloud data will not be deleted. Continue?",
+      "This will remove local app data, Sync ID, saved PIN, Supabase URL, and public key from this browser only. Cloud data will not be deleted. Continue?",
     );
     if (!confirmed) return;
     window.clearTimeout(pushTimerRef.current);
     window.clearInterval(pollTimerRef.current);
     localStorage.removeItem(STORAGE_KEY);
     localStorage.removeItem(SYNC_BACKEND_KEY);
-    localStorage.removeItem(`${SYNC_BACKEND_KEY}:sync-id`);
+    localStorage.removeItem(SYNC_ID_KEY);
+    localStorage.removeItem(SYNC_PIN_KEY);
+    localStorage.removeItem(SYNC_REMEMBER_KEY);
     window.location.reload();
   };
 
@@ -689,27 +712,6 @@ function App() {
     "main",
     { className: "app-shell" },
     h(Topbar, { selectedDate, setSelectedDate, shiftDate }),
-    h(SyncPanel, {
-      forgetThisDevice,
-      isOpen: openPanels.sync,
-      onToggle: () => togglePanel("sync"),
-      onConnect: connectSync,
-      onGenerate: () => {
-        const syncId = generateSyncIdValue();
-        localStorage.setItem(`${SYNC_BACKEND_KEY}:sync-id`, syncId);
-        updateSync((current) => ({ ...current, syncId }));
-      },
-      onPull: () => pullSyncData({ force: true }),
-      onPush: () => pushSyncData(),
-      onSaveCloud: () => {
-        localStorage.setItem(SYNC_BACKEND_KEY, JSON.stringify(syncRef.current.backend));
-        setSyncStatus("Cloud setup saved.");
-        startAutoSyncPolling();
-      },
-      setSync: updateSync,
-      sync,
-      syncReady: syncBackendReady() && Boolean(sync.syncId && sync.pin),
-    }),
     h(SchedulePanel, { calendar: data.calendar, selectedDate }),
     h(MemoPanel, { memo, updateMemo }),
     h(ScorePanel, { entryCount: entries.length, scoreInfo }),
@@ -767,6 +769,22 @@ function App() {
       setSelectedDate,
       updateCalendarNote,
     }),
+    h(SyncPanel, {
+      forgetThisDevice,
+      isOpen: openPanels.sync,
+      onToggle: () => togglePanel("sync"),
+      onConnect: connectSync,
+      onGenerate: () => {
+        const syncId = generateSyncIdValue();
+        localStorage.setItem(SYNC_ID_KEY, syncId);
+        updateSync((current) => ({ ...current, syncId }));
+      },
+      onPull: () => pullSyncData({ force: true }),
+      onPush: () => pushSyncData(),
+      setSync: updateSync,
+      sync,
+      syncReady: syncBackendReady() && Boolean(sync.syncId && sync.pin),
+    }),
   );
 }
 
@@ -785,7 +803,7 @@ function Topbar({ selectedDate, setSelectedDate, shiftDate }) {
   );
 }
 
-function SyncPanel({ forgetThisDevice, isOpen, onConnect, onGenerate, onPull, onPush, onSaveCloud, onToggle, setSync, sync, syncReady }) {
+function SyncPanel({ forgetThisDevice, isOpen, onConnect, onGenerate, onPull, onPush, onToggle, setSync, sync, syncReady }) {
   return h(CollapsiblePanel, {
     className: "sync-panel",
     controls: "syncBody",
@@ -800,8 +818,27 @@ function SyncPanel({ forgetThisDevice, isOpen, onConnect, onGenerate, onPull, on
         h(
           "div",
           { className: "sync-grid" },
+          h("label", null, h("span", null, "Supabase URL"), h("input", { type: "url", autoComplete: "off", placeholder: "https://project.supabase.co", value: sync.backend.supabaseUrl, onChange: (event) => setSync((current) => ({ ...current, backend: { ...current.backend, supabaseUrl: event.target.value.trim() } })) })),
+          h("label", null, h("span", null, "Public Key"), h("input", { type: "password", autoComplete: "off", placeholder: "anon public key", value: sync.backend.supabaseAnonKey, onChange: (event) => setSync((current) => ({ ...current, backend: { ...current.backend, supabaseAnonKey: event.target.value.trim() } })) })),
           h("label", null, h("span", null, "Sync ID"), h("input", { type: "text", autoComplete: "off", placeholder: "Generate or enter Sync ID", value: sync.syncId, onChange: (event) => setSync((current) => ({ ...current, syncId: event.target.value })) })),
           h("label", null, h("span", null, "PIN"), h("input", { type: "password", inputMode: "numeric", autoComplete: "current-password", placeholder: "PIN", value: sync.pin, onChange: (event) => setSync((current) => ({ ...current, pin: event.target.value.trim() })) })),
+          h(
+            "label",
+            { className: "remember-device" },
+            h("input", {
+              type: "checkbox",
+              checked: sync.rememberDevice,
+              onChange: (event) =>
+                setSync((current) => {
+                  if (!event.target.checked) {
+                    localStorage.removeItem(SYNC_REMEMBER_KEY);
+                    localStorage.removeItem(SYNC_PIN_KEY);
+                  }
+                  return { ...current, rememberDevice: event.target.checked };
+                }),
+            }),
+            h("span", null, "Remember this device"),
+          ),
           h(
             "div",
             { className: "sync-actions" },
@@ -810,18 +847,6 @@ function SyncPanel({ forgetThisDevice, isOpen, onConnect, onGenerate, onPull, on
             h("button", { className: "text-button", type: "button", disabled: sync.busy || !syncReady, onClick: onPull }, "Pull"),
             h("button", { className: "text-button", type: "button", disabled: sync.busy || !syncReady, onClick: onPush }, "Push"),
             h("button", { className: "text-button danger", type: "button", onClick: forgetThisDevice }, "Forget This Device"),
-          ),
-        ),
-        h(
-          "details",
-          { className: "sync-cloud" },
-          h("summary", null, "Cloud Setup"),
-          h(
-            "div",
-            { className: "sync-grid" },
-            h("label", null, h("span", null, "Supabase URL"), h("input", { type: "url", autoComplete: "off", placeholder: "https://project.supabase.co", value: sync.backend.supabaseUrl, onChange: (event) => setSync((current) => ({ ...current, backend: { ...current.backend, supabaseUrl: event.target.value.trim() } })) })),
-            h("label", null, h("span", null, "Public Key"), h("input", { type: "password", autoComplete: "off", placeholder: "anon public key", value: sync.backend.supabaseAnonKey, onChange: (event) => setSync((current) => ({ ...current, backend: { ...current.backend, supabaseAnonKey: event.target.value.trim() } })) })),
-            h("div", { className: "sync-actions" }, h("button", { className: "text-button", type: "button", onClick: onSaveCloud }, "Save Cloud")),
           ),
         ),
         h("p", { className: "sync-status" }, sync.status),
@@ -892,6 +917,7 @@ function TodayPlanPanel({ categories, entries, presets, selectedDate, toggleChoi
       "div",
       { className: "today-plan-grid" },
       h(PlanRow, {
+        className: "daily-plan-row",
         title: "Daily",
         cards: presets.map((preset) => {
           const planKey = `daily:${selectedDate}:${preset.key}`;
@@ -907,6 +933,7 @@ function TodayPlanPanel({ categories, entries, presets, selectedDate, toggleChoi
         }),
       }),
       h(PlanRow, {
+        className: "weekly-plan-row",
         title: "Weekly",
         cards: categories.map((category) => {
           const value = weeklyPlan[category.key]?.[weekday.key]?.trim() || "Not Set";
@@ -926,8 +953,8 @@ function TodayPlanPanel({ categories, entries, presets, selectedDate, toggleChoi
   );
 }
 
-function PlanRow({ cards, title }) {
-  return h("section", { className: "plan-row" }, h("h3", null, title), h("div", { className: "plan-card-grid" }, cards.map((card) => h(PlanCard, { ...card }))));
+function PlanRow({ cards, className = "", title }) {
+  return h("section", { className: `plan-row ${className}` }, h("h3", null, title), h("div", { className: "plan-card-grid" }, cards.map((card) => h(PlanCard, { ...card }))));
 }
 
 function PlanCard({ label, nScore, onToggle, selectedChoice, value, yScore }) {
@@ -976,8 +1003,8 @@ function DailyPanel({ addPreset, isOpen, movePreset, onToggle, presets, removePr
             "article",
             { className: "preset-card", key: preset.key },
             h("input", { className: "preset-name-input", type: "text", maxLength: 32, "aria-label": "Daily name", value: preset.name, onChange: (event) => updatePreset(index, "name", event.target.value) }),
-            h("label", { className: "score-field" }, h("span", null, "Y"), h("input", { className: "preset-score-input y-score", type: "number", min: -100, max: 100, step: 1, value: preset.yScore, onChange: (event) => updatePreset(index, "yScore", event.target.value) })),
-            h("label", { className: "score-field" }, h("span", null, "N"), h("input", { className: "preset-score-input n-score", type: "number", min: -100, max: 100, step: 1, value: preset.nScore, onChange: (event) => updatePreset(index, "nScore", event.target.value) })),
+            h("label", { className: "score-field positive-score", title: "Y score" }, h("input", { className: "preset-score-input y-score", type: "number", min: -100, max: 100, step: 1, value: preset.yScore, onChange: (event) => updatePreset(index, "yScore", event.target.value) })),
+            h("label", { className: "score-field negative-score", title: "N score" }, h("input", { className: "preset-score-input n-score", type: "number", min: -100, max: 100, step: 1, value: preset.nScore, onChange: (event) => updatePreset(index, "nScore", event.target.value) })),
             h("button", { className: "mini-button preset-up", type: "button", disabled: index === 0, onClick: () => movePreset(index, -1) }, "\u2191"),
             h("button", { className: "mini-button preset-down", type: "button", disabled: index === presets.length - 1, onClick: () => movePreset(index, 1) }, "\u2193"),
             h("button", { className: "mini-button danger", type: "button", onClick: () => removePreset(index) }, "\u00d7"),
@@ -1009,8 +1036,8 @@ function WeeklyPanel({ addCategory, categories, isOpen, moveCategory, onToggle, 
             "div",
             { className: "weekly-category", key: `${category.key}-label` },
             h("input", { className: "category-name-input", type: "text", maxLength: 24, value: category.label, onChange: (event) => updateCategory(category.key, "label", event.target.value) }),
-            h("label", { className: "score-field y-field" }, h("span", null, "Y Score"), h("input", { className: "category-score-input y-score", type: "number", min: -100, max: 100, step: 1, value: category.yScore, onChange: (event) => updateCategory(category.key, "yScore", event.target.value) })),
-            h("label", { className: "score-field n-field" }, h("span", null, "N Score"), h("input", { className: "category-score-input n-score", type: "number", min: -100, max: 100, step: 1, value: category.nScore, onChange: (event) => updateCategory(category.key, "nScore", event.target.value) })),
+            h("label", { className: "score-field y-field positive-score", title: "Y score" }, h("input", { className: "category-score-input y-score", type: "number", min: -100, max: 100, step: 1, value: category.yScore, onChange: (event) => updateCategory(category.key, "yScore", event.target.value) })),
+            h("label", { className: "score-field n-field negative-score", title: "N score" }, h("input", { className: "category-score-input n-score", type: "number", min: -100, max: 100, step: 1, value: category.nScore, onChange: (event) => updateCategory(category.key, "nScore", event.target.value) })),
             h(
               "div",
               { className: "category-actions" },

@@ -683,7 +683,7 @@ input::placeholder {
 
 .sync-grid {
   display: grid;
-  grid-template-columns: minmax(180px, 1fr) minmax(140px, 0.7fr) auto;
+  grid-template-columns: repeat(2, minmax(180px, 1fr));
   gap: 10px;
   align-items: end;
 }
@@ -702,7 +702,7 @@ input::placeholder {
   text-transform: uppercase;
 }
 
-.sync-grid input {
+.sync-grid input:not([type="checkbox"]) {
   min-height: 42px;
   min-width: 0;
   border: 1px solid rgba(70, 255, 242, 0.22);
@@ -713,11 +713,35 @@ input::placeholder {
   outline: none;
 }
 
-.sync-grid input:focus {
+.sync-grid input:not([type="checkbox"]):focus {
   border-color: var(--cyan);
   box-shadow:
     0 0 0 3px rgba(70, 255, 242, 0.11),
     0 0 18px rgba(70, 255, 242, 0.18);
+}
+
+.sync-grid .remember-device {
+  min-height: 42px;
+  display: flex;
+  grid-column: 1 / -1;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid rgba(70, 255, 242, 0.2);
+  border-radius: 6px;
+  background: rgba(1, 8, 10, 0.62);
+  padding: 10px 12px;
+}
+
+.remember-device input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--cyan);
+  cursor: pointer;
+}
+
+.remember-device span {
+  color: var(--ink);
+  font-size: 0.8rem;
 }
 
 .sync-actions {
@@ -725,6 +749,10 @@ input::placeholder {
   flex-wrap: wrap;
   gap: 8px;
   justify-content: flex-end;
+}
+
+.sync-grid > .sync-actions {
+  grid-column: 1 / -1;
 }
 
 .sync-cloud {
@@ -761,6 +789,13 @@ input::placeholder {
   margin: 0;
   color: var(--muted);
   font-size: 0.88rem;
+}
+
+.cloud-note {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.8rem;
 }
 
 .section-heading {
@@ -886,7 +921,7 @@ input::placeholder {
 
 .weekly-grid {
   display: grid;
-  grid-template-columns: 336px repeat(7, minmax(158px, 1fr));
+  grid-template-columns: 360px repeat(7, minmax(184px, 1fr));
   gap: 8px;
   overflow-x: auto;
   padding-bottom: 4px;
@@ -931,13 +966,12 @@ input::placeholder {
 }
 
 .weekly-category {
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) 52px 52px 108px;
   grid-template-areas:
-    "name name name"
-    "y n actions";
-  gap: 10px;
+    "name y n actions";
+  gap: 8px;
   align-content: center;
-  min-height: 104px;
+  min-height: 70px;
 }
 
 .category-name-input,
@@ -945,37 +979,38 @@ input::placeholder {
 .preset-score-input {
   width: 100%;
   min-width: 0;
-  height: 36px;
-  min-height: 36px;
-  padding: 0 9px;
+  height: 44px;
+  min-height: 44px;
+  padding: 0 11px;
   font-weight: 850;
 }
 
 .category-name-input {
   grid-area: name;
+  height: 42px;
+  min-height: 42px;
+  text-align: left;
 }
 
 .category-actions {
   grid-area: actions;
   display: flex;
   gap: 4px;
-  justify-content: flex-end;
+  justify-content: stretch;
+}
+
+.category-actions .mini-button {
+  flex: 1;
+  width: auto;
+  min-width: 0;
 }
 
 .score-field {
   display: grid;
-  grid-template-columns: 52px minmax(0, 1fr);
+  grid-template-columns: 1fr;
   align-items: center;
-  gap: 7px;
+  gap: 0;
   min-width: 0;
-}
-
-.score-field span {
-  color: var(--acid);
-  font-size: 0.68rem;
-  font-weight: 950;
-  letter-spacing: 0.04em;
-  white-space: nowrap;
 }
 
 .score-field.y-field {
@@ -989,6 +1024,25 @@ input::placeholder {
 .category-score-input,
 .preset-score-input {
   text-align: center;
+  font-size: 1rem;
+}
+
+.score-field.positive-score input {
+  border-color: rgba(42, 255, 139, 0.42);
+  background:
+    linear-gradient(180deg, rgba(42, 255, 139, 0.22), rgba(42, 255, 139, 0.08)),
+    rgba(1, 16, 10, 0.92);
+  color: #d9ffe9;
+  box-shadow: inset 0 0 18px rgba(42, 255, 139, 0.08);
+}
+
+.score-field.negative-score input {
+  border-color: rgba(255, 79, 109, 0.42);
+  background:
+    linear-gradient(180deg, rgba(255, 79, 109, 0.22), rgba(255, 79, 109, 0.08)),
+    rgba(20, 1, 8, 0.92);
+  color: #ffe3e9;
+  box-shadow: inset 0 0 18px rgba(255, 79, 109, 0.08);
 }
 
 .mini-button {
@@ -1040,6 +1094,10 @@ input::placeholder {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 10px;
+}
+
+.daily-plan-row .plan-card-grid {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
 }
 
 .today-plan-card {
@@ -1281,12 +1339,14 @@ input::placeholder {
 }
 
 .preset-card {
-  min-height: 58px;
+  min-height: 70px;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 74px 74px repeat(3, auto);
+  grid-template-columns: minmax(0, 1fr) 52px 52px 104px;
+  grid-template-areas:
+    "name y n tools";
   align-items: center;
-  gap: 8px;
-  padding: 10px;
+  gap: 9px;
+  padding: 12px;
   border: 1px solid rgba(70, 255, 242, 0.18);
   border-radius: 8px;
   background:
@@ -1309,10 +1369,53 @@ input::placeholder {
 .preset-score-input {
   width: 100%;
   min-width: 0;
-  height: 38px;
-  min-height: 38px;
-  padding: 0 9px;
+  height: 42px;
+  min-height: 42px;
+  padding: 0 11px;
   font-weight: 850;
+}
+
+.preset-name-input {
+  grid-area: name;
+  height: 42px;
+  min-height: 42px;
+  text-align: left;
+}
+
+.preset-card .score-field:first-of-type {
+  grid-area: y;
+}
+
+.preset-card .score-field:nth-of-type(2) {
+  grid-area: n;
+}
+
+.preset-card .score-field {
+  grid-template-columns: 1fr;
+  min-height: 42px;
+}
+
+.preset-card .preset-up {
+  grid-area: tools;
+  align-self: center;
+  justify-self: start;
+}
+
+.preset-card .preset-down {
+  grid-area: tools;
+  align-self: center;
+  justify-self: center;
+}
+
+.preset-card .danger {
+  grid-area: tools;
+  align-self: center;
+  justify-self: end;
+}
+
+.preset-card .mini-button {
+  width: 32px;
+  height: 31px;
 }
 
 .entry-score.plus {
@@ -1705,6 +1808,10 @@ input::placeholder {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .daily-plan-row .plan-card-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
   .score-details {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -1758,12 +1865,16 @@ input::placeholder {
     grid-template-columns: 1fr;
   }
 
+  .daily-plan-row .plan-card-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .sync-actions {
     justify-content: flex-start;
   }
 
   .preset-card {
-    grid-template-columns: 1fr 64px 64px auto auto auto;
+    grid-template-columns: minmax(0, 1fr) 50px 50px 104px;
   }
 
   .history-bars {
