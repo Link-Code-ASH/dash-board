@@ -61,6 +61,12 @@ function clonePresets() {
 }
 
 function parseScore(value, fallback) {
+  if (value === "" || value === "-") return value;
+  const score = Number(value);
+  return Number.isFinite(score) ? score : fallback;
+}
+
+function scoreNumber(value, fallback = 0) {
   const score = Number(value);
   return Number.isFinite(score) ? score : fallback;
 }
@@ -109,6 +115,13 @@ function normalizeWeeklyPlan(plan, categories) {
   return normalized;
 }
 
+function normalizeDateMarkers(markers) {
+  return Array.from({ length: 3 }, (_, index) => ({
+    text: markers?.[index]?.text || "",
+    date: markers?.[index]?.date || "",
+  }));
+}
+
 function createFallbackState() {
   const categories = cloneCategories();
   return {
@@ -118,6 +131,7 @@ function createFallbackState() {
     presets: clonePresets(),
     categories,
     weeklyPlan: createEmptyWeeklyPlan(categories),
+    dateMarkers: normalizeDateMarkers(),
     updatedAt: new Date().toISOString(),
   };
 }
@@ -132,6 +146,7 @@ function normalizeState(source) {
     presets: normalizePresets(source?.presets),
     categories,
     weeklyPlan: normalizeWeeklyPlan(source?.weeklyPlan, categories),
+    dateMarkers: normalizeDateMarkers(source?.dateMarkers),
     updatedAt: source?.updatedAt || new Date().toISOString(),
   };
 }
@@ -169,7 +184,45 @@ function formatDayLabel(dateKey) {
 }
 
 function formatScore(score) {
-  return score > 0 ? `+${score}` : String(score);
+  if (score === "" || score === "-") return String(score);
+  const numericScore = scoreNumber(score);
+  return numericScore > 0 ? `+${numericScore}` : String(numericScore);
+}
+
+function getWeekSerial(dateKey) {
+  const date = new Date(`${dateKey}T00:00:00`);
+  const monday = new Date(date);
+  monday.setDate(date.getDate() - ((date.getDay() + 6) % 7));
+  monday.setHours(0, 0, 0, 0);
+  return Math.floor(monday.getTime() / 604800000);
+}
+
+function addDays(dateKey, amount) {
+  const date = new Date(`${dateKey}T00:00:00`);
+  date.setDate(date.getDate() + amount);
+  return toDateKey(date);
+}
+
+function getWeekStart(dateKey) {
+  const date = new Date(`${dateKey}T00:00:00`);
+  return addDays(dateKey, -((date.getDay() + 6) % 7));
+}
+
+function formatCompactDate(dateKey) {
+  const date = new Date(`${dateKey}T00:00:00`);
+  const month = new Intl.DateTimeFormat("en-US", { month: "short" }).format(date);
+  const weekday = new Intl.DateTimeFormat("en-US", { weekday: "short" }).format(date);
+  return { day: date.getDate(), month, weekday };
+}
+
+function getWeeklyPlanEntry(rawValue, dateKey) {
+  const lines = String(rawValue || "")
+    .split(/\n+/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+  if (!lines.length) return { cycleNumber: "", value: "Not Set" };
+  const lineIndex = ((getWeekSerial(dateKey) % lines.length) + lines.length) % lines.length;
+  return { cycleNumber: lines.length > 1 ? lineIndex + 1 : "", value: lines[lineIndex] };
 }
 
 function getWeekdayKey(dateKey) {
@@ -478,7 +531,7 @@ function App() {
   }, []);
 
   useEffect(() => {
-    document.querySelectorAll(".collapsible-panel, .schedule-panel, .score-meter, .score-details > div, .today-plan-card, .preset-card, .entry-item, .calendar-month, .calendar-day").forEach((element) => {
+    document.querySelectorAll(".collapsible-panel, .schedule-panel, .memo-panel, .today-plan-panel, .history-panel, .score-meter, .score-details > div, .today-plan-card, .preset-card, .entry-item, .calendar-month, .calendar-day").forEach((element) => {
       if (element.dataset.glowReady) return;
       element.dataset.glowReady = "true";
       element.addEventListener("pointermove", (event) => {
@@ -581,8 +634,8 @@ function App() {
       const preset = draft.presets[index];
       if (!preset) return draft;
       if (field === "name") preset.name = value.trim() || preset.name;
-      if (field === "yScore") preset.yScore = parseScore(value, preset.yScore);
-      if (field === "nScore") preset.nScore = parseScore(value, preset.nScore);
+      if (field === "yScore") preset.yScore = value;
+      if (field === "nScore") preset.nScore = value;
       return draft;
     });
   };
@@ -618,8 +671,8 @@ function App() {
       const category = draft.categories.find((item) => item.key === key);
       if (!category) return draft;
       if (field === "label") category.label = value.trim() || category.label;
-      if (field === "yScore") category.yScore = parseScore(value, category.yScore);
-      if (field === "nScore") category.nScore = parseScore(value, category.nScore);
+      if (field === "yScore") category.yScore = value;
+      if (field === "nScore") category.nScore = value;
       return draft;
     });
   };
@@ -657,6 +710,15 @@ function App() {
       const note = value.replace(/\r\n/g, "\n");
       if (note) draft.calendar[dateKey] = note;
       else delete draft.calendar[dateKey];
+      return draft;
+    });
+  };
+
+  const updateDateMarker = (index, field, value) => {
+    saveData((draft) => {
+      const markers = normalizeDateMarkers(draft.dateMarkers);
+      markers[index] = { ...markers[index], [field]: value };
+      draft.dateMarkers = markers;
       return draft;
     });
   };
@@ -718,14 +780,15 @@ function App() {
           React.Fragment,
           null,
           h(Topbar, { selectedDate, setSelectedDate, shiftDate }),
+          h(SchedulePanel, { calendar: data.calendar, selectedDate }),
     h(
       "div",
       { className: "daily-workspace" },
       h(
         "div",
         { className: "daily-left-rail" },
-        h(SchedulePanel, { calendar: data.calendar, selectedDate }),
         h(ScorePanel, { entryCount: entries.length, scoreInfo }),
+        h(DateMarkerPanel, { dateMarkers: data.dateMarkers, updateDateMarker }),
       ),
       h(MemoPanel, { memo, updateMemo }),
     ),
@@ -914,16 +977,42 @@ function SyncPanel({ forgetThisDevice, isOpen, onConnect, onGenerate, onPull, on
 }
 
 function SchedulePanel({ calendar, selectedDate }) {
-  const schedule = calendar[selectedDate]?.trim() || "";
-  const lines = schedule.split(/\n+/).filter(Boolean);
+  const weekStart = getWeekStart(selectedDate);
+  const weeks = [0, 7].map((offset) => Array.from({ length: 7 }, (_, index) => addDays(weekStart, offset + index)));
   return h(
     "section",
-    { className: "schedule-panel", "aria-label": "Today's Schedule" },
-    h("div", { className: "section-heading" }, h("div", null, h("h2", null, "Today's Schedule"), h("p", null, formatDayLabel(selectedDate)))),
+    { className: "schedule-panel two-week-schedule", "aria-label": "Two-week schedule" },
+    h("div", { className: "section-heading" }, h("div", null, h("h2", null, "Today's Schedule"), h("p", null, "Current week and next week"))),
     h(
       "div",
-      { className: `schedule-content ${schedule ? "" : "empty"}` },
-      schedule ? lines.map((line, index) => h("div", { className: "schedule-item", key: `${line}-${index}` }, line)) : h("span", null, "Calendar entries for the selected date will appear here."),
+      { className: "schedule-weeks" },
+      weeks.map((week, weekIndex) =>
+        h(
+          "div",
+          { className: "schedule-week", key: `week-${weekIndex}` },
+          h("div", { className: "schedule-week-title" }, weekIndex === 0 ? "This Week" : "Next Week"),
+          h("div", { className: "schedule-weekdays" }, weekDays.map((day) => h("span", { key: day.key }, day.label))),
+          h(
+            "div",
+            { className: "schedule-week-grid" },
+          week.map((dateKey) => {
+            const schedule = calendar[dateKey]?.trim() || "";
+            const lines = schedule.split(/\n+/).filter(Boolean);
+            const dateLabel = formatCompactDate(dateKey);
+            return h(
+              "article",
+              { className: `schedule-day ${dateKey === selectedDate ? "selected" : ""}`, key: dateKey },
+              h("div", { className: "schedule-date" }, h("b", null, `${dateLabel.month} ${dateLabel.day}`), h("span", null, dateLabel.weekday)),
+              h(
+                "div",
+                { className: `schedule-day-items ${lines.length ? "" : "empty"}` },
+                lines.length ? lines.map((line, index) => h("span", { key: `${dateKey}-${index}` }, line)) : h("i", null, "No schedule"),
+              ),
+            );
+          }),
+          ),
+        ),
+      ),
     ),
   );
 }
@@ -966,6 +1055,37 @@ function ScorePanel({ entryCount, scoreInfo }) {
   );
 }
 
+function DateMarkerPanel({ dateMarkers, updateDateMarker }) {
+  return h(
+    "section",
+    { className: "date-marker-panel", "aria-label": "Date markers" },
+    h(
+      "div",
+      { className: "date-marker-list" },
+      normalizeDateMarkers(dateMarkers).map((marker, index) =>
+        h(
+          "label",
+          { className: "date-marker", key: `marker-${index}` },
+          h("input", {
+            className: "date-marker-text",
+            type: "text",
+            maxLength: 36,
+            placeholder: `Marker ${index + 1}`,
+            value: marker.text,
+            onChange: (event) => updateDateMarker(index, "text", event.target.value),
+          }),
+          h("input", {
+            className: "date-marker-date",
+            type: "date",
+            value: marker.date,
+            onChange: (event) => updateDateMarker(index, "date", event.target.value),
+          }),
+        ),
+      ),
+    ),
+  );
+}
+
 function TodayPlanPanel({ categories, entries, presets, selectedDate, toggleChoice, weekday, weeklyPlan }) {
   return h(
     "section",
@@ -986,7 +1106,7 @@ function TodayPlanPanel({ categories, entries, presets, selectedDate, toggleChoi
             yScore: preset.yScore,
             nScore: preset.nScore,
             selectedChoice: entries.find((entry) => entry.planKey === planKey)?.choice || "",
-            onToggle: (choice) => toggleChoice({ planKey, choice, name: `Daily: ${preset.name} (${choice})`, score: choice === "Y" ? preset.yScore : preset.nScore }),
+            onToggle: (choice) => toggleChoice({ planKey, choice, name: `Daily: ${preset.name} (${choice})`, score: scoreNumber(choice === "Y" ? preset.yScore : preset.nScore) }),
           };
         }),
       }),
@@ -994,16 +1114,17 @@ function TodayPlanPanel({ categories, entries, presets, selectedDate, toggleChoi
         className: "weekly-plan-row",
         title: "Weekly",
         cards: categories.map((category) => {
-          const value = weeklyPlan[category.key]?.[weekday.key]?.trim() || "Not Set";
+          const planEntry = getWeeklyPlanEntry(weeklyPlan[category.key]?.[weekday.key], selectedDate);
+          const value = planEntry.value;
           const planKey = `plan:${selectedDate}:${category.key}`;
           return {
             key: category.key,
-            label: category.label,
+            label: planEntry.cycleNumber ? `${category.label} ${planEntry.cycleNumber}` : category.label,
             value,
             yScore: category.yScore,
             nScore: category.nScore,
             selectedChoice: entries.find((entry) => entry.planKey === planKey)?.choice || "",
-            onToggle: (choice) => toggleChoice({ planKey, choice, name: `${category.label}: ${value} (${choice})`, score: choice === "Y" ? category.yScore : category.nScore }),
+            onToggle: (choice) => toggleChoice({ planKey, choice, name: `${category.label}: ${value} (${choice})`, score: scoreNumber(choice === "Y" ? category.yScore : category.nScore) }),
           };
         }),
       }),
@@ -1061,8 +1182,8 @@ function DailyPanel({ addPreset, isOpen, movePreset, onToggle, presets, removePr
             "article",
             { className: "preset-card", key: preset.key },
             h("input", { className: "preset-name-input", type: "text", maxLength: 32, "aria-label": "Daily name", value: preset.name, onChange: (event) => updatePreset(index, "name", event.target.value) }),
-            h("label", { className: "score-field positive-score", title: "Y score" }, h("input", { className: "preset-score-input y-score", type: "number", min: -100, max: 100, step: 1, value: preset.yScore, onChange: (event) => updatePreset(index, "yScore", event.target.value) })),
-            h("label", { className: "score-field negative-score", title: "N score" }, h("input", { className: "preset-score-input n-score", type: "number", min: -100, max: 100, step: 1, value: preset.nScore, onChange: (event) => updatePreset(index, "nScore", event.target.value) })),
+            h("label", { className: "score-field positive-score", title: "Y score" }, h("input", { className: "preset-score-input y-score", type: "text", inputMode: "numeric", value: preset.yScore, onChange: (event) => updatePreset(index, "yScore", event.target.value) })),
+            h("label", { className: "score-field negative-score", title: "N score" }, h("input", { className: "preset-score-input n-score", type: "text", inputMode: "numeric", value: preset.nScore, onChange: (event) => updatePreset(index, "nScore", event.target.value) })),
             h("button", { className: "mini-button preset-up", type: "button", disabled: index === 0, onClick: () => movePreset(index, -1) }, "\u2191"),
             h("button", { className: "mini-button preset-down", type: "button", disabled: index === presets.length - 1, onClick: () => movePreset(index, 1) }, "\u2193"),
             h("button", { className: "mini-button danger", type: "button", onClick: () => removePreset(index) }, "\u00d7"),
@@ -1094,8 +1215,8 @@ function WeeklyPanel({ addCategory, categories, isOpen, moveCategory, onToggle, 
             "div",
             { className: "weekly-category", key: `${category.key}-label` },
             h("input", { className: "category-name-input", type: "text", maxLength: 24, value: category.label, onChange: (event) => updateCategory(category.key, "label", event.target.value) }),
-            h("label", { className: "score-field y-field positive-score", title: "Y score" }, h("input", { className: "category-score-input y-score", type: "number", min: -100, max: 100, step: 1, value: category.yScore, onChange: (event) => updateCategory(category.key, "yScore", event.target.value) })),
-            h("label", { className: "score-field n-field negative-score", title: "N score" }, h("input", { className: "category-score-input n-score", type: "number", min: -100, max: 100, step: 1, value: category.nScore, onChange: (event) => updateCategory(category.key, "nScore", event.target.value) })),
+            h("label", { className: "score-field y-field positive-score", title: "Y score" }, h("input", { className: "category-score-input y-score", type: "text", inputMode: "numeric", value: category.yScore, onChange: (event) => updateCategory(category.key, "yScore", event.target.value) })),
+            h("label", { className: "score-field n-field negative-score", title: "N score" }, h("input", { className: "category-score-input n-score", type: "text", inputMode: "numeric", value: category.nScore, onChange: (event) => updateCategory(category.key, "nScore", event.target.value) })),
             h(
               "div",
               { className: "category-actions" },
@@ -1105,14 +1226,14 @@ function WeeklyPanel({ addCategory, categories, isOpen, moveCategory, onToggle, 
             ),
           ),
           ...weekDays.map((day) =>
-            h("input", {
+            h("textarea", {
               className: `weekly-input ${day.key === selectedWeekday ? "active" : ""}`,
               key: `${category.key}-${day.key}`,
-              type: "text",
-              maxLength: 40,
+              maxLength: 180,
               placeholder: `${day.label} ${category.label}`,
               value: weeklyPlan[category.key]?.[day.key] || "",
               onChange: (event) => updateWeeklyPlan(category.key, day.key, event.target.value),
+              onKeyDown: (event) => event.stopPropagation(),
             }),
           ),
         ]),

@@ -447,6 +447,57 @@ input[type="date"] {
   overflow: hidden;
 }
 
+.date-marker-panel {
+  border: 1px solid rgba(183, 255, 60, 0.2);
+  border-radius: 8px;
+  background:
+    linear-gradient(90deg, rgba(183, 255, 60, 0.075), rgba(70, 255, 242, 0.035)),
+    rgba(4, 12, 14, 0.86);
+  padding: 12px;
+}
+
+.date-marker-list {
+  display: grid;
+  gap: 8px;
+}
+
+.date-marker {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 148px;
+  gap: 9px;
+}
+
+.date-marker input {
+  min-width: 0;
+  min-height: 40px;
+  border: 1px solid rgba(183, 255, 60, 0.2);
+  border-radius: 6px;
+  background: rgba(1, 8, 10, 0.72);
+  color: var(--ink);
+  padding: 0 11px;
+  font-size: 0.88rem;
+  font-weight: 800;
+  outline: none;
+}
+
+.date-marker-date {
+  color-scheme: dark;
+  border-color: rgba(70, 255, 242, 0.28);
+  background:
+    linear-gradient(180deg, rgba(70, 255, 242, 0.12), rgba(183, 255, 60, 0.055)),
+    rgba(1, 8, 10, 0.84);
+  color: #f7feff;
+  font-size: 0.9rem;
+  letter-spacing: 0.02em;
+}
+
+.date-marker input:focus {
+  border-color: rgba(183, 255, 60, 0.58);
+  box-shadow:
+    0 0 0 3px rgba(183, 255, 60, 0.09),
+    0 0 16px rgba(183, 255, 60, 0.14);
+}
+
 .score-track span {
   display: block;
   width: 50%;
@@ -624,6 +675,38 @@ input[type="date"] {
   opacity: 0.9;
 }
 
+.today-plan-panel:hover {
+  border-color: rgba(70, 255, 242, 0.48);
+  box-shadow:
+    var(--shadow),
+    0 0 0 1px rgba(70, 255, 242, 0.08),
+    0 0 30px rgba(70, 255, 242, 0.1),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.035);
+}
+
+.history-panel:hover {
+  border-color: rgba(70, 255, 242, 0.48);
+  box-shadow:
+    var(--shadow),
+    0 0 0 1px rgba(70, 255, 242, 0.08),
+    0 0 30px rgba(70, 255, 242, 0.1),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.035);
+}
+
+.today-plan-panel::after {
+  background:
+    radial-gradient(circle at var(--glow-x) var(--glow-y), rgba(70, 255, 242, 0.28), rgba(255, 45, 184, 0.12) 25%, transparent 52%),
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.028) 0 1px, transparent 1px 7px),
+    linear-gradient(90deg, transparent 0 68%, rgba(255, 45, 184, 0.075) 68% 68.6%, transparent 68.6%);
+}
+
+.history-panel::after {
+  background:
+    radial-gradient(circle at var(--glow-x) var(--glow-y), rgba(183, 255, 60, 0.22), rgba(70, 255, 242, 0.12) 28%, transparent 54%),
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.028) 0 1px, transparent 1px 7px),
+    linear-gradient(90deg, transparent 0 68%, rgba(183, 255, 60, 0.07) 68% 68.6%, transparent 68.6%);
+}
+
 .quick-panel > *,
 .planner-view > *,
 .log-panel > *,
@@ -756,38 +839,111 @@ input::placeholder {
   margin-bottom: 10px;
 }
 
-.schedule-content {
+.schedule-weeks {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.schedule-week {
+  display: grid;
   gap: 8px;
 }
 
-.schedule-content.empty {
-  grid-template-columns: 1fr;
-  min-height: 54px;
-  align-content: center;
-  border: 1px dashed rgba(70, 255, 242, 0.22);
-  border-radius: 8px;
-  background: rgba(1, 8, 10, 0.48);
-  padding: 12px;
+.schedule-week-title {
+  color: var(--acid);
+  font-size: 0.78rem;
+  font-weight: 950;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
 }
 
-.schedule-content.empty span {
-  color: var(--muted);
+.schedule-weekdays,
+.schedule-week-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 8px;
 }
 
-.schedule-item {
-  border: 1px solid rgba(70, 255, 242, 0.2);
-  border-left-color: var(--acid);
+.schedule-weekdays span {
+  min-height: 30px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(70, 255, 242, 0.14);
+  border-radius: 6px;
+  background: rgba(70, 255, 242, 0.05);
+  color: var(--cyan);
+  font-size: 0.7rem;
+  font-weight: 950;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.schedule-day {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: 8px;
+  align-items: start;
+  min-height: 132px;
+  border: 1px solid rgba(70, 255, 242, 0.16);
   border-radius: 8px;
   background:
-    linear-gradient(90deg, rgba(183, 255, 60, 0.09), rgba(70, 255, 242, 0.035)),
+    linear-gradient(90deg, rgba(70, 255, 242, 0.07), rgba(255, 45, 184, 0.035)),
     rgba(1, 8, 10, 0.62);
+  padding: 9px;
+}
+
+.schedule-day.selected {
+  border-color: rgba(183, 255, 60, 0.58);
+  background:
+    linear-gradient(90deg, rgba(183, 255, 60, 0.17), rgba(70, 255, 242, 0.055)),
+    rgba(3, 15, 10, 0.82);
+  box-shadow:
+    0 0 0 1px rgba(183, 255, 60, 0.1),
+    0 0 22px rgba(183, 255, 60, 0.13);
+}
+
+.schedule-date {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  border-right: 0;
+  border-bottom: 1px solid rgba(70, 255, 242, 0.12);
+  padding: 0 0 7px;
+}
+
+.schedule-date b {
   color: #f8feff;
-  padding: 10px 12px;
-  line-height: 1.45;
+  font-family: var(--display-font);
+  font-size: 1rem;
+}
+
+.schedule-date span {
+  color: var(--muted);
+  font-size: 0.74rem;
+  font-weight: 950;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.schedule-day-items {
+  display: grid;
+  gap: 5px;
+  align-content: start;
+  min-height: 72px;
+}
+
+.schedule-day-items span {
+  color: #f8feff;
+  line-height: 1.35;
   overflow-wrap: anywhere;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+}
+
+.schedule-day-items.empty i {
+  color: rgba(127, 157, 165, 0.64);
+  font-size: 0.82rem;
+  font-style: normal;
 }
 
 .sync-body {
@@ -1192,6 +1348,11 @@ input::placeholder {
 .weekly-input {
   width: 100%;
   min-width: 158px;
+  min-height: 64px;
+  padding: 10px 12px;
+  resize: vertical;
+  line-height: 1.35;
+  white-space: pre-wrap;
 }
 
 .today-plan-grid {
@@ -1955,6 +2116,17 @@ input::placeholder {
     grid-template-columns: 1fr;
   }
 
+  .schedule-weeks {
+    grid-template-columns: 1fr;
+  }
+
+  .schedule-weekdays,
+  .schedule-week-grid {
+    grid-template-columns: repeat(7, minmax(118px, 1fr));
+    overflow-x: auto;
+    padding-bottom: 2px;
+  }
+
   .preset-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -2014,7 +2186,6 @@ input::placeholder {
 
   .memo-grid,
   .preset-grid,
-  .schedule-content,
   .sync-grid {
     grid-template-columns: 1fr;
   }
