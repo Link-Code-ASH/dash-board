@@ -272,6 +272,7 @@ function CollapsiblePanel({ children, className, controls, description, isOpen, 
 
 function App() {
   const [data, setData] = useState(loadState);
+  const [activeView, setActiveView] = useState("dashboard");
   const [selectedDate, setSelectedDate] = useState(toDateKey(new Date()));
   const [openPanels, setOpenPanels] = useState({
     sync: false,
@@ -653,7 +654,7 @@ function App() {
 
   const updateCalendarNote = (dateKey, value) => {
     saveData((draft) => {
-      const note = value.trim();
+      const note = value.replace(/\r\n/g, "\n");
       if (note) draft.calendar[dateKey] = note;
       else delete draft.calendar[dateKey];
       return draft;
@@ -711,7 +712,12 @@ function App() {
   return h(
     "main",
     { className: "app-shell" },
-    h(Topbar, { selectedDate, setSelectedDate, shiftDate }),
+    h(AppNavigation, { activeView, setActiveView }),
+    activeView === "dashboard"
+      ? h(
+          React.Fragment,
+          null,
+          h(Topbar, { selectedDate, setSelectedDate, shiftDate }),
     h(
       "div",
       { className: "daily-workspace" },
@@ -759,14 +765,6 @@ function App() {
       updateWeeklyPlan,
       weeklyPlan: data.weeklyPlan,
     }),
-    h(RecordPanel, {
-      clearSelectedDay,
-      entries,
-      isOpen: openPanels.record,
-      onToggle: () => togglePanel("record"),
-      removeEntry,
-    }),
-    h(HistoryPanel, { getDayTotal, selectedDate }),
     h(CalendarPanel, {
       calendar: data.calendar,
       isOpen: openPanels.calendar,
@@ -777,6 +775,16 @@ function App() {
       setSelectedDate,
       updateCalendarNote,
     }),
+    h(RecordPanel, {
+      clearSelectedDay,
+      entries,
+      isOpen: openPanels.record,
+      onToggle: () => togglePanel("record"),
+      removeEntry,
+    }),
+    h(HistoryPanel, { getDayTotal, selectedDate }),
+        )
+      : h(PlannerView),
     h(SyncPanel, {
       forgetThisDevice,
       isOpen: openPanels.sync,
@@ -793,6 +801,48 @@ function App() {
       sync,
       syncReady: syncBackendReady() && Boolean(sync.syncId && sync.pin),
     }),
+  );
+}
+
+function AppNavigation({ activeView, setActiveView }) {
+  const items = [
+    { key: "dashboard", label: "Dashboard" },
+    { key: "planner", label: "Planner" },
+  ];
+  return h(
+    "nav",
+    { className: "app-navigation", "aria-label": "Main menu" },
+    h(
+      "div",
+      { className: "nav-buttons" },
+      items.map((item) =>
+        h(
+          "button",
+          {
+            className: `nav-button ${activeView === item.key ? "active" : ""}`,
+            key: item.key,
+            type: "button",
+            onClick: () => setActiveView(item.key),
+          },
+          item.label,
+        ),
+      ),
+    ),
+  );
+}
+
+function PlannerView() {
+  return h(
+    "section",
+    { className: "planner-view", "aria-label": "Planner" },
+    h("div", { className: "section-heading" }, h("div", null, h("h2", null, "Planner"), h("p", null, "A second workspace for new routines, projects, or notes."))),
+    h(
+      "div",
+      { className: "planner-grid" },
+      h("article", null, h("span", null, "Projects"), h("strong", null, "Ready for your next setup.")),
+      h("article", null, h("span", null, "Notes"), h("strong", null, "Add a new system here.")),
+      h("article", null, h("span", null, "Tracking"), h("strong", null, "We can connect this to sync later.")),
+    ),
   );
 }
 
@@ -1195,9 +1245,15 @@ function CalendarPanel({ calendar, isOpen, onToggle, openMonths, selectedDate, s
 function MonthDays({ calendar, monthIndex, selectedDate, setSelectedDate, updateCalendarNote, year }) {
   const todayKey = toDateKey(new Date());
   const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
+  const firstDayIndex = (new Date(year, monthIndex, 1).getDay() + 6) % 7;
+  const blanks = Array.from({ length: firstDayIndex }, (_, index) =>
+    h("div", { className: "calendar-day-spacer", key: `blank-${monthIndex}-${index}`, "aria-hidden": "true" }),
+  );
   return h(
     "div",
     { className: "calendar-days" },
+    ...weekDays.map((day) => h("div", { className: "calendar-weekday", key: day.key }, day.label)),
+    ...blanks,
     Array.from({ length: daysInMonth }, (_, index) => {
       const day = index + 1;
       const dateKey = `${year}-${String(monthIndex + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
@@ -1207,7 +1263,7 @@ function MonthDays({ calendar, monthIndex, selectedDate, setSelectedDate, update
         "label",
         { className: `calendar-day ${dateKey === selectedDate ? "selected" : ""} ${dateKey === todayKey ? "today" : ""}`, key: dateKey },
         h("span", { className: "calendar-date" }, h("b", null, day), h("i", null, weekday)),
-        h("textarea", { maxLength: 600, placeholder: "Schedule", value: calendar[dateKey] || "", onFocus: () => setSelectedDate(dateKey), onChange: (event) => updateCalendarNote(dateKey, event.target.value) }),
+        h("textarea", { maxLength: 600, placeholder: "Schedule", value: calendar[dateKey] || "", onFocus: () => setSelectedDate(dateKey), onChange: (event) => updateCalendarNote(dateKey, event.target.value), onKeyDown: (event) => event.stopPropagation() }),
       );
     }),
   );

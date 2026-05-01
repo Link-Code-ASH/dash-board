@@ -103,6 +103,7 @@ button:disabled {
 }
 
 .topbar,
+.app-navigation,
 .score-panel,
 .quick-panel,
 .weekly-panel,
@@ -112,6 +113,7 @@ button:disabled {
 .memo-panel,
 .log-panel,
 .history-panel,
+.planner-view,
 .calendar-panel {
   margin-bottom: 18px;
 }
@@ -144,6 +146,48 @@ button:disabled {
   height: 3px;
   background: linear-gradient(90deg, transparent, var(--cyan), var(--pink), transparent);
   opacity: 0.85;
+}
+
+.app-navigation {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  overflow: visible;
+  isolation: auto;
+}
+
+.nav-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.nav-button {
+  min-height: 32px;
+  border: 1px solid rgba(70, 255, 242, 0.22);
+  border-radius: 6px;
+  background: rgba(1, 8, 10, 0.72);
+  color: var(--muted);
+  padding: 0 10px;
+  font-size: 0.72rem;
+  font-weight: 950;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.nav-button:hover,
+.nav-button.active {
+  border-color: rgba(70, 255, 242, 0.64);
+  color: var(--cyan);
+  box-shadow:
+    0 0 0 1px rgba(70, 255, 242, 0.12),
+    0 0 18px rgba(70, 255, 242, 0.15);
 }
 
 .eyebrow {
@@ -497,6 +541,7 @@ input[type="date"] {
 }
 
 .entry-form,
+.planner-view,
 .quick-panel,
 .log-panel,
 .weekly-panel,
@@ -521,6 +566,7 @@ input[type="date"] {
 }
 
 .quick-panel::before,
+.planner-view::before,
 .log-panel::before,
 .weekly-panel::before,
 .today-plan-panel::before,
@@ -543,6 +589,7 @@ input[type="date"] {
 }
 
 .quick-panel::after,
+.planner-view::after,
 .log-panel::after,
 .weekly-panel::after,
 .today-plan-panel::after,
@@ -565,6 +612,7 @@ input[type="date"] {
 }
 
 .quick-panel:hover::after,
+.planner-view:hover::after,
 .log-panel:hover::after,
 .weekly-panel:hover::after,
 .today-plan-panel:hover::after,
@@ -577,6 +625,7 @@ input[type="date"] {
 }
 
 .quick-panel > *,
+.planner-view > *,
 .log-panel > *,
 .weekly-panel > *,
 .today-plan-panel > *,
@@ -590,6 +639,7 @@ input[type="date"] {
 }
 
 .quick-panel,
+.planner-view,
 .log-panel,
 .weekly-panel,
 .today-plan-panel,
@@ -607,6 +657,37 @@ input[type="date"] {
   gap: 18px;
   align-items: stretch;
   margin-bottom: 18px;
+}
+
+.planner-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.planner-grid article {
+  min-height: 128px;
+  display: grid;
+  align-content: space-between;
+  gap: 12px;
+  border: 1px solid rgba(70, 255, 242, 0.16);
+  border-radius: 8px;
+  background: rgba(1, 8, 10, 0.62);
+  padding: 14px;
+}
+
+.planner-grid span {
+  color: var(--cyan);
+  font-size: 0.76rem;
+  font-weight: 950;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.planner-grid strong {
+  color: #f7feff;
+  font-size: 1rem;
+  line-height: 1.35;
 }
 
 .daily-left-rail {
@@ -1709,9 +1790,30 @@ input::placeholder {
 
 .calendar-days {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
+  grid-template-columns: repeat(7, minmax(132px, 1fr));
   gap: 8px;
   padding: 10px;
+}
+
+.calendar-weekday {
+  min-height: 34px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(70, 255, 242, 0.16);
+  border-radius: 6px;
+  background: rgba(70, 255, 242, 0.055);
+  color: var(--cyan);
+  font-size: 0.72rem;
+  font-weight: 950;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.calendar-day-spacer {
+  min-height: 132px;
+  border: 1px dashed rgba(70, 255, 242, 0.08);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.018);
 }
 
 .calendar-day {
@@ -1772,6 +1874,7 @@ input::placeholder {
   font-size: 0.88rem;
   line-height: 1.45;
   outline: none;
+  white-space: pre-wrap;
 }
 
 .calendar-day textarea:focus {
@@ -1827,6 +1930,7 @@ input::placeholder {
 
 @media (max-width: 940px) {
   .topbar,
+  .app-navigation,
   .score-panel,
   .daily-workspace,
   .today-plan-grid {
@@ -1836,6 +1940,19 @@ input::placeholder {
   .topbar {
     display: grid;
     align-items: start;
+  }
+
+  .app-navigation {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .nav-buttons {
+    justify-content: flex-start;
+  }
+
+  .planner-grid {
+    grid-template-columns: 1fr;
   }
 
   .preset-grid {
@@ -1921,5 +2038,10 @@ input::placeholder {
   .calendar-days {
     grid-template-columns: 1fr;
     padding: 8px;
+  }
+
+  .calendar-weekday,
+  .calendar-day-spacer {
+    display: none;
   }
 }
