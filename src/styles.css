@@ -109,6 +109,7 @@ button:disabled {
 .weekly-panel,
 .today-plan-panel,
 .sync-panel,
+.system-panel,
 .schedule-panel,
 .memo-panel,
 .log-panel,
@@ -641,6 +642,7 @@ input[type="date"] {
 .weekly-panel,
 .today-plan-panel,
 .sync-panel,
+.system-panel,
 .schedule-panel,
 .memo-panel,
 .history-panel,
@@ -665,6 +667,7 @@ input[type="date"] {
 .weekly-panel::before,
 .today-plan-panel::before,
 .sync-panel::before,
+.system-panel::before,
 .schedule-panel::before,
 .memo-panel::before,
 .history-panel::before,
@@ -688,6 +691,7 @@ input[type="date"] {
 .weekly-panel::after,
 .today-plan-panel::after,
 .sync-panel::after,
+.system-panel::after,
 .schedule-panel::after,
 .memo-panel::after,
 .history-panel::after,
@@ -711,6 +715,7 @@ input[type="date"] {
 .weekly-panel:hover::after,
 .today-plan-panel:hover::after,
 .sync-panel:hover::after,
+.system-panel:hover::after,
 .schedule-panel:hover::after,
 .memo-panel:hover::after,
 .history-panel:hover::after,
@@ -756,6 +761,7 @@ input[type="date"] {
 .weekly-panel > *,
 .today-plan-panel > *,
 .sync-panel > *,
+.system-panel > *,
 .schedule-panel > *,
 .memo-panel > *,
 .history-panel > *,
@@ -770,6 +776,7 @@ input[type="date"] {
 .weekly-panel,
 .today-plan-panel,
 .sync-panel,
+.system-panel,
 .schedule-panel,
 .memo-panel,
 .history-panel,
@@ -1293,6 +1300,56 @@ input::placeholder {
   font-size: 0.88rem;
 }
 
+.system-body {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.system-action {
+  min-height: 76px;
+  display: grid;
+  align-content: center;
+  gap: 6px;
+  border: 1px solid rgba(70, 255, 242, 0.2);
+  border-radius: 8px;
+  background:
+    linear-gradient(135deg, rgba(70, 255, 242, 0.1), rgba(255, 45, 184, 0.045)),
+    rgba(1, 8, 10, 0.72);
+  color: var(--ink);
+  padding: 12px 14px;
+  text-align: left;
+  transition:
+    transform 180ms var(--ease-soft),
+    border-color 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.system-action:hover {
+  transform: translateY(-1px);
+  border-color: rgba(70, 255, 242, 0.46);
+  box-shadow:
+    0 0 0 1px rgba(70, 255, 242, 0.08),
+    0 0 22px rgba(70, 255, 242, 0.12);
+}
+
+.system-action span {
+  color: var(--cyan);
+  font-size: 0.76rem;
+  font-weight: 950;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.system-action strong {
+  color: #f7feff;
+  font-size: 0.95rem;
+}
+
+.backup-file-input {
+  display: none;
+}
+
 .cloud-note {
   grid-column: 1 / -1;
   margin: 0;
@@ -1318,6 +1375,7 @@ input::placeholder {
 .collapsible-panel .weekly-grid,
 .collapsible-panel .preset-grid,
 .collapsible-panel .entry-list,
+.collapsible-panel .system-body,
 .collapsible-panel .calendar-months {
   cursor: auto;
 }
@@ -1399,6 +1457,7 @@ input::placeholder {
 .log-panel.collapsed,
 .three-m-panel.collapsed,
 .sync-panel.collapsed,
+.system-panel.collapsed,
 .calendar-panel.collapsed {
   padding-bottom: 12px;
 }
@@ -1416,6 +1475,8 @@ input::placeholder {
 .three-m-panel.collapsed .section-heading p,
 .sync-panel.collapsed .sync-body,
 .sync-panel.collapsed .section-heading p,
+.system-panel.collapsed .system-body,
+.system-panel.collapsed .section-heading p,
 .calendar-panel.collapsed .calendar-months,
 .calendar-panel.collapsed .section-heading p {
   display: none;
@@ -2463,6 +2524,7 @@ input::placeholder {
   .weekly-panel,
   .today-plan-panel,
   .sync-panel,
+  .system-panel,
   .memo-panel,
   .history-panel,
   .calendar-panel {
@@ -2497,7 +2559,8 @@ input::placeholder {
 
   .memo-grid,
   .preset-grid,
-  .sync-grid {
+  .sync-grid,
+  .system-body {
     grid-template-columns: 1fr;
   }
 

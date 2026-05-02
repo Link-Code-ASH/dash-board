@@ -192,6 +192,18 @@ function loadState() {
   }
 }
 
+function downloadTextFile(filename, text) {
+  const blob = new Blob([text], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
 function loadSyncBackend() {
   try {
     const saved = JSON.parse(localStorage.getItem(SYNC_BACKEND_KEY));
@@ -362,6 +374,7 @@ function App() {
   const [selectedDate, setSelectedDate] = useState(toDateKey(new Date()));
   const [openPanels, setOpenPanels] = useState({
     sync: false,
+    system: false,
     daily: false,
     weekly: false,
     record: false,
@@ -845,6 +858,38 @@ function App() {
     window.location.reload();
   };
 
+  const exportBackup = () => {
+    const state = normalizeState(dataRef.current);
+    const filename = `dashboard-backup-${toDateKey(new Date())}.json`;
+    downloadTextFile(filename, JSON.stringify(state, null, 2));
+  };
+
+  const copyBackup = async () => {
+    try {
+      const state = normalizeState(dataRef.current);
+      await navigator.clipboard.writeText(JSON.stringify(state, null, 2));
+      window.alert("Dashboard backup data was copied to the clipboard.");
+    } catch {
+      window.alert("Copy failed. Please try Download Data instead.");
+    }
+  };
+
+  const importBackup = async (file) => {
+    if (!file) return;
+    try {
+      const text = await file.text();
+      const normalized = normalizeState(JSON.parse(text));
+      const confirmed = window.confirm("This will replace the dashboard data in this browser with the selected backup file. Continue?");
+      if (!confirmed) return;
+      dataRef.current = normalized;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized));
+      setData(normalized);
+      scheduleAutoSync();
+    } catch {
+      window.alert("Backup import failed. Please choose a valid dashboard backup JSON file.");
+    }
+  };
+
   return h(
     "main",
     { className: "app-shell" },
@@ -938,6 +983,13 @@ function App() {
       setSync: updateSync,
       sync,
       syncReady: syncBackendReady() && Boolean(sync.syncId && sync.pin),
+    }),
+    h(SystemPanel, {
+      copyBackup,
+      exportBackup,
+      importBackup,
+      isOpen: openPanels.system,
+      onToggle: () => togglePanel("system"),
     }),
   );
 }
@@ -1046,6 +1098,56 @@ function SyncPanel({ forgetThisDevice, isOpen, onConnect, onGenerate, onPull, on
           ),
         ),
         h("p", { className: "sync-status" }, sync.status),
+      ),
+    },
+  });
+}
+
+function SystemPanel({ copyBackup, exportBackup, importBackup, isOpen, onToggle }) {
+  const fileInputRef = useRef(null);
+  return h(CollapsiblePanel, {
+    className: "system-panel",
+    controls: "systemBody",
+    description: "Export or restore dashboard data.",
+    isOpen,
+    onToggle,
+    title: "System",
+    children: {
+      body: h(
+        "div",
+        { className: "system-body", id: "systemBody" },
+        h(
+          "button",
+          { className: "system-action export-action", type: "button", onClick: exportBackup },
+          h("span", null, "Download Data"),
+          h("strong", null, "Save a JSON backup file"),
+        ),
+        h(
+          "button",
+          { className: "system-action copy-action", type: "button", onClick: copyBackup },
+          h("span", null, "Copy Data"),
+          h("strong", null, "Copy backup JSON to clipboard"),
+        ),
+        h(
+          "button",
+          {
+            className: "system-action import-action",
+            type: "button",
+            onClick: () => fileInputRef.current?.click(),
+          },
+          h("span", null, "Upload Data"),
+          h("strong", null, "Restore from a JSON backup"),
+        ),
+        h("input", {
+          ref: fileInputRef,
+          type: "file",
+          accept: "application/json,.json",
+          className: "backup-file-input",
+          onChange: (event) => {
+            importBackup(event.target.files?.[0]);
+            event.target.value = "";
+          },
+        }),
       ),
     },
   });
