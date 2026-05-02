@@ -447,6 +447,49 @@ input[type="date"] {
   overflow: hidden;
 }
 
+.attempt-check {
+  width: 26px;
+  height: 26px;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid rgba(70, 255, 242, 0.24);
+  border-radius: 6px;
+  background:
+    linear-gradient(180deg, rgba(70, 255, 242, 0.12), rgba(183, 255, 60, 0.04)),
+    rgba(1, 8, 10, 0.72);
+  color: transparent;
+  padding: 0;
+  font-size: 0.82rem;
+  font-weight: 950;
+  line-height: 1;
+  position: absolute;
+  top: 9px;
+  right: 9px;
+  z-index: 2;
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    color 180ms ease,
+    transform 180ms var(--ease-soft);
+}
+
+.attempt-check:hover {
+  transform: translateY(-1px);
+  border-color: rgba(183, 255, 60, 0.5);
+  box-shadow: 0 0 18px rgba(183, 255, 60, 0.12);
+}
+
+.attempt-check.checked {
+  border-color: rgba(183, 255, 60, 0.68);
+  color: #061006;
+  background:
+    linear-gradient(180deg, rgba(183, 255, 60, 0.2), rgba(70, 255, 242, 0.07)),
+    var(--acid);
+  box-shadow:
+    0 0 0 1px rgba(183, 255, 60, 0.08),
+    0 0 18px rgba(183, 255, 60, 0.13);
+}
+
 .date-marker-panel {
   border: 1px solid rgba(183, 255, 60, 0.2);
   border-radius: 8px;
@@ -1969,9 +2012,49 @@ input::placeholder {
   min-height: 150px;
 }
 
+.history-heading {
+  gap: 12px;
+}
+
+.history-heading-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.flag-button {
+  width: 34px;
+  height: 34px;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid rgba(255, 188, 66, 0.3);
+  border-radius: 7px;
+  background:
+    linear-gradient(180deg, rgba(255, 188, 66, 0.12), rgba(255, 45, 184, 0.04)),
+    rgba(1, 8, 10, 0.72);
+  color: var(--gold);
+  font-size: 1rem;
+  line-height: 1;
+  transition:
+    transform 180ms var(--ease-soft),
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    background 180ms ease;
+}
+
+.flag-button:hover,
+.flag-button.active {
+  transform: translateY(-1px);
+  border-color: rgba(255, 188, 66, 0.68);
+  background:
+    linear-gradient(180deg, rgba(255, 188, 66, 0.24), rgba(255, 45, 184, 0.08)),
+    rgba(20, 12, 3, 0.88);
+  box-shadow: 0 0 18px rgba(255, 188, 66, 0.16);
+}
+
 .history-day {
   display: grid;
-  grid-template-rows: 1fr auto auto;
+  grid-template-rows: 1fr auto auto auto auto;
   gap: 8px;
   min-width: 0;
   text-align: center;
@@ -1995,6 +2078,42 @@ input::placeholder {
 .history-fill.minus {
   background: var(--minus);
   box-shadow: 0 0 16px rgba(255, 79, 109, 0.2);
+}
+
+.history-flag {
+  height: 18px;
+  display: inline-grid;
+  place-items: center;
+  justify-self: center;
+  color: transparent;
+  font-size: 0.95rem;
+  line-height: 1;
+}
+
+.history-flag.active {
+  color: var(--gold);
+  filter: drop-shadow(0 0 8px rgba(255, 188, 66, 0.38));
+}
+
+.history-attempt {
+  width: 22px;
+  height: 22px;
+  display: inline-grid;
+  place-items: center;
+  justify-self: center;
+  border: 1px solid rgba(70, 255, 242, 0.18);
+  border-radius: 6px;
+  background: rgba(1, 8, 10, 0.68);
+  color: transparent;
+  font-size: 0.82rem;
+  font-weight: 950;
+}
+
+.history-attempt.checked {
+  border-color: rgba(183, 255, 60, 0.58);
+  background: var(--acid);
+  color: #061006;
+  box-shadow: 0 0 14px rgba(183, 255, 60, 0.16);
 }
 
 .history-date,

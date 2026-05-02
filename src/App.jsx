@@ -124,7 +124,7 @@ function normalizeWeeklyPlan(plan, categories) {
 }
 
 function normalizeDateMarkers(markers) {
-  return Array.from({ length: 3 }, (_, index) => ({
+  return Array.from({ length: 5 }, (_, index) => ({
     text: markers?.[index]?.text || "",
     date: markers?.[index]?.date || "",
   }));
@@ -157,6 +157,8 @@ function createFallbackState() {
     days: {},
     memos: normalizeMemos(),
     calendar: {},
+    routineAttempts: {},
+    flaggedDate: "",
     presets: clonePresets(),
     categories,
     weeklyPlan: createEmptyWeeklyPlan(categories),
@@ -172,6 +174,8 @@ function normalizeState(source) {
     days: source?.days && typeof source.days === "object" ? source.days : {},
     memos: normalizeMemos(source?.memos),
     calendar: source?.calendar && typeof source.calendar === "object" ? source.calendar : {},
+    routineAttempts: source?.routineAttempts && typeof source.routineAttempts === "object" ? source.routineAttempts : {},
+    flaggedDate: source?.flaggedDate || "",
     presets: normalizePresets(source?.presets),
     categories,
     weeklyPlan: normalizeWeeklyPlan(source?.weeklyPlan, categories),
@@ -572,6 +576,7 @@ function App() {
 
   const entries = data.days[selectedDate] || [];
   const weekday = getWeekdayMeta(selectedDate);
+  const routineTried = Boolean(data.routineAttempts?.[selectedDate]);
 
   const getEntries = (dateKey = selectedDate) => (Array.isArray(data.days[dateKey]) ? data.days[dateKey] : []);
   const getDayTotal = (dateKey) => getEntries(dateKey).reduce((sum, entry) => sum + entry.score, 0);
@@ -616,6 +621,22 @@ function App() {
           choice,
         });
       }
+      return draft;
+    });
+  };
+
+  const toggleRoutineAttempt = () => {
+    saveData((draft) => {
+      draft.routineAttempts = draft.routineAttempts || {};
+      if (draft.routineAttempts[selectedDate]) delete draft.routineAttempts[selectedDate];
+      else draft.routineAttempts[selectedDate] = true;
+      return draft;
+    });
+  };
+
+  const toggleFlaggedDate = () => {
+    saveData((draft) => {
+      draft.flaggedDate = draft.flaggedDate === selectedDate ? "" : selectedDate;
       return draft;
     });
   };
@@ -840,7 +861,7 @@ function App() {
       h(
         "div",
         { className: "daily-left-rail" },
-        h(ScorePanel, { entryCount: entries.length, scoreInfo }),
+        h(ScorePanel, { entryCount: entries.length, onToggleAttempt: toggleRoutineAttempt, routineTried, scoreInfo }),
         h(DateMarkerPanel, { dateMarkers: data.dateMarkers, updateDateMarker }),
       ),
       h(MemoPanel, {
@@ -899,7 +920,7 @@ function App() {
       onToggle: () => togglePanel("record"),
       removeEntry,
     }),
-    h(HistoryPanel, { getDayTotal, selectedDate }),
+    h(HistoryPanel, { flaggedDate: data.flaggedDate, getDayTotal, onToggleFlag: toggleFlaggedDate, routineAttempts: data.routineAttempts, selectedDate }),
         )
       : h(PlannerView),
     h(SyncPanel, {
@@ -1189,7 +1210,7 @@ function MemoPanel({ activeMemoId, addMemoCard, cards, removeMemoCard, setActive
   );
 }
 
-function ScorePanel({ entryCount, scoreInfo }) {
+function ScorePanel({ entryCount, onToggleAttempt, routineTried, scoreInfo }) {
   const totalClass = scoreInfo.total < 0 ? "negative" : scoreInfo.total === 0 ? "neutral" : "";
   const fillClass = scoreInfo.total > 0 ? "positive" : scoreInfo.total < 0 ? "negative" : "neutral";
   return h(
@@ -1200,6 +1221,18 @@ function ScorePanel({ entryCount, scoreInfo }) {
       { className: "score-meter" },
       h("span", { className: "score-kicker" }, "Total Score"),
       h("div", { className: `score-number ${totalClass}` }, formatScore(scoreInfo.total)),
+      h(
+        "button",
+        {
+          className: `attempt-check ${routineTried ? "checked" : ""}`,
+          type: "button",
+          "aria-pressed": String(routineTried),
+          "aria-label": "Tried today",
+          title: "Tried today",
+          onClick: onToggleAttempt,
+        },
+        routineTried ? "\u2713" : "",
+      ),
       h("div", { className: "score-track", "aria-hidden": "true" }, h("span", { className: fillClass, style: { width: `${Math.max(0, Math.min(100, 50 + scoreInfo.total * 2))}%` } })),
     ),
     h(
@@ -1419,23 +1452,49 @@ function RecordPanel({ clearSelectedDay, entries, isOpen, onToggle, removeEntry 
   });
 }
 
-function HistoryPanel({ getDayTotal, selectedDate }) {
+function HistoryPanel({ flaggedDate, getDayTotal, onToggleFlag, routineAttempts, selectedDate }) {
   const days = Array.from({ length: 7 }, (_, index) => {
     const date = new Date(`${selectedDate}T00:00:00`);
     date.setDate(date.getDate() - (6 - index));
     const key = toDateKey(date);
-    return { key, total: getDayTotal(key) };
+    return { key, flagged: key === flaggedDate, total: getDayTotal(key), tried: Boolean(routineAttempts?.[key]) };
   });
   const maxAbs = Math.max(10, ...days.map((day) => Math.abs(day.total)));
-  let streak = 0;
-  for (let index = days.length - 1; index >= 0; index -= 1) {
-    if (days[index].total <= 0) break;
-    streak += 1;
+  let uncheckedSinceFlag = 0;
+  if (flaggedDate && flaggedDate < selectedDate) {
+    let cursor = flaggedDate;
+    let guard = 0;
+    while (cursor < selectedDate && guard < 10000) {
+      if (!routineAttempts?.[cursor]) uncheckedSinceFlag += 1;
+      cursor = addDays(cursor, 1);
+      guard += 1;
+    }
   }
+  const flagSummary = flaggedDate ? `Unchecked ${uncheckedSinceFlag} days` : "Set a flag";
   return h(
     "section",
     { className: "history-panel", "aria-label": "Last 7 days" },
-    h("div", { className: "section-heading" }, h("h2", null, "Last 7 Days"), h("span", null, `Positive streak ${streak} days`)),
+    h(
+      "div",
+      { className: "section-heading history-heading" },
+      h("h2", null, "Last 7 Days"),
+      h(
+        "div",
+        { className: "history-heading-actions" },
+        h("span", null, flagSummary),
+        h(
+          "button",
+          {
+            className: `flag-button ${flaggedDate === selectedDate ? "active" : ""}`,
+            type: "button",
+            title: flaggedDate === selectedDate ? "Remove flag from selected date" : "Flag selected date",
+            "aria-pressed": String(flaggedDate === selectedDate),
+            onClick: onToggleFlag,
+          },
+          "\u2691",
+        ),
+      ),
+    ),
     h(
       "div",
       { className: "history-bars" },
@@ -1444,6 +1503,8 @@ function HistoryPanel({ getDayTotal, selectedDate }) {
           "div",
           { className: "history-day", key: day.key },
           h("div", { className: `history-fill ${day.total > 0 ? "plus" : day.total < 0 ? "minus" : ""}`, style: { height: `${Math.max(16, (Math.abs(day.total) / maxAbs) * 112)}px` } }),
+          h("span", { className: `history-flag ${day.flagged ? "active" : ""}`, title: day.flagged ? "Flagged date" : "" }, day.flagged ? "\u2691" : ""),
+          h("span", { className: `history-attempt ${day.tried ? "checked" : ""}`, title: day.tried ? "Routine tried" : "Routine not checked" }, day.tried ? "\u2713" : ""),
           h("span", { className: "history-date" }, day.key.slice(5).replace("-", ".")),
           h("strong", { className: "history-score" }, formatScore(day.total)),
         ),
