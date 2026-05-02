@@ -52,6 +52,14 @@ const defaultPresets = [
   { key: "daily-late-sleep", name: "Late Sleep", yScore: -6, nScore: 3 },
 ];
 
+function createDefaultMemoCards(globalMemos = {}) {
+  return [
+    { id: "memo-life", title: "Life", leftText: globalMemos.life || "", rightText: "" },
+    { id: "memo-school", title: "School", leftText: globalMemos.school || "", rightText: "" },
+    { id: "memo-ideas", title: "Ideas", leftText: "", rightText: "" },
+  ];
+}
+
 function cloneCategories() {
   return defaultCategories.map((category) => ({ ...category }));
 }
@@ -122,11 +130,32 @@ function normalizeDateMarkers(markers) {
   }));
 }
 
+function normalizeMemos(memos) {
+  const global = memos?.global && typeof memos.global === "object" ? memos.global : { life: "", school: "" };
+  const sourceCards = Array.isArray(memos?.cards) && memos.cards.length ? memos.cards : createDefaultMemoCards(global);
+  const cards = sourceCards
+    .filter((card) => card && card.id)
+    .map((card, index) => ({
+      id: card.id,
+      title: String(card.title || `Memo ${index + 1}`).slice(0, 32),
+      leftText: String(card.leftText ?? card.text ?? ""),
+      rightText: String(card.rightText || ""),
+    }));
+  const safeCards = cards.length ? cards : createDefaultMemoCards(global);
+  const activeMemoId = safeCards.some((card) => card.id === memos?.activeMemoId) ? memos.activeMemoId : safeCards[0].id;
+  return {
+    global,
+    threeM: memos?.threeM || "",
+    cards: safeCards,
+    activeMemoId,
+  };
+}
+
 function createFallbackState() {
   const categories = cloneCategories();
   return {
     days: {},
-    memos: { global: { life: "", school: "" }, threeM: "" },
+    memos: normalizeMemos(),
     calendar: {},
     presets: clonePresets(),
     categories,
@@ -141,7 +170,7 @@ function normalizeState(source) {
   const categories = normalizeCategories(source?.categories, fallback.categories);
   return {
     days: source?.days && typeof source.days === "object" ? source.days : {},
-    memos: source?.memos && typeof source.memos === "object" ? source.memos : fallback.memos,
+    memos: normalizeMemos(source?.memos),
     calendar: source?.calendar && typeof source.calendar === "object" ? source.calendar : {},
     presets: normalizePresets(source?.presets),
     categories,
@@ -329,7 +358,6 @@ function App() {
   const [selectedDate, setSelectedDate] = useState(toDateKey(new Date()));
   const [openPanels, setOpenPanels] = useState({
     sync: false,
-    threeM: false,
     daily: false,
     weekly: false,
     record: false,
@@ -543,7 +571,6 @@ function App() {
   });
 
   const entries = data.days[selectedDate] || [];
-  const memo = data.memos.global || { life: "", school: "" };
   const weekday = getWeekdayMeta(selectedDate);
 
   const getEntries = (dateKey = selectedDate) => (Array.isArray(data.days[dateKey]) ? data.days[dateKey] : []);
@@ -607,17 +634,43 @@ function App() {
     });
   };
 
-  const updateMemo = (field, value) => {
+  const setActiveMemo = (memoId) => {
     saveData((draft) => {
-      draft.memos.global = draft.memos.global || { life: "", school: "" };
-      draft.memos.global[field] = value;
+      draft.memos.activeMemoId = memoId;
       return draft;
     });
   };
 
-  const updateThreeM = (value) => {
+  const updateMemoCard = (id, field, value) => {
     saveData((draft) => {
-      draft.memos.threeM = value;
+      const card = draft.memos.cards.find((item) => item.id === id);
+      if (!card) return draft;
+      if (field === "title") card.title = value;
+      if (field === "leftText") card.leftText = value;
+      if (field === "rightText") card.rightText = value;
+      if (id === "memo-life") draft.memos.global.life = card.leftText || "";
+      if (id === "memo-school") draft.memos.global.school = card.leftText || "";
+      return draft;
+    });
+  };
+
+  const addMemoCard = () => {
+    saveData((draft) => {
+      const card = { id: createKey("memo"), title: `Memo ${draft.memos.cards.length + 1}`, leftText: "", rightText: "" };
+      draft.memos.cards.push(card);
+      draft.memos.activeMemoId = card.id;
+      return draft;
+    });
+  };
+
+  const removeMemoCard = (id) => {
+    saveData((draft) => {
+      if (draft.memos.cards.length <= 1) return draft;
+      const index = draft.memos.cards.findIndex((card) => card.id === id);
+      draft.memos.cards = draft.memos.cards.filter((card) => card.id !== id);
+      if (draft.memos.activeMemoId === id) {
+        draft.memos.activeMemoId = draft.memos.cards[Math.max(0, index - 1)]?.id || draft.memos.cards[0].id;
+      }
       return draft;
     });
   };
@@ -790,7 +843,14 @@ function App() {
         h(ScorePanel, { entryCount: entries.length, scoreInfo }),
         h(DateMarkerPanel, { dateMarkers: data.dateMarkers, updateDateMarker }),
       ),
-      h(MemoPanel, { memo, updateMemo }),
+      h(MemoPanel, {
+        activeMemoId: data.memos.activeMemoId,
+        addMemoCard,
+        cards: data.memos.cards,
+        removeMemoCard,
+        setActiveMemo,
+        updateMemoCard,
+      }),
     ),
     h(TodayPlanPanel, {
       categories: data.categories,
@@ -800,12 +860,6 @@ function App() {
       weekday,
       weeklyPlan: data.weeklyPlan,
       toggleChoice,
-    }),
-    h(ThreeMPanel, {
-      isOpen: openPanels.threeM,
-      onToggle: () => togglePanel("threeM"),
-      value: data.memos.threeM || "",
-      updateThreeM,
     }),
     h(DailyPanel, {
       addPreset,
@@ -982,7 +1036,7 @@ function SchedulePanel({ calendar, selectedDate }) {
   return h(
     "section",
     { className: "schedule-panel two-week-schedule", "aria-label": "Two-week schedule" },
-    h("div", { className: "section-heading" }, h("div", null, h("h2", null, "Today's Schedule"), h("p", null, "Current week and next week"))),
+    h("div", { className: "section-heading" }, h("div", null, h("h2", null, "Today's Schedule"))),
     h(
       "div",
       { className: "schedule-weeks" },
@@ -1021,16 +1075,116 @@ function SchedulePanel({ calendar, selectedDate }) {
   );
 }
 
-function MemoPanel({ memo, updateMemo }) {
+function MemoPanel({ activeMemoId, addMemoCard, cards, removeMemoCard, setActiveMemo, updateMemoCard }) {
+  const [drag, setDrag] = useState({ active: false, startX: 0, deltaX: 0 });
+  const activeIndex = Math.max(0, cards.findIndex((card) => card.id === activeMemoId));
+  const goToOffset = (offset) => {
+    if (!cards.length) return;
+    const nextIndex = (activeIndex + offset + cards.length) % cards.length;
+    setActiveMemo(cards[nextIndex].id);
+  };
+  const handlePointerDown = (event) => {
+    if (panelClickIsInteractive(event.target)) return;
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+    setDrag({ active: true, startX: event.clientX, deltaX: 0 });
+  };
+  const handlePointerMove = (event) => {
+    if (!drag.active) return;
+    setDrag((current) => ({ ...current, deltaX: event.clientX - current.startX }));
+  };
+  const endDrag = () => {
+    if (!drag.active) return;
+    if (drag.deltaX > 64) goToOffset(-1);
+    if (drag.deltaX < -64) goToOffset(1);
+    setDrag({ active: false, startX: 0, deltaX: 0 });
+  };
   return h(
     "section",
-    { className: "memo-panel", "aria-label": "Memo" },
-    h("div", { className: "section-heading" }, h("h2", null, "Memo")),
+    { className: "memo-panel stacked-memo-panel", "aria-label": "Memo" },
     h(
       "div",
-      { className: "memo-grid" },
-      h("label", null, h("span", null, "Life"), h("textarea", { maxLength: 1200, placeholder: "Life, body, mood, personal notes.", value: memo.life || "", onChange: (event) => updateMemo("life", event.target.value) })),
-      h("label", null, h("span", null, "School"), h("textarea", { maxLength: 1200, placeholder: "Classes, assignments, study plans, school tasks.", value: memo.school || "", onChange: (event) => updateMemo("school", event.target.value) })),
+      { className: "memo-stack-layout" },
+      h(
+        "div",
+        {
+          className: `memo-stack ${drag.active ? "dragging" : ""}`,
+          onPointerDown: handlePointerDown,
+          onPointerMove: handlePointerMove,
+          onPointerUp: endDrag,
+          onPointerCancel: endDrag,
+          style: { "--drag-x": `${drag.deltaX}px` },
+        },
+        cards.map((card, index) => {
+          const stackIndex = (index - activeIndex + cards.length) % cards.length;
+          const visible = stackIndex < Math.min(cards.length, 4);
+          const isActive = index === activeIndex;
+          return h(
+            "article",
+            {
+              className: `memo-card ${isActive ? "active" : ""} ${visible ? "" : "hidden"}`,
+              key: card.id,
+              style: { "--stack-index": stackIndex },
+              onClick: () => {
+                if (!isActive) setActiveMemo(card.id);
+              },
+            },
+            h(
+              "div",
+              { className: "memo-card-grip" },
+              h("span", null, String(index + 1).padStart(2, "0")),
+              h("input", {
+                type: "text",
+                maxLength: 32,
+                "aria-label": "Memo title",
+                value: card.title,
+                onChange: (event) => updateMemoCard(card.id, "title", event.target.value),
+                disabled: !isActive,
+              }),
+              h("button", { className: "mini-button danger", type: "button", disabled: cards.length <= 1 || !isActive, title: "Delete memo", onClick: () => removeMemoCard(card.id) }, "\u00d7"),
+            ),
+            isActive
+              ? h(
+                  "div",
+                  { className: "memo-card-columns" },
+                  h("textarea", {
+                    maxLength: 1600,
+                    placeholder: "Left memo",
+                    value: card.leftText || "",
+                    onChange: (event) => updateMemoCard(card.id, "leftText", event.target.value),
+                  }),
+                  h("textarea", {
+                    maxLength: 1600,
+                    placeholder: "Right memo",
+                    value: card.rightText || "",
+                    onChange: (event) => updateMemoCard(card.id, "rightText", event.target.value),
+                  }),
+                )
+              : h(
+                  "div",
+                  { className: "memo-card-preview-grid" },
+                  h("p", { className: "memo-card-preview" }, card.leftText || "Empty memo"),
+                  h("p", { className: "memo-card-preview" }, card.rightText || "Empty memo"),
+                ),
+          );
+        }),
+      ),
+      h(
+        "div",
+        { className: "memo-index", "aria-label": "Memo cards" },
+        h("button", { className: "memo-index-button add-memo", type: "button", title: "Add memo", onClick: addMemoCard }, "+"),
+        cards.map((card, index) =>
+          h(
+            "button",
+            {
+              className: `memo-index-button ${index === activeIndex ? "active" : ""}`,
+              key: card.id,
+              type: "button",
+              onClick: () => setActiveMemo(card.id),
+            },
+            index + 1,
+          ),
+        ),
+      ),
     ),
   );
 }
@@ -1154,18 +1308,6 @@ function PlanCard({ label, nScore, onToggle, selectedChoice, value, yScore }) {
       h("button", { className: `choice-button no ${selectedChoice === "N" ? "selected" : ""}`, type: "button", onClick: () => onToggle("N") }, h("i", null, "N"), h("b", null, formatScore(nScore))),
     ),
   );
-}
-
-function ThreeMPanel({ isOpen, onToggle, updateThreeM, value }) {
-  return h(CollapsiblePanel, {
-    className: "memo-panel three-m-panel",
-    controls: "threeMMemo",
-    description: "Long-range 3M notes.",
-    isOpen,
-    onToggle,
-    title: "3M",
-    children: { body: h("textarea", { id: "threeMMemo", maxLength: 1200, placeholder: "Write your 3M notes.", value, onChange: (event) => updateThreeM(event.target.value) }) },
-  });
 }
 
 function DailyPanel({ addPreset, isOpen, movePreset, onToggle, presets, removePreset, updatePreset }) {
