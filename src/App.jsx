@@ -1387,8 +1387,6 @@ function MemoBlockColumn({ cardId, field, updateMemoCard, value }) {
     if (Math.abs(dragBlock.deltaY) >= 28 && offset !== 0) {
       const nextIndex = Math.max(0, Math.min(blocks.length - 1, dragBlock.index + offset));
       moveBlock(dragBlock.index, nextIndex);
-    } else {
-      startEdit(dragBlock.index);
     }
     setDragBlock(null);
   };
@@ -1451,18 +1449,35 @@ function MemoBlockColumn({ cardId, field, updateMemoCard, value }) {
                   ),
                 )
               : h(
-                  "button",
+                  "div",
                   {
-                    className: `memo-block ${dragBlock?.index === index ? "dragging" : ""}`,
+                    className: `memo-block view ${dragBlock?.index === index ? "dragging" : ""}`,
                     key: `${field}-${index}-block`,
-                    type: "button",
-                    onPointerDown: (event) => startBlockPointer(event, index),
-                    onPointerMove: moveBlockPointer,
-                    onPointerUp: endBlockPointer,
-                    onPointerCancel: () => setDragBlock(null),
                     style: dragBlock?.index === index ? { transform: `translateY(${dragBlock.deltaY}px)` } : null,
                   },
-                  block,
+                  h(
+                    "button",
+                    {
+                      className: "memo-drag-handle",
+                      type: "button",
+                      title: "Move memo block",
+                      "aria-label": "Move memo block",
+                      onPointerDown: (event) => startBlockPointer(event, index),
+                      onPointerMove: moveBlockPointer,
+                      onPointerUp: endBlockPointer,
+                      onPointerCancel: () => setDragBlock(null),
+                    },
+                    "\u2630",
+                  ),
+                  h(
+                    "button",
+                    {
+                      className: "memo-block-text",
+                      type: "button",
+                      onClick: () => startEdit(index),
+                    },
+                    block,
+                  ),
                 ),
           )
         : h("div", { className: "memo-block-empty" }, "No blocks yet"),
