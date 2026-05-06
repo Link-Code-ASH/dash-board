@@ -1462,9 +1462,16 @@ function MemoBlockColumn({ cardId, field, updateMemoCard, value }) {
                       type: "button",
                       title: "Move memo block",
                       "aria-label": "Move memo block",
-                      onPointerDown: (event) => startBlockPointer(event, index),
+                      onPointerDown: (event) => {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        startBlockPointer(event, index);
+                      },
                       onPointerMove: moveBlockPointer,
-                      onPointerUp: endBlockPointer,
+                      onPointerUp: (event) => {
+                        event.stopPropagation();
+                        endBlockPointer();
+                      },
                       onPointerCancel: () => setDragBlock(null),
                     },
                     "\u2630",
@@ -1474,6 +1481,7 @@ function MemoBlockColumn({ cardId, field, updateMemoCard, value }) {
                     {
                       className: "memo-block-text",
                       type: "button",
+                      onPointerDown: (event) => event.stopPropagation(),
                       onClick: () => startEdit(index),
                     },
                     block,

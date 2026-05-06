@@ -1101,6 +1101,7 @@ input::placeholder {
     rgba(0, 5, 7, 0.44);
   padding: 8px;
   overflow: hidden;
+  touch-action: pan-y;
 }
 
 .memo-block-list {
@@ -1110,8 +1111,10 @@ input::placeholder {
   align-content: start;
   gap: 7px;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
   padding-right: 2px;
+  touch-action: pan-y;
   scrollbar-color: rgba(70, 255, 242, 0.58) rgba(1, 8, 10, 0.58);
   scrollbar-width: thin;
 }
@@ -1166,6 +1169,7 @@ input::placeholder {
   align-items: stretch;
   gap: 8px;
   padding: 6px 10px 6px 6px;
+  touch-action: pan-y;
 }
 
 .memo-block-text {
@@ -1178,7 +1182,7 @@ input::placeholder {
   line-height: inherit;
   overflow-wrap: anywhere;
   white-space: pre-wrap;
-  touch-action: manipulation;
+  touch-action: pan-y;
 }
 
 .memo-drag-handle {
