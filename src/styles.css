@@ -1143,6 +1143,8 @@ input::placeholder {
   width: 100%;
   min-height: 38px;
   height: auto;
+  box-sizing: border-box;
+  overflow: visible;
   border: 1px solid rgba(70, 255, 242, 0.17);
   border-left-color: rgba(183, 255, 60, 0.42);
   border-radius: 7px;
@@ -1166,21 +1168,28 @@ input::placeholder {
 .memo-block.view {
   display: grid;
   grid-template-columns: 34px minmax(0, 1fr);
-  align-items: stretch;
+  align-items: start;
   gap: 8px;
   padding: 6px 10px 6px 6px;
   touch-action: pan-y;
 }
 
 .memo-block-text {
+  appearance: none;
+  display: block;
+  width: 100%;
+  height: auto;
+  min-height: 28px;
   min-width: 0;
   border: 0;
   background: transparent;
   color: inherit;
-  padding: 3px 0;
+  padding: 4px 0;
   text-align: left;
   line-height: inherit;
+  overflow: visible;
   overflow-wrap: anywhere;
+  word-break: break-word;
   white-space: pre-wrap;
   touch-action: pan-y;
 }
@@ -1188,6 +1197,7 @@ input::placeholder {
 .memo-drag-handle {
   width: 34px;
   min-height: 28px;
+  align-self: start;
   display: grid;
   place-items: center;
   border: 1px solid rgba(70, 255, 242, 0.2);
