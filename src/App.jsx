@@ -70,6 +70,7 @@ function clonePresets() {
 
 function parseScore(value, fallback) {
   if (value === "" || value === "-") return value;
+  if (typeof value === "string" && /^\d+\s*(?:~|-|,)\s*\d*$/.test(value.trim())) return value.trim();
   const score = Number(value);
   return Number.isFinite(score) ? score : fallback;
 }
@@ -246,6 +247,21 @@ function addDays(dateKey, amount) {
   const date = new Date(`${dateKey}T00:00:00`);
   date.setDate(date.getDate() + amount);
   return toDateKey(date);
+}
+
+function getDateDiffDays(fromDateKey, toDateKeyValue) {
+  if (!fromDateKey || !toDateKeyValue) return "";
+  const from = new Date(`${fromDateKey}T00:00:00`);
+  const to = new Date(`${toDateKeyValue}T00:00:00`);
+  if (Number.isNaN(from.getTime()) || Number.isNaN(to.getTime())) return "";
+  return Math.floor((to.getTime() - from.getTime()) / 86400000);
+}
+
+function formatDDay(fromDateKey, toDateKeyValue) {
+  const diff = getDateDiffDays(fromDateKey, toDateKeyValue);
+  if (diff === "") return "D";
+  if (diff === 0) return "D-Day";
+  return diff > 0 ? `D+${diff}` : `D${diff}`;
 }
 
 function getWeekStart(dateKey) {
@@ -720,7 +736,7 @@ function App() {
     saveData((draft) => {
       const preset = draft.presets[index];
       if (!preset) return draft;
-      if (field === "name") preset.name = value.trim() || preset.name;
+      if (field === "name") preset.name = value;
       if (field === "yScore") preset.yScore = value;
       if (field === "nScore") preset.nScore = value;
       return draft;
@@ -757,7 +773,7 @@ function App() {
     saveData((draft) => {
       const category = draft.categories.find((item) => item.key === key);
       if (!category) return draft;
-      if (field === "label") category.label = value.trim() || category.label;
+      if (field === "label") category.label = value;
       if (field === "yScore") category.yScore = value;
       if (field === "nScore") category.nScore = value;
       return draft;
@@ -907,7 +923,7 @@ function App() {
         "div",
         { className: "daily-left-rail" },
         h(ScorePanel, { entryCount: entries.length, onToggleAttempt: toggleRoutineAttempt, routineTried, scoreInfo }),
-        h(DateMarkerPanel, { dateMarkers: data.dateMarkers, updateDateMarker }),
+        h(DateMarkerPanel, { dateMarkers: data.dateMarkers, selectedDate, updateDateMarker }),
       ),
       h(MemoPanel, {
         activeMemoId: data.memos.activeMemoId,
@@ -1269,18 +1285,8 @@ function MemoPanel({ activeMemoId, addMemoCard, cards, removeMemoCard, setActive
               ? h(
                   "div",
                   { className: "memo-card-columns" },
-                  h("textarea", {
-                    maxLength: 1600,
-                    placeholder: "Left memo",
-                    value: card.leftText || "",
-                    onChange: (event) => updateMemoCard(card.id, "leftText", event.target.value),
-                  }),
-                  h("textarea", {
-                    maxLength: 1600,
-                    placeholder: "Right memo",
-                    value: card.rightText || "",
-                    onChange: (event) => updateMemoCard(card.id, "rightText", event.target.value),
-                  }),
+                  h(MemoBlockColumn, { cardId: card.id, field: "leftText", updateMemoCard, value: card.leftText || "" }),
+                  h(MemoBlockColumn, { cardId: card.id, field: "rightText", updateMemoCard, value: card.rightText || "" }),
                 )
               : h(
                   "div",
@@ -1308,6 +1314,158 @@ function MemoPanel({ activeMemoId, addMemoCard, cards, removeMemoCard, setActive
           ),
         ),
       ),
+    ),
+  );
+}
+
+function getMemoBlocks(value) {
+  return String(value || "")
+    .split(/\n+/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+}
+
+function growMemoTextarea(textarea) {
+  if (!textarea) return;
+  textarea.style.height = "auto";
+  textarea.style.height = `${textarea.scrollHeight}px`;
+}
+
+function MemoBlockColumn({ cardId, field, updateMemoCard, value }) {
+  const [draft, setDraft] = useState("");
+  const [editingIndex, setEditingIndex] = useState(null);
+  const [editingText, setEditingText] = useState("");
+  const [dragBlock, setDragBlock] = useState(null);
+  const blocks = getMemoBlocks(value);
+  const saveBlocks = (nextBlocks) => updateMemoCard(cardId, field, nextBlocks.join("\n"));
+  const moveBlock = (fromIndex, toIndex) => {
+    if (fromIndex === toIndex || fromIndex < 0 || toIndex < 0 || fromIndex >= blocks.length || toIndex >= blocks.length) return;
+    const nextBlocks = [...blocks];
+    const [block] = nextBlocks.splice(fromIndex, 1);
+    nextBlocks.splice(toIndex, 0, block);
+    saveBlocks(nextBlocks);
+  };
+  const addBlock = () => {
+    const text = draft.trim();
+    if (!text) return;
+    saveBlocks([text, ...blocks]);
+    setDraft("");
+  };
+  const startEdit = (index) => {
+    setEditingIndex(index);
+    setEditingText(blocks[index] || "");
+    window.requestAnimationFrame(() => {
+      const textarea = document.querySelector(`[data-memo-editor="${field}-${index}"]`);
+      growMemoTextarea(textarea);
+    });
+  };
+  const saveEdit = () => {
+    if (editingIndex === null) return;
+    const text = editingText.trim();
+    const nextBlocks = blocks.map((block, index) => (index === editingIndex ? text : block)).filter(Boolean);
+    saveBlocks(nextBlocks);
+    setEditingIndex(null);
+    setEditingText("");
+  };
+  const deleteBlock = () => {
+    if (editingIndex === null) return;
+    saveBlocks(blocks.filter((_, index) => index !== editingIndex));
+    setEditingIndex(null);
+    setEditingText("");
+  };
+  const startBlockPointer = (event, index) => {
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+    setDragBlock({ index, startY: event.clientY, deltaY: 0 });
+  };
+  const moveBlockPointer = (event) => {
+    if (!dragBlock) return;
+    setDragBlock((current) => ({ ...current, deltaY: event.clientY - current.startY }));
+  };
+  const endBlockPointer = () => {
+    if (!dragBlock) return;
+    const offset = Math.trunc(dragBlock.deltaY / 42);
+    if (Math.abs(dragBlock.deltaY) >= 28 && offset !== 0) {
+      const nextIndex = Math.max(0, Math.min(blocks.length - 1, dragBlock.index + offset));
+      moveBlock(dragBlock.index, nextIndex);
+    } else {
+      startEdit(dragBlock.index);
+    }
+    setDragBlock(null);
+  };
+  return h(
+    "section",
+    { className: "memo-block-column" },
+    h("input", {
+      className: "memo-block-input",
+      maxLength: 240,
+      placeholder: "Type and press Enter",
+      type: "text",
+      value: draft,
+      onChange: (event) => setDraft(event.target.value),
+      onKeyDown: (event) => {
+        event.stopPropagation();
+        if (event.key === "Enter") {
+          event.preventDefault();
+          addBlock();
+        }
+      },
+    }),
+    h(
+      "div",
+      { className: "memo-block-list" },
+      blocks.length
+        ? blocks.map((block, index) =>
+            editingIndex === index
+              ? h(
+                  "div",
+                  { className: "memo-block editing selected", key: `${field}-${index}-block` },
+                  h("textarea", {
+                    autoFocus: true,
+                    "data-memo-editor": `${field}-${index}`,
+                    maxLength: 500,
+                    rows: 1,
+                    value: editingText,
+                    onFocus: (event) => growMemoTextarea(event.target),
+                    onInput: (event) => growMemoTextarea(event.target),
+                    onChange: (event) => {
+                      setEditingText(event.target.value);
+                      growMemoTextarea(event.target);
+                    },
+                    onKeyDown: (event) => {
+                      event.stopPropagation();
+                      if (event.key === "Enter" && !event.shiftKey) {
+                        event.preventDefault();
+                        saveEdit();
+                      }
+                      if (event.key === "Escape") {
+                        setEditingIndex(null);
+                        setEditingText("");
+                      }
+                    },
+                  }),
+                  h(
+                    "div",
+                    { className: "memo-block-actions" },
+                    h("button", { className: "mini-button", type: "button", title: "Save", onClick: saveEdit }, "\u2713"),
+                    h("button", { className: "mini-button danger", type: "button", onClick: deleteBlock }, "\u00d7"),
+                  ),
+                )
+              : h(
+                  "button",
+                  {
+                    className: `memo-block ${dragBlock?.index === index ? "dragging" : ""}`,
+                    key: `${field}-${index}-block`,
+                    type: "button",
+                    onPointerDown: (event) => startBlockPointer(event, index),
+                    onPointerMove: moveBlockPointer,
+                    onPointerUp: endBlockPointer,
+                    onPointerCancel: () => setDragBlock(null),
+                    style: dragBlock?.index === index ? { transform: `translateY(${dragBlock.deltaY}px)` } : null,
+                  },
+                  block,
+                ),
+          )
+        : h("div", { className: "memo-block-empty" }, "No blocks yet"),
     ),
   );
 }
@@ -1348,7 +1506,7 @@ function ScorePanel({ entryCount, onToggleAttempt, routineTried, scoreInfo }) {
   );
 }
 
-function DateMarkerPanel({ dateMarkers, updateDateMarker }) {
+function DateMarkerPanel({ dateMarkers, selectedDate, updateDateMarker }) {
   return h(
     "section",
     { className: "date-marker-panel", "aria-label": "Date markers" },
@@ -1373,10 +1531,35 @@ function DateMarkerPanel({ dateMarkers, updateDateMarker }) {
             value: marker.date,
             onChange: (event) => updateDateMarker(index, "date", event.target.value),
           }),
+          h("span", { className: `date-marker-dday ${marker.date ? "" : "empty"}` }, formatDDay(marker.date, selectedDate)),
         ),
       ),
     ),
   );
+}
+
+function isRangeCategory(category) {
+  const label = String(category?.label || "").toUpperCase().replace(/\s+/g, "");
+  return label === "R.ORG" || label === "D.ORG";
+}
+
+function parseScoreRange(value) {
+  if (typeof value === "number" && Number.isFinite(value)) return [value];
+  const text = String(value || "").trim();
+  const rangeMatch = text.match(/^(\d+)\s*(?:~|-|,)\s*(\d+)$/);
+  if (!rangeMatch) {
+    const score = scoreNumber(text, 0);
+    return [score];
+  }
+  const start = Number(rangeMatch[1]);
+  const end = Number(rangeMatch[2]);
+  const step = start <= end ? 1 : -1;
+  const length = Math.min(31, Math.abs(end - start) + 1);
+  return Array.from({ length }, (_, index) => start + index * step);
+}
+
+function getCategoryScoreRange(category) {
+  return parseScoreRange(category.yScore).filter((score) => score > 0);
 }
 
 function TodayPlanPanel({ categories, entries, presets, selectedDate, toggleChoice, weekday, weeklyPlan }) {
@@ -1410,13 +1593,32 @@ function TodayPlanPanel({ categories, entries, presets, selectedDate, toggleChoi
           const planEntry = getWeeklyPlanEntry(weeklyPlan[category.key]?.[weekday.key], selectedDate);
           const value = planEntry.value;
           const planKey = `plan:${selectedDate}:${category.key}`;
+          const selectedEntry = entries.find((entry) => entry.planKey === planKey);
+          if (isRangeCategory(category)) {
+            return {
+              key: category.key,
+              isRangeCard: true,
+              label: planEntry.cycleNumber ? `${category.label} ${planEntry.cycleNumber}` : category.label,
+              scoreRange: getCategoryScoreRange(category),
+              selectedChoice: selectedEntry?.choice || "",
+              value,
+              nScore: category.nScore,
+              onToggle: (choice) =>
+                toggleChoice({
+                  planKey,
+                  choice: choice === "N" ? "N" : String(choice),
+                  name: `${category.label}: ${value} (${choice === "N" ? "N" : formatScore(choice)})`,
+                  score: choice === "N" ? scoreNumber(category.nScore) : scoreNumber(choice),
+                }),
+            };
+          }
           return {
             key: category.key,
             label: planEntry.cycleNumber ? `${category.label} ${planEntry.cycleNumber}` : category.label,
             value,
             yScore: category.yScore,
             nScore: category.nScore,
-            selectedChoice: entries.find((entry) => entry.planKey === planKey)?.choice || "",
+            selectedChoice: selectedEntry?.choice || "",
             onToggle: (choice) => toggleChoice({ planKey, choice, name: `${category.label}: ${value} (${choice})`, score: scoreNumber(choice === "Y" ? category.yScore : category.nScore) }),
           };
         }),
@@ -1429,19 +1631,34 @@ function PlanRow({ cards, className = "", title }) {
   return h("section", { className: `plan-row ${className}` }, h("h3", null, title), h("div", { className: "plan-card-grid" }, cards.map((card) => h(PlanCard, { ...card }))));
 }
 
-function PlanCard({ label, nScore, onToggle, selectedChoice, value, yScore }) {
+function PlanCard({ label, nScore, onToggle, scoreRange, selectedChoice, value, yScore }) {
+  const selectedScore = scoreNumber(selectedChoice, 0);
+  const isRangeCard = Array.isArray(scoreRange);
   return h(
     "article",
-    { className: `today-plan-card ${selectedChoice ? "done" : ""} ${selectedChoice === "N" ? "no" : ""}` },
+    { className: `today-plan-card ${isRangeCard ? "range-card" : ""} ${selectedChoice ? "done" : ""} ${selectedChoice === "N" || (isRangeCard && selectedScore < 0) ? "no" : ""}` },
     h("span", { className: "edge-light", "aria-hidden": "true" }),
     h("span", { className: "plan-label" }, label),
     h("strong", { className: "plan-title" }, value),
-    h(
-      "div",
-      { className: "choice-buttons" },
-      h("button", { className: `choice-button yes ${selectedChoice === "Y" ? "selected" : ""}`, type: "button", onClick: () => onToggle("Y") }, h("i", null, "Y"), h("b", null, formatScore(yScore))),
-      h("button", { className: `choice-button no ${selectedChoice === "N" ? "selected" : ""}`, type: "button", onClick: () => onToggle("N") }, h("i", null, "N"), h("b", null, formatScore(nScore))),
-    ),
+    isRangeCard
+      ? h(
+        "div",
+        { className: "range-score-buttons" },
+          ...scoreRange.map((score) =>
+            h(
+              "button",
+              { className: `range-score-button ${String(score) === selectedChoice ? "selected" : ""}`, key: score, type: "button", onClick: () => onToggle(score) },
+              formatScore(score),
+            ),
+          ),
+          h("button", { className: `range-score-button no ${selectedChoice === "N" ? "selected" : ""}`, type: "button", onClick: () => onToggle("N") }, formatScore(nScore)),
+        )
+      : h(
+          "div",
+          { className: "choice-buttons" },
+          h("button", { className: `choice-button yes ${selectedChoice === "Y" ? "selected" : ""}`, type: "button", onClick: () => onToggle("Y") }, h("i", null, "Y"), h("b", null, formatScore(yScore))),
+          h("button", { className: `choice-button no ${selectedChoice === "N" ? "selected" : ""}`, type: "button", onClick: () => onToggle("N") }, h("i", null, "N"), h("b", null, formatScore(nScore))),
+        ),
   );
 }
 
@@ -1496,7 +1713,7 @@ function WeeklyPanel({ addCategory, categories, isOpen, moveCategory, onToggle, 
             "div",
             { className: "weekly-category", key: `${category.key}-label` },
             h("input", { className: "category-name-input", type: "text", maxLength: 24, value: category.label, onChange: (event) => updateCategory(category.key, "label", event.target.value) }),
-            h("label", { className: "score-field y-field positive-score", title: "Y score" }, h("input", { className: "category-score-input y-score", type: "text", inputMode: "numeric", value: category.yScore, onChange: (event) => updateCategory(category.key, "yScore", event.target.value) })),
+            h("label", { className: `score-field y-field ${isRangeCategory(category) ? "range-score" : "positive-score"}`, title: isRangeCategory(category) ? "Y range" : "Y score" }, h("input", { className: "category-score-input y-score", type: "text", inputMode: isRangeCategory(category) ? "text" : "numeric", value: category.yScore, onChange: (event) => updateCategory(category.key, "yScore", event.target.value) })),
             h("label", { className: "score-field n-field negative-score", title: "N score" }, h("input", { className: "category-score-input n-score", type: "text", inputMode: "numeric", value: category.nScore, onChange: (event) => updateCategory(category.key, "nScore", event.target.value) })),
             h(
               "div",
