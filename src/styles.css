@@ -1092,8 +1092,6 @@ input::placeholder {
   min-height: 0;
   max-height: 100%;
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
-  gap: 8px;
   border: 1px solid rgba(70, 255, 242, 0.13);
   border-radius: 7px;
   background:
@@ -1102,6 +1100,22 @@ input::placeholder {
   padding: 8px;
   overflow: hidden;
   touch-action: pan-y;
+}
+
+.memo-large-textarea {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  resize: none;
+  border: 1px solid rgba(70, 255, 242, 0.16);
+  border-radius: 6px;
+  background: rgba(1, 8, 10, 0.72);
+  color: var(--ink);
+  padding: 12px;
+  font: inherit;
+  line-height: 1.5;
+  outline: none;
+  white-space: pre-wrap;
 }
 
 .memo-block-list {
@@ -1144,7 +1158,7 @@ input::placeholder {
   min-height: 38px;
   height: auto;
   box-sizing: border-box;
-  overflow: visible;
+  overflow: hidden;
   border: 1px solid rgba(70, 255, 242, 0.17);
   border-left-color: rgba(183, 255, 60, 0.42);
   border-radius: 7px;
@@ -1156,7 +1170,6 @@ input::placeholder {
   text-align: left;
   line-height: 1.35;
   overflow-wrap: anywhere;
-  white-space: pre-wrap;
   box-shadow: inset 0 0 14px rgba(70, 255, 242, 0.035);
   touch-action: pan-y;
   transition:
@@ -1170,12 +1183,12 @@ input::placeholder {
   grid-template-columns: 34px minmax(0, 1fr);
   align-items: start;
   gap: 8px;
-  padding: 6px 10px 6px 6px;
+  min-height: auto;
+  padding: 6px 10px 7px 6px;
   touch-action: pan-y;
 }
 
 .memo-block-text {
-  appearance: none;
   display: block;
   width: 100%;
   height: auto;
@@ -1184,14 +1197,26 @@ input::placeholder {
   border: 0;
   background: transparent;
   color: inherit;
-  padding: 4px 0;
+  box-sizing: border-box;
+  padding: 0;
   text-align: left;
-  line-height: inherit;
+  line-height: 1.45;
+  overflow: visible;
+  touch-action: pan-y;
+}
+
+.memo-block-text p {
+  display: block;
+  margin: 0;
+  padding: 4px 0 5px;
+  min-height: 28px;
+  height: auto;
+  color: inherit;
+  line-height: 1.45;
   overflow: visible;
   overflow-wrap: anywhere;
   word-break: break-word;
   white-space: pre-wrap;
-  touch-action: pan-y;
 }
 
 .memo-drag-handle {
@@ -1302,6 +1327,12 @@ input::placeholder {
   font-size: 0.84rem;
 }
 
+.memo-block-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 34px;
+  gap: 6px;
+}
+
 .memo-block-input {
   width: 100%;
   min-height: 40px;
@@ -1311,6 +1342,19 @@ input::placeholder {
   color: var(--ink);
   padding: 0 11px;
   outline: none;
+}
+
+.memo-block-submit {
+  width: 34px;
+  min-height: 40px;
+  border: 1px solid rgba(70, 255, 242, 0.24);
+  border-radius: 6px;
+  background:
+    linear-gradient(180deg, rgba(70, 255, 242, 0.14), rgba(183, 255, 60, 0.06)),
+    rgba(1, 8, 10, 0.82);
+  color: var(--cyan);
+  font-weight: 950;
+  line-height: 1;
 }
 
 .memo-card-preview {
