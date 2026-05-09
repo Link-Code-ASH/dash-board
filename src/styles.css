@@ -2813,14 +2813,14 @@ input::placeholder {
 }
 
 .calendar-day-spacer {
-  min-height: 132px;
+  min-height: 176px;
   border: 1px dashed rgba(70, 255, 242, 0.08);
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.018);
 }
 
 .calendar-day {
-  min-height: 132px;
+  min-height: 176px;
   display: grid;
   grid-template-rows: auto 1fr;
   gap: 8px;
@@ -2866,7 +2866,7 @@ input::placeholder {
 
 .calendar-day textarea {
   width: 100%;
-  min-height: 74px;
+  min-height: 118px;
   resize: vertical;
   border: 1px solid rgba(70, 255, 242, 0.16);
   border-radius: 6px;
@@ -3095,28 +3095,33 @@ input::placeholder {
   }
 
   .calendar-days {
-    grid-template-columns: repeat(7, minmax(42px, 1fr));
-    gap: 4px;
-    padding: 6px;
+    grid-template-columns: repeat(7, minmax(132px, 1fr));
+    gap: 8px;
+    min-width: 1020px;
+    max-height: 680px;
+    overflow: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    padding: 8px;
   }
 
   .calendar-weekday {
-    min-height: 24px;
-    border-radius: 4px;
-    font-size: 0.58rem;
-    letter-spacing: 0.04em;
+    min-height: 34px;
+    border-radius: 6px;
+    font-size: 0.72rem;
+    letter-spacing: 0.12em;
   }
 
   .calendar-day-spacer {
-    min-height: 78px;
-    border-radius: 6px;
+    min-height: 156px;
+    border-radius: 8px;
   }
 
   .calendar-day {
-    min-height: 78px;
-    gap: 4px;
-    border-radius: 6px;
-    padding: 5px;
+    min-height: 156px;
+    gap: 8px;
+    border-radius: 8px;
+    padding: 10px;
   }
 
   .calendar-date {
@@ -3125,19 +3130,19 @@ input::placeholder {
   }
 
   .calendar-date b {
-    font-size: 0.95rem;
+    font-size: 1.28rem;
   }
 
   .calendar-date i {
-    display: none;
+    display: inline;
   }
 
   .calendar-day textarea {
-    min-height: 44px;
-    resize: none;
-    border-radius: 4px;
-    padding: 5px;
-    font-size: 0.72rem;
-    line-height: 1.25;
+    min-height: 92px;
+    resize: vertical;
+    border-radius: 6px;
+    padding: 9px;
+    font-size: 0.86rem;
+    line-height: 1.4;
   }
 }
