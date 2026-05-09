@@ -2684,7 +2684,7 @@ input::placeholder {
 }
 
 .calendar-month.open {
-  overflow: visible;
+  overflow: hidden;
 }
 
 .calendar-month::before,
@@ -2797,8 +2797,9 @@ input::placeholder {
 
 .calendar-days-scroll {
   width: 100%;
-  overflow-x: auto;
-  overflow-y: visible;
+  max-width: 100%;
+  display: block;
+  overflow: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
   padding-bottom: 4px;
@@ -3000,7 +3001,7 @@ input::placeholder {
 
   .calendar-days-scroll {
     max-width: 100%;
-    max-height: 760px;
+    height: min(760px, 72vh);
     overflow: auto;
     overscroll-behavior: contain;
     -webkit-overflow-scrolling: touch;
@@ -3008,8 +3009,8 @@ input::placeholder {
   }
 
   .calendar-days {
-    width: max-content;
-    min-width: 1180px;
+    width: 1180px;
+    max-width: none;
     grid-template-columns: repeat(7, 160px);
     padding: 8px;
   }
@@ -3135,15 +3136,17 @@ input::placeholder {
   }
 
   .calendar-days-scroll {
-    max-height: 760px;
+    width: 100%;
+    max-width: 100%;
+    height: min(720px, 72vh);
     overflow: auto;
     overscroll-behavior: contain;
     -webkit-overflow-scrolling: touch;
   }
 
   .calendar-days {
-    width: max-content;
-    min-width: 1180px;
+    width: 1180px;
+    max-width: none;
     grid-template-columns: repeat(7, 160px);
     gap: 8px;
     padding: 8px;
