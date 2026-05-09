@@ -2797,25 +2797,33 @@ input::placeholder {
   box-shadow: inset 0 -1px 0 rgba(70, 255, 242, 0.16);
 }
 
-.calendar-days-scroll {
+.calendar-weeks {
+  display: grid;
+  gap: 10px;
+  padding: 10px;
+}
+
+.calendar-week-scroll {
   width: 100%;
   max-width: 100%;
   min-width: 0;
   display: block;
-  overflow: auto;
+  overflow-x: auto;
+  overflow-y: visible;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
   padding-bottom: 4px;
 }
 
+.calendar-weekdays,
 .calendar-days {
   width: 100%;
   display: grid;
   grid-template-columns: repeat(7, minmax(132px, 1fr));
   gap: 8px;
-  padding: 10px;
 }
 
+.calendar-weekdays span,
 .calendar-weekday {
   min-height: 34px;
   display: grid;
@@ -3002,21 +3010,20 @@ input::placeholder {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .calendar-days-scroll {
+  .calendar-week-scroll {
     width: min(100%, calc(100vw - 64px));
     max-width: calc(100vw - 64px);
     min-width: 0;
-    height: min(520px, 52vh);
     display: block;
-    overflow: auto;
     overflow-x: scroll;
-    overflow-y: auto;
+    overflow-y: visible;
     overscroll-behavior: contain;
     -webkit-overflow-scrolling: touch;
     padding-bottom: 6px;
-    touch-action: pan-x pan-y;
+    touch-action: pan-x;
   }
 
+  .calendar-weekdays,
   .calendar-days {
     width: 1180px;
     max-width: none;
@@ -3144,20 +3151,24 @@ input::placeholder {
     gap: 6px;
   }
 
-  .calendar-days-scroll {
+  .calendar-weeks {
+    gap: 12px;
+    padding: 8px;
+  }
+
+  .calendar-week-scroll {
     width: min(100%, calc(100vw - 46px));
     max-width: calc(100vw - 46px);
     min-width: 0;
-    height: min(460px, 50vh);
     display: block;
-    overflow: auto;
     overflow-x: scroll;
-    overflow-y: auto;
+    overflow-y: visible;
     overscroll-behavior: contain;
     -webkit-overflow-scrolling: touch;
-    touch-action: pan-x pan-y;
+    touch-action: pan-x;
   }
 
+  .calendar-weekdays,
   .calendar-days {
     width: 1180px;
     max-width: none;

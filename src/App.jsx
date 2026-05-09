@@ -1806,29 +1806,39 @@ function MonthDays({ calendar, monthIndex, selectedDate, updateCalendarNote, yea
   const todayKey = toDateKey(new Date());
   const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
   const firstDayIndex = (new Date(year, monthIndex, 1).getDay() + 6) % 7;
-  const blanks = Array.from({ length: firstDayIndex }, (_, index) =>
-    h("div", { className: "calendar-day-spacer", key: `blank-${monthIndex}-${index}`, "aria-hidden": "true" }),
-  );
+  const cells = [
+    ...Array.from({ length: firstDayIndex }, (_, index) => ({ key: `blank-start-${monthIndex}-${index}`, type: "blank" })),
+    ...Array.from({ length: daysInMonth }, (_, index) => ({ day: index + 1, key: `day-${monthIndex}-${index + 1}`, type: "day" })),
+  ];
+  const trailingBlanks = (7 - (cells.length % 7)) % 7;
+  Array.from({ length: trailingBlanks }, (_, index) => cells.push({ key: `blank-end-${monthIndex}-${index}`, type: "blank" }));
+  const weeks = Array.from({ length: Math.ceil(cells.length / 7) }, (_, index) => cells.slice(index * 7, index * 7 + 7));
   return h(
     "div",
-    { className: "calendar-days-scroll" },
-    h(
+    { className: "calendar-weeks" },
+    weeks.map((week, weekIndex) =>
+      h(
       "div",
-      { className: "calendar-days" },
-      ...weekDays.map((day) => h("div", { className: "calendar-weekday", key: day.key }, day.label)),
-      ...blanks,
-      Array.from({ length: daysInMonth }, (_, index) => {
-        const day = index + 1;
-        const dateKey = `${year}-${String(monthIndex + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-        const date = new Date(`${dateKey}T00:00:00`);
-        const weekday = weekDays[(date.getDay() + 6) % 7].label;
-        return h(
-          "label",
-          { className: `calendar-day ${dateKey === selectedDate ? "selected" : ""} ${dateKey === todayKey ? "today" : ""}`, key: dateKey },
-          h("span", { className: "calendar-date" }, h("b", null, day), h("i", null, weekday)),
-          h("textarea", { maxLength: 600, placeholder: "Schedule", value: calendar[dateKey] || "", onChange: (event) => updateCalendarNote(dateKey, event.target.value), onKeyDown: (event) => event.stopPropagation() }),
-        );
-      }),
+      { className: "calendar-week-scroll", key: `week-${monthIndex}-${weekIndex}` },
+      h("div", { className: "calendar-weekdays" }, weekDays.map((day) => h("span", { key: day.key }, day.label))),
+      h(
+        "div",
+        { className: "calendar-days" },
+        week.map((cell, cellIndex) => {
+          if (cell.type === "blank") return h("div", { className: "calendar-day-spacer", key: cell.key, "aria-hidden": "true" });
+          const day = cell.day;
+          const dateKey = `${year}-${String(monthIndex + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+          const date = new Date(`${dateKey}T00:00:00`);
+          const weekday = weekDays[(date.getDay() + 6) % 7].label;
+          return h(
+            "label",
+            { className: `calendar-day ${dateKey === selectedDate ? "selected" : ""} ${dateKey === todayKey ? "today" : ""}`, key: dateKey },
+            h("span", { className: "calendar-date" }, h("b", null, day), h("i", null, weekday)),
+            h("textarea", { maxLength: 600, placeholder: "Schedule", value: calendar[dateKey] || "", onChange: (event) => updateCalendarNote(dateKey, event.target.value), onKeyDown: (event) => event.stopPropagation() }),
+          );
+        }),
+      ),
+      ),
     ),
   );
 }
