@@ -1811,21 +1811,25 @@ function MonthDays({ calendar, monthIndex, selectedDate, updateCalendarNote, yea
   );
   return h(
     "div",
-    { className: "calendar-days" },
-    ...weekDays.map((day) => h("div", { className: "calendar-weekday", key: day.key }, day.label)),
-    ...blanks,
-    Array.from({ length: daysInMonth }, (_, index) => {
-      const day = index + 1;
-      const dateKey = `${year}-${String(monthIndex + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-      const date = new Date(`${dateKey}T00:00:00`);
-      const weekday = weekDays[(date.getDay() + 6) % 7].label;
-      return h(
-        "label",
-        { className: `calendar-day ${dateKey === selectedDate ? "selected" : ""} ${dateKey === todayKey ? "today" : ""}`, key: dateKey },
-        h("span", { className: "calendar-date" }, h("b", null, day), h("i", null, weekday)),
-        h("textarea", { maxLength: 600, placeholder: "Schedule", value: calendar[dateKey] || "", onChange: (event) => updateCalendarNote(dateKey, event.target.value), onKeyDown: (event) => event.stopPropagation() }),
-      );
-    }),
+    { className: "calendar-days-scroll" },
+    h(
+      "div",
+      { className: "calendar-days" },
+      ...weekDays.map((day) => h("div", { className: "calendar-weekday", key: day.key }, day.label)),
+      ...blanks,
+      Array.from({ length: daysInMonth }, (_, index) => {
+        const day = index + 1;
+        const dateKey = `${year}-${String(monthIndex + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+        const date = new Date(`${dateKey}T00:00:00`);
+        const weekday = weekDays[(date.getDay() + 6) % 7].label;
+        return h(
+          "label",
+          { className: `calendar-day ${dateKey === selectedDate ? "selected" : ""} ${dateKey === todayKey ? "today" : ""}`, key: dateKey },
+          h("span", { className: "calendar-date" }, h("b", null, day), h("i", null, weekday)),
+          h("textarea", { maxLength: 600, placeholder: "Schedule", value: calendar[dateKey] || "", onChange: (event) => updateCalendarNote(dateKey, event.target.value), onKeyDown: (event) => event.stopPropagation() }),
+        );
+      }),
+    ),
   );
 }
 

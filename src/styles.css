@@ -2795,7 +2795,17 @@ input::placeholder {
   box-shadow: inset 0 -1px 0 rgba(70, 255, 242, 0.16);
 }
 
+.calendar-days-scroll {
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: visible;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 4px;
+}
+
 .calendar-days {
+  width: 100%;
   display: grid;
   grid-template-columns: repeat(7, minmax(132px, 1fr));
   gap: 8px;
@@ -2988,23 +2998,29 @@ input::placeholder {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .calendar-days {
-    width: 100%;
-    max-height: 720px;
-    grid-template-columns: repeat(7, 148px);
+  .calendar-days-scroll {
+    max-width: 100%;
+    max-height: 760px;
     overflow: auto;
     overscroll-behavior: contain;
     -webkit-overflow-scrolling: touch;
+    padding-bottom: 6px;
+  }
+
+  .calendar-days {
+    width: max-content;
+    min-width: 1180px;
+    grid-template-columns: repeat(7, 160px);
     padding: 8px;
   }
 
   .calendar-day-spacer,
   .calendar-day {
-    min-height: 164px;
+    min-height: 190px;
   }
 
   .calendar-day textarea {
-    min-height: 98px;
+    min-height: 124px;
     resize: vertical;
   }
 }
@@ -3118,14 +3134,18 @@ input::placeholder {
     gap: 6px;
   }
 
-  .calendar-days {
-    width: 100%;
-    grid-template-columns: repeat(7, 148px);
-    gap: 8px;
-    max-height: 720px;
+  .calendar-days-scroll {
+    max-height: 760px;
     overflow: auto;
     overscroll-behavior: contain;
     -webkit-overflow-scrolling: touch;
+  }
+
+  .calendar-days {
+    width: max-content;
+    min-width: 1180px;
+    grid-template-columns: repeat(7, 160px);
+    gap: 8px;
     padding: 8px;
   }
 
@@ -3137,12 +3157,12 @@ input::placeholder {
   }
 
   .calendar-day-spacer {
-    min-height: 156px;
+    min-height: 190px;
     border-radius: 8px;
   }
 
   .calendar-day {
-    min-height: 156px;
+    min-height: 190px;
     gap: 8px;
     border-radius: 8px;
     padding: 10px;
@@ -3162,7 +3182,7 @@ input::placeholder {
   }
 
   .calendar-day textarea {
-    min-height: 92px;
+    min-height: 124px;
     resize: vertical;
     border-radius: 6px;
     padding: 9px;
