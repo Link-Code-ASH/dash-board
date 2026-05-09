@@ -657,6 +657,35 @@ input[type="date"] {
   text-shadow: 0 0 12px rgba(70, 255, 242, 0.26);
 }
 
+.carry-detail {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto minmax(42px, auto);
+  align-items: center;
+  gap: 10px;
+}
+
+.carry-detail strong {
+  justify-self: end;
+}
+
+.carry-reset-button {
+  min-height: 24px;
+  border: 1px solid rgba(255, 79, 109, 0.28);
+  border-radius: 6px;
+  background: rgba(255, 79, 109, 0.08);
+  color: var(--minus);
+  padding: 0 8px;
+  font-size: 0.68rem;
+  font-weight: 950;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.carry-reset-button:hover {
+  border-color: rgba(255, 79, 109, 0.52);
+  box-shadow: 0 0 14px rgba(255, 79, 109, 0.12);
+}
+
 .entry-form,
 .planner-view,
 .quick-panel,
@@ -865,8 +894,12 @@ input[type="date"] {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
-.daily-workspace .memo-panel textarea {
-  min-height: 348px;
+.daily-workspace .memo-panel .memo-large-textarea {
+  min-height: 522px;
+}
+
+.daily-workspace .memo-panel .memo-quick-textarea {
+  min-height: 40px;
 }
 
 .memo-grid {
@@ -965,7 +998,7 @@ input::placeholder {
 .memo-stack {
   --drag-x: 0px;
   grid-row: 2;
-  min-height: 540px;
+  min-height: 810px;
   position: relative;
   touch-action: pan-y;
   user-select: none;
@@ -973,8 +1006,8 @@ input::placeholder {
 
 .memo-card {
   width: calc(100% - min(18px, 3vw));
-  min-height: 516px;
-  max-height: 516px;
+  min-height: 774px;
+  max-height: 774px;
   display: grid;
   grid-template-rows: auto 1fr;
   gap: 12px;
@@ -1076,7 +1109,7 @@ input::placeholder {
   grid-template-columns: minmax(0, 1fr);
   grid-template-rows: repeat(2, minmax(0, 1fr));
   gap: 10px;
-  min-height: 446px;
+  min-height: 704px;
   height: 100%;
   min-width: 0;
   overflow: hidden;
@@ -1092,6 +1125,8 @@ input::placeholder {
   min-height: 0;
   max-height: 100%;
   display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 8px;
   border: 1px solid rgba(70, 255, 242, 0.13);
   border-radius: 7px;
   background:
@@ -1100,6 +1135,23 @@ input::placeholder {
   padding: 8px;
   overflow: hidden;
   touch-action: pan-y;
+}
+
+.memo-quick-textarea {
+  width: 100%;
+  min-height: 40px;
+  max-height: 82px;
+  resize: none;
+  border: 1px solid rgba(183, 255, 60, 0.18);
+  border-radius: 6px;
+  background:
+    linear-gradient(90deg, rgba(183, 255, 60, 0.06), rgba(70, 255, 242, 0.035)),
+    rgba(1, 8, 10, 0.78);
+  color: var(--ink);
+  padding: 9px 11px;
+  font: inherit;
+  line-height: 1.35;
+  outline: none;
 }
 
 .memo-large-textarea {
@@ -2994,13 +3046,13 @@ input::placeholder {
   }
 
   .memo-stack {
-    min-height: 560px;
+    min-height: 840px;
   }
 
   .memo-card {
     width: calc(100% - 10px);
-    min-height: 536px;
-    max-height: 536px;
+    min-height: 804px;
+    max-height: 804px;
     padding: 12px;
     transform:
       translate(
@@ -3021,6 +3073,11 @@ input::placeholder {
     min-height: 0;
   }
 
+  .memo-card-columns,
+  .memo-card-preview-grid {
+    min-height: 734px;
+  }
+
   .daily-plan-row .plan-card-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -3038,12 +3095,49 @@ input::placeholder {
   }
 
   .calendar-days {
-    grid-template-columns: 1fr;
-    padding: 8px;
+    grid-template-columns: repeat(7, minmax(42px, 1fr));
+    gap: 4px;
+    padding: 6px;
   }
 
-  .calendar-weekday,
+  .calendar-weekday {
+    min-height: 24px;
+    border-radius: 4px;
+    font-size: 0.58rem;
+    letter-spacing: 0.04em;
+  }
+
   .calendar-day-spacer {
+    min-height: 78px;
+    border-radius: 6px;
+  }
+
+  .calendar-day {
+    min-height: 78px;
+    gap: 4px;
+    border-radius: 6px;
+    padding: 5px;
+  }
+
+  .calendar-date {
+    align-items: start;
+    gap: 3px;
+  }
+
+  .calendar-date b {
+    font-size: 0.95rem;
+  }
+
+  .calendar-date i {
     display: none;
+  }
+
+  .calendar-day textarea {
+    min-height: 44px;
+    resize: none;
+    border-radius: 4px;
+    padding: 5px;
+    font-size: 0.72rem;
+    line-height: 1.25;
   }
 }

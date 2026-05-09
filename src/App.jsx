@@ -160,6 +160,7 @@ function createFallbackState() {
     calendar: {},
     routineAttempts: {},
     flaggedDate: "",
+    carryResetDate: "",
     presets: clonePresets(),
     categories,
     weeklyPlan: createEmptyWeeklyPlan(categories),
@@ -177,6 +178,7 @@ function normalizeState(source) {
     calendar: source?.calendar && typeof source.calendar === "object" ? source.calendar : {},
     routineAttempts: source?.routineAttempts && typeof source.routineAttempts === "object" ? source.routineAttempts : {},
     flaggedDate: source?.flaggedDate || "",
+    carryResetDate: source?.carryResetDate || "",
     presets: normalizePresets(source?.presets),
     categories,
     weeklyPlan: normalizeWeeklyPlan(source?.weeklyPlan, categories),
@@ -612,6 +614,7 @@ function App() {
   const getCarryTotal = () =>
     Object.entries(data.days).reduce((sum, [key, dayEntries]) => {
       if (key >= selectedDate || !Array.isArray(dayEntries)) return sum;
+      if (data.carryResetDate && selectedDate >= data.carryResetDate && key < data.carryResetDate) return sum;
       return sum + dayEntries.reduce((daySum, entry) => daySum + entry.score, 0);
     }, 0);
 
@@ -670,6 +673,13 @@ function App() {
     });
   };
 
+  const resetCarry = () => {
+    saveData((draft) => {
+      draft.carryResetDate = selectedDate;
+      return draft;
+    });
+  };
+
   const removeEntry = (id) => {
     saveData((draft) => {
       draft.days[selectedDate] = getEntries().filter((entry) => entry.id !== id);
@@ -714,6 +724,8 @@ function App() {
   };
 
   const removeMemoCard = (id) => {
+    const confirmed = window.confirm("메모를 삭제하시겠습니까?");
+    if (!confirmed) return;
     saveData((draft) => {
       if (draft.memos.cards.length <= 1) return draft;
       const index = draft.memos.cards.findIndex((card) => card.id === id);
@@ -922,7 +934,7 @@ function App() {
       h(
         "div",
         { className: "daily-left-rail" },
-        h(ScorePanel, { entryCount: entries.length, onToggleAttempt: toggleRoutineAttempt, routineTried, scoreInfo }),
+        h(ScorePanel, { entryCount: entries.length, onResetCarry: resetCarry, onToggleAttempt: toggleRoutineAttempt, routineTried, scoreInfo }),
         h(DateMarkerPanel, { dateMarkers: data.dateMarkers, selectedDate, updateDateMarker }),
       ),
       h(MemoPanel, {
@@ -971,7 +983,6 @@ function App() {
       openMonths,
       selectedDate,
       setOpenMonths,
-      setSelectedDate,
       updateCalendarNote,
     }),
     h(RecordPanel, {
@@ -1332,9 +1343,30 @@ function growMemoTextarea(textarea) {
 }
 
 function MemoBlockColumn({ cardId, field, updateMemoCard, value }) {
+  const [quickMemo, setQuickMemo] = useState("");
+  const addQuickMemo = () => {
+    const text = quickMemo.trim();
+    if (!text) return;
+    updateMemoCard(cardId, field, value ? `${text}\n${value}` : text);
+    setQuickMemo("");
+  };
   return h(
     "section",
     { className: "memo-block-column" },
+    h("textarea", {
+      className: "memo-quick-textarea",
+      placeholder: "Quick add...",
+      rows: 1,
+      value: quickMemo,
+      onChange: (event) => setQuickMemo(event.target.value),
+      onKeyDown: (event) => {
+        event.stopPropagation();
+        if (event.key === "Enter" && !event.shiftKey) {
+          event.preventDefault();
+          addQuickMemo();
+        }
+      },
+    }),
     h("textarea", {
       className: "memo-large-textarea",
       placeholder: "Write freely...",
@@ -1345,7 +1377,7 @@ function MemoBlockColumn({ cardId, field, updateMemoCard, value }) {
   );
 }
 
-function ScorePanel({ entryCount, onToggleAttempt, routineTried, scoreInfo }) {
+function ScorePanel({ entryCount, onResetCarry, onToggleAttempt, routineTried, scoreInfo }) {
   const totalClass = scoreInfo.total < 0 ? "negative" : scoreInfo.total === 0 ? "neutral" : "";
   const fillClass = scoreInfo.total > 0 ? "positive" : scoreInfo.total < 0 ? "negative" : "neutral";
   return h(
@@ -1373,7 +1405,13 @@ function ScorePanel({ entryCount, onToggleAttempt, routineTried, scoreInfo }) {
     h(
       "div",
       { className: "score-details" },
-      h("div", null, h("span", { className: "detail-label" }, "Carry"), h("strong", null, formatScore(scoreInfo.carry))),
+      h(
+        "div",
+        { className: "carry-detail" },
+        h("span", { className: "detail-label" }, "Carry"),
+        h("button", { className: "carry-reset-button", type: "button", title: "Reset Carry", onClick: onResetCarry }, "Reset"),
+        h("strong", null, formatScore(scoreInfo.carry)),
+      ),
       h("div", null, h("span", { className: "detail-label" }, "Plus"), h("strong", null, formatScore(scoreInfo.plus))),
       h("div", null, h("span", { className: "detail-label" }, "Minus"), h("strong", null, formatScore(scoreInfo.minus))),
       h("div", null, h("span", { className: "detail-label" }, "Records"), h("strong", null, entryCount)),
@@ -1707,7 +1745,7 @@ function HistoryPanel({ flaggedDate, getDayTotal, onToggleFlag, routineAttempts,
   );
 }
 
-function CalendarPanel({ calendar, isOpen, onToggle, openMonths, selectedDate, setOpenMonths, setSelectedDate, updateCalendarNote }) {
+function CalendarPanel({ calendar, isOpen, onToggle, openMonths, selectedDate, setOpenMonths, updateCalendarNote }) {
   const year = new Date(`${selectedDate}T00:00:00`).getFullYear();
   const toggleMonth = (monthIndex) => {
     setOpenMonths((current) => {
@@ -1756,7 +1794,7 @@ function CalendarPanel({ calendar, isOpen, onToggle, openMonths, selectedDate, s
               h("span", null, monthName),
               h("strong", null, `${noteCount} items`),
             ),
-            monthOpen ? h(MonthDays, { calendar, monthIndex, selectedDate, setSelectedDate, updateCalendarNote, year }) : null,
+            monthOpen ? h(MonthDays, { calendar, monthIndex, selectedDate, updateCalendarNote, year }) : null,
           );
         }),
       ),
@@ -1764,7 +1802,7 @@ function CalendarPanel({ calendar, isOpen, onToggle, openMonths, selectedDate, s
   });
 }
 
-function MonthDays({ calendar, monthIndex, selectedDate, setSelectedDate, updateCalendarNote, year }) {
+function MonthDays({ calendar, monthIndex, selectedDate, updateCalendarNote, year }) {
   const todayKey = toDateKey(new Date());
   const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
   const firstDayIndex = (new Date(year, monthIndex, 1).getDay() + 6) % 7;
@@ -1785,7 +1823,7 @@ function MonthDays({ calendar, monthIndex, selectedDate, setSelectedDate, update
         "label",
         { className: `calendar-day ${dateKey === selectedDate ? "selected" : ""} ${dateKey === todayKey ? "today" : ""}`, key: dateKey },
         h("span", { className: "calendar-date" }, h("b", null, day), h("i", null, weekday)),
-        h("textarea", { maxLength: 600, placeholder: "Schedule", value: calendar[dateKey] || "", onFocus: () => setSelectedDate(dateKey), onChange: (event) => updateCalendarNote(dateKey, event.target.value), onKeyDown: (event) => event.stopPropagation() }),
+        h("textarea", { maxLength: 600, placeholder: "Schedule", value: calendar[dateKey] || "", onChange: (event) => updateCalendarNote(dateKey, event.target.value), onKeyDown: (event) => event.stopPropagation() }),
       );
     }),
   );
