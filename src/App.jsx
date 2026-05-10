@@ -158,14 +158,33 @@ function normalizeWork(work) {
     { id: "work-process", title: "Process", content: String(work?.procedures || ""), open: true },
     { id: "work-notes", title: "Notes", content: String(work?.notes || ""), open: true },
   ];
-  const sourceBlocks = Array.isArray(work?.blocks) && work.blocks.length ? work.blocks : legacyBlocks;
-  return {
-    blocks: sourceBlocks.map((block, index) => ({
+  const normalizeBlocks = (blocks) =>
+    blocks.map((block, index) => ({
       id: block.id || createKey("work"),
       title: String(block.title || `Work ${index + 1}`),
       content: String(block.content || ""),
       open: block.open !== false,
-    })),
+    }));
+  if (Array.isArray(work?.categories) && work.categories.length) {
+    return {
+      categories: work.categories.map((category, index) => ({
+        id: category.id || createKey("work-category"),
+        title: String(category.title || `Category ${index + 1}`),
+        open: category.open !== false,
+        blocks: normalizeBlocks(Array.isArray(category.blocks) ? category.blocks : []),
+      })),
+    };
+  }
+  const sourceBlocks = Array.isArray(work?.blocks) && work.blocks.length ? work.blocks : legacyBlocks;
+  return {
+    categories: [
+      {
+        id: "work-category-main",
+        title: "Main",
+        open: true,
+        blocks: normalizeBlocks(sourceBlocks),
+      },
+    ],
   };
 }
 
@@ -860,7 +879,7 @@ function App() {
   const updateWorkBlock = (id, field, value) => {
     saveData((draft) => {
       draft.work = normalizeWork(draft.work);
-      const block = draft.work.blocks.find((item) => item.id === id);
+      const block = draft.work.categories.flatMap((category) => category.blocks).find((item) => item.id === id);
       if (block) block[field] = value;
       return draft;
     });
@@ -869,16 +888,68 @@ function App() {
   const toggleWorkBlock = (id) => {
     saveData((draft) => {
       draft.work = normalizeWork(draft.work);
-      const block = draft.work.blocks.find((item) => item.id === id);
+      const block = draft.work.categories.flatMap((category) => category.blocks).find((item) => item.id === id);
       if (block) block.open = !block.open;
       return draft;
     });
   };
 
-  const addWorkBlock = () => {
+  const addWorkCategory = () => {
     saveData((draft) => {
       draft.work = normalizeWork(draft.work);
-      draft.work.blocks.push({ id: createKey("work"), title: `Work ${draft.work.blocks.length + 1}`, content: "", open: true });
+      draft.work.categories.push({ id: createKey("work-category"), title: `Category ${draft.work.categories.length + 1}`, blocks: [] });
+      return draft;
+    });
+  };
+
+  const updateWorkCategory = (id, value) => {
+    saveData((draft) => {
+      draft.work = normalizeWork(draft.work);
+      const category = draft.work.categories.find((item) => item.id === id);
+      if (category) category.title = value;
+      return draft;
+    });
+  };
+
+  const toggleWorkCategory = (id) => {
+    saveData((draft) => {
+      draft.work = normalizeWork(draft.work);
+      const category = draft.work.categories.find((item) => item.id === id);
+      if (category) category.open = !category.open;
+      return draft;
+    });
+  };
+
+  const removeWorkCategory = (id) => {
+    const confirmed = window.confirm("Delete this work category and all blocks inside it?");
+    if (!confirmed) return;
+    saveData((draft) => {
+      draft.work = normalizeWork(draft.work);
+      if (draft.work.categories.length <= 1) return draft;
+      draft.work.categories = draft.work.categories.filter((category) => category.id !== id);
+      return draft;
+    });
+  };
+
+  const moveWorkCategory = (fromId, toId) => {
+    if (!fromId || !toId || fromId === toId) return;
+    saveData((draft) => {
+      draft.work = normalizeWork(draft.work);
+      const fromIndex = draft.work.categories.findIndex((category) => category.id === fromId);
+      const toIndex = draft.work.categories.findIndex((category) => category.id === toId);
+      if (fromIndex < 0 || toIndex < 0) return draft;
+      const [category] = draft.work.categories.splice(fromIndex, 1);
+      draft.work.categories.splice(toIndex, 0, category);
+      return draft;
+    });
+  };
+
+  const addWorkBlock = (categoryId) => {
+    saveData((draft) => {
+      draft.work = normalizeWork(draft.work);
+      const category = draft.work.categories.find((item) => item.id === categoryId) || draft.work.categories[0];
+      if (!category) return draft;
+      category.blocks.push({ id: createKey("work"), title: `Work ${category.blocks.length + 1}`, content: "", open: true });
       return draft;
     });
   };
@@ -888,7 +959,9 @@ function App() {
     if (!confirmed) return;
     saveData((draft) => {
       draft.work = normalizeWork(draft.work);
-      draft.work.blocks = draft.work.blocks.filter((block) => block.id !== id);
+      draft.work.categories.forEach((category) => {
+        category.blocks = category.blocks.filter((block) => block.id !== id);
+      });
       return draft;
     });
   };
@@ -897,11 +970,13 @@ function App() {
     if (!fromId || !toId || fromId === toId) return;
     saveData((draft) => {
       draft.work = normalizeWork(draft.work);
-      const fromIndex = draft.work.blocks.findIndex((block) => block.id === fromId);
-      const toIndex = draft.work.blocks.findIndex((block) => block.id === toId);
+      const category = draft.work.categories.find((item) => item.blocks.some((block) => block.id === fromId) && item.blocks.some((block) => block.id === toId));
+      if (!category) return draft;
+      const fromIndex = category.blocks.findIndex((block) => block.id === fromId);
+      const toIndex = category.blocks.findIndex((block) => block.id === toId);
       if (fromIndex < 0 || toIndex < 0) return draft;
-      const [block] = draft.work.blocks.splice(fromIndex, 1);
-      draft.work.blocks.splice(toIndex, 0, block);
+      const [block] = category.blocks.splice(fromIndex, 1);
+      category.blocks.splice(toIndex, 0, block);
       return draft;
     });
   };
@@ -1062,7 +1137,19 @@ function App() {
     }),
     h(HistoryPanel, { flaggedDate: data.flaggedDate, getDayTotal, onToggleFlag: toggleFlaggedDate, routineAttempts: data.routineAttempts, selectedDate }),
         )
-      : h(WorkView, { addWorkBlock, moveWorkBlock, removeWorkBlock, toggleWorkBlock, updateWorkBlock, work: data.work }),
+      : h(WorkView, {
+          addWorkBlock,
+          addWorkCategory,
+          moveWorkBlock,
+          moveWorkCategory,
+          removeWorkBlock,
+          removeWorkCategory,
+          toggleWorkCategory,
+          toggleWorkBlock,
+          updateWorkBlock,
+          updateWorkCategory,
+          work: data.work,
+        }),
     h(SyncPanel, {
       forgetThisDevice,
       isOpen: openPanels.sync,
@@ -1116,9 +1203,10 @@ function AppNavigation({ activeView, setActiveView }) {
   );
 }
 
-function WorkView({ addWorkBlock, moveWorkBlock, removeWorkBlock, toggleWorkBlock, updateWorkBlock, work }) {
-  const blocks = normalizeWork(work).blocks;
+function WorkView({ addWorkBlock, addWorkCategory, moveWorkBlock, moveWorkCategory, removeWorkBlock, removeWorkCategory, toggleWorkBlock, toggleWorkCategory, updateWorkBlock, updateWorkCategory, work }) {
+  const categories = normalizeWork(work).categories;
   const [dragBlockId, setDragBlockId] = useState("");
+  const [dragCategoryId, setDragCategoryId] = useState("");
   return h(
     "section",
     { className: "work-view", "aria-label": "Work" },
@@ -1126,75 +1214,142 @@ function WorkView({ addWorkBlock, moveWorkBlock, removeWorkBlock, toggleWorkBloc
       "div",
       { className: "section-heading" },
       h("div", null, h("h2", null, "Work"), h("p", null, "A workspace for manuals, procedures, and work notes.")),
-      h("button", { className: "text-button", type: "button", onClick: addWorkBlock }, "+ Block"),
+      h("button", { className: "text-button", type: "button", onClick: addWorkCategory }, "+ Category"),
     ),
     h(
       "div",
-      { className: "work-manual-grid" },
-      blocks.map((block) =>
+      { className: "work-category-list" },
+      categories.map((category) =>
         h(
-          "article",
+          "section",
           {
-            className: `work-manual-card ${block.open ? "" : "collapsed"} ${dragBlockId === block.id ? "dragging" : ""}`,
+            className: `work-category ${category.open ? "" : "collapsed"} ${dragCategoryId === category.id ? "dragging" : ""}`,
             draggable: true,
-            key: block.id,
+            key: category.id,
             onDragStart: (event) => {
-              if (panelClickIsInteractive(event.target)) {
+              if (panelClickIsInteractive(event.target) || event.target.closest?.(".work-manual-card")) {
                 event.preventDefault();
                 return;
               }
-              setDragBlockId(block.id);
+              setDragCategoryId(category.id);
               event.dataTransfer.effectAllowed = "move";
-              event.dataTransfer.setData("text/plain", block.id);
+              event.dataTransfer.setData("text/work-category", category.id);
             },
             onDragOver: (event) => {
+              if (!dragCategoryId) return;
               event.preventDefault();
               event.dataTransfer.dropEffect = "move";
             },
             onDrop: (event) => {
+              const fromId = event.dataTransfer.getData("text/work-category") || dragCategoryId;
+              if (!fromId) return;
               event.preventDefault();
-              const fromId = event.dataTransfer.getData("text/plain") || dragBlockId;
-              moveWorkBlock(fromId, block.id);
-              setDragBlockId("");
+              moveWorkCategory(fromId, category.id);
+              setDragCategoryId("");
             },
-            onDragEnd: () => setDragBlockId(""),
+            onDragEnd: () => setDragCategoryId(""),
           },
           h(
             "div",
-            { className: "work-manual-heading" },
+            { className: "work-category-heading" },
             h("input", {
               type: "text",
-              value: block.title,
-              "aria-label": "Work block title",
-              onChange: (event) => updateWorkBlock(block.id, "title", event.target.value),
+              value: category.title,
+              "aria-label": "Work category title",
+              onChange: (event) => updateWorkCategory(category.id, event.target.value),
               onKeyDown: (event) => {
                 if (event.key === "Enter") event.currentTarget.blur();
               },
             }),
-            h(
-              "button",
-              {
-                className: "work-toggle-zone",
-                type: "button",
-                "aria-expanded": String(block.open),
-                "aria-label": block.open ? "Close work block" : "Open work block",
-                onClick: () => toggleWorkBlock(block.id),
-              },
-            ),
+            h("button", {
+              className: "work-category-toggle-zone",
+              type: "button",
+              "aria-expanded": String(category.open),
+              "aria-label": category.open ? "Close work category" : "Open work category",
+              onClick: () => toggleWorkCategory(category.id),
+            }),
             h(
               "div",
-              { className: "work-block-actions" },
-              h("button", { className: "mini-button danger", type: "button", title: "Delete work block", onClick: () => removeWorkBlock(block.id) }, "\u00d7"),
+              { className: "work-category-actions" },
+              h("button", { className: "text-button", type: "button", onClick: () => addWorkBlock(category.id) }, "+ Block"),
+              h("button", { className: "mini-button danger", type: "button", disabled: categories.length <= 1, title: "Delete work category", onClick: () => removeWorkCategory(category.id) }, "\u00d7"),
             ),
           ),
-          block.open
-            ? h("textarea", {
-                className: "work-manual-textarea",
-                placeholder: "Write work manuals, procedures, notes, links, or templates...",
-                value: block.content,
-                onChange: (event) => updateWorkBlock(block.id, "content", event.target.value),
-              })
-            : null,
+          h(
+            "div",
+            { className: "work-manual-grid" },
+            category.open
+              ? category.blocks.map((block) =>
+                  h(
+                    "article",
+                    {
+                      className: `work-manual-card ${block.open ? "" : "collapsed"} ${dragBlockId === block.id ? "dragging" : ""}`,
+                      draggable: true,
+                      key: block.id,
+                      onDragStart: (event) => {
+                        event.stopPropagation();
+                        if (panelClickIsInteractive(event.target)) {
+                          event.preventDefault();
+                          return;
+                        }
+                        setDragBlockId(block.id);
+                        event.dataTransfer.effectAllowed = "move";
+                        event.dataTransfer.setData("text/plain", block.id);
+                      },
+                      onDragOver: (event) => {
+                        event.stopPropagation();
+                        event.preventDefault();
+                        event.dataTransfer.dropEffect = "move";
+                      },
+                      onDrop: (event) => {
+                        event.stopPropagation();
+                        event.preventDefault();
+                        const fromId = event.dataTransfer.getData("text/plain") || dragBlockId;
+                        moveWorkBlock(fromId, block.id);
+                        setDragBlockId("");
+                      },
+                      onDragEnd: () => setDragBlockId(""),
+                    },
+                    h(
+                      "div",
+                      { className: "work-manual-heading" },
+                      h("input", {
+                        type: "text",
+                        value: block.title,
+                        "aria-label": "Work block title",
+                        onChange: (event) => updateWorkBlock(block.id, "title", event.target.value),
+                        onKeyDown: (event) => {
+                          if (event.key === "Enter") event.currentTarget.blur();
+                        },
+                      }),
+                      h(
+                        "button",
+                        {
+                          className: "work-toggle-zone",
+                          type: "button",
+                          "aria-expanded": String(block.open),
+                          "aria-label": block.open ? "Close work block" : "Open work block",
+                          onClick: () => toggleWorkBlock(block.id),
+                        },
+                      ),
+                      h(
+                        "div",
+                        { className: "work-block-actions" },
+                        h("button", { className: "mini-button danger", type: "button", title: "Delete work block", onClick: () => removeWorkBlock(block.id) }, "\u00d7"),
+                      ),
+                    ),
+                    block.open
+                      ? h("textarea", {
+                          className: "work-manual-textarea",
+                          placeholder: "Write work manuals, procedures, notes, links, or templates...",
+                          value: block.content,
+                          onChange: (event) => updateWorkBlock(block.id, "content", event.target.value),
+                        })
+                      : null,
+                  ),
+                )
+              : null,
+          ),
         ),
       ),
     ),
