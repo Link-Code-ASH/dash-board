@@ -152,6 +152,23 @@ function normalizeMemos(memos) {
   };
 }
 
+function normalizeWork(work) {
+  const legacyBlocks = [
+    { id: "work-manual", title: "Manual", content: String(work?.manual || ""), open: true },
+    { id: "work-process", title: "Process", content: String(work?.procedures || ""), open: true },
+    { id: "work-notes", title: "Notes", content: String(work?.notes || ""), open: true },
+  ];
+  const sourceBlocks = Array.isArray(work?.blocks) && work.blocks.length ? work.blocks : legacyBlocks;
+  return {
+    blocks: sourceBlocks.map((block, index) => ({
+      id: block.id || createKey("work"),
+      title: String(block.title || `Work ${index + 1}`),
+      content: String(block.content || ""),
+      open: block.open !== false,
+    })),
+  };
+}
+
 function createFallbackState() {
   const categories = cloneCategories();
   return {
@@ -165,6 +182,7 @@ function createFallbackState() {
     categories,
     weeklyPlan: createEmptyWeeklyPlan(categories),
     dateMarkers: normalizeDateMarkers(),
+    work: normalizeWork(),
     updatedAt: new Date().toISOString(),
   };
 }
@@ -183,6 +201,7 @@ function normalizeState(source) {
     categories,
     weeklyPlan: normalizeWeeklyPlan(source?.weeklyPlan, categories),
     dateMarkers: normalizeDateMarkers(source?.dateMarkers),
+    work: normalizeWork(source?.work),
     updatedAt: source?.updatedAt || new Date().toISOString(),
   };
 }
@@ -724,7 +743,7 @@ function App() {
   };
 
   const removeMemoCard = (id) => {
-    const confirmed = window.confirm("메모를 삭제하시겠습니까?");
+    const confirmed = window.confirm("Delete this memo?");
     if (!confirmed) return;
     saveData((draft) => {
       if (draft.memos.cards.length <= 1) return draft;
@@ -834,6 +853,55 @@ function App() {
       const markers = normalizeDateMarkers(draft.dateMarkers);
       markers[index] = { ...markers[index], [field]: value };
       draft.dateMarkers = markers;
+      return draft;
+    });
+  };
+
+  const updateWorkBlock = (id, field, value) => {
+    saveData((draft) => {
+      draft.work = normalizeWork(draft.work);
+      const block = draft.work.blocks.find((item) => item.id === id);
+      if (block) block[field] = value;
+      return draft;
+    });
+  };
+
+  const toggleWorkBlock = (id) => {
+    saveData((draft) => {
+      draft.work = normalizeWork(draft.work);
+      const block = draft.work.blocks.find((item) => item.id === id);
+      if (block) block.open = !block.open;
+      return draft;
+    });
+  };
+
+  const addWorkBlock = () => {
+    saveData((draft) => {
+      draft.work = normalizeWork(draft.work);
+      draft.work.blocks.push({ id: createKey("work"), title: `Work ${draft.work.blocks.length + 1}`, content: "", open: true });
+      return draft;
+    });
+  };
+
+  const removeWorkBlock = (id) => {
+    const confirmed = window.confirm("Delete this work block?");
+    if (!confirmed) return;
+    saveData((draft) => {
+      draft.work = normalizeWork(draft.work);
+      draft.work.blocks = draft.work.blocks.filter((block) => block.id !== id);
+      return draft;
+    });
+  };
+
+  const moveWorkBlock = (fromId, toId) => {
+    if (!fromId || !toId || fromId === toId) return;
+    saveData((draft) => {
+      draft.work = normalizeWork(draft.work);
+      const fromIndex = draft.work.blocks.findIndex((block) => block.id === fromId);
+      const toIndex = draft.work.blocks.findIndex((block) => block.id === toId);
+      if (fromIndex < 0 || toIndex < 0) return draft;
+      const [block] = draft.work.blocks.splice(fromIndex, 1);
+      draft.work.blocks.splice(toIndex, 0, block);
       return draft;
     });
   };
@@ -994,7 +1062,7 @@ function App() {
     }),
     h(HistoryPanel, { flaggedDate: data.flaggedDate, getDayTotal, onToggleFlag: toggleFlaggedDate, routineAttempts: data.routineAttempts, selectedDate }),
         )
-      : h(PlannerView),
+      : h(WorkView, { addWorkBlock, moveWorkBlock, removeWorkBlock, toggleWorkBlock, updateWorkBlock, work: data.work }),
     h(SyncPanel, {
       forgetThisDevice,
       isOpen: openPanels.sync,
@@ -1024,7 +1092,7 @@ function App() {
 function AppNavigation({ activeView, setActiveView }) {
   const items = [
     { key: "dashboard", label: "Dashboard" },
-    { key: "planner", label: "Planner" },
+    { key: "work", label: "Work" },
   ];
   return h(
     "nav",
@@ -1048,17 +1116,87 @@ function AppNavigation({ activeView, setActiveView }) {
   );
 }
 
-function PlannerView() {
+function WorkView({ addWorkBlock, moveWorkBlock, removeWorkBlock, toggleWorkBlock, updateWorkBlock, work }) {
+  const blocks = normalizeWork(work).blocks;
+  const [dragBlockId, setDragBlockId] = useState("");
   return h(
     "section",
-    { className: "planner-view", "aria-label": "Planner" },
-    h("div", { className: "section-heading" }, h("div", null, h("h2", null, "Planner"), h("p", null, "A second workspace for new routines, projects, or notes."))),
+    { className: "work-view", "aria-label": "Work" },
     h(
       "div",
-      { className: "planner-grid" },
-      h("article", null, h("span", null, "Projects"), h("strong", null, "Ready for your next setup.")),
-      h("article", null, h("span", null, "Notes"), h("strong", null, "Add a new system here.")),
-      h("article", null, h("span", null, "Tracking"), h("strong", null, "We can connect this to sync later.")),
+      { className: "section-heading" },
+      h("div", null, h("h2", null, "Work"), h("p", null, "A workspace for manuals, procedures, and work notes.")),
+      h("button", { className: "text-button", type: "button", onClick: addWorkBlock }, "+ Block"),
+    ),
+    h(
+      "div",
+      { className: "work-manual-grid" },
+      blocks.map((block) =>
+        h(
+          "article",
+          {
+            className: `work-manual-card ${block.open ? "" : "collapsed"} ${dragBlockId === block.id ? "dragging" : ""}`,
+            draggable: true,
+            key: block.id,
+            onDragStart: (event) => {
+              if (panelClickIsInteractive(event.target)) {
+                event.preventDefault();
+                return;
+              }
+              setDragBlockId(block.id);
+              event.dataTransfer.effectAllowed = "move";
+              event.dataTransfer.setData("text/plain", block.id);
+            },
+            onDragOver: (event) => {
+              event.preventDefault();
+              event.dataTransfer.dropEffect = "move";
+            },
+            onDrop: (event) => {
+              event.preventDefault();
+              const fromId = event.dataTransfer.getData("text/plain") || dragBlockId;
+              moveWorkBlock(fromId, block.id);
+              setDragBlockId("");
+            },
+            onDragEnd: () => setDragBlockId(""),
+          },
+          h(
+            "div",
+            { className: "work-manual-heading" },
+            h("input", {
+              type: "text",
+              value: block.title,
+              "aria-label": "Work block title",
+              onChange: (event) => updateWorkBlock(block.id, "title", event.target.value),
+              onKeyDown: (event) => {
+                if (event.key === "Enter") event.currentTarget.blur();
+              },
+            }),
+            h(
+              "button",
+              {
+                className: "work-toggle-zone",
+                type: "button",
+                "aria-expanded": String(block.open),
+                "aria-label": block.open ? "Close work block" : "Open work block",
+                onClick: () => toggleWorkBlock(block.id),
+              },
+            ),
+            h(
+              "div",
+              { className: "work-block-actions" },
+              h("button", { className: "mini-button danger", type: "button", title: "Delete work block", onClick: () => removeWorkBlock(block.id) }, "\u00d7"),
+            ),
+          ),
+          block.open
+            ? h("textarea", {
+                className: "work-manual-textarea",
+                placeholder: "Write work manuals, procedures, notes, links, or templates...",
+                value: block.content,
+                onChange: (event) => updateWorkBlock(block.id, "content", event.target.value),
+              })
+            : null,
+        ),
+      ),
     ),
   );
 }
