@@ -170,6 +170,10 @@ button:disabled {
 }
 
 .nav-button {
+  position: relative;
+  isolation: isolate;
+  overflow: visible;
+  min-width: 112px;
   min-height: 32px;
   border: 1px solid rgba(70, 255, 242, 0.22);
   border-radius: 6px;
@@ -183,13 +187,46 @@ button:disabled {
   cursor: pointer;
 }
 
-.nav-button:hover,
-.nav-button.active {
+.nav-button:hover {
   border-color: rgba(70, 255, 242, 0.64);
   color: var(--cyan);
+  background:
+    linear-gradient(180deg, rgba(70, 255, 242, 0.18), rgba(183, 255, 60, 0.05)),
+    rgba(3, 14, 11, 0.92);
   box-shadow:
     0 0 0 1px rgba(70, 255, 242, 0.12),
     0 0 18px rgba(70, 255, 242, 0.15);
+}
+
+.nav-button.active,
+.nav-button[aria-current="page"] {
+  border-color: rgba(183, 255, 60, 0.96) !important;
+  background:
+    linear-gradient(180deg, rgba(70, 255, 242, 0.28), rgba(183, 255, 60, 0.2)),
+    rgba(3, 18, 18, 0.98) !important;
+  color: #f7feff !important;
+  text-shadow:
+    0 0 8px rgba(255, 255, 255, 0.58),
+    0 0 16px rgba(183, 255, 60, 0.46),
+    0 0 24px rgba(70, 255, 242, 0.34) !important;
+  box-shadow:
+    0 0 0 1px rgba(183, 255, 60, 0.5),
+    0 0 18px rgba(183, 255, 60, 0.34),
+    0 0 34px rgba(70, 255, 242, 0.24),
+    inset 0 0 18px rgba(70, 255, 242, 0.12) !important;
+}
+
+.nav-button.active::after,
+.nav-button[aria-current="page"]::after {
+  content: "";
+  position: absolute;
+  inset: -5px;
+  z-index: -1;
+  border-radius: 9px;
+  background:
+    radial-gradient(circle, rgba(183, 255, 60, 0.38), rgba(70, 255, 242, 0.18) 46%, transparent 72%);
+  opacity: 1;
+  pointer-events: none;
 }
 
 .eyebrow {
@@ -1208,6 +1245,12 @@ input::placeholder {
   box-shadow: 0 0 18px rgba(183, 255, 60, 0.14);
 }
 
+.memo-index-button.dragging {
+  opacity: 0.58;
+  transform: scale(0.94);
+  border-color: rgba(255, 188, 66, 0.64);
+}
+
 .memo-index-button.add-memo {
   border-color: rgba(70, 255, 242, 0.34);
   color: var(--cyan);
@@ -1287,7 +1330,7 @@ input::placeholder {
 .memo-card-grip {
   min-height: 46px;
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
   align-items: center;
   gap: 10px;
   border: 1px solid rgba(70, 255, 242, 0.16);
@@ -1345,6 +1388,14 @@ input::placeholder {
   opacity: 1;
 }
 
+.memo-reset-button {
+  width: auto;
+  min-width: 58px;
+  padding: 0 9px;
+  font-size: 0.66rem;
+  color: var(--amber);
+}
+
 .memo-card-columns,
 .memo-card-preview-grid {
   display: grid;
@@ -1361,6 +1412,50 @@ input::placeholder {
   height: 100%;
   min-height: 0;
   resize: none;
+}
+
+.memo-quick-split {
+  min-height: 40px;
+  display: grid;
+  grid-template-columns: minmax(0, var(--memo-split, 50%)) 12px minmax(0, 1fr);
+  gap: 0;
+}
+
+.memo-quick-split-gap {
+  width: 12px;
+  min-height: 100%;
+}
+
+.memo-split-editor {
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, var(--memo-split, 50%)) 12px minmax(0, 1fr);
+  gap: 0;
+  overflow: hidden;
+}
+
+.memo-split-textarea {
+  min-width: 0;
+}
+
+.memo-split-handle {
+  width: 12px;
+  height: 100%;
+  border: 0;
+  border-radius: 0;
+  background:
+    linear-gradient(90deg, transparent 0 4px, rgba(255, 216, 74, 0.5) 4px 8px, transparent 8px 100%),
+    rgba(1, 8, 10, 0.42);
+  cursor: col-resize;
+  padding: 0;
+  touch-action: none;
+}
+
+.memo-split-handle:hover,
+.memo-split-handle:active {
+  background:
+    linear-gradient(90deg, transparent 0 3px, rgba(255, 216, 74, 0.86) 3px 9px, transparent 9px 100%),
+    rgba(255, 188, 66, 0.08);
 }
 
 .memo-block-column {

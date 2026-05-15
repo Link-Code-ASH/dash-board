@@ -54,9 +54,9 @@ const defaultPresets = [
 
 function createDefaultMemoCards(globalMemos = {}) {
   return [
-    { id: "memo-life", title: "Life", leftText: globalMemos.life || "", rightText: "" },
-    { id: "memo-school", title: "School", leftText: globalMemos.school || "", rightText: "" },
-    { id: "memo-ideas", title: "Ideas", leftText: "", rightText: "" },
+    { id: "memo-life", title: "Life", leftText: globalMemos.life || "", leftTextExtra: "", rightText: "", rightTextExtra: "", memoSplits: { leftText: 50, rightText: 50 } },
+    { id: "memo-school", title: "School", leftText: globalMemos.school || "", leftTextExtra: "", rightText: "", rightTextExtra: "", memoSplits: { leftText: 50, rightText: 50 } },
+    { id: "memo-ideas", title: "Ideas", leftText: "", leftTextExtra: "", rightText: "", rightTextExtra: "", memoSplits: { leftText: 50, rightText: 50 } },
   ];
 }
 
@@ -131,6 +131,12 @@ function normalizeDateMarkers(markers) {
   }));
 }
 
+function clampNumber(value, min, max) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return min;
+  return Math.min(max, Math.max(min, number));
+}
+
 function normalizeMemos(memos) {
   const global = memos?.global && typeof memos.global === "object" ? memos.global : { life: "", school: "" };
   const sourceCards = Array.isArray(memos?.cards) && memos.cards.length ? memos.cards : createDefaultMemoCards(global);
@@ -138,9 +144,15 @@ function normalizeMemos(memos) {
     .filter((card) => card && card.id)
     .map((card, index) => ({
       id: card.id,
-      title: String(card.title || `Memo ${index + 1}`).slice(0, 32),
+      title: String(card.title == null ? `Memo ${index + 1}` : card.title).slice(0, 32),
       leftText: String(card.leftText ?? card.text ?? ""),
+      leftTextExtra: String(card.leftTextExtra || ""),
       rightText: String(card.rightText || ""),
+      rightTextExtra: String(card.rightTextExtra || ""),
+      memoSplits: {
+        leftText: clampNumber(card.memoSplits?.leftText ?? 50, 24, 76),
+        rightText: clampNumber(card.memoSplits?.rightText ?? 50, 24, 76),
+      },
     }));
   const safeCards = cards.length ? cards : createDefaultMemoCards(global);
   const activeMemoId = safeCards.some((card) => card.id === memos?.activeMemoId) ? memos.activeMemoId : safeCards[0].id;
@@ -161,7 +173,7 @@ function normalizeWork(work) {
   const normalizeBlocks = (blocks) =>
     blocks.map((block, index) => ({
       id: block.id || createKey("work"),
-      title: String(block.title || `Work ${index + 1}`),
+      title: String(block.title == null ? `Work ${index + 1}` : block.title),
       content: String(block.content || ""),
       open: block.open !== false,
     }));
@@ -169,7 +181,7 @@ function normalizeWork(work) {
     return {
       categories: work.categories.map((category, index) => ({
         id: category.id || createKey("work-category"),
-        title: String(category.title || `Category ${index + 1}`),
+        title: String(category.title == null ? `Category ${index + 1}` : category.title),
         open: category.open !== false,
         blocks: normalizeBlocks(Array.isArray(category.blocks) ? category.blocks : []),
       })),
@@ -739,22 +751,47 @@ function App() {
     });
   };
 
+  const moveMemoCard = (fromId, toId) => {
+    if (!fromId || !toId || fromId === toId) return;
+    saveData((draft) => {
+      const fromIndex = draft.memos.cards.findIndex((card) => card.id === fromId);
+      const toIndex = draft.memos.cards.findIndex((card) => card.id === toId);
+      if (fromIndex < 0 || toIndex < 0) return draft;
+      const [card] = draft.memos.cards.splice(fromIndex, 1);
+      draft.memos.cards.splice(toIndex, 0, card);
+      draft.memos.activeMemoId = card.id;
+      return draft;
+    });
+  };
+
   const updateMemoCard = (id, field, value) => {
     saveData((draft) => {
       const card = draft.memos.cards.find((item) => item.id === id);
       if (!card) return draft;
       if (field === "title") card.title = value;
       if (field === "leftText") card.leftText = value;
+      if (field === "leftTextExtra") card.leftTextExtra = value;
       if (field === "rightText") card.rightText = value;
+      if (field === "rightTextExtra") card.rightTextExtra = value;
+      if (field === "memoSplits") card.memoSplits = { ...(card.memoSplits || {}), ...value };
       if (id === "memo-life") draft.memos.global.life = card.leftText || "";
       if (id === "memo-school") draft.memos.global.school = card.leftText || "";
       return draft;
     });
   };
 
+  const resetMemoSplits = (id) => {
+    saveData((draft) => {
+      const card = draft.memos.cards.find((item) => item.id === id);
+      if (!card) return draft;
+      card.memoSplits = { leftText: 50, rightText: 50 };
+      return draft;
+    });
+  };
+
   const addMemoCard = () => {
     saveData((draft) => {
-      const card = { id: createKey("memo"), title: `Memo ${draft.memos.cards.length + 1}`, leftText: "", rightText: "" };
+      const card = { id: createKey("memo"), title: `Memo ${draft.memos.cards.length + 1}`, leftText: "", leftTextExtra: "", rightText: "", rightTextExtra: "", memoSplits: { leftText: 50, rightText: 50 } };
       draft.memos.cards.push(card);
       draft.memos.activeMemoId = card.id;
       return draft;
@@ -1064,9 +1101,7 @@ function App() {
   return h(
     "main",
     { className: "app-shell" },
-    h(AppNavigation, { activeView, setActiveView }),
-    activeView === "dashboard"
-      ? h(
+    h(
           React.Fragment,
           null,
           h(Topbar, { selectedDate, setSelectedDate, shiftDate }),
@@ -1084,7 +1119,9 @@ function App() {
         activeMemoId: data.memos.activeMemoId,
         addMemoCard,
         cards: data.memos.cards,
+        moveMemoCard,
         removeMemoCard,
+        resetMemoSplits,
         setActiveMemo,
         updateMemoCard,
       }),
@@ -1137,19 +1174,7 @@ function App() {
     }),
     h(HistoryPanel, { flaggedDate: data.flaggedDate, getDayTotal, onToggleFlag: toggleFlaggedDate, routineAttempts: data.routineAttempts, selectedDate }),
         )
-      : h(WorkView, {
-          addWorkBlock,
-          addWorkCategory,
-          moveWorkBlock,
-          moveWorkCategory,
-          removeWorkBlock,
-          removeWorkCategory,
-          toggleWorkCategory,
-          toggleWorkBlock,
-          updateWorkBlock,
-          updateWorkCategory,
-          work: data.work,
-        }),
+    ,
     h(SyncPanel, {
       forgetThisDevice,
       isOpen: openPanels.sync,
@@ -1179,7 +1204,6 @@ function App() {
 function AppNavigation({ activeView, setActiveView }) {
   const items = [
     { key: "dashboard", label: "Dashboard" },
-    { key: "work", label: "Work" },
   ];
   return h(
     "nav",
@@ -1194,6 +1218,7 @@ function AppNavigation({ activeView, setActiveView }) {
             className: `nav-button ${activeView === item.key ? "active" : ""}`,
             key: item.key,
             type: "button",
+            "aria-current": activeView === item.key ? "page" : undefined,
             onClick: () => setActiveView(item.key),
           },
           item.label,
@@ -1518,8 +1543,9 @@ function SchedulePanel({ calendar, selectedDate }) {
   );
 }
 
-function MemoPanel({ activeMemoId, addMemoCard, cards, removeMemoCard, setActiveMemo, updateMemoCard }) {
+function MemoPanel({ activeMemoId, addMemoCard, cards, moveMemoCard, removeMemoCard, resetMemoSplits, setActiveMemo, updateMemoCard }) {
   const [drag, setDrag] = useState({ active: false, startX: 0, deltaX: 0 });
+  const [dragMemoId, setDragMemoId] = useState("");
   const activeIndex = Math.max(0, cards.findIndex((card) => card.id === activeMemoId));
   const goToOffset = (offset) => {
     if (!cards.length) return;
@@ -1583,14 +1609,31 @@ function MemoPanel({ activeMemoId, addMemoCard, cards, removeMemoCard, setActive
                 onChange: (event) => updateMemoCard(card.id, "title", event.target.value),
                 disabled: !isActive,
               }),
+              h("button", { className: "mini-button memo-reset-button", type: "button", disabled: !isActive, title: "Reset memo widths", onClick: () => resetMemoSplits(card.id) }, "Reset"),
               h("button", { className: "mini-button danger", type: "button", disabled: cards.length <= 1 || !isActive, title: "Delete memo", onClick: () => removeMemoCard(card.id) }, "\u00d7"),
             ),
             isActive
               ? h(
                   "div",
                   { className: "memo-card-columns" },
-                  h(MemoBlockColumn, { cardId: card.id, field: "leftText", updateMemoCard, value: card.leftText || "" }),
-                  h(MemoBlockColumn, { cardId: card.id, field: "rightText", updateMemoCard, value: card.rightText || "" }),
+                  h(MemoBlockColumn, {
+                    cardId: card.id,
+                    extraField: "leftTextExtra",
+                    extraValue: card.leftTextExtra || "",
+                    field: "leftText",
+                    split: card.memoSplits?.leftText ?? 50,
+                    updateMemoCard,
+                    value: card.leftText || "",
+                  }),
+                  h(MemoBlockColumn, {
+                    cardId: card.id,
+                    extraField: "rightTextExtra",
+                    extraValue: card.rightTextExtra || "",
+                    field: "rightText",
+                    split: card.memoSplits?.rightText ?? 50,
+                    updateMemoCard,
+                    value: card.rightText || "",
+                  }),
                 )
               : h(
                   "div",
@@ -1609,9 +1652,26 @@ function MemoPanel({ activeMemoId, addMemoCard, cards, removeMemoCard, setActive
           h(
             "button",
             {
-              className: `memo-index-button ${index === activeIndex ? "active" : ""}`,
+              className: `memo-index-button ${index === activeIndex ? "active" : ""} ${dragMemoId === card.id ? "dragging" : ""}`,
+              draggable: true,
               key: card.id,
               type: "button",
+              onDragStart: (event) => {
+                setDragMemoId(card.id);
+                event.dataTransfer.effectAllowed = "move";
+                event.dataTransfer.setData("text/memo-card", card.id);
+              },
+              onDragOver: (event) => {
+                event.preventDefault();
+                event.dataTransfer.dropEffect = "move";
+              },
+              onDrop: (event) => {
+                event.preventDefault();
+                const fromId = event.dataTransfer.getData("text/memo-card") || dragMemoId;
+                moveMemoCard(fromId, card.id);
+                setDragMemoId("");
+              },
+              onDragEnd: () => setDragMemoId(""),
               onClick: () => setActiveMemo(card.id),
             },
             index + 1,
@@ -1635,38 +1695,105 @@ function growMemoTextarea(textarea) {
   textarea.style.height = `${textarea.scrollHeight}px`;
 }
 
-function MemoBlockColumn({ cardId, field, updateMemoCard, value }) {
+function MemoBlockColumn({ cardId, extraField, extraValue, field, split, updateMemoCard, value }) {
   const [quickMemo, setQuickMemo] = useState("");
-  const addQuickMemo = () => {
-    const text = quickMemo.trim();
+  const [quickExtraMemo, setQuickExtraMemo] = useState("");
+  const splitRef = useRef(null);
+  const addQuickMemo = (targetField, currentValue, textValue, clearText) => {
+    const text = textValue.trim();
     if (!text) return;
-    updateMemoCard(cardId, field, value ? `${text}\n${value}` : text);
-    setQuickMemo("");
+    const taggedText = text.startsWith("#") ? text : `# ${text}`;
+    updateMemoCard(cardId, targetField, currentValue ? `${taggedText}\n${currentValue}` : taggedText);
+    clearText("");
+  };
+  const startResize = (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    const container = splitRef.current;
+    if (!container) return;
+    const rect = container.getBoundingClientRect();
+    const pointerId = event.pointerId;
+    event.currentTarget.setPointerCapture?.(pointerId);
+    const move = (moveEvent) => {
+      const next = clampNumber(((moveEvent.clientX - rect.left) / rect.width) * 100, 24, 76);
+      updateMemoCard(cardId, "memoSplits", { [field]: Math.round(next) });
+    };
+    const stop = () => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", stop);
+      window.removeEventListener("pointercancel", stop);
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", stop);
+    window.addEventListener("pointercancel", stop);
   };
   return h(
     "section",
     { className: "memo-block-column" },
-    h("textarea", {
-      className: "memo-quick-textarea",
-      placeholder: "Quick add...",
-      rows: 1,
-      value: quickMemo,
-      onChange: (event) => setQuickMemo(event.target.value),
-      onKeyDown: (event) => {
-        event.stopPropagation();
-        if (event.key === "Enter" && !event.shiftKey) {
-          event.preventDefault();
-          addQuickMemo();
-        }
+    h(
+      "div",
+      {
+        className: "memo-quick-split",
+        style: { "--memo-split": `${clampNumber(split, 24, 76)}%` },
       },
-    }),
-    h("textarea", {
-      className: "memo-large-textarea",
-      placeholder: "Write freely...",
-      value,
-      onChange: (event) => updateMemoCard(cardId, field, event.target.value),
-      onKeyDown: (event) => event.stopPropagation(),
-    }),
+      h("textarea", {
+        className: "memo-quick-textarea",
+        placeholder: "Quick add...",
+        rows: 1,
+        value: quickMemo,
+        onChange: (event) => setQuickMemo(event.target.value),
+        onKeyDown: (event) => {
+          event.stopPropagation();
+          if (event.key === "Enter" && !event.shiftKey) {
+            event.preventDefault();
+            addQuickMemo(field, value, quickMemo, setQuickMemo);
+          }
+        },
+      }),
+      h("div", { className: "memo-quick-split-gap" }),
+      h("textarea", {
+        className: "memo-quick-textarea",
+        placeholder: "Quick add...",
+        rows: 1,
+        value: quickExtraMemo,
+        onChange: (event) => setQuickExtraMemo(event.target.value),
+        onKeyDown: (event) => {
+          event.stopPropagation();
+          if (event.key === "Enter" && !event.shiftKey) {
+            event.preventDefault();
+            addQuickMemo(extraField, extraValue, quickExtraMemo, setQuickExtraMemo);
+          }
+        },
+      }),
+    ),
+    h(
+      "div",
+      {
+        className: "memo-split-editor",
+        ref: splitRef,
+        style: { "--memo-split": `${clampNumber(split, 24, 76)}%` },
+      },
+      h("textarea", {
+        className: "memo-large-textarea memo-split-textarea",
+        placeholder: "Write freely...",
+        value,
+        onChange: (event) => updateMemoCard(cardId, field, event.target.value),
+        onKeyDown: (event) => event.stopPropagation(),
+      }),
+      h("button", {
+        "aria-label": "Resize memo columns",
+        className: "memo-split-handle",
+        onPointerDown: startResize,
+        type: "button",
+      }),
+      h("textarea", {
+        className: "memo-large-textarea memo-split-textarea",
+        placeholder: "Write freely...",
+        value: extraValue,
+        onChange: (event) => updateMemoCard(cardId, extraField, event.target.value),
+        onKeyDown: (event) => event.stopPropagation(),
+      }),
+    ),
   );
 }
 
@@ -2095,6 +2222,20 @@ function CalendarPanel({ calendar, isOpen, onToggle, openMonths, selectedDate, s
   });
 }
 
+function handleCalendarWheel(event) {
+  event.preventDefault();
+  event.stopPropagation();
+  if (Math.abs(event.deltaX) > Math.abs(event.deltaY)) {
+    const scrollArea = event.target.closest(".calendar-week-scroll");
+    if (!scrollArea) return;
+    const maxScrollLeft = scrollArea.scrollWidth - scrollArea.clientWidth;
+    if (maxScrollLeft <= 0) return;
+    scrollArea.scrollLeft = clampNumber(scrollArea.scrollLeft + event.deltaX, 0, maxScrollLeft);
+    return;
+  }
+  window.scrollBy({ top: event.deltaY, left: 0, behavior: "auto" });
+}
+
 function MonthDays({ calendar, monthIndex, selectedDate, updateCalendarNote, year }) {
   const todayKey = toDateKey(new Date());
   const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
@@ -2108,7 +2249,7 @@ function MonthDays({ calendar, monthIndex, selectedDate, updateCalendarNote, yea
   const weeks = Array.from({ length: Math.ceil(cells.length / 7) }, (_, index) => cells.slice(index * 7, index * 7 + 7));
   return h(
     "div",
-    { className: "calendar-weeks" },
+    { className: "calendar-weeks", onWheel: handleCalendarWheel },
     weeks.map((week, weekIndex) =>
       h(
       "div",
@@ -2127,7 +2268,13 @@ function MonthDays({ calendar, monthIndex, selectedDate, updateCalendarNote, yea
             "label",
             { className: `calendar-day ${dateKey === selectedDate ? "selected" : ""} ${dateKey === todayKey ? "today" : ""}`, key: dateKey },
             h("span", { className: "calendar-date" }, h("b", null, day), h("i", null, weekday)),
-            h("textarea", { maxLength: 600, placeholder: "Schedule", value: calendar[dateKey] || "", onChange: (event) => updateCalendarNote(dateKey, event.target.value), onKeyDown: (event) => event.stopPropagation() }),
+            h("textarea", {
+              maxLength: 600,
+              placeholder: "Schedule",
+              value: calendar[dateKey] || "",
+              onChange: (event) => updateCalendarNote(dateKey, event.target.value),
+              onKeyDown: (event) => event.stopPropagation(),
+            }),
           );
         }),
       ),
