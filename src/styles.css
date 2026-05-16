@@ -3419,10 +3419,11 @@ input::placeholder {
     display: block;
     overflow-x: scroll;
     overflow-y: visible;
-    overscroll-behavior: contain;
+    overscroll-behavior-x: contain;
+    overscroll-behavior-y: auto;
     -webkit-overflow-scrolling: touch;
     padding-bottom: 6px;
-    touch-action: pan-x;
+    touch-action: auto;
   }
 
   .calendar-weekdays,
@@ -3523,8 +3524,24 @@ input::placeholder {
   }
 
   .memo-card-grip {
-    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-columns: auto minmax(0, 1fr) auto auto;
     gap: 7px;
+  }
+
+  .memo-card-grip span {
+    min-width: 26px;
+    font-size: 0.76rem;
+  }
+
+  .memo-reset-button {
+    min-width: 48px;
+    padding: 0 7px;
+    font-size: 0.6rem;
+  }
+
+  .memo-card-grip .mini-button.danger {
+    width: 30px;
+    min-width: 30px;
   }
 
   .memo-card.active .memo-card-columns textarea,
@@ -3565,9 +3582,10 @@ input::placeholder {
     display: block;
     overflow-x: scroll;
     overflow-y: visible;
-    overscroll-behavior: contain;
+    overscroll-behavior-x: contain;
+    overscroll-behavior-y: auto;
     -webkit-overflow-scrolling: touch;
-    touch-action: pan-x;
+    touch-action: auto;
   }
 
   .calendar-weekdays,
