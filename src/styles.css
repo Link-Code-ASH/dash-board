@@ -1340,6 +1340,7 @@ input::placeholder {
     rgba(1, 8, 10, 0.66);
   padding: 8px;
   cursor: grab;
+  overflow: hidden;
 }
 
 .memo-stack.dragging .memo-card-grip {
@@ -1394,6 +1395,7 @@ input::placeholder {
   padding: 0 9px;
   font-size: 0.66rem;
   color: var(--amber);
+  flex-shrink: 0;
 }
 
 .memo-card-columns,
@@ -3194,6 +3196,7 @@ input::placeholder {
   display: grid;
   gap: 10px;
   padding: 10px;
+  touch-action: pan-y;
 }
 
 .calendar-week-scroll {
@@ -3203,9 +3206,11 @@ input::placeholder {
   display: block;
   overflow-x: auto;
   overflow-y: visible;
-  overscroll-behavior: contain;
+  overscroll-behavior-x: contain;
+  overscroll-behavior-y: auto;
   -webkit-overflow-scrolling: touch;
   padding-bottom: 4px;
+  touch-action: pan-x pan-y;
 }
 
 .calendar-weekdays,
@@ -3524,8 +3529,10 @@ input::placeholder {
   }
 
   .memo-card-grip {
-    grid-template-columns: auto minmax(0, 1fr) auto auto;
-    gap: 7px;
+    grid-template-columns: 26px minmax(0, 1fr) 44px 28px;
+    gap: 5px;
+    min-height: 42px;
+    padding: 7px;
   }
 
   .memo-card-grip span {
@@ -3534,14 +3541,22 @@ input::placeholder {
   }
 
   .memo-reset-button {
-    min-width: 48px;
-    padding: 0 7px;
+    width: 44px;
+    min-width: 44px;
+    height: 28px;
+    padding: 0;
     font-size: 0.6rem;
   }
 
   .memo-card-grip .mini-button.danger {
-    width: 30px;
-    min-width: 30px;
+    width: 28px;
+    min-width: 28px;
+    height: 28px;
+  }
+
+  .memo-card-grip input {
+    font-size: 0.78rem;
+    letter-spacing: 0.08em;
   }
 
   .memo-card.active .memo-card-columns textarea,
