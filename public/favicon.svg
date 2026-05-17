@@ -1,31 +1,108 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Dashboard icon">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Skeuomorphic orbit planner icon">
   <defs>
-    <linearGradient id="edge" x1="8" y1="8" x2="56" y2="56" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#46fff2"/>
-      <stop offset="0.52" stop-color="#ff2db8"/>
-      <stop offset="1" stop-color="#b7ff3c"/>
+    <radialGradient id="desk" cx="38%" cy="18%" r="82%">
+      <stop stop-color="#fffaf0"/>
+      <stop offset="0.48" stop-color="#eef4f8"/>
+      <stop offset="1" stop-color="#b8c5d3"/>
+    </radialGradient>
+    <linearGradient id="rim" x1="82" y1="58" x2="430" y2="454" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#ffffff"/>
+      <stop offset="0.32" stop-color="#dbe8f4"/>
+      <stop offset="0.65" stop-color="#8fa3b8"/>
+      <stop offset="1" stop-color="#f9fafb"/>
     </linearGradient>
-    <linearGradient id="core" x1="18" y1="14" x2="48" y2="52" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#0c2227"/>
-      <stop offset="1" stop-color="#03080b"/>
+    <radialGradient id="glass" cx="34%" cy="22%" r="78%">
+      <stop stop-color="#ffffff" stop-opacity="0.92"/>
+      <stop offset="0.28" stop-color="#eef8ff" stop-opacity="0.72"/>
+      <stop offset="0.7" stop-color="#aac4dd" stop-opacity="0.34"/>
+      <stop offset="1" stop-color="#38506a" stop-opacity="0.42"/>
+    </radialGradient>
+    <radialGradient id="core" cx="34%" cy="24%" r="75%">
+      <stop stop-color="#f6fff9"/>
+      <stop offset="0.36" stop-color="#78e6b0"/>
+      <stop offset="1" stop-color="#14885e"/>
+    </radialGradient>
+    <linearGradient id="paper" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#fffaf0"/>
+      <stop offset="1" stop-color="#f0dcc0"/>
     </linearGradient>
-    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
-      <feGaussianBlur stdDeviation="2.2" result="blur"/>
-      <feMerge>
-        <feMergeNode in="blur"/>
-        <feMergeNode in="SourceGraphic"/>
-      </feMerge>
+    <linearGradient id="calendar" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#dceeff"/>
+    </linearGradient>
+    <linearGradient id="pinkButton" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#ffd0e8"/>
+      <stop offset="0.48" stop-color="#f472b6"/>
+      <stop offset="1" stop-color="#be185d"/>
+    </linearGradient>
+    <filter id="drop" x="-22%" y="-22%" width="144%" height="150%">
+      <feDropShadow dx="0" dy="18" stdDeviation="18" flood-color="#1e293b" flood-opacity="0.28"/>
+    </filter>
+    <filter id="smallDrop" x="-35%" y="-35%" width="170%" height="175%">
+      <feDropShadow dx="0" dy="7" stdDeviation="7" flood-color="#0f172a" flood-opacity="0.28"/>
+    </filter>
+    <filter id="innerShadow">
+      <feOffset dx="0" dy="4"/>
+      <feGaussianBlur stdDeviation="5" result="offset-blur"/>
+      <feComposite operator="out" in="SourceGraphic" in2="offset-blur" result="inverse"/>
+      <feFlood flood-color="#0f172a" flood-opacity="0.24" result="color"/>
+      <feComposite operator="in" in="color" in2="inverse" result="shadow"/>
+      <feComposite operator="over" in="shadow" in2="SourceGraphic"/>
     </filter>
   </defs>
-  <rect width="64" height="64" rx="14" fill="#02070a"/>
-  <path d="M8 18 18 8h28l10 10v28L46 56H18L8 46Z" fill="url(#core)" stroke="url(#edge)" stroke-width="3"/>
-  <g filter="url(#glow)">
-    <path d="M18 21h28M18 32h28M18 43h28" stroke="#12343a" stroke-width="3" stroke-linecap="round"/>
-    <path d="M19 43 27 33l7 5 11-16" fill="none" stroke="#b7ff3c" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-    <circle cx="19" cy="43" r="3.2" fill="#46fff2"/>
-    <circle cx="27" cy="33" r="3.2" fill="#ff2db8"/>
-    <circle cx="34" cy="38" r="3.2" fill="#ffd84a"/>
-    <circle cx="45" cy="22" r="3.2" fill="#46fff2"/>
+
+  <rect width="512" height="512" rx="110" fill="url(#desk)"/>
+  <ellipse cx="256" cy="411" rx="155" ry="34" fill="#64748b" opacity="0.22"/>
+
+  <g filter="url(#drop)">
+    <circle cx="256" cy="246" r="171" fill="url(#rim)"/>
+    <circle cx="256" cy="246" r="153" fill="#d8e2ec"/>
+    <circle cx="256" cy="246" r="140" fill="url(#glass)" filter="url(#innerShadow)"/>
   </g>
-  <path d="M13 18h6M45 51h6M13 46v-6M51 18v6" stroke="#46fff2" stroke-width="2" stroke-linecap="round" opacity="0.8"/>
+
+  <path d="M139 246c55-76 179-78 235-2" fill="none" stroke="#ffffff" stroke-width="11" stroke-linecap="round" opacity="0.5"/>
+  <path d="M131 305c64 59 189 62 251 4" fill="none" stroke="#718096" stroke-width="8" stroke-linecap="round" opacity="0.28"/>
+  <path d="M124 246c58-118 210-117 264-1" fill="none" stroke="#94a3b8" stroke-width="5" stroke-linecap="round" opacity="0.52"/>
+  <path d="M102 282c78 106 231 106 309 2" fill="none" stroke="#94a3b8" stroke-width="5" stroke-linecap="round" opacity="0.38"/>
+
+  <g filter="url(#smallDrop)">
+    <circle cx="256" cy="246" r="58" fill="url(#core)"/>
+    <circle cx="238" cy="222" r="18" fill="#ffffff" opacity="0.34"/>
+    <path d="M231 247l18 18 36-45" fill="none" stroke="#ffffff" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+
+  <g transform="translate(96 152) rotate(-11)" filter="url(#smallDrop)">
+    <rect width="78" height="88" rx="14" fill="url(#calendar)" stroke="#d7e5f4" stroke-width="4"/>
+    <path d="M0 27h78" stroke="#60a5fa" stroke-width="8"/>
+    <rect x="17" y="-7" width="10" height="27" rx="5" fill="#3b82f6"/>
+    <rect x="51" y="-7" width="10" height="27" rx="5" fill="#3b82f6"/>
+    <rect x="16" y="43" width="15" height="15" rx="4" fill="#bfdbfe"/>
+    <rect x="40" y="43" width="15" height="15" rx="4" fill="#bfdbfe"/>
+    <path d="M19 72l10 9 25-28" fill="none" stroke="#16a34a" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+
+  <g transform="translate(333 135) rotate(12)" filter="url(#smallDrop)">
+    <rect width="86" height="72" rx="15" fill="url(#paper)" stroke="#e7cfae" stroke-width="4"/>
+    <path d="M19 24h47M19 39h35M19 54h43" stroke="#9a7b5a" stroke-width="6" stroke-linecap="round" opacity="0.7"/>
+    <circle cx="13" cy="24" r="4" fill="#f59e0b"/>
+    <circle cx="13" cy="39" r="4" fill="#34d399"/>
+    <circle cx="13" cy="54" r="4" fill="#60a5fa"/>
+  </g>
+
+  <g transform="translate(91 300) rotate(10)" filter="url(#smallDrop)">
+    <rect width="88" height="70" rx="16" fill="#fff7ed" stroke="#f2c68f" stroke-width="4"/>
+    <path d="M22 34l15 14 31-37" fill="none" stroke="#f97316" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M18 55h52" stroke="#c08457" stroke-width="5" stroke-linecap="round" opacity="0.45"/>
+  </g>
+
+  <g transform="translate(340 303) rotate(-9)" filter="url(#smallDrop)">
+    <circle cx="39" cy="39" r="39" fill="url(#pinkButton)" stroke="#ffffff" stroke-width="5"/>
+    <path d="M39 17v23l16 12" fill="none" stroke="#ffffff" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="39" cy="39" r="6" fill="#fff"/>
+    <path d="M18 18c12-11 30-13 43-1" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" opacity="0.45"/>
+  </g>
+
+  <path d="M145 102c54-35 146-45 218 2" fill="none" stroke="#ffffff" stroke-width="14" stroke-linecap="round" opacity="0.5"/>
+  <circle cx="181" cy="94" r="6" fill="#ffffff" opacity="0.68"/>
+  <circle cx="205" cy="82" r="4" fill="#ffffff" opacity="0.52"/>
 </svg>
