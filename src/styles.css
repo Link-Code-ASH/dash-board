@@ -697,7 +697,7 @@ input[type="date"] {
 
 .carry-detail {
   display: grid !important;
-  grid-template-columns: minmax(0, 1fr) auto minmax(42px, auto);
+  grid-template-columns: minmax(52px, 1fr) auto minmax(42px, auto);
   align-items: center;
   gap: 8px;
 }
@@ -708,9 +708,14 @@ input[type="date"] {
 
 .carry-controls {
   display: inline-grid;
-  grid-template-columns: 24px auto 24px;
+  grid-template-columns: 28px;
+  grid-template-areas:
+    "plus"
+    "reset"
+    "minus";
   align-items: center;
   gap: 4px;
+  justify-self: end;
 }
 
 .carry-reset-button,
@@ -726,12 +731,16 @@ input[type="date"] {
 }
 
 .carry-reset-button {
-  padding: 0 8px;
+  grid-area: reset;
+  min-height: 24px;
+  width: 28px;
+  padding: 0;
   text-transform: uppercase;
 }
 
 .carry-adjust-button {
-  width: 24px;
+  width: 28px;
+  min-height: 22px;
   padding: 0;
   display: inline-grid;
   place-items: center;
@@ -741,6 +750,14 @@ input[type="date"] {
     linear-gradient(180deg, rgba(70, 255, 242, 0.12), rgba(255, 45, 184, 0.04)),
     rgba(5, 12, 14, 0.82);
   font-size: 0.85rem;
+}
+
+.carry-adjust-button:first-child {
+  grid-area: minus;
+}
+
+.carry-adjust-button:last-child {
+  grid-area: plus;
 }
 
 .carry-reset-button:hover,
