@@ -699,29 +699,60 @@ input[type="date"] {
   display: grid !important;
   grid-template-columns: minmax(0, 1fr) auto minmax(42px, auto);
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
 .carry-detail strong {
   justify-self: end;
 }
 
-.carry-reset-button {
+.carry-controls {
+  display: inline-grid;
+  grid-template-columns: 24px auto 24px;
+  align-items: center;
+  gap: 4px;
+}
+
+.carry-reset-button,
+.carry-adjust-button {
   min-height: 24px;
   border: 1px solid rgba(255, 79, 109, 0.28);
   border-radius: 6px;
   background: rgba(255, 79, 109, 0.08);
   color: var(--minus);
-  padding: 0 8px;
   font-size: 0.68rem;
   font-weight: 950;
   line-height: 1;
+}
+
+.carry-reset-button {
+  padding: 0 8px;
   text-transform: uppercase;
 }
 
-.carry-reset-button:hover {
+.carry-adjust-button {
+  width: 24px;
+  padding: 0;
+  display: inline-grid;
+  place-items: center;
+  color: var(--cyan);
+  border-color: rgba(70, 255, 242, 0.28);
+  background:
+    linear-gradient(180deg, rgba(70, 255, 242, 0.12), rgba(255, 45, 184, 0.04)),
+    rgba(5, 12, 14, 0.82);
+  font-size: 0.85rem;
+}
+
+.carry-reset-button:hover,
+.carry-adjust-button:hover {
   border-color: rgba(255, 79, 109, 0.52);
   box-shadow: 0 0 14px rgba(255, 79, 109, 0.12);
+}
+
+.carry-adjust-button:hover {
+  color: #fff;
+  border-color: rgba(70, 255, 242, 0.52);
+  box-shadow: 0 0 14px rgba(70, 255, 242, 0.12);
 }
 
 .entry-form,

@@ -209,6 +209,7 @@ function createFallbackState() {
     routineAttempts: {},
     flaggedDate: "",
     carryResetDate: "",
+    carryAdjustment: 0,
     presets: clonePresets(),
     categories,
     weeklyPlan: createEmptyWeeklyPlan(categories),
@@ -228,6 +229,7 @@ function normalizeState(source) {
     routineAttempts: source?.routineAttempts && typeof source.routineAttempts === "object" ? source.routineAttempts : {},
     flaggedDate: source?.flaggedDate || "",
     carryResetDate: source?.carryResetDate || "",
+    carryAdjustment: scoreNumber(source?.carryAdjustment, 0),
     presets: normalizePresets(source?.presets),
     categories,
     weeklyPlan: normalizeWeeklyPlan(source?.weeklyPlan, categories),
@@ -661,12 +663,14 @@ function App() {
 
   const getEntries = (dateKey = selectedDate) => (Array.isArray(data.days[dateKey]) ? data.days[dateKey] : []);
   const getDayTotal = (dateKey) => getEntries(dateKey).reduce((sum, entry) => sum + entry.score, 0);
-  const getCarryTotal = () =>
-    Object.entries(data.days).reduce((sum, [key, dayEntries]) => {
+  const getCarryTotal = () => {
+    const carryFromEntries = Object.entries(data.days).reduce((sum, [key, dayEntries]) => {
       if (key >= selectedDate || !Array.isArray(dayEntries)) return sum;
       if (data.carryResetDate && selectedDate >= data.carryResetDate && key < data.carryResetDate) return sum;
       return sum + dayEntries.reduce((daySum, entry) => daySum + entry.score, 0);
     }, 0);
+    return carryFromEntries + scoreNumber(data.carryAdjustment, 0);
+  };
 
   const scoreInfo = useMemo(() => {
     const plus = entries.filter((entry) => entry.score > 0).reduce((sum, entry) => sum + entry.score, 0);
@@ -726,6 +730,14 @@ function App() {
   const resetCarry = () => {
     saveData((draft) => {
       draft.carryResetDate = selectedDate;
+      draft.carryAdjustment = 0;
+      return draft;
+    });
+  };
+
+  const adjustCarry = (amount) => {
+    saveData((draft) => {
+      draft.carryAdjustment = scoreNumber(draft.carryAdjustment, 0) + amount;
       return draft;
     });
   };
@@ -1115,7 +1127,7 @@ function App() {
       h(
         "div",
         { className: "daily-left-rail" },
-        h(ScorePanel, { entryCount: entries.length, onResetCarry: resetCarry, onToggleAttempt: toggleRoutineAttempt, routineTried, scoreInfo }),
+        h(ScorePanel, { entryCount: entries.length, onAdjustCarry: adjustCarry, onResetCarry: resetCarry, onToggleAttempt: toggleRoutineAttempt, routineTried, scoreInfo }),
         h(DateMarkerPanel, { dateMarkers: data.dateMarkers, selectedDate, updateDateMarker }),
       ),
       h(MemoPanel, {
@@ -1800,7 +1812,7 @@ function MemoBlockColumn({ cardId, extraField, extraValue, field, split, updateM
   );
 }
 
-function ScorePanel({ entryCount, onResetCarry, onToggleAttempt, routineTried, scoreInfo }) {
+function ScorePanel({ entryCount, onAdjustCarry, onResetCarry, onToggleAttempt, routineTried, scoreInfo }) {
   const totalClass = scoreInfo.total < 0 ? "negative" : scoreInfo.total === 0 ? "neutral" : "";
   const fillClass = scoreInfo.total > 0 ? "positive" : scoreInfo.total < 0 ? "negative" : "neutral";
   return h(
@@ -1832,7 +1844,13 @@ function ScorePanel({ entryCount, onResetCarry, onToggleAttempt, routineTried, s
         "div",
         { className: "carry-detail" },
         h("span", { className: "detail-label" }, "Carry"),
-        h("button", { className: "carry-reset-button", type: "button", title: "Reset Carry", onClick: onResetCarry }, "Reset"),
+        h(
+          "div",
+          { className: "carry-controls" },
+          h("button", { className: "carry-adjust-button", type: "button", title: "Decrease Carry", "aria-label": "Decrease Carry", onClick: () => onAdjustCarry(-1) }, "-"),
+          h("button", { className: "carry-reset-button", type: "button", title: "Reset Carry", onClick: onResetCarry }, "Reset"),
+          h("button", { className: "carry-adjust-button", type: "button", title: "Increase Carry", "aria-label": "Increase Carry", onClick: () => onAdjustCarry(1) }, "+"),
+        ),
         h("strong", null, formatScore(scoreInfo.carry)),
       ),
       h("div", null, h("span", { className: "detail-label" }, "Plus"), h("strong", null, formatScore(scoreInfo.plus))),
