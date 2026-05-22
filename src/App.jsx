@@ -830,12 +830,14 @@ function App() {
     });
   };
 
-  const movePreset = (index, direction) => {
+  const movePreset = (fromKey, toKey) => {
+    if (!fromKey || !toKey || fromKey === toKey) return;
     saveData((draft) => {
-      const nextIndex = index + direction;
-      if (nextIndex < 0 || nextIndex >= draft.presets.length) return draft;
-      const [preset] = draft.presets.splice(index, 1);
-      draft.presets.splice(nextIndex, 0, preset);
+      const fromIndex = draft.presets.findIndex((preset) => preset.key === fromKey);
+      const toIndex = draft.presets.findIndex((preset) => preset.key === toKey);
+      if (fromIndex < 0 || toIndex < 0) return draft;
+      const [preset] = draft.presets.splice(fromIndex, 1);
+      draft.presets.splice(toIndex, 0, preset);
       return draft;
     });
   };
@@ -867,13 +869,14 @@ function App() {
     });
   };
 
-  const moveCategory = (key, direction) => {
+  const moveCategory = (fromKey, toKey) => {
+    if (!fromKey || !toKey || fromKey === toKey) return;
     saveData((draft) => {
-      const index = draft.categories.findIndex((category) => category.key === key);
-      const nextIndex = index + direction;
-      if (index < 0 || nextIndex < 0 || nextIndex >= draft.categories.length) return draft;
-      const [category] = draft.categories.splice(index, 1);
-      draft.categories.splice(nextIndex, 0, category);
+      const fromIndex = draft.categories.findIndex((category) => category.key === fromKey);
+      const toIndex = draft.categories.findIndex((category) => category.key === toKey);
+      if (fromIndex < 0 || toIndex < 0) return draft;
+      const [category] = draft.categories.splice(fromIndex, 1);
+      draft.categories.splice(toIndex, 0, category);
       return draft;
     });
   };
@@ -1996,6 +1999,7 @@ function PlanCard({ label, nScore, onToggle, scoreRange, selectedChoice, value, 
 }
 
 function DailyPanel({ addPreset, isOpen, movePreset, onToggle, presets, removePreset, updatePreset }) {
+  const [dragPresetKey, setDragPresetKey] = useState("");
   return h(CollapsiblePanel, {
     className: "quick-panel",
     controls: "presetGrid",
@@ -2011,12 +2015,35 @@ function DailyPanel({ addPreset, isOpen, movePreset, onToggle, presets, removePr
         presets.map((preset, index) =>
           h(
             "article",
-            { className: "preset-card", key: preset.key },
+            {
+              className: `preset-card ${dragPresetKey === preset.key ? "dragging" : ""}`,
+              draggable: true,
+              key: preset.key,
+              onDragStart: (event) => {
+                if (panelClickIsInteractive(event.target)) {
+                  event.preventDefault();
+                  return;
+                }
+                setDragPresetKey(preset.key);
+                event.dataTransfer.effectAllowed = "move";
+                event.dataTransfer.setData("text/daily-preset", preset.key);
+              },
+              onDragOver: (event) => {
+                event.preventDefault();
+                event.dataTransfer.dropEffect = "move";
+              },
+              onDrop: (event) => {
+                event.preventDefault();
+                const fromKey = event.dataTransfer.getData("text/daily-preset") || dragPresetKey;
+                movePreset(fromKey, preset.key);
+                setDragPresetKey("");
+              },
+              onDragEnd: () => setDragPresetKey(""),
+            },
+            h("span", { className: "drag-handle", title: "Drag to reorder", "aria-hidden": "true" }, "\u22ee\u22ee"),
             h("input", { className: "preset-name-input", type: "text", maxLength: 32, "aria-label": "Daily name", value: preset.name, onChange: (event) => updatePreset(index, "name", event.target.value) }),
             h("label", { className: "score-field positive-score", title: "Y score" }, h("input", { className: "preset-score-input y-score", type: "text", inputMode: "numeric", value: preset.yScore, onChange: (event) => updatePreset(index, "yScore", event.target.value) })),
             h("label", { className: "score-field negative-score", title: "N score" }, h("input", { className: "preset-score-input n-score", type: "text", inputMode: "numeric", value: preset.nScore, onChange: (event) => updatePreset(index, "nScore", event.target.value) })),
-            h("button", { className: "mini-button preset-up", type: "button", disabled: index === 0, onClick: () => movePreset(index, -1) }, "\u2191"),
-            h("button", { className: "mini-button preset-down", type: "button", disabled: index === presets.length - 1, onClick: () => movePreset(index, 1) }, "\u2193"),
             h("button", { className: "mini-button danger", type: "button", onClick: () => removePreset(index) }, "\u00d7"),
           ),
         ),
@@ -2026,6 +2053,7 @@ function DailyPanel({ addPreset, isOpen, movePreset, onToggle, presets, removePr
 }
 
 function WeeklyPanel({ addCategory, categories, isOpen, moveCategory, onToggle, removeCategory, selectedDate, updateCategory, updateWeeklyPlan, weeklyPlan }) {
+  const [dragCategoryKey, setDragCategoryKey] = useState("");
   const selectedWeekday = getWeekdayKey(selectedDate);
   return h(CollapsiblePanel, {
     className: "weekly-panel",
@@ -2044,15 +2072,38 @@ function WeeklyPanel({ addCategory, categories, isOpen, moveCategory, onToggle, 
         ...categories.flatMap((category, index) => [
           h(
             "div",
-            { className: "weekly-category", key: `${category.key}-label` },
+            {
+              className: `weekly-category ${dragCategoryKey === category.key ? "dragging" : ""}`,
+              draggable: true,
+              key: `${category.key}-label`,
+              onDragStart: (event) => {
+                if (panelClickIsInteractive(event.target)) {
+                  event.preventDefault();
+                  return;
+                }
+                setDragCategoryKey(category.key);
+                event.dataTransfer.effectAllowed = "move";
+                event.dataTransfer.setData("text/weekly-category", category.key);
+              },
+              onDragOver: (event) => {
+                event.preventDefault();
+                event.dataTransfer.dropEffect = "move";
+              },
+              onDrop: (event) => {
+                event.preventDefault();
+                const fromKey = event.dataTransfer.getData("text/weekly-category") || dragCategoryKey;
+                moveCategory(fromKey, category.key);
+                setDragCategoryKey("");
+              },
+              onDragEnd: () => setDragCategoryKey(""),
+            },
+            h("span", { className: "drag-handle", title: "Drag to reorder", "aria-hidden": "true" }, "\u22ee\u22ee"),
             h("input", { className: "category-name-input", type: "text", maxLength: 24, value: category.label, onChange: (event) => updateCategory(category.key, "label", event.target.value) }),
             h("label", { className: `score-field y-field ${isRangeCategory(category) ? "range-score" : "positive-score"}`, title: isRangeCategory(category) ? "Y range" : "Y score" }, h("input", { className: "category-score-input y-score", type: "text", inputMode: isRangeCategory(category) ? "text" : "numeric", value: category.yScore, onChange: (event) => updateCategory(category.key, "yScore", event.target.value) })),
             h("label", { className: "score-field n-field negative-score", title: "N score" }, h("input", { className: "category-score-input n-score", type: "text", inputMode: "numeric", value: category.nScore, onChange: (event) => updateCategory(category.key, "nScore", event.target.value) })),
             h(
               "div",
               { className: "category-actions" },
-              h("button", { className: "mini-button", type: "button", disabled: index === 0, onClick: () => moveCategory(category.key, -1) }, "\u2191"),
-              h("button", { className: "mini-button", type: "button", disabled: index === categories.length - 1, onClick: () => moveCategory(category.key, 1) }, "\u2193"),
               h("button", { className: "mini-button danger", type: "button", disabled: categories.length <= 1, onClick: () => removeCategory(category.key) }, "\u00d7"),
             ),
           ),
