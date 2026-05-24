@@ -2339,21 +2339,17 @@ function CalendarPanel({ calendar, calendarDuties, isOpen, onToggle, openMonths,
 }
 
 function handleCalendarWheel(event) {
+  if (Math.abs(event.deltaX) <= Math.abs(event.deltaY)) return;
+  const scrollArea = event.target.closest(".calendar-week-scroll");
+  if (!scrollArea) return;
+  const maxScrollLeft = scrollArea.scrollWidth - scrollArea.clientWidth;
+  if (maxScrollLeft <= 0) return;
   event.preventDefault();
   event.stopPropagation();
-  if (Math.abs(event.deltaX) > Math.abs(event.deltaY)) {
-    const scrollArea = event.target.closest(".calendar-week-scroll");
-    if (!scrollArea) return;
-    const maxScrollLeft = scrollArea.scrollWidth - scrollArea.clientWidth;
-    if (maxScrollLeft <= 0) return;
-    scrollArea.scrollLeft = clampNumber(scrollArea.scrollLeft + event.deltaX, 0, maxScrollLeft);
-    return;
-  }
-  window.scrollBy({ top: event.deltaY, left: 0, behavior: "auto" });
+  scrollArea.scrollLeft = clampNumber(scrollArea.scrollLeft + event.deltaX, 0, maxScrollLeft);
 }
 
 function MonthDays({ calendar, calendarDuties, monthIndex, selectedDate, toggleCalendarDuty, updateCalendarNote, year }) {
-  const touchPoint = useRef({ x: 0, y: 0 });
   const todayKey = toDateKey(new Date());
   const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
   const firstDayIndex = (new Date(year, monthIndex, 1).getDay() + 6) % 7;
@@ -2364,24 +2360,9 @@ function MonthDays({ calendar, calendarDuties, monthIndex, selectedDate, toggleC
   const trailingBlanks = (7 - (cells.length % 7)) % 7;
   Array.from({ length: trailingBlanks }, (_, index) => cells.push({ key: `blank-end-${monthIndex}-${index}`, type: "blank" }));
   const weeks = Array.from({ length: Math.ceil(cells.length / 7) }, (_, index) => cells.slice(index * 7, index * 7 + 7));
-  const handleTouchStart = (event) => {
-    if (event.touches.length !== 1) return;
-    touchPoint.current = { x: event.touches[0].clientX, y: event.touches[0].clientY };
-  };
-  const handleTouchMove = (event) => {
-    if (event.touches.length !== 1) return;
-    const nextPoint = { x: event.touches[0].clientX, y: event.touches[0].clientY };
-    const deltaX = touchPoint.current.x - nextPoint.x;
-    const deltaY = touchPoint.current.y - nextPoint.y;
-    touchPoint.current = nextPoint;
-    if (Math.abs(deltaY) <= Math.abs(deltaX)) return;
-    event.preventDefault();
-    event.stopPropagation();
-    window.scrollBy({ top: deltaY, left: 0, behavior: "auto" });
-  };
   return h(
     "div",
-    { className: "calendar-weeks", onTouchMove: handleTouchMove, onTouchStart: handleTouchStart, onWheel: handleCalendarWheel },
+    { className: "calendar-weeks", onWheel: handleCalendarWheel },
     weeks.map((week, weekIndex) =>
       h(
       "div",
