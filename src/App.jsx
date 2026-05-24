@@ -2338,17 +2338,6 @@ function CalendarPanel({ calendar, calendarDuties, isOpen, onToggle, openMonths,
   });
 }
 
-function handleCalendarWheel(event) {
-  if (Math.abs(event.deltaX) <= Math.abs(event.deltaY)) return;
-  const scrollArea = event.target.closest(".calendar-week-scroll");
-  if (!scrollArea) return;
-  const maxScrollLeft = scrollArea.scrollWidth - scrollArea.clientWidth;
-  if (maxScrollLeft <= 0) return;
-  event.preventDefault();
-  event.stopPropagation();
-  scrollArea.scrollLeft = clampNumber(scrollArea.scrollLeft + event.deltaX, 0, maxScrollLeft);
-}
-
 function MonthDays({ calendar, calendarDuties, monthIndex, selectedDate, toggleCalendarDuty, updateCalendarNote, year }) {
   const todayKey = toDateKey(new Date());
   const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
@@ -2362,7 +2351,7 @@ function MonthDays({ calendar, calendarDuties, monthIndex, selectedDate, toggleC
   const weeks = Array.from({ length: Math.ceil(cells.length / 7) }, (_, index) => cells.slice(index * 7, index * 7 + 7));
   return h(
     "div",
-    { className: "calendar-weeks", onWheel: handleCalendarWheel },
+    { className: "calendar-weeks" },
     weeks.map((week, weekIndex) =>
       h(
       "div",

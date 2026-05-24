@@ -3287,7 +3287,7 @@ input::placeholder {
   overflow-x: auto;
   overflow-y: visible;
   overscroll-behavior-x: contain;
-  overscroll-behavior-y: contain;
+  overscroll-behavior-y: auto;
   -webkit-overflow-scrolling: touch;
   padding-bottom: 4px;
   touch-action: auto;
@@ -3351,6 +3351,7 @@ input::placeholder {
   align-items: center;
   justify-content: space-between;
   gap: 8px;
+  min-width: 0;
 }
 
 .calendar-date b {
@@ -3362,6 +3363,7 @@ input::placeholder {
 }
 
 .calendar-date i {
+  flex: 0 0 auto;
   color: var(--muted);
   font-size: 0.78rem;
   font-style: normal;
@@ -3369,6 +3371,7 @@ input::placeholder {
 }
 
 .calendar-duty-checks {
+  flex: 0 0 auto;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -3377,6 +3380,7 @@ input::placeholder {
 }
 
 .calendar-duty {
+  flex: 0 0 auto;
   min-height: 24px;
   display: inline-flex;
   align-items: center;
@@ -3413,6 +3417,7 @@ input::placeholder {
   width: 100%;
   min-height: 118px;
   resize: vertical;
+  overflow: hidden;
   border: 1px solid rgba(70, 255, 242, 0.16);
   border-radius: 6px;
   background: rgba(0, 4, 6, 0.76);
