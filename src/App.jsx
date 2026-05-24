@@ -52,6 +52,11 @@ const defaultPresets = [
   { key: "daily-late-sleep", name: "Late Sleep", yScore: -6, nScore: 3 },
 ];
 
+const calendarDutyOptions = [
+  { key: "afterSchool", label: "방" },
+  { key: "nightStudy", label: "야" },
+];
+
 function createDefaultMemoCards(globalMemos = {}) {
   return [
     { id: "memo-life", title: "Life", leftText: globalMemos.life || "", leftTextExtra: "", rightText: "", rightTextExtra: "", memoSplits: { leftText: 50, rightText: 50 } },
@@ -131,6 +136,18 @@ function normalizeDateMarkers(markers) {
   }));
 }
 
+function normalizeCalendarDuties(duties) {
+  if (!duties || typeof duties !== "object") return {};
+  return Object.entries(duties).reduce((normalized, [dateKey, value]) => {
+    const flags = calendarDutyOptions.reduce((items, option) => {
+      if (Boolean(value?.[option.key])) items[option.key] = true;
+      return items;
+    }, {});
+    if (Object.keys(flags).length) normalized[dateKey] = flags;
+    return normalized;
+  }, {});
+}
+
 function clampNumber(value, min, max) {
   const number = Number(value);
   if (!Number.isFinite(number)) return min;
@@ -206,6 +223,7 @@ function createFallbackState() {
     days: {},
     memos: normalizeMemos(),
     calendar: {},
+    calendarDuties: {},
     routineAttempts: {},
     flaggedDate: "",
     carryResetDate: "",
@@ -226,6 +244,7 @@ function normalizeState(source) {
     days: source?.days && typeof source.days === "object" ? source.days : {},
     memos: normalizeMemos(source?.memos),
     calendar: source?.calendar && typeof source.calendar === "object" ? source.calendar : {},
+    calendarDuties: normalizeCalendarDuties(source?.calendarDuties),
     routineAttempts: source?.routineAttempts && typeof source.routineAttempts === "object" ? source.routineAttempts : {},
     flaggedDate: source?.flaggedDate || "",
     carryResetDate: source?.carryResetDate || "",
@@ -919,6 +938,18 @@ function App() {
     });
   };
 
+  const toggleCalendarDuty = (dateKey, dutyKey) => {
+    saveData((draft) => {
+      draft.calendarDuties = normalizeCalendarDuties(draft.calendarDuties);
+      const current = draft.calendarDuties[dateKey] || {};
+      const next = { ...current, [dutyKey]: !current[dutyKey] };
+      const active = Object.fromEntries(Object.entries(next).filter(([, value]) => value));
+      if (Object.keys(active).length) draft.calendarDuties[dateKey] = active;
+      else delete draft.calendarDuties[dateKey];
+      return draft;
+    });
+  };
+
   const updateDateMarker = (index, field, value) => {
     saveData((draft) => {
       const markers = normalizeDateMarkers(draft.dateMarkers);
@@ -1120,7 +1151,7 @@ function App() {
           React.Fragment,
           null,
           h(Topbar, { selectedDate, setSelectedDate, shiftDate }),
-          h(SchedulePanel, { calendar: data.calendar, selectedDate }),
+          h(SchedulePanel, { calendar: data.calendar, calendarDuties: data.calendarDuties, selectedDate }),
     h(
       "div",
       { className: "daily-workspace" },
@@ -1173,11 +1204,13 @@ function App() {
     }),
     h(CalendarPanel, {
       calendar: data.calendar,
+      calendarDuties: data.calendarDuties,
       isOpen: openPanels.calendar,
       onToggle: () => togglePanel("calendar"),
       openMonths,
       selectedDate,
       setOpenMonths,
+      toggleCalendarDuty,
       updateCalendarNote,
     }),
     h(RecordPanel, {
@@ -1513,7 +1546,7 @@ function SystemPanel({ copyBackup, exportBackup, importBackup, isOpen, onToggle 
   });
 }
 
-function SchedulePanel({ calendar, selectedDate }) {
+function SchedulePanel({ calendar, calendarDuties, selectedDate }) {
   const weekStart = getWeekStart(selectedDate);
   const weeks = [0, 7].map((offset) => Array.from({ length: 7 }, (_, index) => addDays(weekStart, offset + index)));
   return h(
@@ -1537,7 +1570,11 @@ function SchedulePanel({ calendar, selectedDate }) {
               { className: "schedule-week-grid" },
           week.map((dateKey) => {
             const schedule = calendar[dateKey]?.trim() || "";
-            const lines = schedule.split(/\n+/).filter(Boolean);
+            const dutyItems = calendarDutyOptions
+              .filter((option) => calendarDuties?.[dateKey]?.[option.key])
+              .map((option) => ({ type: "duty", label: option.label }));
+            const lines = schedule.split(/\n+/).filter(Boolean).map((line) => ({ type: "note", label: line }));
+            const items = [...dutyItems, ...lines];
             const dateLabel = formatCompactDate(dateKey);
             return h(
               "article",
@@ -1545,8 +1582,17 @@ function SchedulePanel({ calendar, selectedDate }) {
               h("div", { className: "schedule-date" }, h("b", null, `${dateLabel.month} ${dateLabel.day}`), h("span", null, dateLabel.weekday)),
               h(
                 "div",
-                { className: `schedule-day-items ${lines.length ? "" : "empty"}` },
-                lines.length ? lines.map((line, index) => h("span", { key: `${dateKey}-${index}` }, line)) : h("i", null, "No schedule"),
+                { className: `schedule-day-items ${items.length ? "" : "empty"}` },
+                items.length
+                  ? items.map((item, index) =>
+                      h(
+                        "span",
+                        { className: item.type === "duty" ? "schedule-duty-item" : "", key: `${dateKey}-${index}` },
+                        item.type === "duty" ? h("input", { type: "checkbox", checked: true, readOnly: true, tabIndex: -1 }) : null,
+                        item.label,
+                      ),
+                    )
+                  : h("i", null, "No schedule"),
               ),
             );
           }),
@@ -2234,7 +2280,7 @@ function HistoryPanel({ flaggedDate, getDayTotal, onToggleFlag, routineAttempts,
   );
 }
 
-function CalendarPanel({ calendar, isOpen, onToggle, openMonths, selectedDate, setOpenMonths, updateCalendarNote }) {
+function CalendarPanel({ calendar, calendarDuties, isOpen, onToggle, openMonths, selectedDate, setOpenMonths, toggleCalendarDuty, updateCalendarNote }) {
   const year = new Date(`${selectedDate}T00:00:00`).getFullYear();
   const toggleMonth = (monthIndex) => {
     setOpenMonths((current) => {
@@ -2247,7 +2293,7 @@ function CalendarPanel({ calendar, isOpen, onToggle, openMonths, selectedDate, s
   return h(CollapsiblePanel, {
     className: "calendar-panel",
     controls: "calendarMonths",
-    description: "Open a month and write schedule notes for each date.",
+    description: "Open a month and write schedule notes or duty checks for each date.",
     isOpen,
     onToggle,
     title: "Calendar",
@@ -2257,7 +2303,8 @@ function CalendarPanel({ calendar, isOpen, onToggle, openMonths, selectedDate, s
         { className: "calendar-months", id: "calendarMonths" },
         monthNames.map((monthName, monthIndex) => {
           const prefix = `${year}-${String(monthIndex + 1).padStart(2, "0")}`;
-          const noteCount = Object.keys(calendar).filter((dateKey) => dateKey.startsWith(prefix)).length;
+          const dutyDates = Object.keys(calendarDuties || {}).filter((dateKey) => dateKey.startsWith(prefix));
+          const noteCount = new Set([...Object.keys(calendar).filter((dateKey) => dateKey.startsWith(prefix)), ...dutyDates]).size;
           const monthOpen = openMonths.has(monthIndex);
           return h(
             "section",
@@ -2283,7 +2330,7 @@ function CalendarPanel({ calendar, isOpen, onToggle, openMonths, selectedDate, s
               h("span", null, monthName),
               h("strong", null, `${noteCount} items`),
             ),
-            monthOpen ? h(MonthDays, { calendar, monthIndex, selectedDate, updateCalendarNote, year }) : null,
+            monthOpen ? h(MonthDays, { calendar, calendarDuties, monthIndex, selectedDate, toggleCalendarDuty, updateCalendarNote, year }) : null,
           );
         }),
       ),
@@ -2305,7 +2352,7 @@ function handleCalendarWheel(event) {
   window.scrollBy({ top: event.deltaY, left: 0, behavior: "auto" });
 }
 
-function MonthDays({ calendar, monthIndex, selectedDate, updateCalendarNote, year }) {
+function MonthDays({ calendar, calendarDuties, monthIndex, selectedDate, toggleCalendarDuty, updateCalendarNote, year }) {
   const touchPoint = useRef({ x: 0, y: 0 });
   const todayKey = toDateKey(new Date());
   const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
@@ -2349,10 +2396,34 @@ function MonthDays({ calendar, monthIndex, selectedDate, updateCalendarNote, yea
           const dateKey = `${year}-${String(monthIndex + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
           const date = new Date(`${dateKey}T00:00:00`);
           const weekday = weekDays[(date.getDay() + 6) % 7].label;
+          const duties = calendarDuties?.[dateKey] || {};
           return h(
-            "label",
+            "article",
             { className: `calendar-day ${dateKey === selectedDate ? "selected" : ""} ${dateKey === todayKey ? "today" : ""}`, key: dateKey },
-            h("span", { className: "calendar-date" }, h("b", null, day), h("i", null, weekday)),
+            h(
+              "span",
+              { className: "calendar-date" },
+              h("b", null, day),
+              h(
+                "span",
+                { className: "calendar-duty-checks" },
+                calendarDutyOptions.map((option) =>
+                  h(
+                    "span",
+                    { className: `calendar-duty ${duties[option.key] ? "checked" : ""}`, key: option.key },
+                    h("input", {
+                      type: "checkbox",
+                      checked: Boolean(duties[option.key]),
+                      "aria-label": `${dateKey} ${option.label}`,
+                      onChange: () => toggleCalendarDuty(dateKey, option.key),
+                      onClick: (event) => event.stopPropagation(),
+                    }),
+                    h("em", null, option.label),
+                  ),
+                ),
+              ),
+              h("i", null, weekday),
+            ),
             h("textarea", {
               maxLength: 600,
               placeholder: "Schedule",
