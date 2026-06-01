@@ -55,6 +55,7 @@ const defaultPresets = [
 const calendarDutyOptions = [
   { key: "afterSchool", label: "방" },
   { key: "nightStudy", label: "야" },
+  { key: "clubActivity", label: "동" },
 ];
 
 function createDefaultMemoCards(globalMemos = {}) {
@@ -98,10 +99,10 @@ function createEmptyWeeklyPlan(categories = defaultCategories) {
 function normalizeCategories(savedCategories, fallbackCategories = cloneCategories()) {
   const source = Array.isArray(savedCategories) && savedCategories.length ? savedCategories : fallbackCategories;
   return source
-    .filter((category) => category && category.key && category.label)
+    .filter((category) => category && category.key)
     .map((category) => ({
       key: category.key,
-      label: category.label,
+      label: String(category.label ?? ""),
       yScore: parseScore(category.yScore, 5),
       nScore: parseScore(category.nScore, -2),
     }));
@@ -2162,9 +2163,16 @@ function WeeklyPanel({ addCategory, categories, isOpen, moveCategory, onToggle, 
               onDragEnd: () => setDragCategoryKey(""),
             },
             h("span", { className: "drag-handle", title: "Drag to reorder", "aria-hidden": "true" }, "\u22ee\u22ee"),
-            h("input", { className: "category-name-input", type: "text", maxLength: 24, value: category.label, onChange: (event) => updateCategory(category.key, "label", event.target.value) }),
-            h("label", { className: `score-field y-field ${isRangeCategory(category) ? "range-score" : "positive-score"}`, title: isRangeCategory(category) ? "Y range" : "Y score" }, h("input", { className: "category-score-input y-score", type: "text", inputMode: isRangeCategory(category) ? "text" : "numeric", value: category.yScore, onChange: (event) => updateCategory(category.key, "yScore", event.target.value) })),
-            h("label", { className: "score-field n-field negative-score", title: "N score" }, h("input", { className: "category-score-input n-score", type: "text", inputMode: "numeric", value: category.nScore, onChange: (event) => updateCategory(category.key, "nScore", event.target.value) })),
+            h("input", {
+              className: "category-name-input",
+              type: "text",
+              maxLength: 24,
+              value: category.label,
+              onChange: (event) => updateCategory(category.key, "label", event.target.value),
+              onKeyDown: (event) => event.stopPropagation(),
+            }),
+            h("label", { className: `score-field y-field ${isRangeCategory(category) ? "range-score" : "positive-score"}`, title: isRangeCategory(category) ? "Y range" : "Y score" }, h("input", { className: "category-score-input y-score", type: "text", inputMode: isRangeCategory(category) ? "text" : "numeric", value: category.yScore, onChange: (event) => updateCategory(category.key, "yScore", event.target.value), onKeyDown: (event) => event.stopPropagation() })),
+            h("label", { className: "score-field n-field negative-score", title: "N score" }, h("input", { className: "category-score-input n-score", type: "text", inputMode: "numeric", value: category.nScore, onChange: (event) => updateCategory(category.key, "nScore", event.target.value), onKeyDown: (event) => event.stopPropagation() })),
             h(
               "div",
               { className: "category-actions" },
@@ -2300,7 +2308,7 @@ function CalendarPanel({ calendar, calendarDuties, isOpen, onToggle, openMonths,
     children: {
       body: h(
         "div",
-        { className: "calendar-months", id: "calendarMonths" },
+        { className: "calendar-months no-panel-toggle", id: "calendarMonths" },
         monthNames.map((monthName, monthIndex) => {
           const prefix = `${year}-${String(monthIndex + 1).padStart(2, "0")}`;
           const dutyDates = Object.keys(calendarDuties || {}).filter((dateKey) => dateKey.startsWith(prefix));
@@ -2311,10 +2319,6 @@ function CalendarPanel({ calendar, calendarDuties, isOpen, onToggle, openMonths,
             {
               className: `calendar-month ${monthOpen ? "open" : ""}`,
               key: monthName,
-              onClick: (event) => {
-                if (panelClickIsInteractive(event.target)) return;
-                toggleMonth(monthIndex);
-              },
             },
             h(
               "button",

@@ -3376,7 +3376,7 @@ input::placeholder {
   align-items: center;
   justify-content: center;
   gap: 4px;
-  min-width: 58px;
+  min-width: 88px;
 }
 
 .calendar-duty {
