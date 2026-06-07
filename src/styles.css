@@ -5869,6 +5869,155 @@ body::after {
     0 2px 7px rgba(141, 61, 49, 0.25) !important;
 }
 
+/* Mobile containment pass */
+@media (max-width: 700px) {
+  html {
+    font-size: 108%;
+    overflow-x: hidden;
+  }
+
+  body {
+    overflow-x: hidden !important;
+  }
+
+  .app-shell {
+    width: min(100% - 10px, 1680px) !important;
+    padding: 14px 5px 34px !important;
+  }
+
+  .topbar {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+    padding-inline: 4px !important;
+  }
+
+  .topbar h1 {
+    font-size: clamp(2.15rem, 14vw, 3.25rem) !important;
+    line-height: 0.95 !important;
+    overflow-wrap: anywhere;
+  }
+
+  .day-switcher {
+    width: 100% !important;
+    grid-template-columns: 44px minmax(0, 1fr) 44px !important;
+    gap: 8px !important;
+    padding: 8px !important;
+  }
+
+  .day-switcher .icon-button {
+    width: 44px !important;
+    height: 44px !important;
+    min-width: 44px !important;
+    min-height: 44px !important;
+    font-size: 1.75rem !important;
+  }
+
+  .day-switcher input[type="date"] {
+    min-width: 0 !important;
+    width: 100% !important;
+    height: 48px !important;
+    min-height: 48px !important;
+    padding: 3px 8px 0 !important;
+    line-height: 45px !important;
+    font-size: 1rem !important;
+  }
+
+  .score-panel {
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+  }
+
+  .score-meter {
+    width: 100% !important;
+    min-width: 0 !important;
+    grid-template-columns: minmax(0, 1fr) auto !important;
+  }
+
+  .score-details {
+    grid-template-columns: 1fr !important;
+    width: 100% !important;
+  }
+
+  .score-details > div,
+  .score-details > div:not(.carry-detail),
+  .score-details .carry-detail {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .score-details > div:not(.carry-detail) {
+    grid-template-columns: minmax(64px, 1fr) minmax(44px, auto) 72px !important;
+  }
+
+  .score-details .carry-detail {
+    grid-template-columns: minmax(64px, 1fr) minmax(44px, auto) 72px !important;
+  }
+
+  .date-marker {
+    grid-template-columns: 1fr !important;
+    gap: 6px !important;
+  }
+
+  .date-marker .date-marker-text,
+  .date-marker .date-marker-date,
+  .date-marker-dday {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .memo-card {
+    width: 100% !important;
+    min-height: 650px !important;
+    max-height: none !important;
+    padding: 10px !important;
+  }
+
+  .memo-stack {
+    min-height: 700px !important;
+  }
+
+  .memo-card-grip {
+    grid-template-columns: 30px 1px minmax(0, 1fr) 46px 30px !important;
+    gap: 6px !important;
+    padding: 6px !important;
+  }
+
+  .memo-card-grip span {
+    min-width: 30px !important;
+  }
+
+  .memo-reset-button {
+    min-width: 46px !important;
+    width: 46px !important;
+    padding-inline: 0 !important;
+    font-size: 0.62rem !important;
+  }
+
+  .memo-card-grip .mini-button.danger {
+    width: 30px !important;
+    min-width: 30px !important;
+  }
+
+  .today-plan-grid,
+  .plan-card-grid,
+  .daily-plan-row .plan-card-grid,
+  .preset-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .today-plan-card,
+  .preset-card,
+  .entry-item {
+    min-width: 0 !important;
+  }
+
+  .weekly-grid,
+  .schedule-week-scroll,
+  .calendar-month {
+    max-width: 100% !important;
+  }
+}
+
 /* Brighter Last 7 Days flag */
 .flag-button {
   background: #fff1bf !important;
