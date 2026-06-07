@@ -149,6 +149,14 @@ function normalizeCalendarDuties(duties) {
   }, {});
 }
 
+function normalizeCarryPenalties(penalties) {
+  if (!penalties || typeof penalties !== "object") return {};
+  return Object.entries(penalties).reduce((normalized, [dateKey, value]) => {
+    if (value) normalized[dateKey] = true;
+    return normalized;
+  }, {});
+}
+
 function clampNumber(value, min, max) {
   const number = Number(value);
   if (!Number.isFinite(number)) return min;
@@ -226,6 +234,7 @@ function createFallbackState() {
     calendar: {},
     calendarDuties: {},
     routineAttempts: {},
+    carryPenalties: {},
     flaggedDate: "",
     carryResetDate: "",
     carryAdjustment: 0,
@@ -247,6 +256,7 @@ function normalizeState(source) {
     calendar: source?.calendar && typeof source.calendar === "object" ? source.calendar : {},
     calendarDuties: normalizeCalendarDuties(source?.calendarDuties),
     routineAttempts: source?.routineAttempts && typeof source.routineAttempts === "object" ? source.routineAttempts : {},
+    carryPenalties: normalizeCarryPenalties(source?.carryPenalties),
     flaggedDate: source?.flaggedDate || "",
     carryResetDate: source?.carryResetDate || "",
     carryAdjustment: scoreNumber(source?.carryAdjustment, 0),
@@ -680,6 +690,7 @@ function App() {
   const entries = data.days[selectedDate] || [];
   const weekday = getWeekdayMeta(selectedDate);
   const routineTried = Boolean(data.routineAttempts?.[selectedDate]);
+  const carryPenaltyMarked = Boolean(data.carryPenalties?.[selectedDate]);
 
   const getEntries = (dateKey = selectedDate) => (Array.isArray(data.days[dateKey]) ? data.days[dateKey] : []);
   const getDayTotal = (dateKey) => getEntries(dateKey).reduce((sum, entry) => sum + entry.score, 0);
@@ -689,7 +700,12 @@ function App() {
       if (data.carryResetDate && selectedDate >= data.carryResetDate && key < data.carryResetDate) return sum;
       return sum + dayEntries.reduce((daySum, entry) => daySum + entry.score, 0);
     }, 0);
-    return carryFromEntries + scoreNumber(data.carryAdjustment, 0);
+    const carryPenaltyTotal = Object.entries(data.carryPenalties || {}).reduce((sum, [key, marked]) => {
+      if (!marked || key > selectedDate) return sum;
+      if (data.carryResetDate && selectedDate >= data.carryResetDate && key < data.carryResetDate) return sum;
+      return sum - 2;
+    }, 0);
+    return carryFromEntries + carryPenaltyTotal + scoreNumber(data.carryAdjustment, 0);
   };
 
   const scoreInfo = useMemo(() => {
@@ -734,8 +750,25 @@ function App() {
   const toggleRoutineAttempt = () => {
     saveData((draft) => {
       draft.routineAttempts = draft.routineAttempts || {};
+      draft.carryPenalties = normalizeCarryPenalties(draft.carryPenalties);
       if (draft.routineAttempts[selectedDate]) delete draft.routineAttempts[selectedDate];
-      else draft.routineAttempts[selectedDate] = true;
+      else {
+        draft.routineAttempts[selectedDate] = true;
+        delete draft.carryPenalties[selectedDate];
+      }
+      return draft;
+    });
+  };
+
+  const toggleCarryPenalty = () => {
+    saveData((draft) => {
+      draft.routineAttempts = draft.routineAttempts || {};
+      draft.carryPenalties = normalizeCarryPenalties(draft.carryPenalties);
+      if (draft.carryPenalties[selectedDate]) delete draft.carryPenalties[selectedDate];
+      else {
+        draft.carryPenalties[selectedDate] = true;
+        delete draft.routineAttempts[selectedDate];
+      }
       return draft;
     });
   };
@@ -1159,7 +1192,7 @@ function App() {
       h(
         "div",
         { className: "daily-left-rail" },
-        h(ScorePanel, { entryCount: entries.length, onAdjustCarry: adjustCarry, onResetCarry: resetCarry, onToggleAttempt: toggleRoutineAttempt, routineTried, scoreInfo }),
+        h(ScorePanel, { carryPenaltyMarked, entryCount: entries.length, onAdjustCarry: adjustCarry, onResetCarry: resetCarry, onToggleAttempt: toggleRoutineAttempt, onToggleCarryPenalty: toggleCarryPenalty, routineTried, scoreInfo }),
         h(DateMarkerPanel, { dateMarkers: data.dateMarkers, selectedDate, updateDateMarker }),
       ),
       h(MemoPanel, {
@@ -1221,7 +1254,7 @@ function App() {
       onToggle: () => togglePanel("record"),
       removeEntry,
     }),
-    h(HistoryPanel, { flaggedDate: data.flaggedDate, getDayTotal, onToggleFlag: toggleFlaggedDate, routineAttempts: data.routineAttempts, selectedDate }),
+    h(HistoryPanel, { carryPenalties: data.carryPenalties, flaggedDate: data.flaggedDate, getDayTotal, onToggleFlag: toggleFlaggedDate, routineAttempts: data.routineAttempts, selectedDate }),
         )
     ,
     h(SyncPanel, {
@@ -1580,7 +1613,7 @@ function SchedulePanel({ calendar, calendarDuties, selectedDate }) {
             return h(
               "article",
               { className: `schedule-day ${dateKey === selectedDate ? "selected" : ""}`, key: dateKey },
-              h("div", { className: "schedule-date" }, h("b", null, `${dateLabel.month} ${dateLabel.day}`), h("span", null, dateLabel.weekday)),
+              h("div", { className: "schedule-date" }, h("b", null, `${dateLabel.month} ${dateLabel.day}`)),
               h(
                 "div",
                 { className: `schedule-day-items ${items.length ? "" : "empty"}` },
@@ -1859,7 +1892,7 @@ function MemoBlockColumn({ cardId, extraField, extraValue, field, split, updateM
   );
 }
 
-function ScorePanel({ entryCount, onAdjustCarry, onResetCarry, onToggleAttempt, routineTried, scoreInfo }) {
+function ScorePanel({ carryPenaltyMarked, entryCount, onAdjustCarry, onResetCarry, onToggleAttempt, onToggleCarryPenalty, routineTried, scoreInfo }) {
   const totalClass = scoreInfo.total < 0 ? "negative" : scoreInfo.total === 0 ? "neutral" : "";
   const fillClass = scoreInfo.total > 0 ? "positive" : scoreInfo.total < 0 ? "negative" : "neutral";
   return h(
@@ -1871,16 +1904,32 @@ function ScorePanel({ entryCount, onAdjustCarry, onResetCarry, onToggleAttempt, 
       h("span", { className: "score-kicker" }, "Total Score"),
       h("div", { className: `score-number ${totalClass}` }, formatScore(scoreInfo.total)),
       h(
-        "button",
-        {
-          className: `attempt-check ${routineTried ? "checked" : ""}`,
-          type: "button",
-          "aria-pressed": String(routineTried),
-          "aria-label": "Tried today",
-          title: "Tried today",
-          onClick: onToggleAttempt,
-        },
-        routineTried ? "\u2713" : "",
+        "div",
+        { className: "score-checks" },
+        h(
+          "button",
+          {
+            className: `attempt-check ${routineTried ? "checked" : ""}`,
+            type: "button",
+            "aria-pressed": String(routineTried),
+            "aria-label": "Tried today",
+            title: "Tried today",
+            onClick: onToggleAttempt,
+          },
+          routineTried ? "\u2713" : "",
+        ),
+        h(
+          "button",
+          {
+            className: `attempt-check penalty-check ${carryPenaltyMarked ? "checked" : ""}`,
+            type: "button",
+            "aria-pressed": String(carryPenaltyMarked),
+            "aria-label": "Add -2 Carry",
+            title: "Add -2 Carry",
+            onClick: onToggleCarryPenalty,
+          },
+          carryPenaltyMarked ? "\u2713" : "",
+        ),
       ),
       h("div", { className: "score-track", "aria-hidden": "true" }, h("span", { className: fillClass, style: { width: `${Math.max(0, Math.min(100, 50 + scoreInfo.total * 2))}%` } })),
     ),
@@ -2227,12 +2276,13 @@ function RecordPanel({ clearSelectedDay, entries, isOpen, onToggle, removeEntry 
   });
 }
 
-function HistoryPanel({ flaggedDate, getDayTotal, onToggleFlag, routineAttempts, selectedDate }) {
+function HistoryPanel({ carryPenalties, flaggedDate, getDayTotal, onToggleFlag, routineAttempts, selectedDate }) {
   const days = Array.from({ length: 7 }, (_, index) => {
     const date = new Date(`${selectedDate}T00:00:00`);
     date.setDate(date.getDate() - (6 - index));
     const key = toDateKey(date);
-    return { key, flagged: key === flaggedDate, total: getDayTotal(key), tried: Boolean(routineAttempts?.[key]) };
+    const penalized = Boolean(carryPenalties?.[key]);
+    return { key, flagged: key === flaggedDate, penalized, total: getDayTotal(key), tried: !penalized && Boolean(routineAttempts?.[key]) };
   });
   const maxAbs = Math.max(10, ...days.map((day) => Math.abs(day.total)));
   let uncheckedSinceFlag = 0;
@@ -2279,7 +2329,7 @@ function HistoryPanel({ flaggedDate, getDayTotal, onToggleFlag, routineAttempts,
           { className: "history-day", key: day.key },
           h("div", { className: `history-fill ${day.total > 0 ? "plus" : day.total < 0 ? "minus" : ""}`, style: { height: `${Math.max(16, (Math.abs(day.total) / maxAbs) * 112)}px` } }),
           h("span", { className: `history-flag ${day.flagged ? "active" : ""}`, title: day.flagged ? "Flagged date" : "" }, day.flagged ? "\u2691" : ""),
-          h("span", { className: `history-attempt ${day.tried ? "checked" : ""}`, title: day.tried ? "Routine tried" : "Routine not checked" }, day.tried ? "\u2713" : ""),
+          h("span", { className: `history-attempt ${day.penalized ? "history-penalty checked" : day.tried ? "checked" : ""}`, title: day.penalized ? "Carry -2 marked" : day.tried ? "Routine tried" : "Not checked" }, day.penalized || day.tried ? "\u2713" : ""),
           h("span", { className: "history-date" }, day.key.slice(5).replace("-", ".")),
           h("strong", { className: "history-score" }, formatScore(day.total)),
         ),
