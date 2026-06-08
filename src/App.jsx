@@ -58,6 +58,8 @@ const calendarDutyOptions = [
   { key: "clubActivity", label: "동" },
 ];
 
+const schoolNoteColors = ["cream", "sage", "peach", "blue", "rose", "lavender", "mint", "butter"];
+
 function createDefaultMemoCards(globalMemos = {}) {
   return [
     { id: "memo-life", title: "Life", leftText: globalMemos.life || "", leftTextExtra: "", rightText: "", rightTextExtra: "", memoSplits: { leftText: 50, rightText: 50 } },
@@ -226,6 +228,30 @@ function normalizeWork(work) {
   };
 }
 
+function getStableSchoolColor(id, index = 0) {
+  const text = String(id || "");
+  const hash = Array.from(text).reduce((sum, character) => sum + character.charCodeAt(0), index);
+  return schoolNoteColors[Math.abs(hash) % schoolNoteColors.length];
+}
+
+function normalizeSchool(school) {
+  const sourceNotes = Array.isArray(school?.notes) && school.notes.length
+    ? school.notes
+    : [{ id: "school-note-main", title: "Memo 1", content: "", open: true }];
+  const notes = sourceNotes
+    .filter((note) => note && note.id)
+    .map((note, index) => ({
+      id: note.id,
+      title: String(note.title == null ? `Memo ${index + 1}` : note.title).replace(/^School Memo\b/, "Memo").slice(0, 48),
+      content: String(note.content || ""),
+      open: note.open !== false,
+      color: schoolNoteColors.includes(note.color) ? note.color : getStableSchoolColor(note.id, index),
+    }));
+  return {
+    notes: notes.length ? notes : [{ id: "school-note-main", title: "Memo 1", content: "", open: true }],
+  };
+}
+
 function createFallbackState() {
   const categories = cloneCategories();
   return {
@@ -243,6 +269,7 @@ function createFallbackState() {
     weeklyPlan: createEmptyWeeklyPlan(categories),
     dateMarkers: normalizeDateMarkers(),
     work: normalizeWork(),
+    school: normalizeSchool(),
     updatedAt: new Date().toISOString(),
   };
 }
@@ -265,6 +292,7 @@ function normalizeState(source) {
     weeklyPlan: normalizeWeeklyPlan(source?.weeklyPlan, categories),
     dateMarkers: normalizeDateMarkers(source?.dateMarkers),
     work: normalizeWork(source?.work),
+    school: normalizeSchool(source?.school),
     updatedAt: source?.updatedAt || new Date().toISOString(),
   };
 }
@@ -1098,6 +1126,65 @@ function App() {
     });
   };
 
+  const addSchoolNote = () => {
+    saveData((draft) => {
+      draft.school = normalizeSchool(draft.school);
+      const nextId = createKey("school-note");
+      draft.school.notes.push({
+        id: nextId,
+        title: `Memo ${draft.school.notes.length + 1}`,
+        content: "",
+        open: true,
+        color: schoolNoteColors[draft.school.notes.length % schoolNoteColors.length],
+      });
+      return draft;
+    });
+  };
+
+  const updateSchoolNote = (id, field, value) => {
+    saveData((draft) => {
+      draft.school = normalizeSchool(draft.school);
+      const note = draft.school.notes.find((item) => item.id === id);
+      if (!note) return draft;
+      if (field === "title") note.title = value;
+      if (field === "content") note.content = value;
+      return draft;
+    });
+  };
+
+  const toggleSchoolNote = (id) => {
+    saveData((draft) => {
+      draft.school = normalizeSchool(draft.school);
+      const note = draft.school.notes.find((item) => item.id === id);
+      if (note) note.open = !note.open;
+      return draft;
+    });
+  };
+
+  const removeSchoolNote = (id) => {
+    const confirmed = window.confirm("Delete this school memo?");
+    if (!confirmed) return;
+    saveData((draft) => {
+      draft.school = normalizeSchool(draft.school);
+      if (draft.school.notes.length <= 1) return draft;
+      draft.school.notes = draft.school.notes.filter((note) => note.id !== id);
+      return draft;
+    });
+  };
+
+  const moveSchoolNote = (fromId, toId) => {
+    if (!fromId || !toId || fromId === toId) return;
+    saveData((draft) => {
+      draft.school = normalizeSchool(draft.school);
+      const fromIndex = draft.school.notes.findIndex((note) => note.id === fromId);
+      const toIndex = draft.school.notes.findIndex((note) => note.id === toId);
+      if (fromIndex < 0 || toIndex < 0) return draft;
+      const [note] = draft.school.notes.splice(fromIndex, 1);
+      draft.school.notes.splice(toIndex, 0, note);
+      return draft;
+    });
+  };
+
   const connectSync = async () => {
     const nextSyncId = normalizeSyncId(syncRef.current.syncId);
     updateSync((current) => ({ ...current, syncId: nextSyncId }));
@@ -1178,14 +1265,10 @@ function App() {
     }
   };
 
-  return h(
-    "main",
-    { className: "app-shell" },
-    h(
-          React.Fragment,
-          null,
-          h(Topbar, { selectedDate, setSelectedDate, shiftDate }),
-          h(SchedulePanel, { calendar: data.calendar, calendarDuties: data.calendarDuties, selectedDate }),
+  const dashboardView = h(
+    React.Fragment,
+    null,
+    h(SchedulePanel, { calendar: data.calendar, calendarDuties: data.calendarDuties, selectedDate }),
     h(
       "div",
       { className: "daily-workspace" },
@@ -1255,8 +1338,22 @@ function App() {
       removeEntry,
     }),
     h(HistoryPanel, { carryPenalties: data.carryPenalties, flaggedDate: data.flaggedDate, getDayTotal, onToggleFlag: toggleFlaggedDate, routineAttempts: data.routineAttempts, selectedDate }),
-        )
-    ,
+  );
+
+  return h(
+    "main",
+    { className: "app-shell" },
+    h(Topbar, { activeView, selectedDate, setActiveView, setSelectedDate, shiftDate }),
+    activeView === "school"
+      ? h(SchoolView, {
+          addSchoolNote,
+          moveSchoolNote,
+          notes: data.school.notes,
+          removeSchoolNote,
+          toggleSchoolNote,
+          updateSchoolNote,
+        })
+      : dashboardView,
     h(SyncPanel, {
       forgetThisDevice,
       isOpen: openPanels.sync,
@@ -1285,7 +1382,8 @@ function App() {
 
 function AppNavigation({ activeView, setActiveView }) {
   const items = [
-    { key: "dashboard", label: "Dashboard" },
+    { key: "dashboard", label: "Dash Board" },
+    { key: "school", label: "School" },
   ];
   return h(
     "nav",
@@ -1306,6 +1404,91 @@ function AppNavigation({ activeView, setActiveView }) {
           item.label,
         ),
       ),
+    ),
+  );
+}
+
+function SchoolView({ addSchoolNote, moveSchoolNote, notes, removeSchoolNote, toggleSchoolNote, updateSchoolNote }) {
+  const [dragNoteId, setDragNoteId] = useState("");
+  const dragJustEndedRef = useRef(false);
+  return h(
+    "section",
+    { className: "school-view", "aria-label": "School memos" },
+    h(
+      "div",
+      { className: "school-note-list" },
+      notes.map((note) =>
+        h(
+          "article",
+          {
+            className: `school-note ${note.open ? "" : "collapsed"} ${dragNoteId === note.id ? "dragging" : ""}`,
+            draggable: true,
+            key: note.id,
+            "data-color": note.color || "cream",
+            onClick: (event) => {
+              if (dragJustEndedRef.current) {
+                dragJustEndedRef.current = false;
+                return;
+              }
+              if (panelClickIsInteractive(event.target)) return;
+              toggleSchoolNote(note.id);
+            },
+            onDragStart: (event) => {
+              if (panelClickIsInteractive(event.target)) {
+                event.preventDefault();
+                return;
+              }
+              dragJustEndedRef.current = true;
+              setDragNoteId(note.id);
+              event.dataTransfer.effectAllowed = "move";
+              event.dataTransfer.setData("text/school-note", note.id);
+            },
+            onDragOver: (event) => {
+              if (!dragNoteId) return;
+              event.preventDefault();
+              event.dataTransfer.dropEffect = "move";
+            },
+            onDrop: (event) => {
+              const fromId = event.dataTransfer.getData("text/school-note") || dragNoteId;
+              if (!fromId) return;
+              event.preventDefault();
+              moveSchoolNote(fromId, note.id);
+              setDragNoteId("");
+            },
+            onDragEnd: () => {
+              setDragNoteId("");
+              window.setTimeout(() => {
+                dragJustEndedRef.current = false;
+              }, 120);
+            },
+          },
+          h(
+            "div",
+            { className: "school-note-heading" },
+            h("input", {
+              type: "text",
+              value: note.title,
+              "aria-label": "School memo title",
+              onChange: (event) => updateSchoolNote(note.id, "title", event.target.value),
+              onKeyDown: (event) => {
+                event.stopPropagation();
+                if (event.key === "Enter") event.currentTarget.blur();
+              },
+            }),
+            h("button", { className: "school-delete-note", type: "button", disabled: notes.length <= 1, title: "Delete memo", "aria-label": "Delete memo", onClick: () => removeSchoolNote(note.id) }, "\u00d7"),
+          ),
+          note.open
+            ? h("textarea", {
+                className: "school-note-textarea",
+                placeholder: "Write school notes here...",
+                value: note.content,
+                onChange: (event) => updateSchoolNote(note.id, "content", event.target.value),
+                onKeyDown: (event) => event.stopPropagation(),
+              })
+            : null,
+        ),
+      ),
+      h("button", { className: "school-add-note", type: "button", onClick: addSchoolNote }, "+ Memo"),
     ),
   );
 }
@@ -1463,17 +1646,22 @@ function WorkView({ addWorkBlock, addWorkCategory, moveWorkBlock, moveWorkCatego
   );
 }
 
-function Topbar({ selectedDate, setSelectedDate, shiftDate }) {
+function Topbar({ activeView, selectedDate, setActiveView, setSelectedDate, shiftDate }) {
   return h(
     "section",
     { className: "topbar", "aria-label": "Date selector" },
     h("div", null, h("p", { className: "eyebrow" }, "DASH BOARD"), h("h1", null, formatDayLabel(selectedDate))),
     h(
       "div",
-      { className: "day-switcher" },
-      h("button", { className: "icon-button", type: "button", title: "Previous day", "aria-label": "Previous day", onClick: () => shiftDate(-1) }, "\u2039"),
-      h("input", { type: "date", value: selectedDate, "aria-label": "Record date", onChange: (event) => setSelectedDate(event.target.value || toDateKey(new Date())) }),
-      h("button", { className: "icon-button", type: "button", title: "Next day", "aria-label": "Next day", onClick: () => shiftDate(1) }, "\u203a"),
+      { className: "topbar-controls" },
+      h(
+        "div",
+        { className: "day-switcher" },
+        h("button", { className: "icon-button", type: "button", title: "Previous day", "aria-label": "Previous day", onClick: () => shiftDate(-1) }, "\u2039"),
+        h("input", { type: "date", value: selectedDate, "aria-label": "Record date", onChange: (event) => setSelectedDate(event.target.value || toDateKey(new Date())) }),
+        h("button", { className: "icon-button", type: "button", title: "Next day", "aria-label": "Next day", onClick: () => shiftDate(1) }, "\u203a"),
+      ),
+      h(AppNavigation, { activeView, setActiveView }),
     ),
   );
 }
