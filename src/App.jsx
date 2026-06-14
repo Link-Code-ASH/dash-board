@@ -133,7 +133,7 @@ function normalizeWeeklyPlan(plan, categories) {
 }
 
 function normalizeDateMarkers(markers) {
-  return Array.from({ length: 5 }, (_, index) => ({
+  return Array.from({ length: 6 }, (_, index) => ({
     text: markers?.[index]?.text || "",
     date: markers?.[index]?.date || "",
   }));
@@ -1281,12 +1281,6 @@ function App() {
     h(
       "div",
       { className: "daily-workspace" },
-      h(
-        "div",
-        { className: "daily-left-rail" },
-        h(ScorePanel, { carryPenaltyMarked, entryCount: entries.length, onAdjustCarry: adjustCarry, onResetCarry: resetCarry, onToggleAttempt: toggleRoutineAttempt, onToggleCarryPenalty: toggleCarryPenalty, routineTried, scoreInfo }),
-        h(DateMarkerPanel, { dateMarkers: data.dateMarkers, selectedDate, updateDateMarker }),
-      ),
       h(MemoPanel, {
         activeMemoId: data.memos.activeMemoId,
         addMemoCard,
@@ -1297,6 +1291,12 @@ function App() {
         setActiveMemo,
         updateMemoCard,
       }),
+      h(
+        "div",
+        { className: "daily-left-rail" },
+        h(ScorePanel, { carryPenaltyMarked, entryCount: entries.length, onAdjustCarry: adjustCarry, onResetCarry: resetCarry, onToggleAttempt: toggleRoutineAttempt, onToggleCarryPenalty: toggleCarryPenalty, routineTried, scoreInfo }),
+        h(DateMarkerPanel, { dateMarkers: data.dateMarkers, selectedDate, updateDateMarker }),
+      ),
     ),
     h(TodayPlanPanel, {
       categories: data.categories,
@@ -1656,10 +1656,11 @@ function WorkView({ addWorkBlock, addWorkCategory, moveWorkBlock, moveWorkCatego
 }
 
 function Topbar({ activeView, selectedDate, setActiveView, setSelectedDate, shiftDate }) {
+  const viewLabel = activeView === "school" ? "SCHOOL" : "DASH BOARD";
   return h(
     "section",
-    { className: "topbar", "aria-label": "Date selector" },
-    h("div", null, h("p", { className: "eyebrow" }, "DASH BOARD"), h("h1", null, formatDayLabel(selectedDate))),
+    { className: "topbar", "aria-label": "Date selector", "data-view-label": viewLabel },
+    h("div", null, h("p", { className: "eyebrow" }, viewLabel), h("h1", null, formatDayLabel(selectedDate))),
     h(
       "div",
       { className: "topbar-controls" },
@@ -2119,6 +2120,13 @@ function ScorePanel({ carryPenaltyMarked, entryCount, onAdjustCarry, onResetCarr
       "div",
       { className: "score-meter" },
       h("span", { className: "score-kicker" }, "Total Score"),
+      h(
+        "div",
+        { className: "carry-controls score-carry-controls" },
+        h("button", { className: "carry-adjust-button", type: "button", title: "Decrease Carry", "aria-label": "Decrease Carry", onClick: () => onAdjustCarry(-1) }, "-"),
+        h("button", { className: "carry-reset-button", type: "button", title: "Reset Carry", "aria-label": "Reset Carry", onClick: onResetCarry }, "R"),
+        h("button", { className: "carry-adjust-button", type: "button", title: "Increase Carry", "aria-label": "Increase Carry", onClick: () => onAdjustCarry(1) }, "+"),
+      ),
       h("div", { className: `score-number ${totalClass}` }, formatScore(scoreInfo.total)),
       h(
         "div",
@@ -2157,13 +2165,6 @@ function ScorePanel({ carryPenaltyMarked, entryCount, onAdjustCarry, onResetCarr
         "div",
         { className: "carry-detail" },
         h("span", { className: "detail-label" }, "Carry"),
-        h(
-          "div",
-          { className: "carry-controls" },
-          h("button", { className: "carry-adjust-button", type: "button", title: "Decrease Carry", "aria-label": "Decrease Carry", onClick: () => onAdjustCarry(-1) }, "-"),
-          h("button", { className: "carry-reset-button", type: "button", title: "Reset Carry", "aria-label": "Reset Carry", onClick: onResetCarry }, "R"),
-          h("button", { className: "carry-adjust-button", type: "button", title: "Increase Carry", "aria-label": "Increase Carry", onClick: () => onAdjustCarry(1) }, "+"),
-        ),
         h("strong", null, formatScore(scoreInfo.carry)),
       ),
       h("div", null, h("span", { className: "detail-label" }, "Plus"), h("strong", null, formatScore(scoreInfo.plus))),
@@ -2611,6 +2612,27 @@ function CalendarPanel({ calendar, calendarDuties, isOpen, onToggle, openMonths,
 
 function MonthDays({ calendar, calendarDuties, monthIndex, selectedDate, toggleCalendarDuty, updateCalendarNote, year }) {
   const todayKey = toDateKey(new Date());
+  const scrollStartRef = useRef(null);
+  const handleCalendarTouchStart = (event) => {
+    if (!event.target.closest("textarea")) return;
+    const touch = event.touches?.[0];
+    if (!touch) return;
+    scrollStartRef.current = { x: touch.clientX, y: touch.clientY, target: event.target };
+  };
+  const handleCalendarTouchMove = (event) => {
+    const start = scrollStartRef.current;
+    const touch = event.touches?.[0];
+    if (!start || !touch) return;
+    const dx = touch.clientX - start.x;
+    const dy = touch.clientY - start.y;
+    if (Math.abs(dx) > 10 && Math.abs(dx) > Math.abs(dy) * 1.2) {
+      start.target.blur();
+      scrollStartRef.current = null;
+    }
+  };
+  const handleCalendarTouchEnd = () => {
+    scrollStartRef.current = null;
+  };
   const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
   const firstDayIndex = (new Date(year, monthIndex, 1).getDay() + 6) % 7;
   const cells = [
@@ -2622,7 +2644,7 @@ function MonthDays({ calendar, calendarDuties, monthIndex, selectedDate, toggleC
   const weeks = Array.from({ length: Math.ceil(cells.length / 7) }, (_, index) => cells.slice(index * 7, index * 7 + 7));
   return h(
     "div",
-    { className: "calendar-weeks" },
+    { className: "calendar-weeks", onTouchCancel: handleCalendarTouchEnd, onTouchEnd: handleCalendarTouchEnd, onTouchMove: handleCalendarTouchMove, onTouchStart: handleCalendarTouchStart },
     weeks.map((week, weekIndex) =>
       h(
       "div",

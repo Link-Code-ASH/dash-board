@@ -456,6 +456,9 @@ input[type="date"] {
 .score-kicker {
   width: fit-content;
   grid-column: 1;
+  grid-row: 1;
+  align-self: start;
+  justify-self: start;
   border: 1px solid rgba(183, 255, 60, 0.3);
   border-radius: 999px;
   background: rgba(183, 255, 60, 0.08);
@@ -465,6 +468,13 @@ input[type="date"] {
   font-weight: 950;
   letter-spacing: 0.12em;
   text-transform: uppercase;
+}
+
+.score-carry-controls {
+  grid-column: 2;
+  grid-row: 1;
+  justify-self: end;
+  align-self: start;
 }
 
 .score-number {
@@ -961,7 +971,7 @@ input[type="date"] {
 
 .daily-workspace {
   display: grid;
-  grid-template-columns: minmax(0, 0.95fr) minmax(360px, 1.05fr);
+  grid-template-columns: minmax(520px, 1.65fr) minmax(280px, 0.72fr);
   gap: 18px;
   align-items: stretch;
   margin-bottom: 18px;
@@ -1222,6 +1232,7 @@ input[type="date"] {
   display: grid;
   gap: 18px;
   align-content: start;
+  min-width: 0;
 }
 
 .daily-workspace .schedule-panel,
@@ -4004,7 +4015,7 @@ body::after {
 }
 
 .topbar::before {
-  content: "DASH BOARD";
+  content: attr(data-view-label);
   display: block;
   position: absolute;
   top: 4px;
@@ -7853,15 +7864,64 @@ body::after {
     width: max-content !important;
     max-width: none !important;
     min-width: 100% !important;
-    grid-template-columns: repeat(7, 118px) !important;
+    grid-template-columns: repeat(7, 148px) !important;
     gap: 7px !important;
   }
 
   .calendar-weekdays span,
   .calendar-day,
   .calendar-day-spacer {
-    width: 118px !important;
-    min-width: 118px !important;
+    width: 148px !important;
+    min-width: 148px !important;
+  }
+
+  .calendar-day {
+    min-height: 188px !important;
+    padding: 9px !important;
+  }
+
+  .calendar-date {
+    display: grid !important;
+    grid-template-columns: auto 1fr !important;
+    grid-template-areas:
+      "day duties"
+      "weekday duties";
+    align-items: center !important;
+    gap: 3px 6px !important;
+  }
+
+  .calendar-date b {
+    grid-area: day;
+  }
+
+  .calendar-date i {
+    grid-area: weekday;
+    justify-self: start;
+  }
+
+  .calendar-duty-checks {
+    grid-area: duties;
+    justify-self: end;
+    min-width: 0 !important;
+    gap: 3px !important;
+  }
+
+  .calendar-duty {
+    min-height: 22px !important;
+    padding: 2px 4px !important;
+    gap: 2px !important;
+    font-size: 0.68rem !important;
+  }
+
+  .calendar-duty input {
+    width: 10px !important;
+    height: 10px !important;
+  }
+
+  .calendar-day textarea {
+    min-height: 116px !important;
+    resize: none !important;
+    touch-action: pan-x pan-y !important;
   }
 }
 
@@ -7902,5 +7962,126 @@ body::after {
 
   .memo-mobile-area .memo-large-textarea {
     min-height: 220px !important;
+  }
+}
+
+/* Final dashboard workspace balance */
+@media (min-width: 901px) {
+  .daily-workspace {
+    grid-template-columns: minmax(540px, 1.72fr) minmax(260px, 0.64fr) !important;
+    align-items: stretch !important;
+  }
+
+  .daily-workspace .memo-panel {
+    min-width: 0 !important;
+  }
+
+  .daily-workspace .memo-stack {
+    min-height: 920px !important;
+  }
+
+  .daily-workspace .memo-card {
+    min-height: 884px !important;
+    max-height: 884px !important;
+  }
+
+  .daily-left-rail {
+    min-width: 0 !important;
+    max-width: 390px;
+    justify-self: stretch;
+  }
+
+  .daily-left-rail .score-panel {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+
+  .daily-left-rail .score-meter {
+    width: 100% !important;
+    min-height: 144px !important;
+  }
+
+  .daily-left-rail .score-meter .score-carry-controls {
+    display: inline-grid !important;
+    grid-template-columns: repeat(3, 28px) !important;
+    grid-template-areas: "plus reset minus" !important;
+    gap: 4px !important;
+    justify-self: end !important;
+    align-self: start !important;
+  }
+
+  .daily-left-rail .score-meter .score-carry-controls .carry-reset-button,
+  .daily-left-rail .score-meter .score-carry-controls .carry-adjust-button {
+    width: 28px !important;
+    min-width: 28px !important;
+    min-height: 24px !important;
+  }
+
+  .daily-left-rail .score-details {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+  }
+
+  .daily-left-rail .score-details > div {
+    min-height: 68px !important;
+    padding: 9px 8px 9px 16px !important;
+    gap: 8px !important;
+  }
+
+  .daily-left-rail .score-details > div .detail-label,
+  .daily-left-rail .score-details > div strong {
+    transform: translateX(4px);
+  }
+
+  .daily-left-rail .score-details .carry-detail {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    grid-template-columns: none !important;
+    grid-template-areas: none !important;
+  }
+
+  .daily-left-rail .score-details .carry-detail .detail-label {
+    grid-area: auto !important;
+  }
+
+  .daily-left-rail .score-details .carry-detail strong {
+    grid-area: auto !important;
+    justify-self: auto !important;
+    transform: translateX(-8px) !important;
+  }
+
+  .daily-left-rail .date-marker {
+    grid-template-columns: 1fr auto !important;
+    grid-template-areas:
+      "text dday"
+      "date dday";
+    gap: 7px 8px !important;
+  }
+
+  .daily-left-rail .date-marker .date-marker-text {
+    grid-area: text;
+  }
+
+  .daily-left-rail .date-marker .date-marker-date {
+    grid-area: date;
+  }
+
+  .daily-left-rail .date-marker .date-marker-dday {
+    grid-area: dday;
+    width: 72px;
+    min-height: 100% !important;
+    display: grid !important;
+    place-items: center !important;
+    align-self: stretch !important;
+    justify-self: stretch !important;
+    line-height: 1 !important;
+    padding-top: 2px !important;
+  }
+}
+
+@media (max-width: 900px) {
+  .daily-workspace {
+    grid-template-columns: 1fr !important;
   }
 }
