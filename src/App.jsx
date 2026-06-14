@@ -62,9 +62,9 @@ const schoolNoteColors = ["cream", "sage", "peach", "blue", "rose", "lavender", 
 
 function createDefaultMemoCards(globalMemos = {}) {
   return [
-    { id: "memo-life", title: "Life", leftText: globalMemos.life || "", leftTextExtra: "", rightText: "", rightTextExtra: "", memoSplits: { leftText: 50, rightText: 50 } },
-    { id: "memo-school", title: "School", leftText: globalMemos.school || "", leftTextExtra: "", rightText: "", rightTextExtra: "", memoSplits: { leftText: 50, rightText: 50 } },
-    { id: "memo-ideas", title: "Ideas", leftText: "", leftTextExtra: "", rightText: "", rightTextExtra: "", memoSplits: { leftText: 50, rightText: 50 } },
+    { id: "memo-life", title: "Life", leftTitle: "", leftText: globalMemos.life || "", leftExtraTitle: "", leftTextExtra: "", rightTitle: "", rightText: "", rightExtraTitle: "", rightTextExtra: "", memoSplits: { leftText: 50, rightText: 50 } },
+    { id: "memo-school", title: "School", leftTitle: "", leftText: globalMemos.school || "", leftExtraTitle: "", leftTextExtra: "", rightTitle: "", rightText: "", rightExtraTitle: "", rightTextExtra: "", memoSplits: { leftText: 50, rightText: 50 } },
+    { id: "memo-ideas", title: "Ideas", leftTitle: "", leftText: "", leftExtraTitle: "", leftTextExtra: "", rightTitle: "", rightText: "", rightExtraTitle: "", rightTextExtra: "", memoSplits: { leftText: 50, rightText: 50 } },
   ];
 }
 
@@ -173,9 +173,13 @@ function normalizeMemos(memos) {
     .map((card, index) => ({
       id: card.id,
       title: String(card.title == null ? `Memo ${index + 1}` : card.title).slice(0, 32),
+      leftTitle: String(card.leftTitle || "").slice(0, 48),
       leftText: String(card.leftText ?? card.text ?? ""),
+      leftExtraTitle: String(card.leftExtraTitle || "").slice(0, 48),
       leftTextExtra: String(card.leftTextExtra || ""),
+      rightTitle: String(card.rightTitle || "").slice(0, 48),
       rightText: String(card.rightText || ""),
+      rightExtraTitle: String(card.rightExtraTitle || "").slice(0, 48),
       rightTextExtra: String(card.rightTextExtra || ""),
       memoSplits: {
         leftText: clampNumber(card.memoSplits?.leftText ?? 50, 24, 76),
@@ -478,7 +482,7 @@ function CollapsiblePanel({ children, className, controls, description, isOpen, 
   };
   return h(
     "section",
-    { className: `${className} collapsible-panel ${isOpen ? "" : "collapsed"}`, onClick: handleClick },
+    { className: `${className} collapsible-panel ${isOpen ? "" : "collapsed"}` },
     h(
       "div",
       {
@@ -487,6 +491,7 @@ function CollapsiblePanel({ children, className, controls, description, isOpen, 
         tabIndex: 0,
         "aria-controls": controls,
         "aria-expanded": String(isOpen),
+        onClick: handleClick,
         onKeyDown: handleKeyDown,
       },
       h("div", null, h("h2", null, title), description ? h("p", null, description) : null),
@@ -862,9 +867,13 @@ function App() {
       const card = draft.memos.cards.find((item) => item.id === id);
       if (!card) return draft;
       if (field === "title") card.title = value;
+      if (field === "leftTitle") card.leftTitle = value;
       if (field === "leftText") card.leftText = value;
+      if (field === "leftExtraTitle") card.leftExtraTitle = value;
       if (field === "leftTextExtra") card.leftTextExtra = value;
+      if (field === "rightTitle") card.rightTitle = value;
       if (field === "rightText") card.rightText = value;
+      if (field === "rightExtraTitle") card.rightExtraTitle = value;
       if (field === "rightTextExtra") card.rightTextExtra = value;
       if (field === "memoSplits") card.memoSplits = { ...(card.memoSplits || {}), ...value };
       if (id === "memo-life") draft.memos.global.life = card.leftText || "";
@@ -884,7 +893,7 @@ function App() {
 
   const addMemoCard = () => {
     saveData((draft) => {
-      const card = { id: createKey("memo"), title: `Memo ${draft.memos.cards.length + 1}`, leftText: "", leftTextExtra: "", rightText: "", rightTextExtra: "", memoSplits: { leftText: 50, rightText: 50 } };
+      const card = { id: createKey("memo"), title: `Memo ${draft.memos.cards.length + 1}`, leftTitle: "", leftText: "", leftExtraTitle: "", leftTextExtra: "", rightTitle: "", rightText: "", rightExtraTitle: "", rightTextExtra: "", memoSplits: { leftText: 50, rightText: 50 } };
       draft.memos.cards.push(card);
       draft.memos.activeMemoId = card.id;
       return draft;
@@ -1902,19 +1911,27 @@ function MemoPanel({ activeMemoId, addMemoCard, cards, moveMemoCard, removeMemoC
                   { className: "memo-card-columns" },
                   h(MemoBlockColumn, {
                     cardId: card.id,
+                    extraTitleField: "leftExtraTitle",
+                    extraTitleValue: card.leftExtraTitle || "",
                     extraField: "leftTextExtra",
                     extraValue: card.leftTextExtra || "",
                     field: "leftText",
                     split: card.memoSplits?.leftText ?? 50,
+                    titleField: "leftTitle",
+                    titleValue: card.leftTitle || "",
                     updateMemoCard,
                     value: card.leftText || "",
                   }),
                   h(MemoBlockColumn, {
                     cardId: card.id,
+                    extraTitleField: "rightExtraTitle",
+                    extraTitleValue: card.rightExtraTitle || "",
                     extraField: "rightTextExtra",
                     extraValue: card.rightTextExtra || "",
                     field: "rightText",
                     split: card.memoSplits?.rightText ?? 50,
+                    titleField: "rightTitle",
+                    titleValue: card.rightTitle || "",
                     updateMemoCard,
                     value: card.rightText || "",
                   }),
@@ -1979,7 +1996,7 @@ function growMemoTextarea(textarea) {
   textarea.style.height = `${textarea.scrollHeight}px`;
 }
 
-function MemoBlockColumn({ cardId, extraField, extraValue, field, split, updateMemoCard, value }) {
+function MemoBlockColumn({ cardId, extraField, extraTitleField, extraTitleValue, extraValue, field, split, titleField, titleValue, updateMemoCard, value }) {
   const [quickMemo, setQuickMemo] = useState("");
   const [quickExtraMemo, setQuickExtraMemo] = useState("");
   const splitRef = useRef(null);
@@ -2011,6 +2028,39 @@ function MemoBlockColumn({ cardId, extraField, extraValue, field, split, updateM
     window.addEventListener("pointerup", stop);
     window.addEventListener("pointercancel", stop);
   };
+  const renderQuickInput = (targetField, currentValue, textValue, setTextValue) =>
+    h("textarea", {
+      className: "memo-quick-textarea",
+      placeholder: "Quick add...",
+      rows: 1,
+      value: textValue,
+      onChange: (event) => setTextValue(event.target.value),
+      onKeyDown: (event) => {
+        event.stopPropagation();
+        if (event.key === "Enter" && !event.shiftKey) {
+          event.preventDefault();
+          addQuickMemo(targetField, currentValue, textValue, setTextValue);
+        }
+      },
+    });
+  const renderTitleInput = (targetTitleField, currentTitle) =>
+    h("input", {
+      className: "memo-title-input",
+      maxLength: 48,
+      placeholder: "Title",
+      type: "text",
+      value: currentTitle,
+      onChange: (event) => updateMemoCard(cardId, targetTitleField, event.target.value),
+      onKeyDown: (event) => event.stopPropagation(),
+    });
+  const renderMemoTextarea = (targetField, currentValue) =>
+    h("textarea", {
+      className: "memo-large-textarea memo-split-textarea",
+      placeholder: "Write freely...",
+      value: currentValue,
+      onChange: (event) => updateMemoCard(cardId, targetField, event.target.value),
+      onKeyDown: (event) => event.stopPropagation(),
+    });
   return h(
     "section",
     { className: "memo-block-column" },
@@ -2020,35 +2070,19 @@ function MemoBlockColumn({ cardId, extraField, extraValue, field, split, updateM
         className: "memo-quick-split",
         style: { "--memo-split": `${clampNumber(split, 24, 76)}%` },
       },
-      h("textarea", {
-        className: "memo-quick-textarea",
-        placeholder: "Quick add...",
-        rows: 1,
-        value: quickMemo,
-        onChange: (event) => setQuickMemo(event.target.value),
-        onKeyDown: (event) => {
-          event.stopPropagation();
-          if (event.key === "Enter" && !event.shiftKey) {
-            event.preventDefault();
-            addQuickMemo(field, value, quickMemo, setQuickMemo);
-          }
-        },
-      }),
+      renderQuickInput(field, value, quickMemo, setQuickMemo),
       h("div", { className: "memo-quick-split-gap" }),
-      h("textarea", {
-        className: "memo-quick-textarea",
-        placeholder: "Quick add...",
-        rows: 1,
-        value: quickExtraMemo,
-        onChange: (event) => setQuickExtraMemo(event.target.value),
-        onKeyDown: (event) => {
-          event.stopPropagation();
-          if (event.key === "Enter" && !event.shiftKey) {
-            event.preventDefault();
-            addQuickMemo(extraField, extraValue, quickExtraMemo, setQuickExtraMemo);
-          }
-        },
-      }),
+      renderQuickInput(extraField, extraValue, quickExtraMemo, setQuickExtraMemo),
+    ),
+    h(
+      "div",
+      {
+        className: "memo-title-split",
+        style: { "--memo-split": `${clampNumber(split, 24, 76)}%` },
+      },
+      renderTitleInput(titleField, titleValue),
+      h("div", { className: "memo-title-split-gap" }),
+      renderTitleInput(extraTitleField, extraTitleValue),
     ),
     h(
       "div",
@@ -2057,26 +2091,20 @@ function MemoBlockColumn({ cardId, extraField, extraValue, field, split, updateM
         ref: splitRef,
         style: { "--memo-split": `${clampNumber(split, 24, 76)}%` },
       },
-      h("textarea", {
-        className: "memo-large-textarea memo-split-textarea",
-        placeholder: "Write freely...",
-        value,
-        onChange: (event) => updateMemoCard(cardId, field, event.target.value),
-        onKeyDown: (event) => event.stopPropagation(),
-      }),
+      renderMemoTextarea(field, value),
       h("button", {
         "aria-label": "Resize memo columns",
         className: "memo-split-handle",
         onPointerDown: startResize,
         type: "button",
       }),
-      h("textarea", {
-        className: "memo-large-textarea memo-split-textarea",
-        placeholder: "Write freely...",
-        value: extraValue,
-        onChange: (event) => updateMemoCard(cardId, extraField, event.target.value),
-        onKeyDown: (event) => event.stopPropagation(),
-      }),
+      renderMemoTextarea(extraField, extraValue),
+    ),
+    h(
+      "div",
+      { className: "memo-mobile-flow" },
+      h("div", { className: "memo-mobile-area" }, renderQuickInput(field, value, quickMemo, setQuickMemo), renderTitleInput(titleField, titleValue), renderMemoTextarea(field, value)),
+      h("div", { className: "memo-mobile-area" }, renderQuickInput(extraField, extraValue, quickExtraMemo, setQuickExtraMemo), renderTitleInput(extraTitleField, extraTitleValue), renderMemoTextarea(extraField, extraValue)),
     ),
   );
 }

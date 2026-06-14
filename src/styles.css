@@ -1545,7 +1545,7 @@ input::placeholder {
   min-height: 0;
   max-height: 100%;
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-rows: auto auto minmax(0, 1fr);
   gap: 8px;
   border: 1px solid rgba(70, 255, 242, 0.13);
   border-radius: 7px;
@@ -1555,6 +1555,65 @@ input::placeholder {
   padding: 8px;
   overflow: hidden;
   touch-action: pan-y;
+}
+
+.memo-title-split {
+  min-height: 44px;
+  display: grid;
+  grid-template-columns: minmax(0, var(--memo-split, 50%)) 12px minmax(0, 1fr);
+  gap: 0;
+}
+
+.memo-title-split-gap {
+  width: 12px;
+  min-height: 100%;
+}
+
+.memo-mobile-flow {
+  display: none;
+}
+
+.memo-title-input {
+  width: 100%;
+  min-width: 0;
+  height: 44px;
+  border: 2px solid rgba(116, 86, 45, 0.22);
+  border-bottom-color: rgba(116, 86, 45, 0.36);
+  border-radius: 5px 5px 3px 3px;
+  background:
+    linear-gradient(180deg, rgba(255, 251, 238, 0.88), rgba(247, 224, 168, 0.78)),
+    repeating-linear-gradient(0deg, transparent 0 18px, rgba(127, 91, 45, 0.08) 18px 19px),
+    #f4d98f;
+  color: #332416;
+  padding: 9px 14px 4px;
+  font-family: var(--hand-font);
+  font-size: 1.12rem;
+  font-weight: 950;
+  letter-spacing: 0;
+  line-height: 1;
+  outline: none;
+  caret-color: #7c4a13;
+  text-shadow: none;
+  box-shadow:
+    0 2px 0 rgba(123, 82, 34, 0.12),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.38);
+}
+
+.memo-title-input::placeholder {
+  color: rgba(70, 48, 28, 0.5);
+}
+
+.memo-title-input:focus {
+  border-color: rgba(168, 104, 22, 0.46);
+  border-bottom-color: rgba(126, 78, 17, 0.6);
+  background:
+    linear-gradient(180deg, rgba(255, 254, 247, 0.94), rgba(250, 222, 142, 0.86)),
+    repeating-linear-gradient(0deg, transparent 0 18px, rgba(127, 91, 45, 0.08) 18px 19px),
+    #f7dd94;
+  box-shadow:
+    0 2px 0 rgba(123, 82, 34, 0.12),
+    0 0 0 3px rgba(245, 202, 90, 0.16),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.45);
 }
 
 .memo-quick-textarea {
@@ -6156,11 +6215,13 @@ body::after {
   }
 
   .memo-split-editor,
+  .memo-title-split,
   .memo-quick-split {
     grid-template-columns: 1fr !important;
   }
 
   .memo-split-handle,
+  .memo-title-split-gap,
   .memo-quick-split-gap {
     display: none !important;
   }
@@ -7621,4 +7682,225 @@ body::after {
 
 .schedule-panel .schedule-day.today .schedule-date b::after {
   display: none !important;
+}
+
+/* Final solid memo title blocks */
+.memo-panel .memo-title-input {
+  height: 44px !important;
+  border: 2px solid rgba(116, 86, 45, 0.22) !important;
+  border-bottom-color: rgba(116, 86, 45, 0.36) !important;
+  border-radius: 5px 5px 3px 3px !important;
+  background:
+    linear-gradient(180deg, rgba(255, 251, 238, 0.9), rgba(247, 224, 168, 0.8)),
+    repeating-linear-gradient(0deg, transparent 0 18px, rgba(127, 91, 45, 0.08) 18px 19px),
+    #f4d98f !important;
+  color: #332416 !important;
+  padding: 9px 14px 4px !important;
+  font-family: var(--hand-font) !important;
+  font-size: 1.12rem !important;
+  font-weight: 950 !important;
+  line-height: 1 !important;
+  text-shadow: none !important;
+  box-shadow:
+    0 2px 0 rgba(123, 82, 34, 0.12),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.38) !important;
+}
+
+/* Final Weekly/Daily polish */
+.quick-panel .toggle-heading,
+.weekly-panel .toggle-heading {
+  cursor: pointer;
+}
+
+.quick-panel .preset-card,
+.weekly-panel .weekly-category,
+.weekly-panel .weekly-input {
+  cursor: default;
+}
+
+.quick-panel .drag-handle,
+.weekly-panel .drag-handle {
+  position: relative !important;
+  width: 28px !important;
+  min-height: 42px !important;
+  border: 1px solid rgba(111, 85, 49, 0.18) !important;
+  border-radius: 5px !important;
+  background:
+    linear-gradient(180deg, rgba(255, 253, 246, 0.66), rgba(236, 216, 181, 0.72)),
+    #ead8b8 !important;
+  color: transparent !important;
+  font-size: 0 !important;
+  box-shadow:
+    0 1px 2px rgba(75, 50, 25, 0.1),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.32) !important;
+}
+
+.quick-panel .drag-handle::before,
+.weekly-panel .drag-handle::before {
+  content: "⋯";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  color: rgba(82, 59, 34, 0.72);
+  font-size: 1.2rem;
+  font-weight: 950;
+  letter-spacing: -1px;
+  line-height: 1;
+  transform: translate(-50%, -50%) rotate(90deg);
+}
+
+.quick-panel .drag-handle:active,
+.weekly-panel .drag-handle:active {
+  background:
+    linear-gradient(180deg, rgba(255, 248, 226, 0.8), rgba(236, 203, 139, 0.78)),
+    #f0d79d !important;
+}
+
+.quick-panel .mini-button.danger,
+.weekly-panel .mini-button.danger {
+  position: relative !important;
+  display: grid !important;
+  place-items: center !important;
+  width: 32px !important;
+  height: 32px !important;
+  min-width: 32px !important;
+  min-height: 32px !important;
+  padding: 0 !important;
+  border-radius: 5px !important;
+  color: transparent !important;
+  font-size: 0 !important;
+  line-height: 0 !important;
+}
+
+.quick-panel .mini-button.danger::before,
+.quick-panel .mini-button.danger::after,
+.weekly-panel .mini-button.danger::before,
+.weekly-panel .mini-button.danger::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 13px;
+  height: 2px;
+  border-radius: 999px;
+  background: #5f2f25;
+  transform-origin: center;
+}
+
+.quick-panel .mini-button.danger::before,
+.weekly-panel .mini-button.danger::before {
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.quick-panel .mini-button.danger::after,
+.weekly-panel .mini-button.danger::after {
+  transform: translate(-50%, -50%) rotate(-45deg);
+}
+
+.weekly-panel .weekly-day {
+  min-height: 58px !important;
+  border: 1px solid rgba(118, 90, 49, 0.18) !important;
+  border-bottom-color: rgba(118, 90, 49, 0.3) !important;
+  border-radius: 6px !important;
+  background:
+    linear-gradient(180deg, rgba(255, 254, 248, 0.9), rgba(242, 218, 158, 0.78)),
+    repeating-linear-gradient(0deg, transparent 0 18px, rgba(128, 94, 50, 0.07) 18px 19px),
+    #f5df9f !important;
+  color: #342719 !important;
+  font-size: 1.05rem !important;
+  font-weight: 950 !important;
+  text-shadow: none !important;
+  box-shadow:
+    0 2px 4px rgba(74, 46, 25, 0.1),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.42) !important;
+}
+
+.weekly-panel .weekly-day.active {
+  background:
+    linear-gradient(180deg, rgba(255, 254, 248, 0.9), rgba(242, 218, 158, 0.78)),
+    repeating-linear-gradient(0deg, transparent 0 18px, rgba(128, 94, 50, 0.07) 18px 19px),
+    #f5df9f !important;
+  border-color: rgba(118, 90, 49, 0.18) !important;
+  color: #342719 !important;
+}
+
+/* Final mobile calendar: one horizontal scroll for the whole month */
+@media (max-width: 820px) {
+  .calendar-weeks {
+    width: 100% !important;
+    max-width: 100% !important;
+    display: grid !important;
+    gap: 10px !important;
+    overflow-x: auto !important;
+    overflow-y: visible !important;
+    overscroll-behavior-x: contain !important;
+    -webkit-overflow-scrolling: touch !important;
+    padding: 10px 10px 14px !important;
+    touch-action: pan-x pan-y !important;
+  }
+
+  .calendar-week-scroll {
+    width: max-content !important;
+    min-width: 100% !important;
+    max-width: none !important;
+    overflow: visible !important;
+    padding-bottom: 0 !important;
+    touch-action: auto !important;
+  }
+
+  .calendar-weekdays,
+  .calendar-days {
+    width: max-content !important;
+    max-width: none !important;
+    min-width: 100% !important;
+    grid-template-columns: repeat(7, 118px) !important;
+    gap: 7px !important;
+  }
+
+  .calendar-weekdays span,
+  .calendar-day,
+  .calendar-day-spacer {
+    width: 118px !important;
+    min-width: 118px !important;
+  }
+}
+
+.quick-panel .drag-handle::before,
+.weekly-panel .drag-handle::before {
+  content: "" !important;
+  width: 4px;
+  height: 24px;
+  background:
+    radial-gradient(circle, rgba(82, 59, 34, 0.74) 0 2px, transparent 2.5px) center 1px / 4px 8px repeat-y;
+  transform: translate(-50%, -50%) !important;
+}
+
+@media (max-width: 700px) {
+  .memo-block-column {
+    grid-template-rows: minmax(0, 1fr) !important;
+  }
+
+  .memo-block-column > .memo-quick-split,
+  .memo-block-column > .memo-title-split,
+  .memo-block-column > .memo-split-editor {
+    display: none !important;
+  }
+
+  .memo-mobile-flow {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 12px;
+    min-height: 0;
+  }
+
+  .memo-mobile-area {
+    min-height: 0;
+    display: grid;
+    grid-template-rows: auto auto minmax(220px, 1fr);
+    gap: 8px;
+  }
+
+  .memo-mobile-area .memo-large-textarea {
+    min-height: 220px !important;
+  }
 }
