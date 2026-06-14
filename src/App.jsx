@@ -1798,9 +1798,10 @@ function SchedulePanel({ calendar, calendarDuties, selectedDate }) {
             const lines = schedule.split(/\n+/).filter(Boolean).map((line) => ({ type: "note", label: line }));
             const items = [...dutyItems, ...lines];
             const dateLabel = formatCompactDate(dateKey);
+            const isSelected = dateKey === selectedDate;
             return h(
               "article",
-              { className: `schedule-day ${dateKey === selectedDate ? "selected" : ""}`, key: dateKey },
+              { className: `schedule-day ${isSelected ? "selected today" : ""}`, key: dateKey },
               h("div", { className: "schedule-date" }, h("b", null, `${dateLabel.month} ${dateLabel.day}`)),
               h(
                 "div",
