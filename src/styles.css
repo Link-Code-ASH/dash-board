@@ -8085,3 +8085,76 @@ body::after {
     grid-template-columns: 1fr !important;
   }
 }
+
+/* Final mobile memo: show all four memo areas in one column */
+@media (max-width: 700px) {
+  .daily-workspace .memo-panel {
+    overflow: visible !important;
+  }
+
+  .daily-workspace .memo-stack-layout,
+  .daily-workspace .memo-stack {
+    min-height: 0 !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  .daily-workspace .memo-card.active {
+    position: relative !important;
+    inset: auto !important;
+    width: 100% !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    height: auto !important;
+    transform: none !important;
+    display: grid !important;
+    grid-template-rows: auto auto !important;
+    overflow: visible !important;
+  }
+
+  .daily-workspace .memo-card:not(.active) {
+    pointer-events: none !important;
+  }
+
+  .daily-workspace .memo-card-columns {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    grid-template-rows: none !important;
+    gap: 12px !important;
+    min-height: 0 !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  .daily-workspace .memo-block-column {
+    min-height: 0 !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  .daily-workspace .memo-mobile-flow {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+    min-height: 0 !important;
+    height: auto !important;
+  }
+
+  .daily-workspace .memo-mobile-area {
+    display: grid !important;
+    grid-template-rows: auto auto auto !important;
+    gap: 8px !important;
+    min-height: 0 !important;
+    height: auto !important;
+  }
+
+  .daily-workspace .memo-mobile-area .memo-large-textarea {
+    min-height: 180px !important;
+    height: 180px !important;
+    max-height: none !important;
+    resize: vertical !important;
+  }
+}
