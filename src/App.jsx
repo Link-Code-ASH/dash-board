@@ -281,7 +281,30 @@ function createFallbackState() {
 function normalizeState(source) {
   const fallback = createFallbackState();
   const categories = normalizeCategories(source?.categories, fallback.categories);
+  const knownKeys = new Set([
+    "days",
+    "memos",
+    "calendar",
+    "calendarDuties",
+    "routineAttempts",
+    "carryPenalties",
+    "flaggedDate",
+    "carryResetDate",
+    "carryAdjustment",
+    "presets",
+    "categories",
+    "weeklyPlan",
+    "dateMarkers",
+    "work",
+    "school",
+    "updatedAt",
+  ]);
+  const extraTabData =
+    source && typeof source === "object"
+      ? Object.fromEntries(Object.entries(source).filter(([key]) => !knownKeys.has(key)))
+      : {};
   return {
+    ...extraTabData,
     days: source?.days && typeof source.days === "object" ? source.days : {},
     memos: normalizeMemos(source?.memos),
     calendar: source?.calendar && typeof source.calendar === "object" ? source.calendar : {},
@@ -1363,29 +1386,35 @@ function App() {
           updateSchoolNote,
         })
       : dashboardView,
-    h(SyncPanel, {
-      forgetThisDevice,
-      isOpen: openPanels.sync,
-      onToggle: () => togglePanel("sync"),
-      onConnect: connectSync,
-      onGenerate: () => {
-        const syncId = generateSyncIdValue();
-        localStorage.setItem(SYNC_ID_KEY, syncId);
-        updateSync((current) => ({ ...current, syncId }));
-      },
-      onPull: () => pullSyncData({ force: true }),
-      onPush: () => pushSyncData(),
-      setSync: updateSync,
-      sync,
-      syncReady: syncBackendReady() && Boolean(sync.syncId && sync.pin),
-    }),
-    h(SystemPanel, {
-      copyBackup,
-      exportBackup,
-      importBackup,
-      isOpen: openPanels.system,
-      onToggle: () => togglePanel("system"),
-    }),
+    activeView === "dashboard"
+      ? h(
+          React.Fragment,
+          null,
+          h(SyncPanel, {
+            forgetThisDevice,
+            isOpen: openPanels.sync,
+            onToggle: () => togglePanel("sync"),
+            onConnect: connectSync,
+            onGenerate: () => {
+              const syncId = generateSyncIdValue();
+              localStorage.setItem(SYNC_ID_KEY, syncId);
+              updateSync((current) => ({ ...current, syncId }));
+            },
+            onPull: () => pullSyncData({ force: true }),
+            onPush: () => pushSyncData(),
+            setSync: updateSync,
+            sync,
+            syncReady: syncBackendReady() && Boolean(sync.syncId && sync.pin),
+          }),
+          h(SystemPanel, {
+            copyBackup,
+            exportBackup,
+            importBackup,
+            isOpen: openPanels.system,
+            onToggle: () => togglePanel("system"),
+          }),
+        )
+      : null,
   );
 }
 

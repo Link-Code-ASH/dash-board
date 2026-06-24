@@ -3,6 +3,9 @@
   src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2201-2@1.0/GangwonEdu_OTFLightA.woff") format("woff");
   font-weight: 300;
   font-display: swap;
+  ascent-override: 96%;
+  descent-override: 21%;
+  line-gap-override: 0%;
 }
 
 @font-face {
@@ -10,6 +13,9 @@
   src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2201-2@1.0/GangwonEdu_OTFBoldA.woff") format("woff");
   font-weight: 700;
   font-display: swap;
+  ascent-override: 96%;
+  descent-override: 21%;
+  line-gap-override: 0%;
 }
 
 :root {
@@ -8157,4 +8163,316 @@ body::after {
     max-height: none !important;
     resize: vertical !important;
   }
+}
+
+/* Final Today score centering */
+.today-plan-panel .choice-button b {
+  min-width: 34px !important;
+  height: 26px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  place-items: center !important;
+  padding: 5px 7px 0 !important;
+  line-height: 0.9 !important;
+  border-radius: 999px !important;
+  transform: translateY(2px) !important;
+}
+
+.today-plan-panel .range-score-button {
+  height: 38px !important;
+  min-height: 38px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 6px 8px 0 !important;
+  line-height: 0.9 !important;
+}
+
+/* Final score detail alignment */
+.daily-left-rail .score-details > div,
+.daily-left-rail .score-details .carry-detail {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) 44px !important;
+  grid-template-areas: "label score" !important;
+  align-items: center !important;
+  justify-content: initial !important;
+  padding: 9px 10px 9px 16px !important;
+}
+
+.daily-left-rail .score-details > div .detail-label {
+  grid-area: label !important;
+  justify-self: start !important;
+  transform: none !important;
+  padding-right: 54px !important;
+}
+
+.daily-left-rail .score-details > div strong {
+  grid-area: score !important;
+  position: absolute !important;
+  right: 14px !important;
+  top: 50% !important;
+  height: 32px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+  width: 44px !important;
+  min-width: 44px !important;
+  line-height: 0.9 !important;
+  padding-top: 4px !important;
+  transform: translateY(-50%) !important;
+}
+
+.daily-left-rail .score-details .carry-detail strong {
+  grid-area: score !important;
+  position: absolute !important;
+  right: 14px !important;
+  top: 50% !important;
+  height: 32px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 44px !important;
+  min-width: 44px !important;
+  line-height: 0.9 !important;
+  padding-top: 4px !important;
+  transform: translateY(-50%) !important;
+}
+
+/* Final Daily/Weekly input vertical alignment */
+.quick-panel .preset-name-input,
+.quick-panel .preset-score-input,
+.weekly-panel .category-name-input,
+.weekly-panel .category-score-input {
+  display: block !important;
+  height: 42px !important;
+  min-height: 42px !important;
+  padding-top: 6px !important;
+  padding-bottom: 0 !important;
+  line-height: 1 !important;
+  font-family: var(--hand-font) !important;
+  transform: none !important;
+}
+
+.quick-panel .preset-score-input,
+.weekly-panel .category-score-input {
+  text-align: center !important;
+}
+
+.quick-panel .preset-name-input,
+.weekly-panel .category-name-input {
+  text-align: left !important;
+}
+
+.weekly-panel .weekly-input {
+  display: block !important;
+  width: 100% !important;
+  min-width: 158px !important;
+  min-height: 64px !important;
+  height: auto !important;
+  padding: 18px 12px 8px !important;
+  resize: vertical !important;
+  line-height: 1.35 !important;
+  text-align: left !important;
+  font-family: var(--hand-font) !important;
+  transform: none !important;
+}
+
+/* Final text caret height tuning */
+.app-shell input[type="text"],
+.app-shell input[type="number"],
+.quick-panel .preset-name-input,
+.quick-panel .preset-score-input,
+.weekly-panel .category-name-input,
+.weekly-panel .category-score-input,
+.memo-card-grip input,
+.memo-title-input,
+.school-note-heading input,
+.date-marker .date-marker-text {
+  line-height: 1.32 !important;
+  caret-color: currentColor;
+}
+
+.app-shell textarea,
+.weekly-panel .weekly-input,
+.memo-quick-textarea,
+.memo-large-textarea,
+.school-note-textarea,
+.calendar-day textarea {
+  line-height: 1.55 !important;
+  caret-color: currentColor;
+}
+
+/* Final input text box sizing for handwritten font */
+.quick-panel .preset-name-input,
+.quick-panel .preset-score-input,
+.weekly-panel .category-name-input,
+.weekly-panel .category-score-input,
+.memo-title-input,
+.school-note-heading input,
+.date-marker .date-marker-text {
+  height: 48px !important;
+  min-height: 48px !important;
+  padding-top: 10px !important;
+  padding-bottom: 4px !important;
+  line-height: 1.35 !important;
+  box-sizing: border-box !important;
+  overflow: visible !important;
+}
+
+.memo-card-grip {
+  min-height: 56px !important;
+}
+
+.memo-card-grip input {
+  height: 36px !important;
+  min-height: 36px !important;
+  padding-top: 7px !important;
+  padding-bottom: 3px !important;
+  line-height: 1.35 !important;
+  box-sizing: border-box !important;
+}
+
+/* Final natural alignment after font metric tuning */
+.app-shell button,
+.app-shell input,
+.app-shell select {
+  line-height: normal !important;
+  transform: none !important;
+}
+
+.icon-button,
+.mini-button,
+.text-button,
+.memo-index-button,
+.carry-reset-button,
+.carry-adjust-button,
+.attempt-check,
+.history-attempt,
+.calendar-duty,
+.choice-button,
+.range-score-button,
+.topbar-controls .nav-button,
+.school-delete-note {
+  display: inline-grid !important;
+  place-items: center !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+.quick-panel .preset-name-input,
+.quick-panel .preset-score-input,
+.weekly-panel .category-name-input,
+.weekly-panel .category-score-input,
+.memo-card-grip input,
+.memo-title-input,
+.school-note-heading input,
+.date-marker .date-marker-text,
+.date-marker .date-marker-date {
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  line-height: normal !important;
+  transform: none !important;
+}
+
+.memo-card-grip input,
+.memo-title-input,
+.school-note-heading input,
+.quick-panel .preset-name-input,
+.weekly-panel .category-name-input {
+  text-align: left !important;
+}
+
+.quick-panel .preset-score-input,
+.weekly-panel .category-score-input,
+.date-marker .date-marker-text,
+.date-marker .date-marker-date {
+  text-align: center !important;
+}
+
+.day-switcher input[type="date"],
+.day-switcher input[type="date"]::-webkit-datetime-edit,
+.day-switcher input[type="date"]::-webkit-date-and-time-value,
+.date-marker .date-marker-date::-webkit-datetime-edit,
+.date-marker .date-marker-date::-webkit-date-and-time-value {
+  transform: none !important;
+  line-height: normal !important;
+}
+
+.today-plan-panel .choice-button b {
+  height: 26px !important;
+  display: inline-grid !important;
+  place-items: center !important;
+  padding: 0 7px !important;
+  line-height: normal !important;
+  transform: none !important;
+}
+
+.today-plan-panel .range-score-button {
+  display: inline-grid !important;
+  place-items: center !important;
+  padding: 0 8px !important;
+  line-height: normal !important;
+  transform: none !important;
+}
+
+.daily-left-rail .score-details > div strong,
+.daily-left-rail .score-details .carry-detail strong {
+  display: inline-grid !important;
+  place-items: center !important;
+  padding-top: 0 !important;
+  line-height: normal !important;
+  transform: translateY(-50%) !important;
+}
+
+.date-marker-dday,
+.score-details .detail-label,
+.memo-card-grip span {
+  line-height: normal !important;
+  padding-top: 0 !important;
+  transform: none !important;
+}
+
+/* Keep Today scores on one line */
+.today-plan-panel .choice-button b,
+.today-plan-panel .range-score-button {
+  min-width: 42px !important;
+  width: auto !important;
+  white-space: nowrap !important;
+  word-break: keep-all !important;
+  overflow-wrap: normal !important;
+}
+
+.today-plan-panel .choice-button {
+  grid-template-columns: auto minmax(42px, auto) !important;
+  column-gap: 8px !important;
+}
+
+/* Keep Calendar duty checks on one line */
+.calendar-duty-checks {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-wrap: nowrap !important;
+  gap: 4px !important;
+}
+
+.calendar-duty {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex: 0 0 auto !important;
+  min-width: max-content !important;
+  white-space: nowrap !important;
+  word-break: keep-all !important;
+  overflow-wrap: normal !important;
+  gap: 3px !important;
+  padding: 2px 5px !important;
+}
+
+.calendar-duty input,
+.calendar-duty em {
+  flex: 0 0 auto !important;
+  white-space: nowrap !important;
 }
