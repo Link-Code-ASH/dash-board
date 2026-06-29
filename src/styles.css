@@ -184,9 +184,17 @@ button:disabled {
 
 .nav-buttons {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
+  align-items: flex-end;
   gap: 8px;
   justify-content: flex-end;
+}
+
+.nav-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
 }
 
 .nav-button {
@@ -2653,7 +2661,7 @@ input::placeholder {
 
 .plan-card-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
   gap: 10px;
 }
 
@@ -2888,11 +2896,14 @@ input::placeholder {
 
 .range-score-buttons {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(46px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(34px, 1fr));
   gap: 7px;
+  width: 100%;
+  min-width: 0;
 }
 
 .range-score-button {
+  min-width: 0;
   min-height: 38px;
   border: 1px solid rgba(70, 164, 255, 0.28);
   border-radius: 6px;
@@ -3622,6 +3633,10 @@ input::placeholder {
   }
 
   .nav-buttons {
+    justify-content: flex-start;
+  }
+
+  .nav-row {
     justify-content: flex-start;
   }
 
@@ -6352,6 +6367,7 @@ body::after {
   }
 
   .nav-buttons,
+  .nav-row,
   .history-bars,
   .score-details,
   .today-plan-grid,
@@ -6977,6 +6993,11 @@ body::after {
   justify-content: flex-end;
 }
 
+.topbar-controls .nav-row {
+  width: 100%;
+  justify-content: flex-end;
+}
+
 .topbar-controls .nav-button {
   min-width: 118px;
   min-height: 34px;
@@ -7125,6 +7146,11 @@ body::after {
   }
 
   .topbar-controls .nav-buttons {
+    justify-content: stretch;
+  }
+
+  .topbar-controls .nav-row {
+    width: 100%;
     justify-content: stretch;
   }
 
@@ -7641,13 +7667,14 @@ body::after {
 
 /* School memo title width and toggle space */
 .school-note-heading {
-  grid-template-columns: minmax(0, 70%) minmax(42px, 1fr) 28px !important;
+  grid-template-columns: minmax(0, 1fr) !important;
   column-gap: 8px !important;
+  padding-right: 76px !important;
 }
 
 .school-note-heading::after {
   content: "";
-  grid-column: 2;
+  grid-column: 1;
   grid-row: 1;
   align-self: stretch;
   border-radius: 5px;
@@ -7669,14 +7696,365 @@ body::after {
 }
 
 .school-delete-note {
-  grid-column: 3 !important;
+  position: absolute !important;
+  top: 22px !important;
+  right: 12px !important;
+  z-index: 4 !important;
+}
+
+.school-color-picker {
+  position: absolute !important;
+  top: 22px !important;
+  right: 48px !important;
+  display: grid !important;
+  place-items: center !important;
+  z-index: 5 !important;
+}
+
+.school-note .school-color-button {
+  position: relative !important;
+  width: 28px !important;
+  height: 28px !important;
+  min-width: 28px !important;
+  min-height: 28px !important;
+  display: grid !important;
+  place-items: center !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  border: 1px solid rgba(111, 82, 45, 0.22) !important;
+  border-radius: 50% !important;
+  background: rgba(255, 252, 244, 0.86) !important;
+  box-shadow:
+    0 2px 6px rgba(72, 46, 25, 0.12) !important;
+}
+
+.school-note .school-color-button img {
+  width: 18px !important;
+  height: 18px !important;
+  display: block !important;
+  object-fit: contain !important;
+  pointer-events: none !important;
+}
+
+.school-note .school-color-button:hover,
+.school-note .school-color-button[aria-expanded="true"] {
+  border-color: rgba(98, 69, 35, 0.42) !important;
+  transform: translateY(-1px);
+}
+
+.school-color-menu {
+  position: absolute !important;
+  top: 34px !important;
+  right: -34px !important;
+  width: 148px !important;
+  display: grid !important;
+  grid-template-columns: repeat(4, 1fr) !important;
+  gap: 6px !important;
+  padding: 8px !important;
+  border: 1px solid rgba(100, 74, 44, 0.24) !important;
+  border-radius: 8px !important;
+  background: rgba(255, 250, 237, 0.96) !important;
+  box-shadow: 0 12px 26px rgba(70, 46, 25, 0.18) !important;
+  z-index: 20 !important;
+}
+
+.school-note .school-color-swatch {
+  width: 26px !important;
+  height: 26px !important;
+  min-width: 26px !important;
+  min-height: 26px !important;
+  border: 1px solid rgba(91, 67, 39, 0.22) !important;
+  border-radius: 50% !important;
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.56) !important;
+}
+
+.school-note .school-color-swatch.active {
+  border-color: rgba(64, 42, 22, 0.72) !important;
+  box-shadow:
+    inset 0 0 0 2px rgba(255, 255, 255, 0.8),
+    0 0 0 2px rgba(64, 42, 22, 0.16) !important;
+}
+
+.school-note .school-color-swatch[data-color="cream"] {
+  background: #fff8df !important;
+}
+
+.school-note .school-color-swatch[data-color="sage"] {
+  background: #edf4d6 !important;
+}
+
+.school-note .school-color-swatch[data-color="peach"] {
+  background: #ffe6ce !important;
+}
+
+.school-note .school-color-swatch[data-color="blue"] {
+  background: #deedf7 !important;
+}
+
+.school-note .school-color-swatch[data-color="rose"] {
+  background: #f7dfe6 !important;
+}
+
+.school-note .school-color-swatch[data-color="lavender"] {
+  background: #ece4f8 !important;
+}
+
+.school-note .school-color-swatch[data-color="mint"] {
+  background: #ddf4ea !important;
+}
+
+.school-note .school-color-swatch[data-color="butter"] {
+  background: #fff0ad !important;
 }
 
 @media (max-width: 430px) {
   .school-note-heading {
-    grid-template-columns: minmax(0, 70%) minmax(32px, 1fr) 28px !important;
+    grid-template-columns: minmax(0, 1fr) !important;
     column-gap: 5px !important;
+    padding-right: 70px !important;
   }
+
+  .school-color-picker {
+    top: 22px !important;
+    right: 44px !important;
+  }
+
+  .school-color-menu {
+    right: -28px !important;
+    width: 136px !important;
+    gap: 5px !important;
+    padding: 7px !important;
+  }
+}
+
+/* Final memo card structure */
+.school-note {
+  grid-template-rows: auto minmax(0, 1fr) !important;
+  gap: 12px !important;
+  padding: 16px !important;
+  border: 1px solid rgba(96, 70, 38, 0.18) !important;
+}
+
+.school-note-heading {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  align-items: center !important;
+  gap: 10px !important;
+  width: 100% !important;
+  min-height: 54px !important;
+  height: auto !important;
+  padding: 7px 8px !important;
+  border: 1px solid rgba(99, 72, 39, 0.14) !important;
+  border-radius: 7px !important;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.5), rgba(255, 250, 237, 0.32)),
+    rgba(255, 252, 244, 0.44) !important;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.28),
+    0 1px 2px rgba(80, 54, 28, 0.06) !important;
+}
+
+.school-note-heading::after {
+  content: none !important;
+}
+
+.school-note-heading input {
+  grid-column: 1 !important;
+  width: 100% !important;
+  height: 38px !important;
+  min-height: 38px !important;
+  padding: 0 10px !important;
+  border: 1px solid rgba(96, 69, 36, 0.12) !important;
+  border-radius: 6px !important;
+  background: rgba(255, 255, 255, 0.38) !important;
+  box-shadow: inset 0 1px 2px rgba(79, 52, 27, 0.05) !important;
+  line-height: normal !important;
+}
+
+.school-note-heading textarea {
+  grid-column: 1 !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 38px !important;
+  height: auto !important;
+  padding: 8px 10px !important;
+  border: 1px solid rgba(96, 69, 36, 0.12) !important;
+  border-radius: 6px !important;
+  background: rgba(255, 255, 255, 0.38) !important;
+  box-shadow: inset 0 1px 2px rgba(79, 52, 27, 0.05) !important;
+  color: #2b2822 !important;
+  font: inherit !important;
+  font-size: 1.05rem !important;
+  font-weight: 700 !important;
+  line-height: 1.28 !important;
+  overflow: hidden !important;
+  resize: none !important;
+  white-space: pre-wrap !important;
+  overflow-wrap: anywhere !important;
+  word-break: break-word !important;
+}
+
+.school-note-actions {
+  grid-column: 2 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: 6px !important;
+  min-width: max-content !important;
+  padding-left: 6px !important;
+  border-left: 1px solid rgba(99, 72, 39, 0.12) !important;
+}
+
+.school-note .school-color-button,
+.school-delete-note {
+  position: relative !important;
+  top: auto !important;
+  right: auto !important;
+  display: grid !important;
+  place-items: center !important;
+  width: 30px !important;
+  height: 30px !important;
+  min-width: 30px !important;
+  min-height: 30px !important;
+  padding: 0 !important;
+  border: 1px solid rgba(105, 75, 42, 0.18) !important;
+  border-radius: 7px !important;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.56), rgba(255, 247, 235, 0.68)),
+    rgba(255, 251, 243, 0.76) !important;
+  box-shadow:
+    0 1px 3px rgba(76, 48, 24, 0.08),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.34) !important;
+}
+
+.school-color-picker {
+  position: relative !important;
+  top: auto !important;
+  right: auto !important;
+  display: grid !important;
+  place-items: center !important;
+}
+
+.school-note .school-color-button {
+  border-radius: 7px !important;
+  overflow: visible !important;
+}
+
+.school-note .school-color-button img {
+  width: 18px !important;
+  height: 18px !important;
+}
+
+.school-color-menu {
+  top: 38px !important;
+  right: 0 !important;
+}
+
+.school-delete-note {
+  color: transparent !important;
+}
+
+.school-note-toggle-tab {
+  justify-self: center !important;
+  width: 88px !important;
+  height: 20px !important;
+  min-width: 88px !important;
+  min-height: 20px !important;
+  margin: -13px 0 -2px !important;
+  padding: 0 !important;
+  border: 1px solid rgba(99, 72, 39, 0.16) !important;
+  border-top: 0 !important;
+  border-radius: 0 0 10px 10px !important;
+  background:
+    linear-gradient(180deg, rgba(255, 250, 237, 0.62), rgba(241, 229, 205, 0.86)),
+    rgba(255, 248, 232, 0.78) !important;
+  box-shadow:
+    0 3px 6px rgba(76, 48, 24, 0.08),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.34) !important;
+  position: relative !important;
+  z-index: 2 !important;
+}
+
+.school-note-toggle-tab::before,
+.school-note-toggle-tab::after {
+  content: "" !important;
+  position: absolute !important;
+  left: 50% !important;
+  top: 50% !important;
+  width: 9px !important;
+  height: 2px !important;
+  border-radius: 999px !important;
+  background: rgba(93, 65, 34, 0.62) !important;
+  transform-origin: center !important;
+}
+
+.school-note-toggle-tab::before {
+  transform: translate(-85%, -50%) rotate(35deg) !important;
+}
+
+.school-note-toggle-tab::after {
+  transform: translate(-15%, -50%) rotate(-35deg) !important;
+}
+
+.school-note-toggle-tab.open::before {
+  transform: translate(-85%, -50%) rotate(-35deg) !important;
+}
+
+.school-note-toggle-tab.open::after {
+  transform: translate(-15%, -50%) rotate(35deg) !important;
+}
+
+.school-note-toggle-tab:hover {
+  background:
+    linear-gradient(180deg, rgba(255, 251, 239, 0.82), rgba(235, 220, 192, 0.94)),
+    rgba(255, 247, 229, 0.9) !important;
+  box-shadow:
+    0 4px 8px rgba(76, 48, 24, 0.12),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.42) !important;
+}
+
+.school-note-textarea {
+  min-height: 292px !important;
+  padding: 14px !important;
+  border: 1px solid rgba(96, 69, 36, 0.14) !important;
+  border-radius: 7px !important;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.08)),
+    rgba(255, 253, 247, 0.34) !important;
+  box-shadow:
+    inset 0 1px 2px rgba(79, 52, 27, 0.05),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.18) !important;
+}
+
+.school-note.collapsed {
+  grid-template-rows: auto !important;
+  min-height: 92px !important;
+  padding-bottom: 14px !important;
+}
+
+.school-note.collapsed::after {
+  left: 18px !important;
+  right: 18px !important;
+  bottom: 12px !important;
+  height: 1px !important;
+  border: 0 !important;
+  background: rgba(96, 69, 36, 0.14) !important;
+}
+
+@media (max-width: 430px) {
+  .school-note-heading {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 7px !important;
+  }
+
+  .school-note-actions {
+    width: 100% !important;
+    justify-content: flex-end !important;
+    padding: 7px 0 0 !important;
+    border-left: 0 !important;
+    border-top: 1px solid rgba(99, 72, 39, 0.12) !important;
+  }
+
 }
 
 /* Final visible marker fill for today's schedule block */
@@ -8186,8 +8564,10 @@ body::after {
 }
 
 .today-plan-panel .range-score-button {
+  width: 100% !important;
   height: 38px !important;
   min-height: 38px !important;
+  min-width: 0 !important;
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -8295,6 +8675,7 @@ body::after {
 .memo-card-grip input,
 .memo-title-input,
 .school-note-heading input,
+.school-note-heading textarea,
 .date-marker .date-marker-text {
   line-height: 1.32 !important;
   caret-color: currentColor;
@@ -8374,6 +8755,7 @@ body::after {
 .memo-card-grip input,
 .memo-title-input,
 .school-note-heading input,
+.school-note-heading textarea,
 .date-marker .date-marker-text,
 .date-marker .date-marker-date {
   padding-top: 0 !important;
@@ -8385,6 +8767,7 @@ body::after {
 .memo-card-grip input,
 .memo-title-input,
 .school-note-heading input,
+.school-note-heading textarea,
 .quick-panel .preset-name-input,
 .weekly-panel .category-name-input {
   text-align: left !important;
@@ -8416,6 +8799,7 @@ body::after {
 }
 
 .today-plan-panel .range-score-button {
+  width: 100% !important;
   display: inline-grid !important;
   place-items: center !important;
   padding: 0 8px !important;
@@ -8443,8 +8827,7 @@ body::after {
 /* Keep Today scores on one line */
 .today-plan-panel .choice-button b,
 .today-plan-panel .range-score-button {
-  min-width: 42px !important;
-  width: auto !important;
+  min-width: 0 !important;
   white-space: nowrap !important;
   word-break: keep-all !important;
   overflow-wrap: normal !important;
@@ -8481,4 +8864,15 @@ body::after {
 .calendar-duty em {
   flex: 0 0 auto !important;
   white-space: nowrap !important;
+}
+
+/* Final memo title vertical alignment */
+.school-note-heading textarea {
+  box-sizing: border-box !important;
+  min-height: 42px !important;
+  padding: 9px 10px !important;
+  line-height: 1.35 !important;
+  display: block !important;
+  align-self: center !important;
+  overflow: hidden !important;
 }

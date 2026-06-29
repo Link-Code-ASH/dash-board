@@ -275,6 +275,9 @@ function createFallbackState() {
     dateMarkers: normalizeDateMarkers(),
     work: normalizeWork(),
     school: normalizeSchool(),
+    univ: normalizeSchool(),
+    progress: normalizeSchool(),
+    life: normalizeSchool(),
     updatedAt: new Date().toISOString(),
   };
 }
@@ -299,6 +302,9 @@ function normalizeState(source) {
     "dateMarkers",
     "work",
     "school",
+    "univ",
+    "progress",
+    "life",
     "updatedAt",
   ]);
   const extraTabData =
@@ -323,6 +329,9 @@ function normalizeState(source) {
     dateMarkers: normalizeDateMarkers(source?.dateMarkers),
     work: normalizeWork(source?.work),
     school: normalizeSchool(source?.school),
+    univ: normalizeSchool(source?.univ),
+    progress: normalizeSchool(source?.progress),
+    life: normalizeSchool(source?.life),
     updatedAt: source?.updatedAt || new Date().toISOString(),
   };
 }
@@ -1179,64 +1188,86 @@ function App() {
     });
   };
 
-  const addSchoolNote = () => {
+  const addMemoNote = (sectionKey, idPrefix) => {
     saveData((draft) => {
-      draft.school = normalizeSchool(draft.school);
-      const nextId = createKey("school-note");
-      draft.school.notes.push({
+      draft[sectionKey] = normalizeSchool(draft[sectionKey]);
+      const nextId = createKey(idPrefix);
+      draft[sectionKey].notes.push({
         id: nextId,
-        title: `Memo ${draft.school.notes.length + 1}`,
+        title: `Memo ${draft[sectionKey].notes.length + 1}`,
         content: "",
         open: true,
-        color: schoolNoteColors[draft.school.notes.length % schoolNoteColors.length],
+        color: schoolNoteColors[draft[sectionKey].notes.length % schoolNoteColors.length],
       });
       return draft;
     });
   };
 
-  const updateSchoolNote = (id, field, value) => {
+  const updateMemoNote = (sectionKey, id, field, value) => {
     saveData((draft) => {
-      draft.school = normalizeSchool(draft.school);
-      const note = draft.school.notes.find((item) => item.id === id);
+      draft[sectionKey] = normalizeSchool(draft[sectionKey]);
+      const note = draft[sectionKey].notes.find((item) => item.id === id);
       if (!note) return draft;
       if (field === "title") note.title = value;
       if (field === "content") note.content = value;
+      if (field === "color" && schoolNoteColors.includes(value)) note.color = value;
       return draft;
     });
   };
 
-  const toggleSchoolNote = (id) => {
+  const toggleMemoNote = (sectionKey, id) => {
     saveData((draft) => {
-      draft.school = normalizeSchool(draft.school);
-      const note = draft.school.notes.find((item) => item.id === id);
+      draft[sectionKey] = normalizeSchool(draft[sectionKey]);
+      const note = draft[sectionKey].notes.find((item) => item.id === id);
       if (note) note.open = !note.open;
       return draft;
     });
   };
 
-  const removeSchoolNote = (id) => {
-    const confirmed = window.confirm("Delete this school memo?");
+  const removeMemoNote = (sectionKey, id, label) => {
+    const confirmed = window.confirm(`Delete this ${label} memo?`);
     if (!confirmed) return;
     saveData((draft) => {
-      draft.school = normalizeSchool(draft.school);
-      if (draft.school.notes.length <= 1) return draft;
-      draft.school.notes = draft.school.notes.filter((note) => note.id !== id);
+      draft[sectionKey] = normalizeSchool(draft[sectionKey]);
+      if (draft[sectionKey].notes.length <= 1) return draft;
+      draft[sectionKey].notes = draft[sectionKey].notes.filter((note) => note.id !== id);
       return draft;
     });
   };
 
-  const moveSchoolNote = (fromId, toId) => {
+  const moveMemoNote = (sectionKey, fromId, toId) => {
     if (!fromId || !toId || fromId === toId) return;
     saveData((draft) => {
-      draft.school = normalizeSchool(draft.school);
-      const fromIndex = draft.school.notes.findIndex((note) => note.id === fromId);
-      const toIndex = draft.school.notes.findIndex((note) => note.id === toId);
+      draft[sectionKey] = normalizeSchool(draft[sectionKey]);
+      const fromIndex = draft[sectionKey].notes.findIndex((note) => note.id === fromId);
+      const toIndex = draft[sectionKey].notes.findIndex((note) => note.id === toId);
       if (fromIndex < 0 || toIndex < 0) return draft;
-      const [note] = draft.school.notes.splice(fromIndex, 1);
-      draft.school.notes.splice(toIndex, 0, note);
+      const [note] = draft[sectionKey].notes.splice(fromIndex, 1);
+      draft[sectionKey].notes.splice(toIndex, 0, note);
       return draft;
     });
   };
+
+  const addSchoolNote = () => addMemoNote("school", "school-note");
+  const updateSchoolNote = (id, field, value) => updateMemoNote("school", id, field, value);
+  const toggleSchoolNote = (id) => toggleMemoNote("school", id);
+  const removeSchoolNote = (id) => removeMemoNote("school", id, "school");
+  const moveSchoolNote = (fromId, toId) => moveMemoNote("school", fromId, toId);
+  const addUnivNote = () => addMemoNote("univ", "univ-note");
+  const updateUnivNote = (id, field, value) => updateMemoNote("univ", id, field, value);
+  const toggleUnivNote = (id) => toggleMemoNote("univ", id);
+  const removeUnivNote = (id) => removeMemoNote("univ", id, "UNIV");
+  const moveUnivNote = (fromId, toId) => moveMemoNote("univ", fromId, toId);
+  const addProgressNote = () => addMemoNote("progress", "progress-note");
+  const updateProgressNote = (id, field, value) => updateMemoNote("progress", id, field, value);
+  const toggleProgressNote = (id) => toggleMemoNote("progress", id);
+  const removeProgressNote = (id) => removeMemoNote("progress", id, "Progress");
+  const moveProgressNote = (fromId, toId) => moveMemoNote("progress", fromId, toId);
+  const addLifeNote = () => addMemoNote("life", "life-note");
+  const updateLifeNote = (id, field, value) => updateMemoNote("life", id, field, value);
+  const toggleLifeNote = (id) => toggleMemoNote("life", id);
+  const removeLifeNote = (id) => removeMemoNote("life", id, "Life");
+  const moveLifeNote = (fromId, toId) => moveMemoNote("life", fromId, toId);
 
   const connectSync = async () => {
     const nextSyncId = normalizeSyncId(syncRef.current.syncId);
@@ -1407,20 +1438,18 @@ function App() {
     h(HistoryPanel, { carryPenalties: data.carryPenalties, flaggedDate: data.flaggedDate, getDayTotal, onToggleFlag: toggleFlaggedDate, routineAttempts: data.routineAttempts, selectedDate }),
   );
 
+  const memoView = {
+    school: { addSchoolNote, moveSchoolNote, notes: data.school.notes, removeSchoolNote, toggleSchoolNote, updateSchoolNote },
+    univ: { addSchoolNote: addUnivNote, moveSchoolNote: moveUnivNote, notes: data.univ.notes, removeSchoolNote: removeUnivNote, toggleSchoolNote: toggleUnivNote, updateSchoolNote: updateUnivNote },
+    progress: { addSchoolNote: addProgressNote, moveSchoolNote: moveProgressNote, notes: data.progress.notes, removeSchoolNote: removeProgressNote, toggleSchoolNote: toggleProgressNote, updateSchoolNote: updateProgressNote },
+    life: { addSchoolNote: addLifeNote, moveSchoolNote: moveLifeNote, notes: data.life.notes, removeSchoolNote: removeLifeNote, toggleSchoolNote: toggleLifeNote, updateSchoolNote: updateLifeNote },
+  }[activeView];
+
   return h(
     "main",
     { className: "app-shell" },
     h(Topbar, { activeView, selectedDate, setActiveView, setSelectedDate, shiftDate }),
-    activeView === "school"
-      ? h(SchoolView, {
-          addSchoolNote,
-          moveSchoolNote,
-          notes: data.school.notes,
-          removeSchoolNote,
-          toggleSchoolNote,
-          updateSchoolNote,
-        })
-      : dashboardView,
+    memoView ? h(SchoolView, memoView) : dashboardView,
     activeView === "dashboard"
       ? h(
           React.Fragment,
@@ -1454,36 +1483,50 @@ function App() {
 }
 
 function AppNavigation({ activeView, setActiveView }) {
-  const items = [
+  const navRows = [
+    [
     { key: "dashboard", label: "Dash Board" },
     { key: "school", label: "School" },
+    { key: "univ", label: "UNIV" },
+    ],
+    [
+      { key: "progress", label: "Progress" },
+      { key: "life", label: "Life" },
+    ],
   ];
+  const renderNavButton = (item) =>
+    h(
+      "button",
+      {
+        className: `nav-button ${activeView === item.key ? "active" : ""}`,
+        key: item.key,
+        type: "button",
+        "aria-current": activeView === item.key ? "page" : undefined,
+        onClick: () => setActiveView(item.key),
+      },
+      item.label,
+    );
   return h(
     "nav",
     { className: "app-navigation", "aria-label": "Main menu" },
     h(
       "div",
       { className: "nav-buttons" },
-      items.map((item) =>
-        h(
-          "button",
-          {
-            className: `nav-button ${activeView === item.key ? "active" : ""}`,
-            key: item.key,
-            type: "button",
-            "aria-current": activeView === item.key ? "page" : undefined,
-            onClick: () => setActiveView(item.key),
-          },
-          item.label,
-        ),
-      ),
+      navRows.map((items, index) => h("div", { className: "nav-row", key: `nav-row-${index}` }, items.map(renderNavButton))),
     ),
   );
 }
 
 function SchoolView({ addSchoolNote, moveSchoolNote, notes, removeSchoolNote, toggleSchoolNote, updateSchoolNote }) {
   const [dragNoteId, setDragNoteId] = useState("");
+  const [openColorNoteId, setOpenColorNoteId] = useState("");
   const dragJustEndedRef = useRef(false);
+  useEffect(() => {
+    if (!openColorNoteId) return undefined;
+    const closeColorMenu = () => setOpenColorNoteId("");
+    document.addEventListener("click", closeColorMenu);
+    return () => document.removeEventListener("click", closeColorMenu);
+  }, [openColorNoteId]);
   return h(
     "section",
     { className: "school-view", "aria-label": "School memos" },
@@ -1538,18 +1581,72 @@ function SchoolView({ addSchoolNote, moveSchoolNote, notes, removeSchoolNote, to
           h(
             "div",
             { className: "school-note-heading" },
-            h("input", {
-              type: "text",
+            h("textarea", {
               value: note.title,
               "aria-label": "School memo title",
+              rows: Math.min(4, Math.max(1, String(note.title || "").split("\n").reduce((rows, line) => rows + Math.max(1, Math.ceil(line.length / 24)), 0))),
               onChange: (event) => updateSchoolNote(note.id, "title", event.target.value),
               onKeyDown: (event) => {
                 event.stopPropagation();
                 if (event.key === "Enter") event.currentTarget.blur();
               },
             }),
-            h("button", { className: "school-delete-note", type: "button", disabled: notes.length <= 1, title: "Delete memo", "aria-label": "Delete memo", onClick: () => removeSchoolNote(note.id) }, "\u00d7"),
+            h(
+              "div",
+              { className: "school-note-actions" },
+              h(
+                "div",
+                { className: "school-color-picker" },
+                h(
+                  "button",
+                  {
+                    className: "school-color-button",
+                    type: "button",
+                    title: "Choose memo color",
+                    "aria-label": "Choose memo color",
+                    "aria-expanded": openColorNoteId === note.id,
+                    onClick: (event) => {
+                      event.stopPropagation();
+                      setOpenColorNoteId((current) => (current === note.id ? "" : note.id));
+                    },
+                  },
+                  h("img", { alt: "", "aria-hidden": "true", src: "./paint-brush.png" }),
+                ),
+                openColorNoteId === note.id
+                  ? h(
+                      "div",
+                      { className: "school-color-menu", role: "menu", "aria-label": "Memo colors" },
+                      schoolNoteColors.map((color) =>
+                        h("button", {
+                          className: `school-color-swatch ${note.color === color ? "active" : ""}`,
+                          key: color,
+                          type: "button",
+                          title: color,
+                          "aria-label": `Use ${color} memo color`,
+                          "data-color": color,
+                          onClick: (event) => {
+                            event.stopPropagation();
+                            updateSchoolNote(note.id, "color", color);
+                            setOpenColorNoteId("");
+                          },
+                        }),
+                      ),
+                    )
+                  : null,
+              ),
+              h("button", { className: "school-delete-note", type: "button", disabled: notes.length <= 1, title: "Delete memo", "aria-label": "Delete memo", onClick: () => removeSchoolNote(note.id) }, "\u00d7"),
+            ),
           ),
+          h("button", {
+            className: `school-note-toggle-tab ${note.open ? "open" : ""}`,
+            type: "button",
+            title: note.open ? "Close memo" : "Open memo",
+            "aria-label": note.open ? "Close memo" : "Open memo",
+            onClick: (event) => {
+              event.stopPropagation();
+              toggleSchoolNote(note.id);
+            },
+          }),
           note.open
             ? h("textarea", {
                 className: "school-note-textarea",
@@ -1720,7 +1817,14 @@ function WorkView({ addWorkBlock, addWorkCategory, moveWorkBlock, moveWorkCatego
 }
 
 function Topbar({ activeView, selectedDate, setActiveView, setSelectedDate, shiftDate }) {
-  const viewLabel = activeView === "school" ? "SCHOOL" : "DASH BOARD";
+  const viewLabels = {
+    dashboard: "DASH BOARD",
+    school: "SCHOOL",
+    univ: "UNIV",
+    progress: "PROGRESS",
+    life: "LIFE",
+  };
+  const viewLabel = viewLabels[activeView] || "DASH BOARD";
   return h(
     "section",
     { className: "topbar", "aria-label": "Date selector", "data-view-label": viewLabel },
@@ -2294,6 +2398,11 @@ function getCategoryScoreRange(category) {
   return parseScoreRange(category.yScore).filter((score) => score > 0);
 }
 
+function getPresetScoreRange(preset) {
+  const range = parseScoreRange(preset.yScore).filter((score) => score > 0);
+  return range.length > 1 ? range : null;
+}
+
 function TodayPlanPanel({ categories, entries, presets, schoolPresets, selectedDate, toggleChoice, weekday, weeklyPlan }) {
   return h(
     "section",
@@ -2307,13 +2416,32 @@ function TodayPlanPanel({ categories, entries, presets, schoolPresets, selectedD
         title: "School",
         cards: schoolPresets.map((preset) => {
           const planKey = `school:${selectedDate}:${preset.key}`;
+          const selectedEntry = entries.find((entry) => entry.planKey === planKey);
+          const scoreRange = getPresetScoreRange(preset);
+          if (scoreRange) {
+            return {
+              key: preset.key,
+              label: "",
+              scoreRange,
+              selectedChoice: selectedEntry?.choice || "",
+              value: preset.name,
+              nScore: preset.nScore,
+              onToggle: (choice) =>
+                toggleChoice({
+                  planKey,
+                  choice: choice === "N" ? "N" : String(choice),
+                  name: `School: ${preset.name} (${choice === "N" ? "N" : formatScore(choice)})`,
+                  score: choice === "N" ? scoreNumber(preset.nScore) : scoreNumber(choice),
+                }),
+            };
+          }
           return {
             key: preset.key,
             label: "",
             value: preset.name,
             yScore: preset.yScore,
             nScore: preset.nScore,
-            selectedChoice: entries.find((entry) => entry.planKey === planKey)?.choice || "",
+            selectedChoice: selectedEntry?.choice || "",
             onToggle: (choice) => toggleChoice({ planKey, choice, name: `School: ${preset.name} (${choice})`, score: scoreNumber(choice === "Y" ? preset.yScore : preset.nScore) }),
           };
         }),
