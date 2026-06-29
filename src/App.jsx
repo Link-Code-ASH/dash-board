@@ -62,9 +62,9 @@ const schoolNoteColors = ["cream", "sage", "peach", "blue", "rose", "lavender", 
 
 function createDefaultMemoCards(globalMemos = {}) {
   return [
-    { id: "memo-life", title: "Life", leftTitle: "", leftText: globalMemos.life || "", leftExtraTitle: "", leftTextExtra: "", rightTitle: "", rightText: "", rightExtraTitle: "", rightTextExtra: "", memoSplits: { leftText: 50, rightText: 50 } },
-    { id: "memo-school", title: "School", leftTitle: "", leftText: globalMemos.school || "", leftExtraTitle: "", leftTextExtra: "", rightTitle: "", rightText: "", rightExtraTitle: "", rightTextExtra: "", memoSplits: { leftText: 50, rightText: 50 } },
-    { id: "memo-ideas", title: "Ideas", leftTitle: "", leftText: "", leftExtraTitle: "", leftTextExtra: "", rightTitle: "", rightText: "", rightExtraTitle: "", rightTextExtra: "", memoSplits: { leftText: 50, rightText: 50 } },
+    { id: "memo-life", title: "Life", leftTitle: "", leftText: globalMemos.life || "", leftExtraTitle: "", leftTextExtra: "", centerTitle: "", centerText: "", centerExtraTitle: "", centerTextExtra: "", rightTitle: "", rightText: "", rightExtraTitle: "", rightTextExtra: "", memoSplits: { leftText: 50, rightText: 50 } },
+    { id: "memo-school", title: "School", leftTitle: "", leftText: globalMemos.school || "", leftExtraTitle: "", leftTextExtra: "", centerTitle: "", centerText: "", centerExtraTitle: "", centerTextExtra: "", rightTitle: "", rightText: "", rightExtraTitle: "", rightTextExtra: "", memoSplits: { leftText: 50, rightText: 50 } },
+    { id: "memo-ideas", title: "Ideas", leftTitle: "", leftText: "", leftExtraTitle: "", leftTextExtra: "", centerTitle: "", centerText: "", centerExtraTitle: "", centerTextExtra: "", rightTitle: "", rightText: "", rightExtraTitle: "", rightTextExtra: "", memoSplits: { leftText: 50, rightText: 50 } },
   ];
 }
 
@@ -133,7 +133,7 @@ function normalizeWeeklyPlan(plan, categories) {
 }
 
 function normalizeDateMarkers(markers) {
-  return Array.from({ length: 6 }, (_, index) => ({
+  return Array.from({ length: 12 }, (_, index) => ({
     text: markers?.[index]?.text || "",
     date: markers?.[index]?.date || "",
   }));
@@ -177,6 +177,10 @@ function normalizeMemos(memos) {
       leftText: String(card.leftText ?? card.text ?? ""),
       leftExtraTitle: String(card.leftExtraTitle || "").slice(0, 48),
       leftTextExtra: String(card.leftTextExtra || ""),
+      centerTitle: String(card.centerTitle || "").slice(0, 48),
+      centerText: String(card.centerText || ""),
+      centerExtraTitle: String(card.centerExtraTitle || "").slice(0, 48),
+      centerTextExtra: String(card.centerTextExtra || ""),
       rightTitle: String(card.rightTitle || "").slice(0, 48),
       rightText: String(card.rightText || ""),
       rightExtraTitle: String(card.rightExtraTitle || "").slice(0, 48),
@@ -539,6 +543,7 @@ function CollapsiblePanel({ children, className, controls, description, isOpen, 
 function App() {
   const [data, setData] = useState(loadState);
   const [activeView, setActiveView] = useState("dashboard");
+  const [activeNoteView, setActiveNoteView] = useState("school");
   const [selectedDate, setSelectedDate] = useState(toDateKey(new Date()));
   const [openPanels, setOpenPanels] = useState({
     sync: false,
@@ -907,6 +912,10 @@ function App() {
       if (field === "leftText") card.leftText = value;
       if (field === "leftExtraTitle") card.leftExtraTitle = value;
       if (field === "leftTextExtra") card.leftTextExtra = value;
+      if (field === "centerTitle") card.centerTitle = value;
+      if (field === "centerText") card.centerText = value;
+      if (field === "centerExtraTitle") card.centerExtraTitle = value;
+      if (field === "centerTextExtra") card.centerTextExtra = value;
       if (field === "rightTitle") card.rightTitle = value;
       if (field === "rightText") card.rightText = value;
       if (field === "rightExtraTitle") card.rightExtraTitle = value;
@@ -929,7 +938,7 @@ function App() {
 
   const addMemoCard = () => {
     saveData((draft) => {
-      const card = { id: createKey("memo"), title: `Memo ${draft.memos.cards.length + 1}`, leftTitle: "", leftText: "", leftExtraTitle: "", leftTextExtra: "", rightTitle: "", rightText: "", rightExtraTitle: "", rightTextExtra: "", memoSplits: { leftText: 50, rightText: 50 } };
+      const card = { id: createKey("memo"), title: `Memo ${draft.memos.cards.length + 1}`, leftTitle: "", leftText: "", leftExtraTitle: "", leftTextExtra: "", centerTitle: "", centerText: "", centerExtraTitle: "", centerTextExtra: "", rightTitle: "", rightText: "", rightExtraTitle: "", rightTextExtra: "", memoSplits: { leftText: 50, rightText: 50 } };
       draft.memos.cards.push(card);
       draft.memos.activeMemoId = card.id;
       return draft;
@@ -1443,13 +1452,15 @@ function App() {
     univ: { addSchoolNote: addUnivNote, moveSchoolNote: moveUnivNote, notes: data.univ.notes, removeSchoolNote: removeUnivNote, toggleSchoolNote: toggleUnivNote, updateSchoolNote: updateUnivNote },
     progress: { addSchoolNote: addProgressNote, moveSchoolNote: moveProgressNote, notes: data.progress.notes, removeSchoolNote: removeProgressNote, toggleSchoolNote: toggleProgressNote, updateSchoolNote: updateProgressNote },
     life: { addSchoolNote: addLifeNote, moveSchoolNote: moveLifeNote, notes: data.life.notes, removeSchoolNote: removeLifeNote, toggleSchoolNote: toggleLifeNote, updateSchoolNote: updateLifeNote },
-  }[activeView];
+  }[activeNoteView];
 
   return h(
     "main",
     { className: "app-shell" },
     h(Topbar, { activeView, selectedDate, setActiveView, setSelectedDate, shiftDate }),
-    memoView ? h(SchoolView, memoView) : dashboardView,
+    activeView === "note"
+      ? h(NoteView, { activeNoteView, memoView, setActiveNoteView })
+      : dashboardView,
     activeView === "dashboard"
       ? h(
           React.Fragment,
@@ -1483,16 +1494,9 @@ function App() {
 }
 
 function AppNavigation({ activeView, setActiveView }) {
-  const navRows = [
-    [
+  const items = [
     { key: "dashboard", label: "Dash Board" },
-    { key: "school", label: "School" },
-    { key: "univ", label: "UNIV" },
-    ],
-    [
-      { key: "progress", label: "Progress" },
-      { key: "life", label: "Life" },
-    ],
+    { key: "note", label: "Note" },
   ];
   const renderNavButton = (item) =>
     h(
@@ -1512,8 +1516,39 @@ function AppNavigation({ activeView, setActiveView }) {
     h(
       "div",
       { className: "nav-buttons" },
-      navRows.map((items, index) => h("div", { className: "nav-row", key: `nav-row-${index}` }, items.map(renderNavButton))),
+      h("div", { className: "nav-row" }, items.map(renderNavButton)),
     ),
+  );
+}
+
+function NoteView({ activeNoteView, memoView, setActiveNoteView }) {
+  const noteTabs = [
+    { key: "school", label: "School" },
+    { key: "univ", label: "UNIV" },
+    { key: "progress", label: "Progress" },
+    { key: "life", label: "Life" },
+  ];
+  return h(
+    React.Fragment,
+    null,
+    h(
+      "nav",
+      { className: "note-subnav", "aria-label": "Note categories" },
+      noteTabs.map((item) =>
+        h(
+          "button",
+          {
+            className: `note-subnav-button ${activeNoteView === item.key ? "active" : ""}`,
+            key: item.key,
+            type: "button",
+            "aria-current": activeNoteView === item.key ? "page" : undefined,
+            onClick: () => setActiveNoteView(item.key),
+          },
+          item.label,
+        ),
+      ),
+    ),
+    h(SchoolView, memoView),
   );
 }
 
@@ -1819,10 +1854,7 @@ function WorkView({ addWorkBlock, addWorkCategory, moveWorkBlock, moveWorkCatego
 function Topbar({ activeView, selectedDate, setActiveView, setSelectedDate, shiftDate }) {
   const viewLabels = {
     dashboard: "DASH BOARD",
-    school: "SCHOOL",
-    univ: "UNIV",
-    progress: "PROGRESS",
-    life: "LIFE",
+    note: "NOTE",
   };
   const viewLabel = viewLabels[activeView] || "DASH BOARD";
   return h(
@@ -2049,6 +2081,14 @@ function MemoPanel({ activeMemoId, addMemoCard, cards, moveMemoCard, removeMemoC
           const stackIndex = (index - activeIndex + cards.length) % cards.length;
           const visible = stackIndex < Math.min(cards.length, 4);
           const isActive = index === activeIndex;
+          const memoAreas = [
+            { key: "left", titleField: "leftTitle", titleValue: card.leftTitle || "", field: "leftText", value: card.leftText || "" },
+            { key: "center", titleField: "centerTitle", titleValue: card.centerTitle || "", field: "centerText", value: card.centerText || "" },
+            { key: "right", titleField: "rightTitle", titleValue: card.rightTitle || "", field: "rightText", value: card.rightText || "" },
+            { key: "left-extra", titleField: "leftExtraTitle", titleValue: card.leftExtraTitle || "", field: "leftTextExtra", value: card.leftTextExtra || "" },
+            { key: "center-extra", titleField: "centerExtraTitle", titleValue: card.centerExtraTitle || "", field: "centerTextExtra", value: card.centerTextExtra || "" },
+            { key: "right-extra", titleField: "rightExtraTitle", titleValue: card.rightExtraTitle || "", field: "rightTextExtra", value: card.rightTextExtra || "" },
+          ];
           return h(
             "article",
             {
@@ -2077,39 +2117,23 @@ function MemoPanel({ activeMemoId, addMemoCard, cards, moveMemoCard, removeMemoC
             isActive
               ? h(
                   "div",
-                  { className: "memo-card-columns" },
-                  h(MemoBlockColumn, {
-                    cardId: card.id,
-                    extraTitleField: "leftExtraTitle",
-                    extraTitleValue: card.leftExtraTitle || "",
-                    extraField: "leftTextExtra",
-                    extraValue: card.leftTextExtra || "",
-                    field: "leftText",
-                    split: card.memoSplits?.leftText ?? 50,
-                    titleField: "leftTitle",
-                    titleValue: card.leftTitle || "",
-                    updateMemoCard,
-                    value: card.leftText || "",
-                  }),
-                  h(MemoBlockColumn, {
-                    cardId: card.id,
-                    extraTitleField: "rightExtraTitle",
-                    extraTitleValue: card.rightExtraTitle || "",
-                    extraField: "rightTextExtra",
-                    extraValue: card.rightTextExtra || "",
-                    field: "rightText",
-                    split: card.memoSplits?.rightText ?? 50,
-                    titleField: "rightTitle",
-                    titleValue: card.rightTitle || "",
-                    updateMemoCard,
-                    value: card.rightText || "",
-                  }),
+                  { className: "memo-card-columns memo-six-grid" },
+                  memoAreas.map((area) =>
+                    h(MemoArea, {
+                      cardId: card.id,
+                      field: area.field,
+                      key: area.key,
+                      titleField: area.titleField,
+                      titleValue: area.titleValue,
+                      updateMemoCard,
+                      value: area.value,
+                    }),
+                  ),
                 )
               : h(
                   "div",
                   { className: "memo-card-preview-grid" },
-                  h("p", { className: "memo-card-preview" }, card.leftText || "Empty memo"),
-                  h("p", { className: "memo-card-preview" }, card.rightText || "Empty memo"),
+                  memoAreas.slice(0, 6).map((area) => h("p", { className: "memo-card-preview", key: area.key }, area.value || "Empty memo")),
                 ),
           );
         }),
@@ -2147,6 +2171,149 @@ function MemoPanel({ activeMemoId, addMemoCard, cards, moveMemoCard, removeMemoC
             index + 1,
           ),
         ),
+      ),
+    ),
+  );
+}
+
+function MemoArea({ cardId, field, titleField, titleValue, updateMemoCard, value }) {
+  const [quickMemo, setQuickMemo] = useState("");
+  const addQuickMemo = () => {
+    const text = quickMemo.trim();
+    if (!text) return;
+    const taggedText = text.startsWith("#") ? text : `# ${text}`;
+    updateMemoCard(cardId, field, value ? `${taggedText}\n${value}` : taggedText);
+    setQuickMemo("");
+  };
+  return h(
+    "section",
+    { className: "memo-area" },
+    h("input", {
+      className: "memo-title-input",
+      maxLength: 48,
+      placeholder: "Title",
+      type: "text",
+      value: titleValue,
+      onChange: (event) => updateMemoCard(cardId, titleField, event.target.value),
+      onKeyDown: (event) => event.stopPropagation(),
+    }),
+    h("textarea", {
+      className: "memo-quick-textarea",
+      placeholder: "Quick add...",
+      rows: 1,
+      value: quickMemo,
+      onChange: (event) => setQuickMemo(event.target.value),
+      onKeyDown: (event) => {
+        event.stopPropagation();
+        if (event.key === "Enter" && !event.shiftKey) {
+          event.preventDefault();
+          addQuickMemo();
+        }
+      },
+    }),
+    h(MemoLineEditor, { cardId, field, updateMemoCard, value }),
+  );
+}
+
+function MemoLineEditor({ cardId, field, updateMemoCard, value }) {
+  const lines = String(value || "").split("\n");
+  const safeLines = lines.length ? lines : [""];
+  const lineRefs = useRef([]);
+  const pendingFocusRef = useRef(null);
+  const [dragLineIndex, setDragLineIndex] = useState(null);
+  const updateLines = (nextLines) => updateMemoCard(cardId, field, nextLines.join("\n"));
+  const focusLine = (index, position = "end") => {
+    pendingFocusRef.current = { index, position };
+  };
+  const moveLine = (fromIndex, toIndex) => {
+    if (fromIndex === toIndex || fromIndex < 0 || toIndex < 0) return;
+    const nextLines = [...safeLines];
+    const [line] = nextLines.splice(fromIndex, 1);
+    nextLines.splice(toIndex, 0, line);
+    updateLines(nextLines);
+    focusLine(toIndex);
+  };
+
+  useEffect(() => {
+    lineRefs.current.forEach(growMemoTextarea);
+    const pending = pendingFocusRef.current;
+    if (!pending) return;
+    pendingFocusRef.current = null;
+    const textarea = lineRefs.current[pending.index];
+    if (!textarea) return;
+    textarea.focus();
+    const caret = pending.position === "start" ? 0 : textarea.value.length;
+    textarea.setSelectionRange(caret, caret);
+  }, [value]);
+
+  return h(
+    "div",
+    { className: "memo-line-editor" },
+    safeLines.map((line, index) =>
+      h(
+        "div",
+        {
+          className: `memo-line-item ${dragLineIndex === index ? "dragging" : ""}`,
+          draggable: true,
+          key: `${field}-${index}`,
+          onDragStart: (event) => {
+            setDragLineIndex(index);
+            event.dataTransfer.effectAllowed = "move";
+            event.dataTransfer.setData("text/memo-line", String(index));
+            event.dataTransfer.setData("text/memo-line-field", field);
+          },
+          onDragOver: (event) => {
+            event.preventDefault();
+            event.dataTransfer.dropEffect = "move";
+          },
+          onDrop: (event) => {
+            event.preventDefault();
+            if (event.dataTransfer.getData("text/memo-line-field") !== field) return;
+            const fromIndex = Number(event.dataTransfer.getData("text/memo-line"));
+            moveLine(fromIndex, index);
+            setDragLineIndex(null);
+          },
+          onDragEnd: () => setDragLineIndex(null),
+        },
+        h("textarea", {
+          className: `memo-large-textarea memo-line-textarea ${line.trimStart().startsWith("# ") ? "hash-indent" : ""}`,
+          placeholder: index === 0 ? "Write freely..." : "",
+          ref: (element) => {
+            lineRefs.current[index] = element;
+            growMemoTextarea(element);
+          },
+          rows: 1,
+          value: line,
+          onChange: (event) => {
+            const pieces = event.target.value.split("\n");
+            const nextLines = [...safeLines];
+            nextLines.splice(index, 1, ...pieces);
+            updateLines(nextLines);
+            if (pieces.length > 1) focusLine(index + pieces.length - 1);
+          },
+          onInput: (event) => growMemoTextarea(event.currentTarget),
+          onKeyDown: (event) => {
+            event.stopPropagation();
+            if (event.key === "Enter") {
+              event.preventDefault();
+              const current = event.currentTarget;
+              const start = current.selectionStart ?? line.length;
+              const end = current.selectionEnd ?? start;
+              const before = line.slice(0, start);
+              const after = line.slice(end);
+              const nextLines = [...safeLines];
+              nextLines.splice(index, 1, before, after);
+              updateLines(nextLines);
+              focusLine(index + 1, "start");
+            }
+            if (event.key === "Backspace" && line === "" && safeLines.length > 1) {
+              event.preventDefault();
+              const nextLines = safeLines.filter((_, lineIndex) => lineIndex !== index);
+              updateLines(nextLines);
+              focusLine(Math.max(0, index - 1));
+            }
+          },
+        }),
       ),
     ),
   );
@@ -2474,7 +2641,7 @@ function TodayPlanPanel({ categories, entries, presets, schoolPresets, selectedD
             return {
               key: category.key,
               isRangeCard: true,
-              label: planEntry.cycleNumber ? `${category.label} ${planEntry.cycleNumber}` : category.label,
+              label: category.label,
               scoreRange: getCategoryScoreRange(category),
               selectedChoice: selectedEntry?.choice || "",
               value,
@@ -2490,7 +2657,7 @@ function TodayPlanPanel({ categories, entries, presets, schoolPresets, selectedD
           }
           return {
             key: category.key,
-            label: planEntry.cycleNumber ? `${category.label} ${planEntry.cycleNumber}` : category.label,
+            label: category.label,
             value,
             yScore: category.yScore,
             nScore: category.nScore,

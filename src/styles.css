@@ -257,6 +257,80 @@ button:disabled {
   pointer-events: none;
 }
 
+.note-subnav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  align-items: flex-end;
+  gap: 4px;
+  margin: -4px 10px -1px;
+  padding-left: 14px;
+  position: relative;
+  z-index: 4;
+}
+
+.note-subnav-button {
+  min-width: 112px;
+  min-height: 38px;
+  border: 1px solid rgba(111, 82, 45, 0.24);
+  border-bottom-color: rgba(111, 82, 45, 0.1);
+  border-radius: 8px 8px 2px 2px;
+  background:
+    linear-gradient(180deg, rgba(255, 253, 246, 0.84), rgba(235, 216, 182, 0.9)),
+    #ead8b8;
+  color: #4a3320;
+  padding: 4px 16px 0;
+  font-family: var(--hand-font);
+  font-size: 1.08rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  cursor: pointer;
+  box-shadow:
+    0 -1px 0 rgba(255, 255, 255, 0.42) inset,
+    0 2px 5px rgba(73, 48, 24, 0.08),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.3);
+  transform: rotate(-0.5deg);
+}
+
+.note-subnav-button:hover {
+  transform: translateY(-2px) rotate(-0.5deg);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 250, 0.88), rgba(232, 211, 174, 0.9)),
+    #f0ddb9;
+}
+
+.note-subnav-button.active,
+.note-subnav-button[aria-current="page"] {
+  border-color: rgba(145, 94, 22, 0.42);
+  border-bottom-color: rgba(255, 246, 198, 0.86);
+  background:
+    linear-gradient(180deg, rgba(255, 246, 198, 0.9), rgba(244, 205, 103, 0.86)),
+    #f4ca5f;
+  color: #34220d;
+  box-shadow:
+    0 5px 10px rgba(98, 62, 22, 0.1),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.38);
+  transform: translateY(1px) rotate(0deg);
+}
+
+.note-subnav-button:nth-child(2) {
+  background:
+    linear-gradient(180deg, rgba(245, 255, 227, 0.88), rgba(209, 230, 159, 0.9)),
+    #d3e79c;
+}
+
+.note-subnav-button:nth-child(3) {
+  background:
+    linear-gradient(180deg, rgba(255, 240, 234, 0.88), rgba(241, 180, 164, 0.88)),
+    #f0b5a4;
+}
+
+.note-subnav-button:nth-child(4) {
+  background:
+    linear-gradient(180deg, rgba(235, 247, 255, 0.9), rgba(174, 214, 235, 0.9)),
+    #aed6eb;
+}
+
 .eyebrow {
   width: fit-content;
   margin: 0 0 10px;
@@ -1514,6 +1588,68 @@ input::placeholder {
   height: 100%;
   min-width: 0;
   overflow: hidden;
+}
+
+.memo-six-grid,
+.memo-card-preview-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+}
+
+.memo-area {
+  min-height: 0;
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  gap: 8px;
+  border: 1px solid rgba(70, 255, 242, 0.13);
+  border-radius: 7px;
+  background:
+    linear-gradient(180deg, rgba(70, 255, 242, 0.055), rgba(255, 45, 184, 0.025)),
+    rgba(0, 5, 7, 0.44);
+  padding: 8px;
+  overflow: hidden;
+  touch-action: pan-y;
+}
+
+.memo-area .memo-large-textarea {
+  height: 100%;
+  min-height: 0;
+  resize: none;
+}
+
+.memo-line-editor {
+  min-height: 0;
+  height: 100%;
+  display: grid;
+  align-content: start;
+  gap: 7px;
+  overflow: auto;
+}
+
+.memo-line-item {
+  display: block;
+  cursor: grab;
+}
+
+.memo-line-item.dragging {
+  opacity: 0.6;
+}
+
+.memo-line-item:active {
+  cursor: grabbing;
+}
+
+.memo-line-editor .memo-line-textarea {
+  height: auto;
+  min-height: 42px;
+  resize: none;
+  overflow: hidden;
+}
+
+.memo-line-editor .memo-line-textarea.hash-indent {
+  --memo-hanging-indent: 1.35em;
+  padding-left: calc(14px + var(--memo-hanging-indent));
+  text-indent: calc(var(--memo-hanging-indent) * -1);
 }
 
 .memo-card.active .memo-card-columns textarea {
@@ -8824,6 +8960,17 @@ body::after {
   transform: none !important;
 }
 
+/* Final memo order number centering */
+.memo-card-grip span {
+  min-height: 34px !important;
+  height: 34px !important;
+  display: inline-grid !important;
+  place-items: center !important;
+  align-self: center !important;
+  padding: 2px 0 0 !important;
+  line-height: 1 !important;
+}
+
 /* Keep Today scores on one line */
 .today-plan-panel .choice-button b,
 .today-plan-panel .range-score-button {
@@ -8875,4 +9022,313 @@ body::after {
   display: block !important;
   align-self: center !important;
   overflow: hidden !important;
+}
+
+/* Final dashboard: full-width memo board with score and D-Day below */
+@media (min-width: 901px) {
+  .daily-workspace {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+    align-items: stretch !important;
+  }
+
+  .daily-workspace .memo-panel {
+    width: 100% !important;
+    min-width: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  .daily-workspace .memo-stack {
+    min-height: 912px !important;
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+  }
+
+  .daily-workspace .memo-card {
+    width: 100% !important;
+    min-height: 874px !important;
+    max-height: 874px !important;
+    border: 0 !important;
+    background:
+      repeating-linear-gradient(0deg, transparent 0 25px, rgba(128, 101, 64, 0.055) 25px 26px),
+      rgba(255, 252, 246, 0.72) !important;
+    box-shadow: none !important;
+  }
+
+  .daily-workspace .memo-card.active {
+    transform: translateX(calc(var(--drag-x) * (1 - min(var(--stack-index), 1)))) !important;
+  }
+
+  .daily-workspace .memo-card:not(.active) {
+    pointer-events: none !important;
+    opacity: 0 !important;
+    transform: none !important;
+  }
+
+  .daily-workspace .memo-six-grid,
+  .daily-workspace .memo-card-preview-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    grid-template-rows: repeat(2, minmax(0, 1fr)) !important;
+    min-height: 766px !important;
+    gap: 12px !important;
+    border: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  .daily-workspace .memo-area {
+    position: relative !important;
+    --memo-area-accent: #c89534;
+    --memo-area-paper: rgba(255, 241, 178, 0.84);
+    --memo-area-line: rgba(146, 99, 28, 0.1);
+    --memo-title-paper: #f7d86f;
+    --memo-title-border: rgba(163, 111, 26, 0.48);
+    --memo-title-ink: #8f5e10;
+    min-height: 0 !important;
+    padding: 10px !important;
+    border: 1px solid color-mix(in srgb, var(--memo-area-accent) 42%, transparent) !important;
+    border-top: 5px solid var(--memo-area-accent) !important;
+    border-radius: 7px !important;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.46), rgba(248, 229, 190, 0.2)),
+      repeating-linear-gradient(0deg, transparent 0 25px, var(--memo-area-line) 25px 26px),
+      var(--memo-area-paper) !important;
+    box-shadow:
+      0 2px 5px rgba(75, 48, 24, 0.07),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.32) !important;
+  }
+
+  .daily-workspace .memo-area:nth-child(2) {
+    --memo-area-accent: #7fa64d;
+    --memo-area-paper: rgba(229, 244, 199, 0.86);
+    --memo-area-line: rgba(88, 128, 49, 0.095);
+    --memo-title-paper: #cfe78f;
+    --memo-title-border: rgba(93, 127, 46, 0.5);
+    --memo-title-ink: #496f24;
+  }
+
+  .daily-workspace .memo-area:nth-child(3) {
+    --memo-area-accent: #d48a78;
+    --memo-area-paper: rgba(255, 224, 213, 0.86);
+    --memo-area-line: rgba(165, 82, 66, 0.085);
+    --memo-title-paper: #f3ad9e;
+    --memo-title-border: rgba(160, 76, 61, 0.48);
+    --memo-title-ink: #9b4033;
+  }
+
+  .daily-workspace .memo-area:nth-child(4) {
+    --memo-area-accent: #76a9c8;
+    --memo-area-paper: rgba(222, 239, 249, 0.86);
+    --memo-area-line: rgba(69, 116, 145, 0.085);
+    --memo-title-paper: #a9d5ec;
+    --memo-title-border: rgba(67, 112, 140, 0.48);
+    --memo-title-ink: #386f8f;
+  }
+
+  .daily-workspace .memo-area:nth-child(5) {
+    --memo-area-accent: #b193c8;
+    --memo-area-paper: rgba(239, 226, 249, 0.86);
+    --memo-area-line: rgba(113, 82, 141, 0.08);
+    --memo-title-paper: #d2b6e5;
+    --memo-title-border: rgba(109, 78, 137, 0.46);
+    --memo-title-ink: #755093;
+  }
+
+  .daily-workspace .memo-area:nth-child(6) {
+    --memo-area-accent: #4fae9c;
+    --memo-area-paper: rgba(214, 246, 237, 0.88);
+    --memo-area-line: rgba(47, 128, 108, 0.09);
+    --memo-title-paper: #91ddcf;
+    --memo-title-border: rgba(46, 125, 107, 0.5);
+    --memo-title-ink: #2b7f70;
+  }
+
+  .daily-workspace .memo-area::before {
+    content: "" !important;
+    position: absolute !important;
+    top: 9px !important;
+    right: 10px !important;
+    width: 34px !important;
+    height: 9px !important;
+    border-radius: 999px !important;
+    background: color-mix(in srgb, var(--memo-area-accent) 35%, transparent) !important;
+    pointer-events: none !important;
+  }
+
+  .daily-workspace .memo-area .memo-title-input {
+    color: var(--memo-title-ink) !important;
+    border-color: var(--memo-title-border) !important;
+    border-bottom-color: color-mix(in srgb, var(--memo-title-border) 74%, #5d3c1a) !important;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.36), rgba(255, 255, 255, 0.04)),
+      repeating-linear-gradient(0deg, transparent 0 18px, rgba(82, 57, 28, 0.07) 18px 19px),
+      var(--memo-title-paper) !important;
+  }
+
+  .daily-left-rail {
+    width: 100% !important;
+    max-width: none !important;
+    display: grid !important;
+    grid-template-columns: minmax(240px, 0.42fr) minmax(0, 1.58fr) !important;
+    gap: 14px !important;
+    align-items: stretch !important;
+  }
+
+  .daily-left-rail .score-panel,
+  .daily-left-rail .date-marker-panel {
+    height: 100% !important;
+    margin-bottom: 0 !important;
+    padding: 12px !important;
+  }
+
+  .daily-left-rail .score-panel {
+    align-content: stretch !important;
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+  }
+
+  .daily-left-rail .score-meter {
+    min-height: 126px !important;
+    padding: 10px !important;
+  }
+
+  .daily-left-rail .score-number {
+    font-size: clamp(2.7rem, 5vw, 4.1rem) !important;
+  }
+
+  .daily-left-rail .score-details {
+    grid-template-columns: 1fr !important;
+    gap: 6px !important;
+  }
+
+  .daily-left-rail .score-details > div,
+  .daily-left-rail .score-details .carry-detail {
+    min-height: 44px !important;
+    height: 44px !important;
+    padding: 5px 8px !important;
+  }
+
+  .daily-left-rail .date-marker-list {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    grid-template-rows: repeat(6, minmax(52px, 1fr)) !important;
+    gap: 9px 10px !important;
+    height: 100% !important;
+  }
+
+  .daily-left-rail .date-marker {
+    position: relative !important;
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) minmax(118px, 0.55fr) 66px !important;
+    grid-template-areas: "text date dday" !important;
+    align-items: center !important;
+    gap: 7px !important;
+    min-height: 52px !important;
+    height: 100% !important;
+    padding: 8px 8px 8px 12px !important;
+    border: 1px solid rgba(116, 87, 48, 0.18) !important;
+    border-left: 4px solid rgba(166, 115, 40, 0.34) !important;
+    border-radius: 6px !important;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.32), rgba(248, 226, 184, 0.18)),
+      rgba(255, 249, 236, 0.7) !important;
+    box-shadow:
+      0 1px 2px rgba(82, 52, 25, 0.06),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.26) !important;
+  }
+
+  .daily-left-rail .date-marker:nth-child(4n + 2),
+  .daily-left-rail .date-marker:nth-child(4n + 3) {
+    border-left-color: rgba(105, 137, 72, 0.38) !important;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.3), rgba(219, 234, 190, 0.2)),
+      rgba(248, 252, 237, 0.72) !important;
+  }
+
+  .daily-left-rail .date-marker:nth-child(4n) {
+    border-left-color: rgba(183, 103, 82, 0.34) !important;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.3), rgba(241, 201, 188, 0.18)),
+      rgba(255, 246, 238, 0.72) !important;
+  }
+
+  .daily-left-rail .date-marker .date-marker-text {
+    grid-area: text !important;
+    min-height: 38px !important;
+    height: 38px !important;
+  }
+
+  .daily-left-rail .date-marker .date-marker-date {
+    grid-area: date !important;
+    min-height: 38px !important;
+    height: 38px !important;
+  }
+
+  .daily-left-rail .date-marker .date-marker-dday {
+    grid-area: dday !important;
+    width: auto !important;
+    min-height: 38px !important;
+    height: 38px !important;
+    align-self: center !important;
+    justify-self: stretch !important;
+  }
+}
+
+@media (max-width: 900px) {
+  .daily-left-rail {
+    max-width: none !important;
+  }
+}
+
+@media (max-width: 700px) {
+  .daily-workspace .memo-card.active {
+    min-height: 0 !important;
+    max-height: none !important;
+  }
+
+  .daily-workspace .memo-six-grid,
+  .daily-workspace .memo-card-preview-grid {
+    grid-template-columns: 1fr !important;
+    grid-template-rows: none !important;
+    min-height: 0 !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  .daily-workspace .memo-area {
+    min-height: 0 !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  .daily-workspace .memo-area .memo-large-textarea {
+    min-height: 180px !important;
+    height: 180px !important;
+    resize: vertical !important;
+  }
+
+  .daily-workspace .memo-area .memo-line-editor {
+    min-height: 180px !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  .daily-workspace .memo-area .memo-line-editor .memo-line-textarea {
+    min-height: 42px !important;
+    height: auto !important;
+    resize: none !important;
+  }
+}
+
+/* Each Enter-separated memo line can indent its own # marker. */
+.memo-line-editor .memo-line-textarea.hash-indent {
+  --memo-hanging-indent: 1.35em;
+  padding-left: calc(14px + var(--memo-hanging-indent)) !important;
+  text-indent: calc(var(--memo-hanging-indent) * -1) !important;
 }
