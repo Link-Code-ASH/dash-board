@@ -927,15 +927,6 @@ function App() {
     });
   };
 
-  const resetMemoSplits = (id) => {
-    saveData((draft) => {
-      const card = draft.memos.cards.find((item) => item.id === id);
-      if (!card) return draft;
-      card.memoSplits = { leftText: 50, rightText: 50 };
-      return draft;
-    });
-  };
-
   const addMemoCard = () => {
     saveData((draft) => {
       const card = { id: createKey("memo"), title: `Memo ${draft.memos.cards.length + 1}`, leftTitle: "", leftText: "", leftExtraTitle: "", leftTextExtra: "", centerTitle: "", centerText: "", centerExtraTitle: "", centerTextExtra: "", rightTitle: "", rightText: "", rightExtraTitle: "", rightTextExtra: "", memoSplits: { leftText: 50, rightText: 50 } };
@@ -1371,7 +1362,6 @@ function App() {
         cards: data.memos.cards,
         moveMemoCard,
         removeMemoCard,
-        resetMemoSplits,
         setActiveMemo,
         updateMemoCard,
       }),
@@ -2037,7 +2027,7 @@ function SchedulePanel({ calendar, calendarDuties, selectedDate }) {
   );
 }
 
-function MemoPanel({ activeMemoId, addMemoCard, cards, moveMemoCard, removeMemoCard, resetMemoSplits, setActiveMemo, updateMemoCard }) {
+function MemoPanel({ activeMemoId, addMemoCard, cards, moveMemoCard, removeMemoCard, setActiveMemo, updateMemoCard }) {
   const [drag, setDrag] = useState({ active: false, startX: 0, deltaX: 0 });
   const [dragMemoId, setDragMemoId] = useState("");
   const activeIndex = Math.max(0, cards.findIndex((card) => card.id === activeMemoId));
@@ -2111,7 +2101,6 @@ function MemoPanel({ activeMemoId, addMemoCard, cards, moveMemoCard, removeMemoC
                 onChange: (event) => updateMemoCard(card.id, "title", event.target.value),
                 disabled: !isActive,
               }),
-              h("button", { className: "mini-button memo-reset-button", type: "button", disabled: !isActive, title: "Reset memo widths", onClick: () => resetMemoSplits(card.id) }, "Reset"),
               h("button", { className: "mini-button danger", type: "button", disabled: cards.length <= 1 || !isActive, title: "Delete memo", onClick: () => removeMemoCard(card.id) }, "\u00d7"),
             ),
             isActive
@@ -2177,14 +2166,6 @@ function MemoPanel({ activeMemoId, addMemoCard, cards, moveMemoCard, removeMemoC
 }
 
 function MemoArea({ cardId, field, titleField, titleValue, updateMemoCard, value }) {
-  const [quickMemo, setQuickMemo] = useState("");
-  const addQuickMemo = () => {
-    const text = quickMemo.trim();
-    if (!text) return;
-    const taggedText = text.startsWith("#") ? text : `# ${text}`;
-    updateMemoCard(cardId, field, value ? `${taggedText}\n${value}` : taggedText);
-    setQuickMemo("");
-  };
   return h(
     "section",
     { className: "memo-area" },
@@ -2198,124 +2179,12 @@ function MemoArea({ cardId, field, titleField, titleValue, updateMemoCard, value
       onKeyDown: (event) => event.stopPropagation(),
     }),
     h("textarea", {
-      className: "memo-quick-textarea",
-      placeholder: "Quick add...",
-      rows: 1,
-      value: quickMemo,
-      onChange: (event) => setQuickMemo(event.target.value),
-      onKeyDown: (event) => {
-        event.stopPropagation();
-        if (event.key === "Enter" && !event.shiftKey) {
-          event.preventDefault();
-          addQuickMemo();
-        }
-      },
+      className: "memo-large-textarea",
+      placeholder: "Write freely...",
+      value,
+      onChange: (event) => updateMemoCard(cardId, field, event.target.value),
+      onKeyDown: (event) => event.stopPropagation(),
     }),
-    h(MemoLineEditor, { cardId, field, updateMemoCard, value }),
-  );
-}
-
-function MemoLineEditor({ cardId, field, updateMemoCard, value }) {
-  const lines = String(value || "").split("\n");
-  const safeLines = lines.length ? lines : [""];
-  const lineRefs = useRef([]);
-  const pendingFocusRef = useRef(null);
-  const [dragLineIndex, setDragLineIndex] = useState(null);
-  const updateLines = (nextLines) => updateMemoCard(cardId, field, nextLines.join("\n"));
-  const focusLine = (index, position = "end") => {
-    pendingFocusRef.current = { index, position };
-  };
-  const moveLine = (fromIndex, toIndex) => {
-    if (fromIndex === toIndex || fromIndex < 0 || toIndex < 0) return;
-    const nextLines = [...safeLines];
-    const [line] = nextLines.splice(fromIndex, 1);
-    nextLines.splice(toIndex, 0, line);
-    updateLines(nextLines);
-    focusLine(toIndex);
-  };
-
-  useEffect(() => {
-    lineRefs.current.forEach(growMemoTextarea);
-    const pending = pendingFocusRef.current;
-    if (!pending) return;
-    pendingFocusRef.current = null;
-    const textarea = lineRefs.current[pending.index];
-    if (!textarea) return;
-    textarea.focus();
-    const caret = pending.position === "start" ? 0 : textarea.value.length;
-    textarea.setSelectionRange(caret, caret);
-  }, [value]);
-
-  return h(
-    "div",
-    { className: "memo-line-editor" },
-    safeLines.map((line, index) =>
-      h(
-        "div",
-        {
-          className: `memo-line-item ${dragLineIndex === index ? "dragging" : ""}`,
-          draggable: true,
-          key: `${field}-${index}`,
-          onDragStart: (event) => {
-            setDragLineIndex(index);
-            event.dataTransfer.effectAllowed = "move";
-            event.dataTransfer.setData("text/memo-line", String(index));
-            event.dataTransfer.setData("text/memo-line-field", field);
-          },
-          onDragOver: (event) => {
-            event.preventDefault();
-            event.dataTransfer.dropEffect = "move";
-          },
-          onDrop: (event) => {
-            event.preventDefault();
-            if (event.dataTransfer.getData("text/memo-line-field") !== field) return;
-            const fromIndex = Number(event.dataTransfer.getData("text/memo-line"));
-            moveLine(fromIndex, index);
-            setDragLineIndex(null);
-          },
-          onDragEnd: () => setDragLineIndex(null),
-        },
-        h("textarea", {
-          className: `memo-large-textarea memo-line-textarea ${line.trimStart().startsWith("# ") ? "hash-indent" : ""}`,
-          placeholder: index === 0 ? "Write freely..." : "",
-          ref: (element) => {
-            lineRefs.current[index] = element;
-            growMemoTextarea(element);
-          },
-          rows: 1,
-          value: line,
-          onChange: (event) => {
-            const pieces = event.target.value.split("\n");
-            const nextLines = [...safeLines];
-            nextLines.splice(index, 1, ...pieces);
-            updateLines(nextLines);
-            if (pieces.length > 1) focusLine(index + pieces.length - 1);
-          },
-          onInput: (event) => growMemoTextarea(event.currentTarget),
-          onKeyDown: (event) => {
-            event.stopPropagation();
-            if (event.key === "Enter") {
-              event.preventDefault();
-              const current = event.currentTarget;
-              const start = current.selectionStart ?? line.length;
-              const end = current.selectionEnd ?? start;
-              const before = line.slice(0, start);
-              const after = line.slice(end);
-              const nextLines = [...safeLines];
-              nextLines.splice(index, 1, before, after);
-              updateLines(nextLines);
-              focusLine(index + 1, "start");
-            }
-            if (event.key === "Backspace" && line === "" && safeLines.length > 1) {
-              event.preventDefault();
-              const nextLines = safeLines.filter((_, lineIndex) => lineIndex !== index);
-              updateLines(nextLines);
-              focusLine(Math.max(0, index - 1));
-            }
-          },
-        }),
-      ),
-    ),
   );
 }
 

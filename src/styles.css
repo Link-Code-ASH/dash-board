@@ -1599,7 +1599,7 @@ input::placeholder {
 .memo-area {
   min-height: 0;
   display: grid;
-  grid-template-rows: auto auto minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
   gap: 8px;
   border: 1px solid rgba(70, 255, 242, 0.13);
   border-radius: 7px;
@@ -1615,41 +1615,6 @@ input::placeholder {
   height: 100%;
   min-height: 0;
   resize: none;
-}
-
-.memo-line-editor {
-  min-height: 0;
-  height: 100%;
-  display: grid;
-  align-content: start;
-  gap: 7px;
-  overflow: auto;
-}
-
-.memo-line-item {
-  display: block;
-  cursor: grab;
-}
-
-.memo-line-item.dragging {
-  opacity: 0.6;
-}
-
-.memo-line-item:active {
-  cursor: grabbing;
-}
-
-.memo-line-editor .memo-line-textarea {
-  height: auto;
-  min-height: 42px;
-  resize: none;
-  overflow: hidden;
-}
-
-.memo-line-editor .memo-line-textarea.hash-indent {
-  --memo-hanging-indent: 1.35em;
-  padding-left: calc(14px + var(--memo-hanging-indent));
-  text-indent: calc(var(--memo-hanging-indent) * -1);
 }
 
 .memo-card.active .memo-card-columns textarea {
@@ -9312,23 +9277,11 @@ body::after {
     height: 180px !important;
     resize: vertical !important;
   }
-
-  .daily-workspace .memo-area .memo-line-editor {
-    min-height: 180px !important;
-    height: auto !important;
-    overflow: visible !important;
-  }
-
-  .daily-workspace .memo-area .memo-line-editor .memo-line-textarea {
-    min-height: 42px !important;
-    height: auto !important;
-    resize: none !important;
-  }
 }
 
-/* Each Enter-separated memo line can indent its own # marker. */
-.memo-line-editor .memo-line-textarea.hash-indent {
-  --memo-hanging-indent: 1.35em;
-  padding-left: calc(14px + var(--memo-hanging-indent)) !important;
-  text-indent: calc(var(--memo-hanging-indent) * -1) !important;
+/* Final memo areas use one full writing space each. */
+.daily-workspace .memo-area .memo-large-textarea {
+  min-height: 0 !important;
+  height: 100% !important;
+  resize: none !important;
 }
