@@ -2657,6 +2657,7 @@ input::placeholder {
   gap: 10px;
 }
 
+.school-plan-row .plan-card-grid,
 .daily-plan-row .plan-card-grid {
   grid-template-columns: repeat(6, minmax(0, 1fr));
 }
@@ -3655,6 +3656,7 @@ input::placeholder {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .school-plan-row .plan-card-grid,
   .daily-plan-row .plan-card-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
@@ -3846,6 +3848,7 @@ input::placeholder {
     min-height: 734px;
   }
 
+  .school-plan-row .plan-card-grid,
   .daily-plan-row .plan-card-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -6110,6 +6113,7 @@ body::after {
 
   .today-plan-grid,
   .plan-card-grid,
+  .school-plan-row .plan-card-grid,
   .daily-plan-row .plan-card-grid,
   .preset-grid {
     grid-template-columns: 1fr !important;
@@ -6352,6 +6356,7 @@ body::after {
   .score-details,
   .today-plan-grid,
   .plan-card-grid,
+  .school-plan-row .plan-card-grid,
   .daily-plan-row .plan-card-grid,
   .preset-grid,
   .entry-list,
@@ -6572,6 +6577,7 @@ body::after {
   .preset-grid,
   .today-plan-grid,
   .plan-card-grid,
+  .school-plan-row .plan-card-grid,
   .daily-plan-row .plan-card-grid,
   .entry-list,
   .date-marker-list {

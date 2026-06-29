@@ -268,6 +268,7 @@ function createFallbackState() {
     flaggedDate: "",
     carryResetDate: "",
     carryAdjustment: 0,
+    schoolPresets: clonePresets(),
     presets: clonePresets(),
     categories,
     weeklyPlan: createEmptyWeeklyPlan(categories),
@@ -291,6 +292,7 @@ function normalizeState(source) {
     "flaggedDate",
     "carryResetDate",
     "carryAdjustment",
+    "schoolPresets",
     "presets",
     "categories",
     "weeklyPlan",
@@ -314,6 +316,7 @@ function normalizeState(source) {
     flaggedDate: source?.flaggedDate || "",
     carryResetDate: source?.carryResetDate || "",
     carryAdjustment: scoreNumber(source?.carryAdjustment, 0),
+    schoolPresets: normalizePresets(source?.schoolPresets),
     presets: normalizePresets(source?.presets),
     categories,
     weeklyPlan: normalizeWeeklyPlan(source?.weeklyPlan, categories),
@@ -531,6 +534,7 @@ function App() {
   const [openPanels, setOpenPanels] = useState({
     sync: false,
     system: false,
+    schoolDaily: false,
     daily: false,
     weekly: false,
     record: false,
@@ -937,42 +941,59 @@ function App() {
     });
   };
 
-  const addPreset = () => {
+  const addPresetTo = (listKey, keyPrefix) => {
     saveData((draft) => {
-      draft.presets.push({ key: createKey("daily"), name: `New Record ${draft.presets.length + 1}`, yScore: 5, nScore: -2 });
+      const presets = Array.isArray(draft[listKey]) ? draft[listKey] : [];
+      presets.push({ key: createKey(keyPrefix), name: `New Record ${presets.length + 1}`, yScore: 5, nScore: -2 });
+      draft[listKey] = presets;
       return draft;
     });
   };
 
-  const updatePreset = (index, field, value) => {
+  const updatePresetIn = (listKey, index, field, value) => {
     saveData((draft) => {
-      const preset = draft.presets[index];
+      const presets = Array.isArray(draft[listKey]) ? draft[listKey] : [];
+      const preset = presets[index];
       if (!preset) return draft;
       if (field === "name") preset.name = value;
       if (field === "yScore") preset.yScore = value;
       if (field === "nScore") preset.nScore = value;
+      draft[listKey] = presets;
       return draft;
     });
   };
 
-  const movePreset = (fromKey, toKey) => {
+  const movePresetIn = (listKey, fromKey, toKey) => {
     if (!fromKey || !toKey || fromKey === toKey) return;
     saveData((draft) => {
-      const fromIndex = draft.presets.findIndex((preset) => preset.key === fromKey);
-      const toIndex = draft.presets.findIndex((preset) => preset.key === toKey);
+      const presets = Array.isArray(draft[listKey]) ? draft[listKey] : [];
+      const fromIndex = presets.findIndex((preset) => preset.key === fromKey);
+      const toIndex = presets.findIndex((preset) => preset.key === toKey);
       if (fromIndex < 0 || toIndex < 0) return draft;
-      const [preset] = draft.presets.splice(fromIndex, 1);
-      draft.presets.splice(toIndex, 0, preset);
+      const [preset] = presets.splice(fromIndex, 1);
+      presets.splice(toIndex, 0, preset);
+      draft[listKey] = presets;
       return draft;
     });
   };
 
-  const removePreset = (index) => {
+  const removePresetFrom = (listKey, index) => {
     saveData((draft) => {
-      draft.presets.splice(index, 1);
+      const presets = Array.isArray(draft[listKey]) ? draft[listKey] : [];
+      presets.splice(index, 1);
+      draft[listKey] = presets;
       return draft;
     });
   };
+
+  const addPreset = () => addPresetTo("presets", "daily");
+  const updatePreset = (index, field, value) => updatePresetIn("presets", index, field, value);
+  const movePreset = (fromKey, toKey) => movePresetIn("presets", fromKey, toKey);
+  const removePreset = (index) => removePresetFrom("presets", index);
+  const addSchoolPreset = () => addPresetTo("schoolPresets", "school");
+  const updateSchoolPreset = (index, field, value) => updatePresetIn("schoolPresets", index, field, value);
+  const moveSchoolPreset = (fromKey, toKey) => movePresetIn("schoolPresets", fromKey, toKey);
+  const removeSchoolPreset = (index) => removePresetFrom("schoolPresets", index);
 
   const addCategory = () => {
     saveData((draft) => {
@@ -1325,18 +1346,32 @@ function App() {
       categories: data.categories,
       entries,
       presets: data.presets,
+      schoolPresets: data.schoolPresets,
       selectedDate,
       weekday,
       weeklyPlan: data.weeklyPlan,
       toggleChoice,
     }),
     h(DailyPanel, {
+      addPreset: addSchoolPreset,
+      controlsId: "schoolPresetGrid",
+      isOpen: openPanels.schoolDaily,
+      movePreset: moveSchoolPreset,
+      onToggle: () => togglePanel("schoolDaily"),
+      presets: data.schoolPresets,
+      removePreset: removeSchoolPreset,
+      title: "School",
+      updatePreset: updateSchoolPreset,
+    }),
+    h(DailyPanel, {
       addPreset,
+      controlsId: "presetGrid",
       isOpen: openPanels.daily,
       movePreset,
       onToggle: () => togglePanel("daily"),
       presets: data.presets,
       removePreset,
+      title: "Daily",
       updatePreset,
     }),
     h(WeeklyPanel, {
@@ -2259,7 +2294,7 @@ function getCategoryScoreRange(category) {
   return parseScoreRange(category.yScore).filter((score) => score > 0);
 }
 
-function TodayPlanPanel({ categories, entries, presets, selectedDate, toggleChoice, weekday, weeklyPlan }) {
+function TodayPlanPanel({ categories, entries, presets, schoolPresets, selectedDate, toggleChoice, weekday, weeklyPlan }) {
   return h(
     "section",
     { className: "today-plan-panel", "aria-label": "Today plan" },
@@ -2267,6 +2302,22 @@ function TodayPlanPanel({ categories, entries, presets, selectedDate, toggleChoi
     h(
       "div",
       { className: "today-plan-grid" },
+      h(PlanRow, {
+        className: "school-plan-row",
+        title: "School",
+        cards: schoolPresets.map((preset) => {
+          const planKey = `school:${selectedDate}:${preset.key}`;
+          return {
+            key: preset.key,
+            label: "",
+            value: preset.name,
+            yScore: preset.yScore,
+            nScore: preset.nScore,
+            selectedChoice: entries.find((entry) => entry.planKey === planKey)?.choice || "",
+            onToggle: (choice) => toggleChoice({ planKey, choice, name: `School: ${preset.name} (${choice})`, score: scoreNumber(choice === "Y" ? preset.yScore : preset.nScore) }),
+          };
+        }),
+      }),
       h(PlanRow, {
         className: "daily-plan-row",
         title: "Daily",
@@ -2359,20 +2410,20 @@ function PlanCard({ label, nScore, onToggle, scoreRange, selectedChoice, value, 
   );
 }
 
-function DailyPanel({ addPreset, isOpen, movePreset, onToggle, presets, removePreset, updatePreset }) {
+function DailyPanel({ addPreset, controlsId = "presetGrid", isOpen, movePreset, onToggle, presets, removePreset, title = "Daily", updatePreset }) {
   const [dragPresetKey, setDragPresetKey] = useState("");
   return h(CollapsiblePanel, {
     className: "quick-panel",
-    controls: "presetGrid",
-    description: "Set recurring daily checks and scores.",
+    controls: controlsId,
+    description: `Set recurring ${title.toLowerCase()} checks and scores.`,
     isOpen,
     onToggle,
-    title: "Daily",
+    title,
     children: {
-      actions: h("button", { className: "text-button daily-tool", type: "button", onClick: addPreset }, "+ Daily"),
+      actions: h("button", { className: "text-button daily-tool", type: "button", onClick: addPreset }, "+"),
       body: h(
         "div",
-        { className: "preset-grid", id: "presetGrid" },
+        { className: "preset-grid", id: controlsId },
         presets.map((preset, index) =>
           h(
             "article",
@@ -2387,7 +2438,7 @@ function DailyPanel({ addPreset, isOpen, movePreset, onToggle, presets, removePr
                 }
                 setDragPresetKey(preset.key);
                 event.dataTransfer.effectAllowed = "move";
-                event.dataTransfer.setData("text/daily-preset", preset.key);
+                event.dataTransfer.setData(`text/${controlsId}-preset`, preset.key);
               },
               onDragOver: (event) => {
                 event.preventDefault();
@@ -2395,14 +2446,14 @@ function DailyPanel({ addPreset, isOpen, movePreset, onToggle, presets, removePr
               },
               onDrop: (event) => {
                 event.preventDefault();
-                const fromKey = event.dataTransfer.getData("text/daily-preset") || dragPresetKey;
+                const fromKey = event.dataTransfer.getData(`text/${controlsId}-preset`) || dragPresetKey;
                 movePreset(fromKey, preset.key);
                 setDragPresetKey("");
               },
               onDragEnd: () => setDragPresetKey(""),
             },
             h("span", { className: "drag-handle", title: "Drag to reorder", "aria-hidden": "true" }, "\u22ee\u22ee"),
-            h("input", { className: "preset-name-input", type: "text", maxLength: 32, "aria-label": "Daily name", value: preset.name, onChange: (event) => updatePreset(index, "name", event.target.value) }),
+            h("input", { className: "preset-name-input", type: "text", maxLength: 32, "aria-label": `${title} name`, value: preset.name, onChange: (event) => updatePreset(index, "name", event.target.value) }),
             h("label", { className: "score-field positive-score", title: "Y score" }, h("input", { className: "preset-score-input y-score", type: "text", inputMode: "numeric", value: preset.yScore, onChange: (event) => updatePreset(index, "yScore", event.target.value) })),
             h("label", { className: "score-field negative-score", title: "N score" }, h("input", { className: "preset-score-input n-score", type: "text", inputMode: "numeric", value: preset.nScore, onChange: (event) => updatePreset(index, "nScore", event.target.value) })),
             h("button", { className: "mini-button danger", type: "button", onClick: () => removePreset(index) }, "\u00d7"),
@@ -2424,7 +2475,7 @@ function WeeklyPanel({ addCategory, categories, isOpen, moveCategory, onToggle, 
     onToggle,
     title: "Weekly",
     children: {
-      actions: h("button", { className: "text-button weekly-tool", type: "button", onClick: addCategory }, "+ Category"),
+      actions: h("button", { className: "text-button weekly-tool", type: "button", onClick: addCategory }, "+"),
       body: h(
         "div",
         { className: "weekly-grid", id: "weeklyGrid" },
