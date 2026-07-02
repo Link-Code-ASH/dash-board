@@ -34,6 +34,10 @@ const monthNames = [
   "December",
 ];
 
+function getOrderedMonthIndexes(startMonth = new Date().getMonth()) {
+  return Array.from({ length: 12 }, (_, offset) => (startMonth + offset) % 12);
+}
+
 const defaultCategories = [
   { key: "books", label: "Books", yScore: 6, nScore: -3 },
   { key: "sports", label: "Sports", yScore: 5, nScore: -2 },
@@ -59,6 +63,14 @@ const calendarDutyOptions = [
 ];
 
 const schoolNoteColors = ["cream", "sage", "peach", "blue", "rose", "lavender", "mint", "butter"];
+const noteTabColors = ["kraft", "sage", "peach", "blue", "butter", "rose", "mint", "lavender"];
+
+const defaultNoteTabs = [
+  { id: "school", label: "School", color: "kraft" },
+  { id: "univ", label: "UNIV", color: "sage" },
+  { id: "progress", label: "Progress", color: "peach" },
+  { id: "life", label: "Life", color: "blue" },
+];
 
 function createDefaultMemoCards(globalMemos = {}) {
   return [
@@ -260,6 +272,24 @@ function normalizeSchool(school) {
   };
 }
 
+function normalizeNoteTabs(tabs) {
+  const sourceTabs = Array.isArray(tabs) && tabs.length ? tabs : defaultNoteTabs;
+  const seen = new Set();
+  const normalized = sourceTabs
+    .filter((tab) => tab && tab.id)
+    .map((tab, index) => ({
+      id: String(tab.id).replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 48) || createKey("note"),
+      label: String(tab.label || tab.title || `Note ${index + 1}`).slice(0, 24),
+      color: noteTabColors.includes(tab.color) ? tab.color : noteTabColors[index % noteTabColors.length],
+    }))
+    .filter((tab) => {
+      if (seen.has(tab.id)) return false;
+      seen.add(tab.id);
+      return true;
+    });
+  return normalized.length ? normalized : defaultNoteTabs;
+}
+
 function createFallbackState() {
   const categories = cloneCategories();
   return {
@@ -282,6 +312,7 @@ function createFallbackState() {
     univ: normalizeSchool(),
     progress: normalizeSchool(),
     life: normalizeSchool(),
+    noteTabs: normalizeNoteTabs(),
     updatedAt: new Date().toISOString(),
   };
 }
@@ -289,6 +320,11 @@ function createFallbackState() {
 function normalizeState(source) {
   const fallback = createFallbackState();
   const categories = normalizeCategories(source?.categories, fallback.categories);
+  const noteTabs = normalizeNoteTabs(source?.noteTabs);
+  const noteSections = noteTabs.reduce((sections, tab) => {
+    sections[tab.id] = normalizeSchool(source?.[tab.id]);
+    return sections;
+  }, {});
   const knownKeys = new Set([
     "days",
     "memos",
@@ -309,6 +345,7 @@ function normalizeState(source) {
     "univ",
     "progress",
     "life",
+    "noteTabs",
     "updatedAt",
   ]);
   const extraTabData =
@@ -336,6 +373,8 @@ function normalizeState(source) {
     univ: normalizeSchool(source?.univ),
     progress: normalizeSchool(source?.progress),
     life: normalizeSchool(source?.life),
+    noteTabs,
+    ...noteSections,
     updatedAt: source?.updatedAt || new Date().toISOString(),
   };
 }
@@ -577,6 +616,11 @@ function App() {
   useEffect(() => {
     syncRef.current = sync;
   }, [sync]);
+
+  useEffect(() => {
+    const tabs = normalizeNoteTabs(data.noteTabs);
+    if (!tabs.some((tab) => tab.id === activeNoteView)) setActiveNoteView(tabs[0].id);
+  }, [activeNoteView, data.noteTabs]);
 
   const saveData = (updater, options = {}) => {
     setData((current) => {
@@ -1248,6 +1292,53 @@ function App() {
     });
   };
 
+  const addNoteTab = () => {
+    const nextId = createKey("note");
+    saveData((draft) => {
+      draft.noteTabs = normalizeNoteTabs(draft.noteTabs);
+      const nextLabel = `Note ${draft.noteTabs.length + 1}`;
+      draft.noteTabs.push({ id: nextId, label: nextLabel, color: noteTabColors[draft.noteTabs.length % noteTabColors.length] });
+      draft[nextId] = normalizeSchool({ notes: [{ id: createKey(`${nextId}-memo`), title: "Memo 1", content: "", open: true }] });
+      return draft;
+    });
+    setActiveNoteView(nextId);
+  };
+
+  const updateNoteTab = (id, label) => {
+    saveData((draft) => {
+      draft.noteTabs = normalizeNoteTabs(draft.noteTabs).map((tab) => (tab.id === id ? { ...tab, label: label.slice(0, 24) } : tab));
+      return draft;
+    });
+  };
+
+  const removeNoteTab = (id) => {
+    const tabs = normalizeNoteTabs(dataRef.current.noteTabs);
+    if (tabs.length <= 1) return;
+    const tab = tabs.find((item) => item.id === id);
+    const confirmed = window.confirm(`Delete the ${tab?.label || "Note"} tab?`);
+    if (!confirmed) return;
+    const nextActive = activeNoteView === id ? tabs.find((item) => item.id !== id)?.id || tabs[0].id : activeNoteView;
+    saveData((draft) => {
+      draft.noteTabs = normalizeNoteTabs(draft.noteTabs).filter((item) => item.id !== id);
+      delete draft[id];
+      return draft;
+    });
+    setActiveNoteView(nextActive);
+  };
+
+  const moveNoteTab = (fromId, toId) => {
+    if (!fromId || !toId || fromId === toId) return;
+    saveData((draft) => {
+      draft.noteTabs = normalizeNoteTabs(draft.noteTabs);
+      const fromIndex = draft.noteTabs.findIndex((tab) => tab.id === fromId);
+      const toIndex = draft.noteTabs.findIndex((tab) => tab.id === toId);
+      if (fromIndex < 0 || toIndex < 0) return draft;
+      const [tab] = draft.noteTabs.splice(fromIndex, 1);
+      draft.noteTabs.splice(toIndex, 0, tab);
+      return draft;
+    });
+  };
+
   const addSchoolNote = () => addMemoNote("school", "school-note");
   const updateSchoolNote = (id, field, value) => updateMemoNote("school", id, field, value);
   const toggleSchoolNote = (id) => toggleMemoNote("school", id);
@@ -1382,6 +1473,17 @@ function App() {
       weeklyPlan: data.weeklyPlan,
       toggleChoice,
     }),
+    h(CalendarPanel, {
+      calendar: data.calendar,
+      calendarDuties: data.calendarDuties,
+      isOpen: openPanels.calendar,
+      onToggle: () => togglePanel("calendar"),
+      openMonths,
+      selectedDate,
+      setOpenMonths,
+      toggleCalendarDuty,
+      updateCalendarNote,
+    }),
     h(DailyPanel, {
       addPreset: addSchoolPreset,
       controlsId: "schoolPresetGrid",
@@ -1416,17 +1518,6 @@ function App() {
       updateWeeklyPlan,
       weeklyPlan: data.weeklyPlan,
     }),
-    h(CalendarPanel, {
-      calendar: data.calendar,
-      calendarDuties: data.calendarDuties,
-      isOpen: openPanels.calendar,
-      onToggle: () => togglePanel("calendar"),
-      openMonths,
-      selectedDate,
-      setOpenMonths,
-      toggleCalendarDuty,
-      updateCalendarNote,
-    }),
     h(RecordPanel, {
       clearSelectedDay,
       entries,
@@ -1437,19 +1528,23 @@ function App() {
     h(HistoryPanel, { carryPenalties: data.carryPenalties, flaggedDate: data.flaggedDate, getDayTotal, onToggleFlag: toggleFlaggedDate, routineAttempts: data.routineAttempts, selectedDate }),
   );
 
+  const noteTabs = normalizeNoteTabs(data.noteTabs);
+  const activeNoteKey = noteTabs.some((tab) => tab.id === activeNoteView) ? activeNoteView : noteTabs[0].id;
   const memoView = {
-    school: { addSchoolNote, moveSchoolNote, notes: data.school.notes, removeSchoolNote, toggleSchoolNote, updateSchoolNote },
-    univ: { addSchoolNote: addUnivNote, moveSchoolNote: moveUnivNote, notes: data.univ.notes, removeSchoolNote: removeUnivNote, toggleSchoolNote: toggleUnivNote, updateSchoolNote: updateUnivNote },
-    progress: { addSchoolNote: addProgressNote, moveSchoolNote: moveProgressNote, notes: data.progress.notes, removeSchoolNote: removeProgressNote, toggleSchoolNote: toggleProgressNote, updateSchoolNote: updateProgressNote },
-    life: { addSchoolNote: addLifeNote, moveSchoolNote: moveLifeNote, notes: data.life.notes, removeSchoolNote: removeLifeNote, toggleSchoolNote: toggleLifeNote, updateSchoolNote: updateLifeNote },
-  }[activeNoteView];
+    addSchoolNote: () => addMemoNote(activeNoteKey, `${activeNoteKey}-note`),
+    moveSchoolNote: (fromId, toId) => moveMemoNote(activeNoteKey, fromId, toId),
+    notes: normalizeSchool(data[activeNoteKey]).notes,
+    removeSchoolNote: (id) => removeMemoNote(activeNoteKey, id, activeNoteKey),
+    toggleSchoolNote: (id) => toggleMemoNote(activeNoteKey, id),
+    updateSchoolNote: (id, field, value) => updateMemoNote(activeNoteKey, id, field, value),
+  };
 
   return h(
     "main",
     { className: "app-shell" },
     h(Topbar, { activeView, selectedDate, setActiveView, setSelectedDate, shiftDate }),
     activeView === "note"
-      ? h(NoteView, { activeNoteView, memoView, setActiveNoteView })
+      ? h(NoteView, { activeNoteView: activeNoteKey, addNoteTab, memoView, moveNoteTab, noteTabs, removeNoteTab, setActiveNoteView, updateNoteTab })
       : dashboardView,
     activeView === "dashboard"
       ? h(
@@ -1511,31 +1606,78 @@ function AppNavigation({ activeView, setActiveView }) {
   );
 }
 
-function NoteView({ activeNoteView, memoView, setActiveNoteView }) {
-  const noteTabs = [
-    { key: "school", label: "School" },
-    { key: "univ", label: "UNIV" },
-    { key: "progress", label: "Progress" },
-    { key: "life", label: "Life" },
-  ];
+function NoteView({ activeNoteView, addNoteTab, memoView, moveNoteTab, noteTabs, removeNoteTab, setActiveNoteView, updateNoteTab }) {
+  const [dragTabId, setDragTabId] = useState("");
+  const [editingTabId, setEditingTabId] = useState("");
   return h(
     React.Fragment,
     null,
     h(
       "nav",
       { className: "note-subnav", "aria-label": "Note categories" },
-      noteTabs.map((item) =>
-        h(
-          "button",
-          {
-            className: `note-subnav-button ${activeNoteView === item.key ? "active" : ""}`,
-            key: item.key,
-            type: "button",
-            "aria-current": activeNoteView === item.key ? "page" : undefined,
-            onClick: () => setActiveNoteView(item.key),
-          },
-          item.label,
+      h(
+        "div",
+        { className: "note-subnav-tabs" },
+        noteTabs.map((item) =>
+          h(
+            "div",
+            {
+              className: `note-subnav-item ${activeNoteView === item.id ? "active" : ""} ${dragTabId === item.id ? "dragging" : ""}`,
+              draggable: true,
+              key: item.id,
+              "data-color": item.color || "kraft",
+              "aria-current": activeNoteView === item.id ? "page" : undefined,
+              onClick: () => setActiveNoteView(item.id),
+              onDragStart: (event) => {
+                if (event.target.closest?.(".note-subnav-editor")) {
+                  event.preventDefault();
+                  return;
+                }
+                setDragTabId(item.id);
+                event.dataTransfer.effectAllowed = "move";
+                event.dataTransfer.setData("text/note-tab", item.id);
+              },
+              onDragOver: (event) => {
+                if (!dragTabId) return;
+                event.preventDefault();
+                event.dataTransfer.dropEffect = "move";
+              },
+              onDrop: (event) => {
+                const fromId = event.dataTransfer.getData("text/note-tab") || dragTabId;
+                if (!fromId) return;
+                event.preventDefault();
+                moveNoteTab(fromId, item.id);
+                setDragTabId("");
+              },
+              onDragEnd: () => setDragTabId(""),
+            },
+            editingTabId === item.id
+              ? h("input", {
+                  autoFocus: true,
+                  className: "note-subnav-editor",
+                  defaultValue: item.label,
+                  "aria-label": "Edit note tab name",
+                  onClick: (event) => event.stopPropagation(),
+                  onBlur: (event) => {
+                    updateNoteTab(item.id, event.currentTarget.value || "Note");
+                    setEditingTabId("");
+                  },
+                  onKeyDown: (event) => {
+                    event.stopPropagation();
+                    if (event.key === "Enter") event.currentTarget.blur();
+                    if (event.key === "Escape") setEditingTabId("");
+                  },
+                })
+              : h("span", { className: "note-subnav-label" }, item.label),
+          ),
         ),
+      ),
+      h(
+        "div",
+        { className: "note-tab-toolbar" },
+        h("button", { className: "note-tab-tool note-tab-add", type: "button", onClick: addNoteTab, title: "Add note tab", "aria-label": "Add note tab" }, "+"),
+        h("button", { className: "note-tab-tool note-tab-edit", type: "button", onClick: () => setEditingTabId(activeNoteView), title: "Rename selected tab", "aria-label": "Rename selected tab" }),
+        h("button", { className: "note-tab-tool note-tab-delete", type: "button", disabled: noteTabs.length <= 1, onClick: () => removeNoteTab(activeNoteView), title: "Delete selected tab", "aria-label": "Delete selected tab" }),
       ),
     ),
     h(SchoolView, memoView),
@@ -2166,6 +2308,14 @@ function MemoPanel({ activeMemoId, addMemoCard, cards, moveMemoCard, removeMemoC
 }
 
 function MemoArea({ cardId, field, titleField, titleValue, updateMemoCard, value }) {
+  const [quickMemo, setQuickMemo] = useState("");
+  const addQuickMemo = () => {
+    const text = quickMemo.trim();
+    if (!text) return;
+    const taggedText = text.startsWith("#") ? text : `# ${text}`;
+    updateMemoCard(cardId, field, value ? `${taggedText}\n${value}` : taggedText);
+    setQuickMemo("");
+  };
   return h(
     "section",
     { className: "memo-area" },
@@ -2177,6 +2327,20 @@ function MemoArea({ cardId, field, titleField, titleValue, updateMemoCard, value
       value: titleValue,
       onChange: (event) => updateMemoCard(cardId, titleField, event.target.value),
       onKeyDown: (event) => event.stopPropagation(),
+    }),
+    h("textarea", {
+      className: "memo-quick-textarea",
+      placeholder: "Quick add...",
+      rows: 1,
+      value: quickMemo,
+      onChange: (event) => setQuickMemo(event.target.value),
+      onKeyDown: (event) => {
+        event.stopPropagation();
+        if (event.key === "Enter" && !event.shiftKey) {
+          event.preventDefault();
+          addQuickMemo();
+        }
+      },
     }),
     h("textarea", {
       className: "memo-large-textarea",
@@ -2802,6 +2966,7 @@ function HistoryPanel({ carryPenalties, flaggedDate, getDayTotal, onToggleFlag, 
 
 function CalendarPanel({ calendar, calendarDuties, isOpen, onToggle, openMonths, selectedDate, setOpenMonths, toggleCalendarDuty, updateCalendarNote }) {
   const year = new Date(`${selectedDate}T00:00:00`).getFullYear();
+  const orderedMonthIndexes = getOrderedMonthIndexes();
   const toggleMonth = (monthIndex) => {
     setOpenMonths((current) => {
       const next = new Set(current);
@@ -2821,7 +2986,8 @@ function CalendarPanel({ calendar, calendarDuties, isOpen, onToggle, openMonths,
       body: h(
         "div",
         { className: "calendar-months no-panel-toggle", id: "calendarMonths" },
-        monthNames.map((monthName, monthIndex) => {
+        orderedMonthIndexes.map((monthIndex) => {
+          const monthName = monthNames[monthIndex];
           const prefix = `${year}-${String(monthIndex + 1).padStart(2, "0")}`;
           const dutyDates = Object.keys(calendarDuties || {}).filter((dateKey) => dateKey.startsWith(prefix));
           const noteCount = new Set([...Object.keys(calendar).filter((dateKey) => dateKey.startsWith(prefix)), ...dutyDates]).size;
