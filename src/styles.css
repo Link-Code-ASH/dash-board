@@ -7240,11 +7240,66 @@ body::after {
 
 /* School tab */
 .topbar-controls {
+  position: relative;
   display: grid;
   gap: 8px;
   justify-items: end;
   align-content: end;
   min-width: min(100%, 420px);
+}
+
+.settings-menu {
+  position: relative;
+  z-index: 40;
+  justify-self: end;
+}
+
+.settings-button {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(122, 88, 38, 0.24);
+  border-radius: 50%;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.36), transparent 64%),
+    #fff4d7;
+  color: #372719;
+  font-size: 1.18rem;
+  font-weight: 900;
+  box-shadow:
+    0 6px 14px rgba(68, 43, 20, 0.12),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.38);
+}
+
+.settings-button:hover,
+.settings-button[aria-expanded="true"] {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.5), transparent 64%),
+    #f5ca5a;
+  border-color: rgba(123, 86, 30, 0.38);
+}
+
+.settings-popover {
+  position: absolute;
+  top: 46px;
+  right: 0;
+  width: min(680px, calc(100vw - 34px));
+  max-height: min(76vh, 760px);
+  overflow: auto;
+  display: grid;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid rgba(91, 68, 39, 0.22);
+  border-radius: 10px;
+  background: rgba(255, 247, 230, 0.98);
+  box-shadow: 0 22px 54px rgba(35, 24, 14, 0.24);
+}
+
+.settings-popover .sync-panel,
+.settings-popover .system-panel {
+  margin-bottom: 0 !important;
+  width: 100% !important;
 }
 
 .topbar-controls .app-navigation {
@@ -8290,6 +8345,84 @@ body::after {
     inset 0 0 0 1px rgba(255, 255, 255, 0.18) !important;
 }
 
+.school-note-image-panel {
+  display: grid !important;
+  gap: 10px !important;
+  padding: 12px !important;
+  border: 1px solid rgba(96, 69, 36, 0.12) !important;
+  border-radius: 7px !important;
+  background: rgba(255, 253, 247, 0.28) !important;
+}
+
+.school-note-image-preview {
+  margin: 0 !important;
+  display: grid !important;
+  justify-items: center !important;
+  gap: 6px !important;
+}
+
+.school-note-image-preview img {
+  width: var(--note-image-size) !important;
+  max-width: 100% !important;
+  height: auto !important;
+  display: block !important;
+  border-radius: 6px !important;
+  border: 1px solid rgba(96, 69, 36, 0.16) !important;
+  box-shadow: 0 6px 14px rgba(74, 46, 25, 0.12) !important;
+}
+
+.school-note-image-preview figcaption {
+  max-width: 100% !important;
+  color: rgba(45, 38, 29, 0.62) !important;
+  font-size: 0.82rem !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.school-note-image-tools {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+
+.school-image-upload,
+.school-image-remove {
+  min-height: 30px !important;
+  display: inline-grid !important;
+  place-items: center !important;
+  padding: 0 10px !important;
+  border: 1px solid rgba(105, 75, 42, 0.18) !important;
+  border-radius: 7px !important;
+  background: rgba(255, 251, 243, 0.76) !important;
+  color: #5c4125 !important;
+  font-size: 0.78rem !important;
+  font-weight: 900 !important;
+}
+
+.school-image-upload input {
+  display: none !important;
+}
+
+.school-image-size {
+  min-width: 160px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  color: rgba(45, 38, 29, 0.68) !important;
+  font-size: 0.78rem !important;
+  font-weight: 900 !important;
+}
+
+.school-image-size input {
+  width: 130px !important;
+}
+
+.school-image-remove {
+  color: #8a4b3d !important;
+}
+
 .school-note.collapsed {
   grid-template-rows: auto !important;
   min-height: 92px !important;
@@ -9004,6 +9137,7 @@ body::after {
 .calendar-duty,
 .choice-button,
 .range-score-button,
+.settings-button,
 .topbar-controls .nav-button,
 .school-delete-note {
   display: inline-grid !important;
@@ -9139,6 +9273,15 @@ body::after {
 .calendar-duty em {
   flex: 0 0 auto !important;
   white-space: nowrap !important;
+}
+
+@media (max-width: 620px) {
+  .settings-popover {
+    right: auto !important;
+    left: 50% !important;
+    width: calc(100vw - 24px) !important;
+    transform: translateX(-50%) !important;
+  }
 }
 
 /* Final memo title vertical alignment */

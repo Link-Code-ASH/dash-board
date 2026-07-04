@@ -6,6 +6,9 @@ const SYNC_ID_KEY = `${SYNC_BACKEND_KEY}:sync-id`;
 const SYNC_PIN_KEY = `${SYNC_BACKEND_KEY}:pin`;
 const SYNC_REMEMBER_KEY = `${SYNC_BACKEND_KEY}:remember-device`;
 const SYNC_KDF_ITERATIONS = 250000;
+const NOTE_IMAGE_DB_NAME = "dashboard-note-images-v1";
+const NOTE_IMAGE_STORE_NAME = "images";
+const BACKUP_IMAGES_KEY = "_dashboardNoteImages";
 
 const h = React.createElement;
 
@@ -266,6 +269,9 @@ function normalizeSchool(school) {
       content: String(note.content || ""),
       open: note.open !== false,
       color: schoolNoteColors.includes(note.color) ? note.color : getStableSchoolColor(note.id, index),
+      imageId: note.imageId || "",
+      imageName: String(note.imageName || ""),
+      imageSize: clampNumber(note.imageSize ?? 58, 18, 100),
     }));
   return {
     notes: notes.length ? notes : [{ id: "school-note-main", title: "Memo 1", content: "", open: true }],
@@ -346,6 +352,7 @@ function normalizeState(source) {
     "progress",
     "life",
     "noteTabs",
+    BACKUP_IMAGES_KEY,
     "updatedAt",
   ]);
   const extraTabData =
@@ -397,6 +404,88 @@ function downloadTextFile(filename, text) {
   link.click();
   link.remove();
   URL.revokeObjectURL(url);
+}
+
+function openNoteImageDb() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(NOTE_IMAGE_DB_NAME, 1);
+    request.onupgradeneeded = () => {
+      const db = request.result;
+      if (!db.objectStoreNames.contains(NOTE_IMAGE_STORE_NAME)) db.createObjectStore(NOTE_IMAGE_STORE_NAME, { keyPath: "id" });
+    };
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+async function withNoteImageStore(mode, action) {
+  const db = await openNoteImageDb();
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(NOTE_IMAGE_STORE_NAME, mode);
+    const store = transaction.objectStore(NOTE_IMAGE_STORE_NAME);
+    const result = action(store);
+    transaction.oncomplete = () => {
+      db.close();
+      resolve(result);
+    };
+    transaction.onerror = () => {
+      db.close();
+      reject(transaction.error);
+    };
+  });
+}
+
+function readFileAsDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ""));
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
+}
+
+async function putNoteImage(record) {
+  await withNoteImageStore("readwrite", (store) => store.put(record));
+}
+
+async function deleteNoteImage(id) {
+  if (!id) return;
+  await withNoteImageStore("readwrite", (store) => store.delete(id));
+}
+
+async function getAllNoteImages() {
+  const db = await openNoteImageDb();
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(NOTE_IMAGE_STORE_NAME, "readonly");
+    const request = transaction.objectStore(NOTE_IMAGE_STORE_NAME).getAll();
+    request.onsuccess = () => resolve(Array.isArray(request.result) ? request.result : []);
+    request.onerror = () => reject(request.error);
+    transaction.oncomplete = () => db.close();
+    transaction.onerror = () => {
+      db.close();
+      reject(transaction.error);
+    };
+  });
+}
+
+async function restoreNoteImages(records) {
+  if (!Array.isArray(records)) return;
+  await withNoteImageStore("readwrite", (store) => {
+    store.clear();
+    records.filter((record) => record?.id && record?.dataUrl).forEach((record) => store.put(record));
+  });
+}
+
+function createBackupPayload(state, images = []) {
+  return {
+    ...normalizeState(state),
+    [BACKUP_IMAGES_KEY]: images,
+  };
+}
+
+function splitBackupPayload(payload) {
+  const { [BACKUP_IMAGES_KEY]: images, ...state } = payload && typeof payload === "object" ? payload : {};
+  return { images: Array.isArray(images) ? images : [], state };
 }
 
 function loadSyncBackend() {
@@ -1255,6 +1344,12 @@ function App() {
       if (field === "title") note.title = value;
       if (field === "content") note.content = value;
       if (field === "color" && schoolNoteColors.includes(value)) note.color = value;
+      if (field === "image") {
+        note.imageId = value?.imageId || "";
+        note.imageName = value?.imageName || "";
+        note.imageSize = clampNumber(value?.imageSize ?? note.imageSize ?? 58, 18, 100);
+      }
+      if (field === "imageSize") note.imageSize = clampNumber(value, 18, 100);
       return draft;
     });
   };
@@ -1268,9 +1363,13 @@ function App() {
     });
   };
 
-  const removeMemoNote = (sectionKey, id, label) => {
+  const removeMemoNote = async (sectionKey, id, label) => {
     const confirmed = window.confirm(`Delete this ${label} memo?`);
     if (!confirmed) return;
+    const currentNotes = normalizeSchool(dataRef.current[sectionKey]).notes;
+    if (currentNotes.length <= 1) return;
+    const currentNote = currentNotes.find((note) => note.id === id);
+    if (currentNote?.imageId) await deleteNoteImage(currentNote.imageId);
     saveData((draft) => {
       draft[sectionKey] = normalizeSchool(draft[sectionKey]);
       if (draft[sectionKey].notes.length <= 1) return draft;
@@ -1292,6 +1391,30 @@ function App() {
     });
   };
 
+  const attachMemoImage = async (sectionKey, id, file) => {
+    if (!file || !file.type?.startsWith("image/")) {
+      window.alert("Please choose an image file.");
+      return;
+    }
+    const currentNote = normalizeSchool(dataRef.current[sectionKey]).notes.find((note) => note.id === id);
+    const imageId = createKey("note-image");
+    try {
+      const dataUrl = await readFileAsDataUrl(file);
+      await putNoteImage({ id: imageId, dataUrl, name: file.name, type: file.type, updatedAt: new Date().toISOString() });
+      if (currentNote?.imageId) await deleteNoteImage(currentNote.imageId);
+      updateMemoNote(sectionKey, id, "image", { imageId, imageName: file.name, imageSize: currentNote?.imageSize || 58 });
+    } catch {
+      window.alert("Image attach failed. Please try a different file.");
+    }
+  };
+
+  const removeMemoImage = async (sectionKey, id) => {
+    const currentNote = normalizeSchool(dataRef.current[sectionKey]).notes.find((note) => note.id === id);
+    if (!currentNote?.imageId) return;
+    await deleteNoteImage(currentNote.imageId);
+    updateMemoNote(sectionKey, id, "image", { imageId: "", imageName: "", imageSize: currentNote.imageSize || 58 });
+  };
+
   const addNoteTab = () => {
     const nextId = createKey("note");
     saveData((draft) => {
@@ -1311,12 +1434,13 @@ function App() {
     });
   };
 
-  const removeNoteTab = (id) => {
+  const removeNoteTab = async (id) => {
     const tabs = normalizeNoteTabs(dataRef.current.noteTabs);
     if (tabs.length <= 1) return;
     const tab = tabs.find((item) => item.id === id);
     const confirmed = window.confirm(`Delete the ${tab?.label || "Note"} tab?`);
     if (!confirmed) return;
+    await Promise.all(normalizeSchool(dataRef.current[id]).notes.map((note) => note.imageId).filter(Boolean).map(deleteNoteImage));
     const nextActive = activeNoteView === id ? tabs.find((item) => item.id !== id)?.id || tabs[0].id : activeNoteView;
     saveData((draft) => {
       draft.noteTabs = normalizeNoteTabs(draft.noteTabs).filter((item) => item.id !== id);
@@ -1408,17 +1532,17 @@ function App() {
     window.location.reload();
   };
 
-  const exportBackup = () => {
-    const state = normalizeState(dataRef.current);
+  const exportBackup = async () => {
+    const payload = createBackupPayload(dataRef.current, await getAllNoteImages());
     const filename = `dashboard-backup-${toDateKey(new Date())}.json`;
-    downloadTextFile(filename, JSON.stringify(state, null, 2));
+    downloadTextFile(filename, JSON.stringify(payload, null, 2));
   };
 
   const copyBackup = async () => {
     try {
-      const state = normalizeState(dataRef.current);
-      await navigator.clipboard.writeText(JSON.stringify(state, null, 2));
-      window.alert("Dashboard backup data was copied to the clipboard.");
+      const payload = createBackupPayload(dataRef.current, await getAllNoteImages());
+      await navigator.clipboard.writeText(JSON.stringify(payload, null, 2));
+      window.alert("Dashboard backup data, including memo images, was copied to the clipboard.");
     } catch {
       window.alert("Copy failed. Please try Download Data instead.");
     }
@@ -1428,9 +1552,11 @@ function App() {
     if (!file) return;
     try {
       const text = await file.text();
-      const normalized = normalizeState(JSON.parse(text));
+      const { images, state } = splitBackupPayload(JSON.parse(text));
+      const normalized = normalizeState(state);
       const confirmed = window.confirm("This will replace the dashboard data in this browser with the selected backup file. Continue?");
       if (!confirmed) return;
+      await restoreNoteImages(images);
       dataRef.current = normalized;
       localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized));
       setData(normalized);
@@ -1532,49 +1658,49 @@ function App() {
   const activeNoteKey = noteTabs.some((tab) => tab.id === activeNoteView) ? activeNoteView : noteTabs[0].id;
   const memoView = {
     addSchoolNote: () => addMemoNote(activeNoteKey, `${activeNoteKey}-note`),
+    attachMemoImage: (id, file) => attachMemoImage(activeNoteKey, id, file),
     moveSchoolNote: (fromId, toId) => moveMemoNote(activeNoteKey, fromId, toId),
     notes: normalizeSchool(data[activeNoteKey]).notes,
+    removeMemoImage: (id) => removeMemoImage(activeNoteKey, id),
     removeSchoolNote: (id) => removeMemoNote(activeNoteKey, id, activeNoteKey),
     toggleSchoolNote: (id) => toggleMemoNote(activeNoteKey, id),
     updateSchoolNote: (id, field, value) => updateMemoNote(activeNoteKey, id, field, value),
   };
+  const settingsPanels = h(
+    React.Fragment,
+    null,
+    h(SyncPanel, {
+      forgetThisDevice,
+      isOpen: openPanels.sync,
+      onToggle: () => togglePanel("sync"),
+      onConnect: connectSync,
+      onGenerate: () => {
+        const syncId = generateSyncIdValue();
+        localStorage.setItem(SYNC_ID_KEY, syncId);
+        updateSync((current) => ({ ...current, syncId }));
+      },
+      onPull: () => pullSyncData({ force: true }),
+      onPush: () => pushSyncData(),
+      setSync: updateSync,
+      sync,
+      syncReady: syncBackendReady() && Boolean(sync.syncId && sync.pin),
+    }),
+    h(SystemPanel, {
+      copyBackup,
+      exportBackup,
+      importBackup,
+      isOpen: openPanels.system,
+      onToggle: () => togglePanel("system"),
+    }),
+  );
 
   return h(
     "main",
     { className: "app-shell" },
-    h(Topbar, { activeView, selectedDate, setActiveView, setSelectedDate, shiftDate }),
+    h(Topbar, { activeView, selectedDate, settingsPanels, setActiveView, setSelectedDate, shiftDate }),
     activeView === "note"
       ? h(NoteView, { activeNoteView: activeNoteKey, addNoteTab, memoView, moveNoteTab, noteTabs, removeNoteTab, setActiveNoteView, updateNoteTab })
       : dashboardView,
-    activeView === "dashboard"
-      ? h(
-          React.Fragment,
-          null,
-          h(SyncPanel, {
-            forgetThisDevice,
-            isOpen: openPanels.sync,
-            onToggle: () => togglePanel("sync"),
-            onConnect: connectSync,
-            onGenerate: () => {
-              const syncId = generateSyncIdValue();
-              localStorage.setItem(SYNC_ID_KEY, syncId);
-              updateSync((current) => ({ ...current, syncId }));
-            },
-            onPull: () => pullSyncData({ force: true }),
-            onPush: () => pushSyncData(),
-            setSync: updateSync,
-            sync,
-            syncReady: syncBackendReady() && Boolean(sync.syncId && sync.pin),
-          }),
-          h(SystemPanel, {
-            copyBackup,
-            exportBackup,
-            importBackup,
-            isOpen: openPanels.system,
-            onToggle: () => togglePanel("system"),
-          }),
-        )
-      : null,
   );
 }
 
@@ -1684,9 +1810,10 @@ function NoteView({ activeNoteView, addNoteTab, memoView, moveNoteTab, noteTabs,
   );
 }
 
-function SchoolView({ addSchoolNote, moveSchoolNote, notes, removeSchoolNote, toggleSchoolNote, updateSchoolNote }) {
+function SchoolView({ addSchoolNote, attachMemoImage, moveSchoolNote, notes, removeMemoImage, removeSchoolNote, toggleSchoolNote, updateSchoolNote }) {
   const [dragNoteId, setDragNoteId] = useState("");
   const [openColorNoteId, setOpenColorNoteId] = useState("");
+  const [noteImageUrls, setNoteImageUrls] = useState({});
   const dragJustEndedRef = useRef(false);
   useEffect(() => {
     if (!openColorNoteId) return undefined;
@@ -1694,6 +1821,23 @@ function SchoolView({ addSchoolNote, moveSchoolNote, notes, removeSchoolNote, to
     document.addEventListener("click", closeColorMenu);
     return () => document.removeEventListener("click", closeColorMenu);
   }, [openColorNoteId]);
+  useEffect(() => {
+    let mounted = true;
+    const imageIds = new Set(notes.map((note) => note.imageId).filter(Boolean));
+    getAllNoteImages()
+      .then((records) => {
+        if (!mounted) return;
+        const nextUrls = records.reduce((urls, record) => {
+          if (imageIds.has(record.id)) urls[record.id] = record.dataUrl;
+          return urls;
+        }, {});
+        setNoteImageUrls(nextUrls);
+      })
+      .catch(() => {});
+    return () => {
+      mounted = false;
+    };
+  }, [notes.map((note) => `${note.id}:${note.imageId}`).join("|")]);
   return h(
     "section",
     { className: "school-view", "aria-label": "School memos" },
@@ -1815,13 +1959,55 @@ function SchoolView({ addSchoolNote, moveSchoolNote, notes, removeSchoolNote, to
             },
           }),
           note.open
-            ? h("textarea", {
-                className: "school-note-textarea",
-                placeholder: "Write school notes here...",
-                value: note.content,
-                onChange: (event) => updateSchoolNote(note.id, "content", event.target.value),
-                onKeyDown: (event) => event.stopPropagation(),
-              })
+            ? h(
+                React.Fragment,
+                null,
+                h(
+                  "div",
+                  { className: "school-note-image-panel no-panel-toggle" },
+                  note.imageId && noteImageUrls[note.imageId]
+                    ? h(
+                        "figure",
+                        { className: "school-note-image-preview", style: { "--note-image-size": `${clampNumber(note.imageSize, 18, 100)}%` } },
+                        h("img", { alt: note.imageName || "Attached memo image", src: noteImageUrls[note.imageId] }),
+                        h("figcaption", null, note.imageName || "Attached image"),
+                      )
+                    : null,
+                  h(
+                    "div",
+                    { className: "school-note-image-tools" },
+                    h(
+                      "label",
+                      { className: "school-image-upload" },
+                      h("input", {
+                        accept: "image/*",
+                        type: "file",
+                        onChange: (event) => {
+                          const file = event.target.files?.[0];
+                          if (file) attachMemoImage(note.id, file);
+                          event.target.value = "";
+                        },
+                      }),
+                      note.imageId ? "Change Image" : "Add Image",
+                    ),
+                    note.imageId
+                      ? h(
+                          React.Fragment,
+                          null,
+                          h("label", { className: "school-image-size" }, h("span", null, "Size"), h("input", { max: 100, min: 18, type: "range", value: clampNumber(note.imageSize, 18, 100), onChange: (event) => updateSchoolNote(note.id, "imageSize", event.target.value) })),
+                          h("button", { className: "school-image-remove", type: "button", onClick: () => removeMemoImage(note.id) }, "Remove"),
+                        )
+                      : null,
+                  ),
+                ),
+                h("textarea", {
+                  className: "school-note-textarea",
+                  placeholder: "Write school notes here...",
+                  value: note.content,
+                  onChange: (event) => updateSchoolNote(note.id, "content", event.target.value),
+                  onKeyDown: (event) => event.stopPropagation(),
+                }),
+              )
             : null,
         ),
       ),
@@ -1983,12 +2169,23 @@ function WorkView({ addWorkBlock, addWorkCategory, moveWorkBlock, moveWorkCatego
   );
 }
 
-function Topbar({ activeView, selectedDate, setActiveView, setSelectedDate, shiftDate }) {
+function Topbar({ activeView, selectedDate, settingsPanels, setActiveView, setSelectedDate, shiftDate }) {
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const settingsRef = useRef(null);
   const viewLabels = {
     dashboard: "DASH BOARD",
     note: "NOTE",
   };
   const viewLabel = viewLabels[activeView] || "DASH BOARD";
+  useEffect(() => {
+    if (!settingsOpen) return undefined;
+    const closeSettings = (event) => {
+      if (settingsRef.current?.contains(event.target)) return;
+      setSettingsOpen(false);
+    };
+    document.addEventListener("click", closeSettings);
+    return () => document.removeEventListener("click", closeSettings);
+  }, [settingsOpen]);
   return h(
     "section",
     { className: "topbar", "aria-label": "Date selector", "data-view-label": viewLabel },
@@ -1996,6 +2193,32 @@ function Topbar({ activeView, selectedDate, setActiveView, setSelectedDate, shif
     h(
       "div",
       { className: "topbar-controls" },
+      h(
+        "div",
+        { className: "settings-menu", ref: settingsRef },
+        h(
+          "button",
+          {
+            className: "settings-button",
+            type: "button",
+            title: "Settings",
+            "aria-label": "Settings",
+            "aria-expanded": settingsOpen,
+            onClick: (event) => {
+              event.stopPropagation();
+              setSettingsOpen((current) => !current);
+            },
+          },
+          "⚙",
+        ),
+        settingsOpen
+          ? h(
+              "div",
+              { className: "settings-popover", onClick: (event) => event.stopPropagation() },
+              settingsPanels,
+            )
+          : null,
+      ),
       h(
         "div",
         { className: "day-switcher" },
@@ -2077,13 +2300,13 @@ function SystemPanel({ copyBackup, exportBackup, importBackup, isOpen, onToggle 
           "button",
           { className: "system-action export-action", type: "button", onClick: exportBackup },
           h("span", null, "Download Data"),
-          h("strong", null, "Save a JSON backup file"),
+          h("strong", null, "Save data and memo images"),
         ),
         h(
           "button",
           { className: "system-action copy-action", type: "button", onClick: copyBackup },
           h("span", null, "Copy Data"),
-          h("strong", null, "Copy backup JSON to clipboard"),
+          h("strong", null, "Copy data and memo images"),
         ),
         h(
           "button",
