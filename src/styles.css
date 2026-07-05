@@ -8354,27 +8354,52 @@ body::after {
   background: rgba(255, 253, 247, 0.28) !important;
 }
 
+.school-note-image-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(92px, max-content)) !important;
+  justify-content: start !important;
+  align-items: start !important;
+  gap: 10px !important;
+}
+
 .school-note-image-preview {
+  width: 92px !important;
   margin: 0 !important;
   display: grid !important;
   justify-items: center !important;
   gap: 6px !important;
 }
 
-.school-note-image-preview img {
-  width: var(--note-image-size) !important;
-  max-width: 100% !important;
-  height: auto !important;
-  display: block !important;
-  border-radius: 6px !important;
+.school-note-image-thumb {
+  width: 82px !important;
+  height: 62px !important;
+  display: grid !important;
+  place-items: center !important;
+  padding: 5px !important;
+  overflow: hidden !important;
   border: 1px solid rgba(96, 69, 36, 0.16) !important;
-  box-shadow: 0 6px 14px rgba(74, 46, 25, 0.12) !important;
+  border-radius: 7px !important;
+  background: rgba(255, 251, 243, 0.72) !important;
+  box-shadow: 0 5px 12px rgba(74, 46, 25, 0.1) !important;
+}
+
+.school-note-image-thumb img {
+  width: 100% !important;
+  height: 100% !important;
+  display: block !important;
+  object-fit: contain !important;
+}
+
+.school-note-image-thumb:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 7px 16px rgba(74, 46, 25, 0.16) !important;
 }
 
 .school-note-image-preview figcaption {
-  max-width: 100% !important;
+  width: 100% !important;
   color: rgba(45, 38, 29, 0.62) !important;
-  font-size: 0.82rem !important;
+  font-size: 0.72rem !important;
+  text-align: center !important;
   overflow: hidden !important;
   text-overflow: ellipsis !important;
   white-space: nowrap !important;
@@ -8405,22 +8430,119 @@ body::after {
   display: none !important;
 }
 
-.school-image-size {
-  min-width: 160px !important;
-  display: flex !important;
-  align-items: center !important;
-  gap: 8px !important;
-  color: rgba(45, 38, 29, 0.68) !important;
-  font-size: 0.78rem !important;
-  font-weight: 900 !important;
-}
-
-.school-image-size input {
-  width: 130px !important;
-}
-
 .school-image-remove {
+  width: 82px !important;
   color: #8a4b3d !important;
+}
+
+.note-image-lightbox {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 200 !important;
+  display: grid !important;
+  place-items: center !important;
+  padding: 14px !important;
+  background:
+    radial-gradient(circle at 50% 42%, rgba(255, 248, 226, 0.16), transparent 42%),
+    rgba(16, 12, 8, 0.78) !important;
+  backdrop-filter: blur(8px) saturate(0.95);
+}
+
+.note-image-lightbox-content {
+  position: relative !important;
+  width: min(98vw, 1560px) !important;
+  max-height: min(96vh, 1180px) !important;
+  margin: 0 !important;
+  display: grid !important;
+  gap: 12px !important;
+  padding: 16px !important;
+  border: 1px solid rgba(255, 242, 211, 0.22) !important;
+  border-radius: 14px !important;
+  background:
+    linear-gradient(180deg, rgba(255, 253, 246, 0.98), rgba(245, 234, 215, 0.96)),
+    #fff9ec !important;
+  box-shadow:
+    0 30px 90px rgba(0, 0, 0, 0.42),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.5) !important;
+}
+
+.note-image-zoom-stage {
+  width: 100% !important;
+  height: min(86vh, 1000px) !important;
+  display: grid !important;
+  place-items: center !important;
+  overflow: hidden !important;
+  overscroll-behavior: contain !important;
+  border: 1px solid rgba(89, 65, 38, 0.12) !important;
+  border-radius: 10px !important;
+  background:
+    linear-gradient(45deg, rgba(89, 65, 38, 0.045) 25%, transparent 25% 75%, rgba(89, 65, 38, 0.045) 75%),
+    linear-gradient(45deg, rgba(89, 65, 38, 0.045) 25%, transparent 25% 75%, rgba(89, 65, 38, 0.045) 75%),
+    #f7efe0 !important;
+  background-position: 0 0, 10px 10px !important;
+  background-size: 20px 20px !important;
+  cursor: grab !important;
+  touch-action: none !important;
+  user-select: none !important;
+}
+
+.note-image-zoom-stage.dragging {
+  cursor: grabbing !important;
+}
+
+.note-image-zoom-stage img {
+  max-width: 92% !important;
+  max-height: 92% !important;
+  display: block !important;
+  object-fit: contain !important;
+  border-radius: 8px !important;
+  transform-origin: center center !important;
+  transition: transform 80ms ease-out !important;
+  will-change: transform !important;
+  box-shadow: 0 12px 28px rgba(38, 26, 14, 0.22) !important;
+}
+
+.note-image-zoom-stage.dragging img {
+  transition: none !important;
+}
+
+.note-image-lightbox-content figcaption {
+  min-height: 24px !important;
+  display: grid !important;
+  place-items: center !important;
+  color: rgba(45, 38, 29, 0.68) !important;
+  font-size: 0.88rem !important;
+  font-weight: 800 !important;
+  text-align: center !important;
+}
+
+.note-image-lightbox-close {
+  position: absolute !important;
+  top: 18px !important;
+  right: 18px !important;
+  width: 36px !important;
+  height: 36px !important;
+  display: grid !important;
+  place-items: center !important;
+  border: 1px solid rgba(103, 61, 42, 0.18) !important;
+  border-radius: 50% !important;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(255, 239, 223, 0.92)),
+    #fff2e7 !important;
+  color: #7d382e !important;
+  font-size: 1rem !important;
+  font-weight: 900 !important;
+  box-shadow:
+    0 7px 16px rgba(70, 42, 24, 0.16),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.56) !important;
+  z-index: 2 !important;
+}
+
+.note-image-lightbox-close:hover {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.8), rgba(255, 220, 210, 0.96)),
+    #ffe0d6 !important;
+  transform: translateY(-1px);
 }
 
 .school-note.collapsed {

@@ -263,16 +263,20 @@ function normalizeSchool(school) {
     : [{ id: "school-note-main", title: "Memo 1", content: "", open: true }];
   const notes = sourceNotes
     .filter((note) => note && note.id)
-    .map((note, index) => ({
-      id: note.id,
-      title: String(note.title == null ? `Memo ${index + 1}` : note.title).replace(/^School Memo\b/, "Memo").slice(0, 48),
-      content: String(note.content || ""),
-      open: note.open !== false,
-      color: schoolNoteColors.includes(note.color) ? note.color : getStableSchoolColor(note.id, index),
-      imageId: note.imageId || "",
-      imageName: String(note.imageName || ""),
-      imageSize: clampNumber(note.imageSize ?? 58, 18, 100),
-    }));
+    .map((note, index) => {
+      const legacyImage = note.imageId ? [{ id: note.imageId, name: String(note.imageName || "Attached image") }] : [];
+      const images = (Array.isArray(note.images) ? note.images : legacyImage)
+        .filter((image) => image?.id)
+        .map((image) => ({ id: image.id, name: String(image.name || image.imageName || "Attached image") }));
+      return {
+        id: note.id,
+        title: String(note.title == null ? `Memo ${index + 1}` : note.title).replace(/^School Memo\b/, "Memo").slice(0, 48),
+        content: String(note.content || ""),
+        open: note.open !== false,
+        color: schoolNoteColors.includes(note.color) ? note.color : getStableSchoolColor(note.id, index),
+        images,
+      };
+    });
   return {
     notes: notes.length ? notes : [{ id: "school-note-main", title: "Memo 1", content: "", open: true }],
   };
@@ -1344,12 +1348,7 @@ function App() {
       if (field === "title") note.title = value;
       if (field === "content") note.content = value;
       if (field === "color" && schoolNoteColors.includes(value)) note.color = value;
-      if (field === "image") {
-        note.imageId = value?.imageId || "";
-        note.imageName = value?.imageName || "";
-        note.imageSize = clampNumber(value?.imageSize ?? note.imageSize ?? 58, 18, 100);
-      }
-      if (field === "imageSize") note.imageSize = clampNumber(value, 18, 100);
+      if (field === "images") note.images = Array.isArray(value) ? value.filter((image) => image?.id).map((image) => ({ id: image.id, name: String(image.name || "Attached image") })) : [];
       return draft;
     });
   };
@@ -1369,7 +1368,7 @@ function App() {
     const currentNotes = normalizeSchool(dataRef.current[sectionKey]).notes;
     if (currentNotes.length <= 1) return;
     const currentNote = currentNotes.find((note) => note.id === id);
-    if (currentNote?.imageId) await deleteNoteImage(currentNote.imageId);
+    await Promise.all((currentNote?.images || []).map((image) => image.id).filter(Boolean).map(deleteNoteImage));
     saveData((draft) => {
       draft[sectionKey] = normalizeSchool(draft[sectionKey]);
       if (draft[sectionKey].notes.length <= 1) return draft;
@@ -1391,28 +1390,32 @@ function App() {
     });
   };
 
-  const attachMemoImage = async (sectionKey, id, file) => {
-    if (!file || !file.type?.startsWith("image/")) {
+  const attachMemoImage = async (sectionKey, id, files) => {
+    const imageFiles = Array.from(files || []).filter((file) => file.type?.startsWith("image/"));
+    if (!imageFiles.length) {
       window.alert("Please choose an image file.");
       return;
     }
     const currentNote = normalizeSchool(dataRef.current[sectionKey]).notes.find((note) => note.id === id);
-    const imageId = createKey("note-image");
     try {
-      const dataUrl = await readFileAsDataUrl(file);
-      await putNoteImage({ id: imageId, dataUrl, name: file.name, type: file.type, updatedAt: new Date().toISOString() });
-      if (currentNote?.imageId) await deleteNoteImage(currentNote.imageId);
-      updateMemoNote(sectionKey, id, "image", { imageId, imageName: file.name, imageSize: currentNote?.imageSize || 58 });
+      const nextImages = [...(currentNote?.images || [])];
+      for (const file of imageFiles) {
+        const imageId = createKey("note-image");
+        const dataUrl = await readFileAsDataUrl(file);
+        await putNoteImage({ id: imageId, dataUrl, name: file.name, type: file.type, updatedAt: new Date().toISOString() });
+        nextImages.push({ id: imageId, name: file.name });
+      }
+      updateMemoNote(sectionKey, id, "images", nextImages);
     } catch {
       window.alert("Image attach failed. Please try a different file.");
     }
   };
 
-  const removeMemoImage = async (sectionKey, id) => {
+  const removeMemoImage = async (sectionKey, id, imageId) => {
     const currentNote = normalizeSchool(dataRef.current[sectionKey]).notes.find((note) => note.id === id);
-    if (!currentNote?.imageId) return;
-    await deleteNoteImage(currentNote.imageId);
-    updateMemoNote(sectionKey, id, "image", { imageId: "", imageName: "", imageSize: currentNote.imageSize || 58 });
+    if (!imageId) return;
+    await deleteNoteImage(imageId);
+    updateMemoNote(sectionKey, id, "images", (currentNote?.images || []).filter((image) => image.id !== imageId));
   };
 
   const addNoteTab = () => {
@@ -1440,7 +1443,7 @@ function App() {
     const tab = tabs.find((item) => item.id === id);
     const confirmed = window.confirm(`Delete the ${tab?.label || "Note"} tab?`);
     if (!confirmed) return;
-    await Promise.all(normalizeSchool(dataRef.current[id]).notes.map((note) => note.imageId).filter(Boolean).map(deleteNoteImage));
+    await Promise.all(normalizeSchool(dataRef.current[id]).notes.flatMap((note) => note.images || []).map((image) => image.id).filter(Boolean).map(deleteNoteImage));
     const nextActive = activeNoteView === id ? tabs.find((item) => item.id !== id)?.id || tabs[0].id : activeNoteView;
     saveData((draft) => {
       draft.noteTabs = normalizeNoteTabs(draft.noteTabs).filter((item) => item.id !== id);
@@ -1661,7 +1664,7 @@ function App() {
     attachMemoImage: (id, file) => attachMemoImage(activeNoteKey, id, file),
     moveSchoolNote: (fromId, toId) => moveMemoNote(activeNoteKey, fromId, toId),
     notes: normalizeSchool(data[activeNoteKey]).notes,
-    removeMemoImage: (id) => removeMemoImage(activeNoteKey, id),
+    removeMemoImage: (id, imageId) => removeMemoImage(activeNoteKey, id, imageId),
     removeSchoolNote: (id) => removeMemoNote(activeNoteKey, id, activeNoteKey),
     toggleSchoolNote: (id) => toggleMemoNote(activeNoteKey, id),
     updateSchoolNote: (id, field, value) => updateMemoNote(activeNoteKey, id, field, value),
@@ -1814,6 +1817,13 @@ function SchoolView({ addSchoolNote, attachMemoImage, moveSchoolNote, notes, rem
   const [dragNoteId, setDragNoteId] = useState("");
   const [openColorNoteId, setOpenColorNoteId] = useState("");
   const [noteImageUrls, setNoteImageUrls] = useState({});
+  const [previewImage, setPreviewImage] = useState(null);
+  const [previewZoom, setPreviewZoom] = useState(1);
+  const [previewPan, setPreviewPan] = useState({ x: 0, y: 0 });
+  const [previewDragging, setPreviewDragging] = useState(false);
+  const previewPanRef = useRef({ x: 0, y: 0 });
+  const previewDragRef = useRef(null);
+  const previewImageRef = useRef(null);
   const dragJustEndedRef = useRef(false);
   useEffect(() => {
     if (!openColorNoteId) return undefined;
@@ -1823,7 +1833,7 @@ function SchoolView({ addSchoolNote, attachMemoImage, moveSchoolNote, notes, rem
   }, [openColorNoteId]);
   useEffect(() => {
     let mounted = true;
-    const imageIds = new Set(notes.map((note) => note.imageId).filter(Boolean));
+    const imageIds = new Set(notes.flatMap((note) => note.images || []).map((image) => image.id).filter(Boolean));
     getAllNoteImages()
       .then((records) => {
         if (!mounted) return;
@@ -1837,7 +1847,57 @@ function SchoolView({ addSchoolNote, attachMemoImage, moveSchoolNote, notes, rem
     return () => {
       mounted = false;
     };
-  }, [notes.map((note) => `${note.id}:${note.imageId}`).join("|")]);
+  }, [notes.map((note) => `${note.id}:${(note.images || []).map((image) => image.id).join(",")}`).join("|")]);
+  const closeImagePreview = () => {
+    setPreviewImage(null);
+    setPreviewDragging(false);
+    previewDragRef.current = null;
+  };
+  const openImagePreview = (image) => {
+    setPreviewZoom(1);
+    previewPanRef.current = { x: 0, y: 0 };
+    setPreviewPan({ x: 0, y: 0 });
+    setPreviewDragging(false);
+    previewDragRef.current = null;
+    setPreviewImage(image);
+  };
+  const applyPreviewPan = (pan) => {
+    previewPanRef.current = pan;
+    if (previewImageRef.current) {
+      previewImageRef.current.style.setProperty("--preview-pan-x", `${pan.x}px`);
+      previewImageRef.current.style.setProperty("--preview-pan-y", `${pan.y}px`);
+    }
+  };
+  const startPreviewDrag = (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+    previewDragRef.current = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      originX: previewPanRef.current.x,
+      originY: previewPanRef.current.y,
+    };
+    setPreviewDragging(true);
+  };
+  const movePreviewDrag = (event) => {
+    const previewDrag = previewDragRef.current;
+    if (!previewDrag || previewDrag.pointerId !== event.pointerId) return;
+    event.preventDefault();
+    applyPreviewPan({
+      x: previewDrag.originX + event.clientX - previewDrag.startX,
+      y: previewDrag.originY + event.clientY - previewDrag.startY,
+    });
+  };
+  const endPreviewDrag = (event) => {
+    const previewDrag = previewDragRef.current;
+    if (!previewDrag || previewDrag.pointerId !== event.pointerId) return;
+    event.currentTarget.releasePointerCapture?.(event.pointerId);
+    previewDragRef.current = null;
+    setPreviewPan(previewPanRef.current);
+    setPreviewDragging(false);
+  };
   return h(
     "section",
     { className: "school-view", "aria-label": "School memos" },
@@ -1965,12 +2025,29 @@ function SchoolView({ addSchoolNote, attachMemoImage, moveSchoolNote, notes, rem
                 h(
                   "div",
                   { className: "school-note-image-panel no-panel-toggle" },
-                  note.imageId && noteImageUrls[note.imageId]
+                  (note.images || []).some((image) => noteImageUrls[image.id])
                     ? h(
-                        "figure",
-                        { className: "school-note-image-preview", style: { "--note-image-size": `${clampNumber(note.imageSize, 18, 100)}%` } },
-                        h("img", { alt: note.imageName || "Attached memo image", src: noteImageUrls[note.imageId] }),
-                        h("figcaption", null, note.imageName || "Attached image"),
+                        "div",
+                        { className: "school-note-image-grid" },
+                        (note.images || [])
+                          .filter((image) => noteImageUrls[image.id])
+                          .map((image) =>
+                            h(
+                              "figure",
+                              { className: "school-note-image-preview", key: image.id },
+                              h(
+                                "button",
+                                {
+                                  className: "school-note-image-thumb",
+                                  type: "button",
+                                  onClick: () => openImagePreview({ name: image.name || "Attached image", src: noteImageUrls[image.id] }),
+                                },
+                                h("img", { alt: image.name || "Attached memo image", src: noteImageUrls[image.id] }),
+                              ),
+                              h("figcaption", null, image.name || "Attached image"),
+                              h("button", { className: "school-image-remove", type: "button", onClick: () => removeMemoImage(note.id, image.id) }, "Remove"),
+                            ),
+                          ),
                       )
                     : null,
                   h(
@@ -1982,22 +2059,14 @@ function SchoolView({ addSchoolNote, attachMemoImage, moveSchoolNote, notes, rem
                       h("input", {
                         accept: "image/*",
                         type: "file",
+                        multiple: true,
                         onChange: (event) => {
-                          const file = event.target.files?.[0];
-                          if (file) attachMemoImage(note.id, file);
+                          if (event.target.files?.length) attachMemoImage(note.id, event.target.files);
                           event.target.value = "";
                         },
                       }),
-                      note.imageId ? "Change Image" : "Add Image",
+                      "Add Images",
                     ),
-                    note.imageId
-                      ? h(
-                          React.Fragment,
-                          null,
-                          h("label", { className: "school-image-size" }, h("span", null, "Size"), h("input", { max: 100, min: 18, type: "range", value: clampNumber(note.imageSize, 18, 100), onChange: (event) => updateSchoolNote(note.id, "imageSize", event.target.value) })),
-                          h("button", { className: "school-image-remove", type: "button", onClick: () => removeMemoImage(note.id) }, "Remove"),
-                        )
-                      : null,
                   ),
                 ),
                 h("textarea", {
@@ -2011,6 +2080,55 @@ function SchoolView({ addSchoolNote, attachMemoImage, moveSchoolNote, notes, rem
             : null,
         ),
       ),
+      previewImage
+        ? h(
+            "div",
+            {
+              className: "note-image-lightbox",
+              role: "dialog",
+              "aria-modal": "true",
+              "aria-label": previewImage.name,
+              onClick: closeImagePreview,
+              onWheel: (event) => {
+                event.preventDefault();
+                setPreviewZoom((current) => clampNumber(current + (event.deltaY < 0 ? 0.12 : -0.12), 0.4, 3));
+              },
+            },
+            h(
+              "figure",
+              { className: "note-image-lightbox-content", onClick: (event) => event.stopPropagation() },
+              h("button", { className: "note-image-lightbox-close", type: "button", "aria-label": "Close image preview", onClick: closeImagePreview }, "\u00d7"),
+              h(
+                "div",
+                {
+                  className: `note-image-zoom-stage ${previewDragging ? "dragging" : ""}`,
+                  onWheel: (event) => event.preventDefault(),
+                  onPointerDown: startPreviewDrag,
+                  onPointerMove: movePreviewDrag,
+                  onPointerUp: endPreviewDrag,
+                  onPointerCancel: endPreviewDrag,
+                  onDoubleClick: () => {
+                    setPreviewZoom(1);
+                    applyPreviewPan({ x: 0, y: 0 });
+                    setPreviewPan({ x: 0, y: 0 });
+                  },
+                },
+                h("img", {
+                  alt: previewImage.name,
+                  draggable: false,
+                  ref: previewImageRef,
+                  src: previewImage.src,
+                  style: {
+                    "--preview-pan-x": `${previewPan.x}px`,
+                    "--preview-pan-y": `${previewPan.y}px`,
+                    transform: `translate3d(var(--preview-pan-x), var(--preview-pan-y), 0) scale(${previewZoom})`,
+                  },
+                }),
+              ),
+              h("figcaption", null, `${previewImage.name} · ${Math.round(previewZoom * 100)}%`),
+            ),
+          )
+        : null,
       h("button", { className: "school-add-note", type: "button", onClick: addSchoolNote }, "+ Memo"),
     ),
   );
