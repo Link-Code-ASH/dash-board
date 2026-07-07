@@ -10135,3 +10135,597 @@ body::after {
 .note-tab-delete {
   opacity: 1 !important;
 }
+
+/* NOTE tab: mature fountain-pen notebook direction */
+.note-subnav {
+  align-items: end !important;
+  gap: 14px !important;
+  padding: 12px 14px 4px !important;
+  border-bottom: 1px solid rgba(43, 32, 22, 0.28) !important;
+  background:
+    linear-gradient(180deg, rgba(29, 24, 19, 0.92), rgba(50, 39, 29, 0.84)),
+    #241d17 !important;
+  box-shadow:
+    inset 0 -1px 0 rgba(255, 236, 197, 0.08),
+    0 12px 34px rgba(25, 18, 12, 0.18) !important;
+}
+
+.note-subnav-tabs {
+  gap: 8px !important;
+  align-items: end !important;
+}
+
+.note-subnav-item {
+  min-height: 42px !important;
+  padding: 11px 18px 9px !important;
+  border: 1px solid rgba(220, 194, 145, 0.18) !important;
+  border-bottom-color: rgba(12, 9, 7, 0.34) !important;
+  border-radius: 8px 8px 0 0 !important;
+  background:
+    linear-gradient(180deg, rgba(95, 73, 48, 0.92), rgba(57, 43, 31, 0.98)),
+    #3d2d20 !important;
+  color: #eadcc3 !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 241, 211, 0.12),
+    0 4px 14px rgba(18, 13, 9, 0.16) !important;
+  letter-spacing: 0.03em !important;
+}
+
+.note-subnav-item.active {
+  min-height: 48px !important;
+  border-color: rgba(230, 204, 154, 0.34) !important;
+  border-bottom-color: rgba(244, 234, 214, 0.98) !important;
+  background:
+    linear-gradient(180deg, rgba(105, 82, 54, 0.98), rgba(76, 57, 39, 0.98)),
+    #4b3927 !important;
+  color: #fff3d9 !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 241, 211, 0.2),
+    0 9px 24px rgba(18, 13, 9, 0.22) !important;
+}
+
+.note-subnav-label,
+.note-subnav-editor,
+.note-subnav-editor:hover,
+.note-subnav-editor:focus {
+  color: inherit !important;
+}
+
+.note-tab-toolbar {
+  padding: 6px !important;
+  border: 1px solid rgba(230, 204, 154, 0.16) !important;
+  border-radius: 8px !important;
+  background: rgba(20, 15, 11, 0.28) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 241, 211, 0.08) !important;
+}
+
+.note-tab-toolbar .note-tab-tool {
+  display: grid !important;
+  place-items: center !important;
+  border-color: rgba(230, 204, 154, 0.2) !important;
+  border-radius: 6px !important;
+  background:
+    linear-gradient(180deg, rgba(104, 80, 52, 0.84), rgba(55, 41, 29, 0.96)),
+    #3a2b1f !important;
+  color: #f1dfbd !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 241, 211, 0.12),
+    0 2px 8px rgba(14, 10, 7, 0.2) !important;
+}
+
+.note-tab-toolbar .note-tab-add {
+  padding: 0 0 2px !important;
+  font-size: 1.08rem !important;
+  font-weight: 800 !important;
+  line-height: 1 !important;
+  text-align: center !important;
+}
+
+.note-tab-toolbar .note-tab-tool:hover:not(:disabled) {
+  background:
+    linear-gradient(180deg, rgba(124, 96, 60, 0.94), rgba(66, 49, 33, 0.98)),
+    #453323 !important;
+  transform: translateY(-1px) !important;
+}
+
+.note-subnav-item .note-subnav-label,
+.note-subnav-item .note-subnav-editor {
+  color: #fff8e8 !important;
+  text-shadow: 0 1px 2px rgba(10, 7, 5, 0.42) !important;
+}
+
+.note-subnav-item.active .note-subnav-label,
+.note-subnav-item.active .note-subnav-editor {
+  color: #fffdf5 !important;
+}
+
+.school-view {
+  padding: 22px !important;
+  border: 1px solid rgba(49, 36, 24, 0.16) !important;
+  border-radius: 10px !important;
+  background:
+    radial-gradient(circle at 16% 0%, rgba(102, 77, 47, 0.16), transparent 36%),
+    linear-gradient(180deg, #f2eadc, #e3d5bf) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    0 18px 44px rgba(51, 38, 25, 0.18) !important;
+}
+
+.school-note-list {
+  gap: 18px !important;
+}
+
+.school-note {
+  padding: 18px !important;
+  border: 1px solid rgba(58, 42, 27, 0.22) !important;
+  border-radius: 8px !important;
+  background:
+    linear-gradient(90deg, rgba(62, 43, 28, 0.08) 0 8px, transparent 8px),
+    repeating-linear-gradient(0deg, transparent 0 31px, rgba(65, 48, 32, 0.055) 31px 32px),
+    #f6eddb !important;
+  box-shadow:
+    0 16px 32px rgba(55, 39, 24, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.58),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.22) !important;
+}
+
+.school-note[data-color="cream"] {
+  background:
+    linear-gradient(90deg, rgba(62, 43, 28, 0.08) 0 8px, transparent 8px),
+    repeating-linear-gradient(0deg, transparent 0 31px, rgba(65, 48, 32, 0.055) 31px 32px),
+    #f6eddb !important;
+}
+
+.school-note[data-color="sage"] {
+  background:
+    linear-gradient(90deg, rgba(57, 78, 60, 0.14) 0 8px, transparent 8px),
+    repeating-linear-gradient(0deg, transparent 0 31px, rgba(55, 76, 58, 0.055) 31px 32px),
+    #e4eadc !important;
+}
+
+.school-note[data-color="peach"] {
+  background:
+    linear-gradient(90deg, rgba(126, 78, 52, 0.14) 0 8px, transparent 8px),
+    repeating-linear-gradient(0deg, transparent 0 31px, rgba(112, 72, 48, 0.05) 31px 32px),
+    #f3dec9 !important;
+}
+
+.school-note[data-color="blue"] {
+  background:
+    linear-gradient(90deg, rgba(53, 76, 103, 0.15) 0 8px, transparent 8px),
+    repeating-linear-gradient(0deg, transparent 0 31px, rgba(56, 76, 100, 0.05) 31px 32px),
+    #dde7ed !important;
+}
+
+.school-note[data-color="rose"] {
+  background:
+    linear-gradient(90deg, rgba(116, 58, 65, 0.14) 0 8px, transparent 8px),
+    repeating-linear-gradient(0deg, transparent 0 31px, rgba(102, 55, 62, 0.05) 31px 32px),
+    #ead8d9 !important;
+}
+
+.school-note[data-color="lavender"] {
+  background:
+    linear-gradient(90deg, rgba(82, 70, 106, 0.14) 0 8px, transparent 8px),
+    repeating-linear-gradient(0deg, transparent 0 31px, rgba(76, 66, 98, 0.05) 31px 32px),
+    #e3deea !important;
+}
+
+.school-note[data-color="mint"] {
+  background:
+    linear-gradient(90deg, rgba(50, 94, 78, 0.14) 0 8px, transparent 8px),
+    repeating-linear-gradient(0deg, transparent 0 31px, rgba(50, 88, 74, 0.05) 31px 32px),
+    #dce9df !important;
+}
+
+.school-note[data-color="butter"] {
+  background:
+    linear-gradient(90deg, rgba(128, 101, 45, 0.14) 0 8px, transparent 8px),
+    repeating-linear-gradient(0deg, transparent 0 31px, rgba(112, 90, 42, 0.05) 31px 32px),
+    #efe2bd !important;
+}
+
+.school-note:hover {
+  box-shadow:
+    0 20px 40px rgba(55, 39, 24, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.62),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.24) !important;
+}
+
+.school-note-heading {
+  border-color: rgba(57, 42, 28, 0.2) !important;
+  border-radius: 7px !important;
+  background:
+    linear-gradient(180deg, rgba(255, 252, 243, 0.56), rgba(232, 219, 194, 0.28)),
+    rgba(248, 240, 224, 0.58) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.46),
+    0 1px 2px rgba(57, 42, 28, 0.08) !important;
+}
+
+.school-note-heading textarea {
+  border-color: rgba(54, 39, 25, 0.16) !important;
+  background: rgba(255, 252, 244, 0.42) !important;
+  color: #221c17 !important;
+  font-size: 1.02rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0 !important;
+}
+
+.school-note-textarea {
+  border-color: rgba(57, 42, 28, 0.18) !important;
+  border-radius: 7px !important;
+  background:
+    linear-gradient(90deg, rgba(59, 42, 28, 0.05) 0 1px, transparent 1px),
+    repeating-linear-gradient(0deg, transparent 0 31px, rgba(41, 33, 24, 0.055) 31px 32px),
+    rgba(255, 250, 239, 0.38) !important;
+  background-size: 100% 100%, 100% 32px, 100% 100% !important;
+  color: #241e18 !important;
+  font-size: 1rem !important;
+  line-height: 1.62 !important;
+  box-shadow:
+    inset 0 1px 3px rgba(56, 40, 25, 0.08),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.18) !important;
+}
+
+.school-note-actions {
+  border-left-color: rgba(57, 42, 28, 0.18) !important;
+}
+
+.school-note .school-color-button,
+.school-delete-note,
+.school-image-upload,
+.school-image-remove {
+  border-color: rgba(57, 42, 28, 0.2) !important;
+  background:
+    linear-gradient(180deg, rgba(255, 252, 244, 0.68), rgba(221, 204, 174, 0.46)),
+    rgba(238, 226, 203, 0.74) !important;
+  color: #45301f !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.46),
+    0 2px 7px rgba(45, 32, 20, 0.1) !important;
+}
+
+.school-delete-note::before,
+.school-delete-note::after {
+  background: #5f312a !important;
+}
+
+.school-color-menu {
+  border-color: rgba(57, 42, 28, 0.22) !important;
+  background:
+    linear-gradient(180deg, rgba(249, 240, 222, 0.98), rgba(225, 210, 184, 0.98)),
+    #e8d8bd !important;
+  box-shadow: 0 16px 32px rgba(43, 31, 20, 0.24) !important;
+}
+
+.school-note-toggle-tab {
+  width: 96px !important;
+  border-color: rgba(57, 42, 28, 0.18) !important;
+  background:
+    linear-gradient(180deg, rgba(229, 214, 186, 0.88), rgba(174, 147, 104, 0.72)),
+    #c4a979 !important;
+  box-shadow:
+    0 5px 12px rgba(43, 31, 20, 0.16),
+    inset 0 -1px 0 rgba(255, 246, 226, 0.34) !important;
+}
+
+.school-note-toggle-tab::before,
+.school-note-toggle-tab::after {
+  background: rgba(45, 32, 20, 0.78) !important;
+}
+
+.school-note-image-panel {
+  border-color: rgba(57, 42, 28, 0.16) !important;
+  background:
+    linear-gradient(180deg, rgba(255, 250, 239, 0.34), rgba(219, 202, 174, 0.24)),
+    rgba(245, 235, 216, 0.4) !important;
+}
+
+.school-note-image-thumb {
+  border-color: rgba(57, 42, 28, 0.18) !important;
+  background: rgba(245, 237, 220, 0.76) !important;
+  box-shadow: 0 6px 14px rgba(43, 31, 20, 0.12) !important;
+}
+
+.note-subnav-item[data-color="kraft"],
+.note-subnav-item[data-color="kraft"].active,
+.note-subnav-item[data-color="kraft"][aria-current="page"] {
+  background:
+    linear-gradient(180deg, rgba(111, 86, 57, 0.96), rgba(72, 53, 36, 0.98)),
+    #4a3725 !important;
+}
+
+.note-subnav-item[data-color="sage"],
+.note-subnav-item[data-color="sage"].active,
+.note-subnav-item[data-color="sage"][aria-current="page"] {
+  background:
+    linear-gradient(180deg, rgba(77, 95, 68, 0.96), rgba(50, 66, 48, 0.98)),
+    #344331 !important;
+}
+
+.note-subnav-item[data-color="peach"],
+.note-subnav-item[data-color="peach"].active,
+.note-subnav-item[data-color="peach"][aria-current="page"] {
+  background:
+    linear-gradient(180deg, rgba(126, 77, 55, 0.96), rgba(82, 51, 39, 0.98)),
+    #543429 !important;
+}
+
+.note-subnav-item[data-color="blue"],
+.note-subnav-item[data-color="blue"].active,
+.note-subnav-item[data-color="blue"][aria-current="page"] {
+  background:
+    linear-gradient(180deg, rgba(61, 82, 104, 0.96), rgba(40, 55, 72, 0.98)),
+    #293848 !important;
+}
+
+.note-subnav-item[data-color="butter"],
+.note-subnav-item[data-color="butter"].active,
+.note-subnav-item[data-color="butter"][aria-current="page"] {
+  background:
+    linear-gradient(180deg, rgba(126, 99, 52, 0.96), rgba(81, 62, 37, 0.98)),
+    #523f26 !important;
+}
+
+.note-subnav-item[data-color="rose"],
+.note-subnav-item[data-color="rose"].active,
+.note-subnav-item[data-color="rose"][aria-current="page"] {
+  background:
+    linear-gradient(180deg, rgba(119, 65, 75, 0.96), rgba(78, 44, 52, 0.98)),
+    #4f2d35 !important;
+}
+
+.note-subnav-item[data-color="mint"],
+.note-subnav-item[data-color="mint"].active,
+.note-subnav-item[data-color="mint"][aria-current="page"] {
+  background:
+    linear-gradient(180deg, rgba(59, 98, 84, 0.96), rgba(39, 66, 57, 0.98)),
+    #29433a !important;
+}
+
+.note-subnav-item[data-color="lavender"],
+.note-subnav-item[data-color="lavender"].active,
+.note-subnav-item[data-color="lavender"][aria-current="page"] {
+  background:
+    linear-gradient(180deg, rgba(82, 70, 107, 0.96), rgba(55, 48, 73, 0.98)),
+    #39314a !important;
+}
+
+.note-subnav-item.active,
+.note-subnav-item[aria-current="page"] {
+  filter: brightness(1.04) saturate(1.02) !important;
+}
+
+.school-note-toggle-tab {
+  justify-self: center !important;
+  width: 118px !important;
+  height: 16px !important;
+  min-width: 118px !important;
+  min-height: 16px !important;
+  margin: -12px 0 -3px !important;
+  padding: 0 !important;
+  border: 1px solid rgba(38, 28, 18, 0.26) !important;
+  border-top: 0 !important;
+  border-radius: 0 0 999px 999px !important;
+  background:
+    linear-gradient(90deg, transparent 0 16px, rgba(255, 241, 211, 0.16) 16px 17px, transparent 17px calc(100% - 17px), rgba(255, 241, 211, 0.16) calc(100% - 17px) calc(100% - 16px), transparent calc(100% - 16px)),
+    linear-gradient(180deg, rgba(97, 72, 43, 0.96), rgba(43, 32, 22, 0.98)),
+    #3a2b1e !important;
+  box-shadow:
+    0 5px 12px rgba(38, 28, 18, 0.18),
+    inset 0 -1px 0 rgba(255, 242, 213, 0.12),
+    inset 0 1px 0 rgba(20, 14, 9, 0.22) !important;
+  opacity: 0.92 !important;
+  transition:
+    transform 150ms ease,
+    box-shadow 150ms ease,
+    opacity 150ms ease,
+    background 150ms ease !important;
+}
+
+.school-note-toggle-tab::before,
+.school-note-toggle-tab::after {
+  content: "" !important;
+  position: absolute !important;
+  left: 50% !important;
+  top: 55% !important;
+  width: 8px !important;
+  height: 1.5px !important;
+  border-radius: 999px !important;
+  background: rgba(255, 242, 213, 0.86) !important;
+  box-shadow: 0 1px 1px rgba(13, 9, 6, 0.38) !important;
+  transform-origin: center !important;
+}
+
+.school-note-toggle-tab::before {
+  transform: translate(-82%, -50%) rotate(28deg) !important;
+}
+
+.school-note-toggle-tab::after {
+  transform: translate(-18%, -50%) rotate(-28deg) !important;
+}
+
+.school-note-toggle-tab.open::before {
+  transform: translate(-82%, -50%) rotate(-28deg) !important;
+}
+
+.school-note-toggle-tab.open::after {
+  transform: translate(-18%, -50%) rotate(28deg) !important;
+}
+
+.school-note-toggle-tab:hover,
+.school-note-toggle-tab:focus-visible {
+  opacity: 1 !important;
+  background:
+    linear-gradient(90deg, transparent 0 16px, rgba(255, 241, 211, 0.2) 16px 17px, transparent 17px calc(100% - 17px), rgba(255, 241, 211, 0.2) calc(100% - 17px) calc(100% - 16px), transparent calc(100% - 16px)),
+    linear-gradient(180deg, rgba(115, 86, 51, 0.98), rgba(50, 37, 25, 0.98)),
+    #443321 !important;
+  box-shadow:
+    0 7px 16px rgba(38, 28, 18, 0.24),
+    inset 0 -1px 0 rgba(255, 242, 213, 0.16),
+    inset 0 1px 0 rgba(20, 14, 9, 0.2) !important;
+  transform: translateY(1px) !important;
+}
+
+.school-note-toggle-tab {
+  width: 138px !important;
+  height: 26px !important;
+  min-width: 138px !important;
+  min-height: 26px !important;
+  margin: -15px 0 -6px !important;
+  border: 1px solid rgba(19, 13, 8, 0.42) !important;
+  border-top: 0 !important;
+  border-radius: 0 0 18px 18px !important;
+  background:
+    radial-gradient(circle at 18px 11px, rgba(238, 201, 126, 0.95) 0 2px, rgba(91, 63, 29, 0.95) 2px 3.5px, transparent 3.6px),
+    radial-gradient(circle at calc(100% - 18px) 11px, rgba(238, 201, 126, 0.95) 0 2px, rgba(91, 63, 29, 0.95) 2px 3.5px, transparent 3.6px),
+    linear-gradient(90deg, rgba(255, 232, 177, 0.08), transparent 22%, transparent 78%, rgba(255, 232, 177, 0.08)),
+    linear-gradient(180deg, #5b412a 0%, #2f2117 52%, #18110c 100%) !important;
+  box-shadow:
+    0 10px 20px rgba(28, 20, 13, 0.32),
+    inset 0 -2px 0 rgba(7, 5, 3, 0.32),
+    inset 0 1px 0 rgba(255, 229, 181, 0.18),
+    inset 12px 0 18px rgba(255, 232, 177, 0.04),
+    inset -12px 0 18px rgba(0, 0, 0, 0.18) !important;
+  opacity: 1 !important;
+}
+
+.school-note-toggle-tab::before,
+.school-note-toggle-tab::after {
+  top: 52% !important;
+  width: 13px !important;
+  height: 2px !important;
+  background: linear-gradient(180deg, #f6dc9a, #a77b35) !important;
+  box-shadow:
+    0 1px 1px rgba(0, 0, 0, 0.48),
+    0 0 8px rgba(221, 170, 83, 0.16) !important;
+}
+
+.school-note-toggle-tab::before {
+  transform: translate(-88%, -50%) rotate(31deg) !important;
+}
+
+.school-note-toggle-tab::after {
+  transform: translate(-12%, -50%) rotate(-31deg) !important;
+}
+
+.school-note-toggle-tab.open::before {
+  transform: translate(-88%, -50%) rotate(-31deg) !important;
+}
+
+.school-note-toggle-tab.open::after {
+  transform: translate(-12%, -50%) rotate(31deg) !important;
+}
+
+.school-note-toggle-tab:hover,
+.school-note-toggle-tab:focus-visible {
+  background:
+    radial-gradient(circle at 18px 11px, rgba(255, 222, 151, 1) 0 2px, rgba(112, 77, 34, 0.98) 2px 3.5px, transparent 3.6px),
+    radial-gradient(circle at calc(100% - 18px) 11px, rgba(255, 222, 151, 1) 0 2px, rgba(112, 77, 34, 0.98) 2px 3.5px, transparent 3.6px),
+    linear-gradient(90deg, rgba(255, 232, 177, 0.12), transparent 22%, transparent 78%, rgba(255, 232, 177, 0.1)),
+    linear-gradient(180deg, #6a4a2e 0%, #392719 52%, #1d140d 100%) !important;
+  box-shadow:
+    0 12px 24px rgba(28, 20, 13, 0.38),
+    inset 0 -2px 0 rgba(7, 5, 3, 0.32),
+    inset 0 1px 0 rgba(255, 229, 181, 0.22),
+    inset 12px 0 18px rgba(255, 232, 177, 0.06),
+    inset -12px 0 18px rgba(0, 0, 0, 0.2) !important;
+  transform: translateY(2px) !important;
+}
+
+.note-tab-toolbar .note-tab-add {
+  position: relative !important;
+  display: grid !important;
+  place-items: center !important;
+  color: transparent !important;
+  font-size: 0 !important;
+  line-height: 0 !important;
+}
+
+.note-tab-toolbar .note-tab-add::before,
+.note-tab-toolbar .note-tab-add::after {
+  content: "" !important;
+  position: absolute !important;
+  left: 50% !important;
+  top: 50% !important;
+  width: 12px !important;
+  height: 2px !important;
+  border-radius: 999px !important;
+  background: #f2dfb4 !important;
+  box-shadow: 0 1px 1px rgba(12, 8, 5, 0.38) !important;
+  transform: translate(-50%, -50%) !important;
+}
+
+.note-tab-toolbar .note-tab-add::after {
+  transform: translate(-50%, -50%) rotate(90deg) !important;
+}
+
+.school-note-toggle-tab {
+  border: 0 !important;
+}
+
+.memo-index-button.add-memo {
+  position: relative !important;
+  border-color: rgba(91, 67, 39, 0.22) !important;
+  background:
+    linear-gradient(180deg, rgba(255, 252, 241, 0.82), rgba(226, 209, 181, 0.72)),
+    #ead9bd !important;
+  color: transparent !important;
+  font-size: 0 !important;
+  line-height: 0 !important;
+  text-shadow: none !important;
+  box-shadow:
+    0 1px 3px rgba(72, 45, 22, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.34) !important;
+}
+
+.memo-index-button.add-memo::before,
+.memo-index-button.add-memo::after {
+  content: "" !important;
+  position: absolute !important;
+  left: 50% !important;
+  top: 50% !important;
+  width: 13px !important;
+  height: 2px !important;
+  border-radius: 999px !important;
+  background: #5c4125 !important;
+  box-shadow: none !important;
+  transform: translate(-50%, -50%) !important;
+}
+
+.memo-index-button.add-memo::after {
+  transform: translate(-50%, -50%) rotate(90deg) !important;
+}
+
+.memo-card-grip .mini-button.danger {
+  position: relative !important;
+  display: inline-grid !important;
+  place-items: center !important;
+  padding: 0 !important;
+  line-height: 0 !important;
+  color: transparent !important;
+  font-size: 0 !important;
+  transform: none !important;
+}
+
+.memo-card-grip .mini-button.danger::before,
+.memo-card-grip .mini-button.danger::after {
+  content: "" !important;
+  position: absolute !important;
+  left: 50% !important;
+  top: 50% !important;
+  width: 13px !important;
+  height: 2px !important;
+  border-radius: 999px !important;
+  background: #8a4b3d !important;
+  transform-origin: center !important;
+}
+
+.memo-card-grip .mini-button.danger::before {
+  transform: translate(-50%, -50%) rotate(45deg) !important;
+}
+
+.memo-card-grip .mini-button.danger::after {
+  transform: translate(-50%, -50%) rotate(-45deg) !important;
+}
