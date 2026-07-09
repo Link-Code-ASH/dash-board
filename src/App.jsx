@@ -251,6 +251,69 @@ function normalizeWork(work) {
   };
 }
 
+function normalizeMindfoldNode(node, index = 0) {
+  const id = node?.id || createKey("mindfold");
+  const legacyText = String(node?.content || "");
+  const sourceBlocks = Array.isArray(node?.blocks) && node.blocks.length
+    ? node.blocks
+    : legacyText
+      ? [{ id: createKey("mindfold-block"), text: legacyText }]
+      : [{ id: createKey("mindfold-block"), text: "" }];
+  return {
+    id,
+    title: String(node?.title == null ? `Section ${index + 1}` : node.title).slice(0, 80),
+    open: node?.open !== false,
+    blocks: sourceBlocks
+      .filter((block) => block)
+      .map((block, blockIndex) => ({
+        id: block.id || createKey("mindfold-block"),
+        text: String(block.text == null ? (blockIndex === 0 ? "" : `Block ${blockIndex + 1}`) : block.text),
+      })),
+    children: (Array.isArray(node?.children) ? node.children : []).map(normalizeMindfoldNode),
+  };
+}
+
+function normalizeMindfold(mindfold) {
+  const sourceNodes = Array.isArray(mindfold?.nodes) && mindfold.nodes.length
+    ? mindfold.nodes
+    : [
+        {
+          id: "mindfold-root",
+          title: "Mindfold Prototype",
+          open: true,
+          blocks: [
+            { id: "mindfold-block-intro", text: "Write freely here. Wrap recall targets in {braces} later when masking mode arrives." },
+            { id: "mindfold-block-outline", text: "Use the outline on the left to build chapters, sections, and smaller sections." },
+          ],
+          children: [
+            { id: "mindfold-child-sample", title: "Sample Section", open: true, blocks: [{ id: "mindfold-block-sample", text: "Drag blocks to reorder them. Add child sections as your table of contents grows." }], children: [] },
+          ],
+        },
+      ];
+  const nodes = sourceNodes.map(normalizeMindfoldNode);
+  const flatIds = [];
+  const collectIds = (items) => {
+    items.forEach((item) => {
+      flatIds.push(item.id);
+      collectIds(item.children || []);
+    });
+  };
+  collectIds(nodes);
+  return {
+    nodes,
+    activeId: flatIds.includes(mindfold?.activeId) ? mindfold.activeId : flatIds[0],
+  };
+}
+
+function findMindfoldNode(nodes, id) {
+  for (const node of nodes || []) {
+    if (node.id === id) return node;
+    const found = findMindfoldNode(node.children, id);
+    if (found) return found;
+  }
+  return null;
+}
+
 function getStableSchoolColor(id, index = 0) {
   const text = String(id || "");
   const hash = Array.from(text).reduce((sum, character) => sum + character.charCodeAt(0), index);
@@ -323,6 +386,7 @@ function createFallbackState() {
     progress: normalizeSchool(),
     life: normalizeSchool(),
     noteTabs: normalizeNoteTabs(),
+    mindfold: normalizeMindfold(),
     updatedAt: new Date().toISOString(),
   };
 }
@@ -356,6 +420,7 @@ function normalizeState(source) {
     "progress",
     "life",
     "noteTabs",
+    "mindfold",
     BACKUP_IMAGES_KEY,
     "updatedAt",
   ]);
@@ -386,6 +451,7 @@ function normalizeState(source) {
     life: normalizeSchool(source?.life),
     noteTabs,
     ...noteSections,
+    mindfold: normalizeMindfold(source?.mindfold),
     updatedAt: source?.updatedAt || new Date().toISOString(),
   };
 }
@@ -678,8 +744,8 @@ function App() {
   const [activeNoteView, setActiveNoteView] = useState("school");
   const [selectedDate, setSelectedDate] = useState(toDateKey(new Date()));
   const [openPanels, setOpenPanels] = useState({
-    sync: false,
-    system: false,
+    sync: true,
+    system: true,
     schoolDaily: false,
     daily: false,
     weekly: false,
@@ -1325,6 +1391,110 @@ function App() {
     });
   };
 
+  const setActiveMindfoldNode = (id) => {
+    saveData((draft) => {
+      draft.mindfold = normalizeMindfold(draft.mindfold);
+      if (findMindfoldNode(draft.mindfold.nodes, id)) draft.mindfold.activeId = id;
+      return draft;
+    });
+  };
+
+  const updateMindfoldNode = (id, field, value) => {
+    saveData((draft) => {
+      draft.mindfold = normalizeMindfold(draft.mindfold);
+      const node = findMindfoldNode(draft.mindfold.nodes, id);
+      if (!node) return draft;
+      if (field === "title") node.title = value;
+      if (field === "open") node.open = Boolean(value);
+      return draft;
+    });
+  };
+
+  const addMindfoldNode = (parentId = "") => {
+    const nextId = createKey("mindfold");
+    saveData((draft) => {
+      draft.mindfold = normalizeMindfold(draft.mindfold);
+      const nextNode = { id: nextId, title: "Untitled", open: true, blocks: [{ id: createKey("mindfold-block"), text: "" }], children: [] };
+      if (parentId) {
+        const parent = findMindfoldNode(draft.mindfold.nodes, parentId);
+        if (parent) {
+          parent.open = true;
+          parent.children.push(nextNode);
+        } else {
+          draft.mindfold.nodes.push(nextNode);
+        }
+      } else {
+        draft.mindfold.nodes.push(nextNode);
+      }
+      draft.mindfold.activeId = nextId;
+      return draft;
+    });
+  };
+
+  const removeMindfoldNode = (id) => {
+    const confirmed = window.confirm("Delete this Mindfold section and everything inside it?");
+    if (!confirmed) return;
+    saveData((draft) => {
+      draft.mindfold = normalizeMindfold(draft.mindfold);
+      const removeFrom = (nodes) => {
+        const index = nodes.findIndex((node) => node.id === id);
+        if (index >= 0) {
+          nodes.splice(index, 1);
+          return true;
+        }
+        return nodes.some((node) => removeFrom(node.children));
+      };
+      if (draft.mindfold.nodes.length <= 1 && draft.mindfold.nodes[0]?.id === id) return draft;
+      removeFrom(draft.mindfold.nodes);
+      if (!findMindfoldNode(draft.mindfold.nodes, draft.mindfold.activeId)) draft.mindfold.activeId = draft.mindfold.nodes[0]?.id || "";
+      return draft;
+    });
+  };
+
+  const addMindfoldBlock = (nodeId) => {
+    saveData((draft) => {
+      draft.mindfold = normalizeMindfold(draft.mindfold);
+      const node = findMindfoldNode(draft.mindfold.nodes, nodeId);
+      if (node) node.blocks.push({ id: createKey("mindfold-block"), text: "" });
+      return draft;
+    });
+  };
+
+  const updateMindfoldBlock = (nodeId, blockId, value) => {
+    saveData((draft) => {
+      draft.mindfold = normalizeMindfold(draft.mindfold);
+      const node = findMindfoldNode(draft.mindfold.nodes, nodeId);
+      const block = node?.blocks.find((item) => item.id === blockId);
+      if (block) block.text = value;
+      return draft;
+    });
+  };
+
+  const removeMindfoldBlock = (nodeId, blockId) => {
+    saveData((draft) => {
+      draft.mindfold = normalizeMindfold(draft.mindfold);
+      const node = findMindfoldNode(draft.mindfold.nodes, nodeId);
+      if (!node || node.blocks.length <= 1) return draft;
+      node.blocks = node.blocks.filter((block) => block.id !== blockId);
+      return draft;
+    });
+  };
+
+  const moveMindfoldBlock = (nodeId, fromId, toId) => {
+    if (!fromId || !toId || fromId === toId) return;
+    saveData((draft) => {
+      draft.mindfold = normalizeMindfold(draft.mindfold);
+      const node = findMindfoldNode(draft.mindfold.nodes, nodeId);
+      if (!node) return draft;
+      const fromIndex = node.blocks.findIndex((block) => block.id === fromId);
+      const toIndex = node.blocks.findIndex((block) => block.id === toId);
+      if (fromIndex < 0 || toIndex < 0) return draft;
+      const [block] = node.blocks.splice(fromIndex, 1);
+      node.blocks.splice(toIndex, 0, block);
+      return draft;
+    });
+  };
+
   const addMemoNote = (sectionKey, idPrefix) => {
     saveData((draft) => {
       draft[sectionKey] = normalizeSchool(draft[sectionKey]);
@@ -1699,11 +1869,60 @@ function App() {
 
   return h(
     "main",
-    { className: "app-shell" },
-    h(Topbar, { activeView, selectedDate, settingsPanels, setActiveView, setSelectedDate, shiftDate }),
-    activeView === "note"
-      ? h(NoteView, { activeNoteView: activeNoteKey, addNoteTab, memoView, moveNoteTab, noteTabs, removeNoteTab, setActiveNoteView, updateNoteTab })
-      : dashboardView,
+    { className: `app-shell hub-shell hub-view-${activeView}` },
+    h(HubBar, { activeView, setActiveView }),
+    activeView === "mindfold"
+      ? h(MindfoldView, {
+          addBlock: addMindfoldBlock,
+          addNode: addMindfoldNode,
+          mindfold: data.mindfold,
+          moveBlock: moveMindfoldBlock,
+          removeBlock: removeMindfoldBlock,
+          removeNode: removeMindfoldNode,
+          setActiveNode: setActiveMindfoldNode,
+          updateBlock: updateMindfoldBlock,
+          updateNode: updateMindfoldNode,
+        })
+      : activeView === "vault"
+        ? h(VaultView, { settingsPanels })
+        : h(
+            React.Fragment,
+            null,
+            h(Topbar, { activeView, selectedDate, setActiveView, setSelectedDate, shiftDate }),
+            activeView === "note"
+              ? h(NoteView, { activeNoteView: activeNoteKey, addNoteTab, memoView, moveNoteTab, noteTabs, removeNoteTab, setActiveNoteView, updateNoteTab })
+              : dashboardView,
+          ),
+  );
+}
+
+function HubBar({ activeView, setActiveView }) {
+  const hubItems = [
+    { key: "studio", label: "Studio", target: "dashboard", active: activeView === "dashboard" || activeView === "note" },
+    { key: "mindfold", label: "Mindfold", target: "mindfold", active: activeView === "mindfold" },
+    { key: "vault", label: "Vault", target: "vault", active: activeView === "vault" },
+  ];
+  return h(
+    "header",
+    { className: "hub-bar", "aria-label": "Hub navigation" },
+    h("div", { className: "hub-brand" }, h("span", null, "Hub"), h("small", null, "Studio / Mindfold / Vault")),
+    h(
+      "nav",
+      { className: "hub-nav", "aria-label": "Hub sections" },
+      hubItems.map((item) =>
+        h(
+          "button",
+          {
+            className: `hub-nav-button ${item.active ? "active" : ""}`,
+            key: item.key,
+            type: "button",
+            "aria-current": item.active ? "page" : undefined,
+            onClick: () => setActiveView(item.target),
+          },
+          item.label,
+        ),
+      ),
+    ),
   );
 }
 
@@ -2134,6 +2353,90 @@ function SchoolView({ addSchoolNote, attachMemoImage, moveSchoolNote, notes, rem
   );
 }
 
+function MindfoldView({ addBlock, addNode, mindfold, moveBlock, removeBlock, removeNode, setActiveNode, updateBlock, updateNode }) {
+  const normalized = normalizeMindfold(mindfold);
+  const [dragBlockId, setDragBlockId] = useState("");
+  const getBlockTone = (text) => {
+    if (/^#\s+/.test(text)) return "heading-one";
+    if (/^##\s+/.test(text)) return "heading-two";
+    if (/^###\s+/.test(text)) return "heading-three";
+    return "";
+  };
+  const renderBlocks = (node) =>
+    h(
+      "div",
+      { className: "mindfold-block-list" },
+      node.blocks.map((block) =>
+        h(
+          "div",
+          {
+            className: `mindfold-block ${getBlockTone(block.text)} ${dragBlockId === block.id ? "dragging" : ""}`,
+            draggable: true,
+            key: block.id,
+            onDragStart: (event) => {
+              setDragBlockId(block.id);
+              event.dataTransfer.effectAllowed = "move";
+              event.dataTransfer.setData("text/mindfold-block", block.id);
+            },
+            onDragOver: (event) => {
+              if (!dragBlockId) return;
+              event.preventDefault();
+              event.dataTransfer.dropEffect = "move";
+            },
+            onDrop: (event) => {
+              event.preventDefault();
+              const fromId = event.dataTransfer.getData("text/mindfold-block") || dragBlockId;
+              moveBlock(node.id, fromId, block.id);
+              setDragBlockId("");
+            },
+            onDragEnd: () => setDragBlockId(""),
+          },
+          h("div", { className: "mindfold-block-handle", "aria-hidden": "true" }),
+          h("textarea", { value: block.text, "aria-label": "Mindfold text block", placeholder: "Write freely. Wrap recall targets in {braces}.", onChange: (event) => updateBlock(node.id, block.id, event.target.value) }),
+          h("button", { className: "mindfold-block-remove", type: "button", title: "Remove block", "aria-label": "Remove block", onClick: () => removeBlock(node.id, block.id) }),
+        ),
+      ),
+    );
+  const renderNode = (node, depth = 0) =>
+    h(
+      "section",
+      { className: "mindfold-toggle-block", key: node.id, style: { "--depth": depth } },
+      h(
+        "div",
+        { className: "mindfold-toggle-line" },
+        h("button", { className: `mindfold-toggle ${node.open ? "open" : ""}`, type: "button", title: node.open ? "Collapse" : "Expand", "aria-label": node.open ? "Collapse" : "Expand", onClick: () => updateNode(node.id, "open", !node.open) }),
+        h("input", { className: "mindfold-toggle-title", value: node.title, "aria-label": "Toggle title", placeholder: "Toggle title", onFocus: () => setActiveNode(node.id), onChange: (event) => updateNode(node.id, "title", event.target.value) }),
+        h("button", { className: "mindfold-inline-add", type: "button", title: "Add text block", "aria-label": "Add text block", onClick: () => addBlock(node.id) }, "Text"),
+        h("button", { className: "mindfold-mini-add", type: "button", title: "Add toggle inside", "aria-label": "Add toggle inside", onClick: () => addNode(node.id) }),
+        h("button", { className: "mindfold-block-remove mindfold-node-remove", type: "button", title: "Remove toggle", "aria-label": "Remove toggle", onClick: () => removeNode(node.id) }),
+      ),
+      node.open
+        ? h(
+            "div",
+            { className: "mindfold-toggle-body" },
+            renderBlocks(node),
+            node.children?.length ? h("div", { className: "mindfold-children" }, node.children.map((child) => renderNode(child, depth + 1))) : null,
+            h("button", { className: "mindfold-ghost-add", type: "button", onClick: () => addNode(node.id) }, "+ Toggle"),
+          )
+        : null,
+    );
+  return h(
+    "section",
+    { className: "mindfold-view mindfold-document-view", "aria-label": "Mindfold workspace" },
+    h(
+      "article",
+      { className: "mindfold-editor" },
+      h(
+        "div",
+        { className: "mindfold-editor-head" },
+        h("div", null, h("h2", null, "Mindfold"), h("p", null, "Write, nest, fold, recall.")),
+        h("button", { className: "mindfold-add-root", type: "button", title: "Add toggle", "aria-label": "Add toggle", onClick: () => addNode("") }),
+      ),
+      h("div", { className: "mindfold-document" }, normalized.nodes.map((node) => renderNode(node))),
+    ),
+  );
+}
+
 function WorkView({ addWorkBlock, addWorkCategory, moveWorkBlock, moveWorkCategory, removeWorkBlock, removeWorkCategory, toggleWorkBlock, toggleWorkCategory, updateWorkBlock, updateWorkCategory, work }) {
   const categories = normalizeWork(work).categories;
   const [dragBlockId, setDragBlockId] = useState("");
@@ -2346,6 +2649,20 @@ function Topbar({ activeView, selectedDate, settingsPanels, setActiveView, setSe
       ),
       h(AppNavigation, { activeView, setActiveView }),
     ),
+  );
+}
+
+function VaultView({ settingsPanels }) {
+  return h(
+    "section",
+    { className: "vault-view", "aria-label": "Vault" },
+    h(
+      "div",
+      { className: "vault-heading" },
+      h("div", null, h("p", { className: "eyebrow" }, "HUB VAULT"), h("h1", null, "Storage & Security")),
+      h("p", null, "Sync, backup, import, and device security for Dash Board, Note, and Mindfold."),
+    ),
+    h("div", { className: "vault-grid" }, settingsPanels),
   );
 }
 
