@@ -3154,6 +3154,8 @@ function MemoBlockColumn({ cardId, extraField, extraTitleField, extraTitleValue,
 function ScorePanel({ carryPenaltyMarked, entryCount, onAdjustCarry, onResetCarry, onToggleAttempt, onToggleCarryPenalty, routineTried, scoreInfo }) {
   const totalClass = scoreInfo.total < 0 ? "negative" : scoreInfo.total === 0 ? "neutral" : "";
   const fillClass = scoreInfo.total > 0 ? "positive" : scoreInfo.total < 0 ? "negative" : "neutral";
+  const totalSign = scoreInfo.total > 0 ? "+" : scoreInfo.total < 0 ? "\u2212" : "";
+  const totalMagnitude = String(Math.abs(scoreNumber(scoreInfo.total)));
   return h(
     "section",
     { className: "score-panel", "aria-label": "Score summary" },
@@ -3168,33 +3170,38 @@ function ScorePanel({ carryPenaltyMarked, entryCount, onAdjustCarry, onResetCarr
         h("button", { className: "carry-reset-button", type: "button", title: "Reset Carry", "aria-label": "Reset Carry", onClick: onResetCarry }, "R"),
         h("button", { className: "carry-adjust-button", type: "button", title: "Increase Carry", "aria-label": "Increase Carry", onClick: () => onAdjustCarry(1) }, "+"),
       ),
-      h("div", { className: `score-number ${totalClass}` }, formatScore(scoreInfo.total)),
+      h(
+        "div",
+        { className: `score-number ${totalClass}` },
+        h("span", { className: `score-number-sign ${totalSign ? "" : "empty"}` }, totalSign),
+        h("span", { className: "score-number-digits" }, totalMagnitude),
+      ),
       h(
         "div",
         { className: "score-checks" },
         h(
           "button",
           {
-            className: `attempt-check ${routineTried ? "checked" : ""}`,
+            className: `score-toggle-button score-toggle-good ${routineTried ? "active" : ""}`,
             type: "button",
             "aria-pressed": String(routineTried),
             "aria-label": "Tried today",
             title: "Tried today",
             onClick: onToggleAttempt,
           },
-          routineTried ? "\u2713" : "",
+          h("span", { className: "score-toggle-mark", "aria-hidden": "true" }),
         ),
         h(
           "button",
           {
-            className: `attempt-check penalty-check ${carryPenaltyMarked ? "checked" : ""}`,
+            className: `score-toggle-button score-toggle-bad ${carryPenaltyMarked ? "active" : ""}`,
             type: "button",
             "aria-pressed": String(carryPenaltyMarked),
             "aria-label": "Add -2 Carry",
             title: "Add -2 Carry",
             onClick: onToggleCarryPenalty,
           },
-          carryPenaltyMarked ? "\u2713" : "",
+          h("span", { className: "score-toggle-mark", "aria-hidden": "true" }),
         ),
       ),
       h("div", { className: "score-track", "aria-hidden": "true" }, h("span", { className: fillClass, style: { width: `${Math.max(0, Math.min(100, 50 + scoreInfo.total * 2))}%` } })),
@@ -3206,11 +3213,11 @@ function ScorePanel({ carryPenaltyMarked, entryCount, onAdjustCarry, onResetCarr
         "div",
         { className: "carry-detail" },
         h("span", { className: "detail-label" }, "Carry"),
-        h("strong", null, formatScore(scoreInfo.carry)),
+        h("strong", { className: "score-detail-value" }, formatScore(scoreInfo.carry)),
       ),
-      h("div", null, h("span", { className: "detail-label" }, "Plus"), h("strong", null, formatScore(scoreInfo.plus))),
-      h("div", null, h("span", { className: "detail-label" }, "Minus"), h("strong", null, formatScore(scoreInfo.minus))),
-      h("div", null, h("span", { className: "detail-label" }, "Records"), h("strong", null, entryCount)),
+      h("div", { className: "score-detail-row score-detail-plus" }, h("span", { className: "detail-label" }, "Plus"), h("strong", { className: "score-detail-value" }, formatScore(scoreInfo.plus))),
+      h("div", { className: "score-detail-row score-detail-minus" }, h("span", { className: "detail-label" }, "Minus"), h("strong", { className: "score-detail-value" }, formatScore(scoreInfo.minus))),
+      h("div", { className: "score-detail-row score-detail-records" }, h("span", { className: "detail-label" }, "Records"), h("strong", { className: "score-detail-value" }, entryCount)),
     ),
   );
 }
