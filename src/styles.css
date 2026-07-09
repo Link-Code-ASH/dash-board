@@ -9,6 +9,27 @@
 }
 
 @font-face {
+  font-family: "NexonCartGothic";
+  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2312-1@1.1/KartriderMedium.woff2") format("woff2");
+  font-weight: 500;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "NexonCartGothic";
+  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2312-1@1.1/KartriderBold.woff2") format("woff2");
+  font-weight: 700;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "NexonCartGothic";
+  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2312-1@1.1/KartriderExtraBold.woff2") format("woff2");
+  font-weight: 800;
+  font-display: swap;
+}
+
+@font-face {
   font-family: "GangwonEducationModuche";
   src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2201-2@1.0/GangwonEdu_OTFBoldA.woff") format("woff");
   font-weight: 700;
@@ -40,8 +61,8 @@
   --blue: #46fff2;
   --shadow: 0 20px 70px rgba(0, 0, 0, 0.42);
   --ease-soft: cubic-bezier(0.22, 1, 0.36, 1);
-  --display-font: "GangwonEducationModuche", "Noto Sans KR", system-ui, sans-serif;
-  --hand-font: "GangwonEducationModuche", "Noto Sans KR", system-ui, sans-serif;
+  --display-font: "NexonCartGothic", "Noto Sans KR", system-ui, sans-serif;
+  --hand-font: "NexonCartGothic", "Noto Sans KR", system-ui, sans-serif;
   --glow-x: 50%;
   --glow-y: 50%;
 }
@@ -4237,7 +4258,8 @@ input::placeholder {
   --gold: #d9a23b;
   --blue: #7697ad;
   --shadow: 0 18px 34px rgba(48, 30, 15, 0.18), 0 3px 10px rgba(48, 30, 15, 0.12);
-  --display-font: "GangwonEducationModuche", "Noto Sans KR", system-ui, sans-serif;
+  --display-font: "NexonCartGothic", "Noto Sans KR", system-ui, sans-serif;
+  --hand-font: "NexonCartGothic", "Noto Sans KR", system-ui, sans-serif;
 }
 
 html {
@@ -11273,6 +11295,13 @@ body::after {
   font-weight: 800;
 }
 
+.hub-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
 .hub-nav {
   display: flex;
   flex-wrap: wrap;
@@ -11311,6 +11340,37 @@ body::after {
   background:
     linear-gradient(180deg, rgba(255, 252, 241, 0.86), rgba(223, 176, 83, 0.82)),
     #e8ba52;
+  color: #1f170f;
+}
+
+.hub-vault-button {
+  width: 38px;
+  height: 38px;
+  min-width: 38px;
+  min-height: 38px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(122, 88, 38, 0.24);
+  border-radius: 50%;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.36), transparent 64%),
+    #fff4d7;
+  color: #372719;
+  font-size: 1.12rem;
+  font-weight: 900;
+  line-height: 1;
+  box-shadow:
+    0 6px 14px rgba(68, 43, 20, 0.12),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.38);
+}
+
+.hub-vault-button:hover,
+.hub-vault-button.active,
+.hub-vault-button[aria-current="page"] {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.5), transparent 64%),
+    #f5ca5a;
+  border-color: rgba(123, 86, 30, 0.38);
   color: #1f170f;
 }
 
@@ -11390,7 +11450,4259 @@ body::after {
     justify-content: stretch;
   }
 
+  .hub-actions {
+    justify-content: stretch;
+  }
+
   .hub-nav-button {
     flex: 1 1 120px;
   }
+}
+
+/* Luxury black-and-gold writing desk theme */
+:root {
+  --bg: #070604;
+  --bg-2: #14100b;
+  --panel: rgba(18, 14, 10, 0.94);
+  --panel-strong: rgba(27, 20, 13, 0.98);
+  --ink: #f6ecd8;
+  --muted: #b9a98d;
+  --line: rgba(205, 166, 83, 0.24);
+  --line-hot: rgba(218, 177, 91, 0.42);
+  --cyan: #d8b66a;
+  --pink: #9f6a43;
+  --acid: #e2c576;
+  --amber: #c99642;
+  --plus: #d7b35d;
+  --plus-soft: rgba(215, 179, 93, 0.14);
+  --minus: #9c5144;
+  --minus-soft: rgba(156, 81, 68, 0.14);
+  --gold: #d8b66a;
+  --blue: #c7ad78;
+  --shadow: 0 24px 80px rgba(0, 0, 0, 0.56);
+}
+
+html,
+body {
+  background: #070604 !important;
+}
+
+body {
+  color: var(--ink) !important;
+  background:
+    linear-gradient(90deg, rgba(218, 177, 91, 0.045) 0 1px, transparent 1px 80px),
+    linear-gradient(0deg, rgba(218, 177, 91, 0.03) 0 1px, transparent 1px 80px),
+    linear-gradient(180deg, #090705 0%, #17110b 42%, #070604 100%) !important;
+}
+
+body::before {
+  background:
+    repeating-linear-gradient(90deg, rgba(255, 241, 204, 0.018) 0 1px, transparent 1px 6px),
+    linear-gradient(180deg, rgba(218, 177, 91, 0.08), transparent 52%) !important;
+  opacity: 0.62 !important;
+}
+
+body::after {
+  background:
+    linear-gradient(180deg, rgba(7, 6, 4, 0.08), rgba(7, 6, 4, 0.72)),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.36), transparent 18%, transparent 82%, rgba(0, 0, 0, 0.36)) !important;
+}
+
+.hub-bar,
+.topbar,
+.vault-heading {
+  border-color: rgba(216, 182, 106, 0.26) !important;
+  background:
+    linear-gradient(180deg, rgba(50, 38, 22, 0.96), rgba(16, 12, 8, 0.98)),
+    #15100b !important;
+  color: #f7ecd7 !important;
+  box-shadow:
+    0 18px 46px rgba(0, 0, 0, 0.42),
+    inset 0 1px 0 rgba(255, 235, 188, 0.14),
+    inset 0 0 0 1px rgba(255, 235, 188, 0.035) !important;
+}
+
+.hub-brand span,
+.topbar h1,
+.vault-heading h1 {
+  color: #f8e7bd !important;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.7), 0 0 22px rgba(216, 182, 106, 0.14) !important;
+}
+
+.hub-brand small,
+.topbar .eyebrow,
+.vault-heading .eyebrow,
+.vault-heading p {
+  color: rgba(232, 211, 166, 0.72) !important;
+}
+
+.hub-nav-button,
+.topbar-controls .nav-button,
+.nav-button,
+.hub-vault-button,
+.settings-button,
+.icon-button,
+.text-button,
+.mini-button,
+.memo-index-button,
+.carry-adjust-button,
+.carry-reset-button,
+.mindfold-action,
+.mindfold-inline-add,
+.mindfold-ghost-add,
+.school-image-upload,
+.school-image-remove {
+  border-color: rgba(216, 182, 106, 0.26) !important;
+  background:
+    linear-gradient(180deg, rgba(63, 48, 28, 0.95), rgba(19, 14, 9, 0.98)),
+    #17110b !important;
+  color: #e7cf91 !important;
+  text-shadow: none !important;
+  box-shadow:
+    0 5px 14px rgba(0, 0, 0, 0.24),
+    inset 0 1px 0 rgba(255, 235, 188, 0.12) !important;
+}
+
+.hub-nav-button:hover,
+.topbar-controls .nav-button:hover,
+.nav-button:hover,
+.hub-vault-button:hover,
+.hub-vault-button.active,
+.hub-vault-button[aria-current="page"],
+.icon-button:hover,
+.text-button:hover,
+.mini-button:hover,
+.mindfold-action:hover {
+  border-color: rgba(231, 197, 119, 0.5) !important;
+  background:
+    linear-gradient(180deg, rgba(89, 67, 38, 0.98), rgba(28, 20, 12, 0.98)),
+    #24190f !important;
+  color: #ffe8a8 !important;
+}
+
+.hub-nav-button.active,
+.hub-nav-button[aria-current="page"],
+.topbar-controls .nav-button.active,
+.topbar-controls .nav-button[aria-current="page"],
+.nav-button.active,
+.nav-button[aria-current="page"] {
+  border-color: rgba(232, 198, 119, 0.74) !important;
+  background:
+    linear-gradient(180deg, rgba(108, 78, 37, 0.98), rgba(34, 24, 12, 0.98)),
+    #2e1f10 !important;
+  color: #fff1c4 !important;
+  box-shadow:
+    0 0 0 1px rgba(232, 198, 119, 0.14),
+    0 10px 24px rgba(0, 0, 0, 0.32),
+    inset 0 1px 0 rgba(255, 238, 194, 0.18) !important;
+}
+
+.quick-panel,
+.log-panel,
+.weekly-panel,
+.today-plan-panel,
+.sync-panel,
+.system-panel,
+.schedule-panel,
+.memo-panel,
+.history-panel,
+.calendar-panel,
+.score-panel,
+.date-marker-panel,
+.planner-view,
+.work-view,
+.vault-grid .sync-panel,
+.vault-grid .system-panel {
+  border-color: rgba(216, 182, 106, 0.22) !important;
+  background:
+    linear-gradient(180deg, rgba(31, 23, 14, 0.96), rgba(13, 10, 7, 0.96)),
+    #120d08 !important;
+  color: #f5ead8 !important;
+  box-shadow:
+    0 18px 48px rgba(0, 0, 0, 0.42),
+    inset 0 1px 0 rgba(255, 235, 188, 0.08),
+    inset 0 0 0 1px rgba(255, 235, 188, 0.025) !important;
+}
+
+.quick-panel::before,
+.log-panel::before,
+.weekly-panel::before,
+.today-plan-panel::before,
+.sync-panel::before,
+.system-panel::before,
+.schedule-panel::before,
+.memo-panel::before,
+.history-panel::before,
+.calendar-panel::before {
+  background:
+    linear-gradient(rgba(18, 13, 8, 0.96), rgba(18, 13, 8, 0.96)) padding-box,
+    linear-gradient(135deg, rgba(232, 198, 119, 0.42), rgba(120, 75, 38, 0.12), rgba(232, 198, 119, 0.18)) border-box !important;
+}
+
+.section-heading,
+.panel-title,
+.score-kicker,
+.schedule-week-title,
+.memo-grid label > span,
+.sync-body label span,
+.system-body label span {
+  color: #e4c47a !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.65) !important;
+}
+
+input,
+textarea,
+select {
+  border-color: rgba(216, 182, 106, 0.24) !important;
+  background: rgba(12, 9, 6, 0.72) !important;
+  color: #f7ecd8 !important;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  border-color: rgba(232, 198, 119, 0.56) !important;
+  box-shadow:
+    0 0 0 1px rgba(232, 198, 119, 0.18),
+    0 0 22px rgba(232, 198, 119, 0.08) !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: rgba(232, 211, 166, 0.46) !important;
+}
+
+.memo-card,
+.preset-card,
+.entry-item,
+.today-plan-card,
+.calendar-month,
+.calendar-day,
+.date-marker,
+.schedule-day,
+.score-details > div,
+.work-category,
+.work-block,
+.mindfold-editor,
+.school-note {
+  border-color: rgba(216, 182, 106, 0.22) !important;
+  background:
+    linear-gradient(180deg, rgba(247, 236, 214, 0.98), rgba(217, 196, 158, 0.92)),
+    #efe0bd !important;
+  color: #21170f !important;
+  text-shadow: none !important;
+  box-shadow:
+    0 14px 30px rgba(0, 0, 0, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.48),
+    inset 0 0 0 1px rgba(126, 88, 34, 0.035) !important;
+}
+
+.school-note[data-color],
+.today-plan-card:nth-child(3n + 2),
+.today-plan-card:nth-child(3n),
+.today-plan-card.done,
+.today-plan-card.done.no {
+  background:
+    linear-gradient(90deg, rgba(102, 72, 32, 0.16) 0 7px, transparent 7px),
+    repeating-linear-gradient(0deg, transparent 0 29px, rgba(77, 55, 30, 0.07) 29px 30px),
+    #efe0bd !important;
+}
+
+.memo-card-grip,
+.school-note-heading,
+.mindfold-editor-head,
+.mindfold-toggle-line:hover,
+.mindfold-block:hover,
+.mindfold-block.dragging,
+.school-note-image-panel {
+  border-color: rgba(139, 101, 43, 0.2) !important;
+  background:
+    linear-gradient(180deg, rgba(36, 25, 13, 0.09), rgba(255, 248, 232, 0.1)),
+    rgba(236, 221, 190, 0.72) !important;
+  color: #24180e !important;
+}
+
+.memo-card-grip input,
+.memo-panel textarea,
+.memo-card textarea,
+.school-note-heading textarea,
+.school-note-textarea,
+.mindfold-toggle-title,
+.mindfold-block textarea,
+.work-manual-textarea,
+.calendar-day textarea {
+  background:
+    repeating-linear-gradient(0deg, transparent 0 29px, rgba(72, 52, 27, 0.06) 29px 30px),
+    rgba(255, 248, 231, 0.56) !important;
+  color: #1f160e !important;
+  border-color: rgba(139, 101, 43, 0.18) !important;
+}
+
+.mindfold-document-view .mindfold-editor {
+  background:
+    linear-gradient(180deg, rgba(243, 229, 199, 0.98), rgba(213, 190, 150, 0.92)),
+    #ead7ad !important;
+}
+
+.mindfold-editor-head h2,
+.mindfold-toggle-title,
+.vault-heading h1 {
+  color: #1f160e !important;
+}
+
+.mindfold-editor-head p {
+  color: rgba(54, 39, 22, 0.62) !important;
+}
+
+.mindfold-toggle::before {
+  border-left-color: #7a5524 !important;
+}
+
+.mindfold-block-handle,
+.mindfold-document-view .mindfold-block-handle {
+  opacity: 0.34 !important;
+  background:
+    radial-gradient(circle, #8a642e 1px, transparent 1.2px) 2px 7px / 5px 5px !important;
+}
+
+.mindfold-cloze {
+  background: #1c130b !important;
+}
+
+.mindfold-cloze:hover {
+  background: rgba(210, 169, 83, 0.24) !important;
+  color: #20160d !important;
+}
+
+.score-number,
+.score-details strong,
+.entry-score.plus,
+.history-fill.plus {
+  color: #fff0bd !important;
+  background: linear-gradient(180deg, #b98a35, #5a3816) !important;
+}
+
+.entry-score.minus,
+.history-fill.minus {
+  color: #ffe4dc !important;
+  background: linear-gradient(180deg, #8f4f43, #4a211b) !important;
+}
+
+.choice-button.yes.selected,
+.range-score-button.selected {
+  background:
+    linear-gradient(180deg, rgba(96, 119, 60, 0.96), rgba(42, 60, 31, 0.96)) !important;
+  color: #f5ffe3 !important;
+}
+
+.choice-button.no.selected,
+.range-score-button.no.selected {
+  background:
+    linear-gradient(180deg, rgba(132, 73, 60, 0.96), rgba(70, 32, 27, 0.96)) !important;
+  color: #ffe9e1 !important;
+}
+
+.school-note-toggle-tab {
+  background:
+    radial-gradient(circle at 18px 11px, rgba(255, 224, 151, 0.96) 0 2px, rgba(107, 76, 31, 0.96) 2px 3.5px, transparent 3.6px),
+    radial-gradient(circle at calc(100% - 18px) 11px, rgba(255, 224, 151, 0.96) 0 2px, rgba(107, 76, 31, 0.96) 2px 3.5px, transparent 3.6px),
+    linear-gradient(180deg, #6e4f2c 0%, #2a1b0f 54%, #120c07 100%) !important;
+  box-shadow:
+    0 12px 26px rgba(0, 0, 0, 0.32),
+    inset 0 1px 0 rgba(255, 235, 188, 0.18) !important;
+}
+
+.school-note-toggle-tab::before,
+.school-note-toggle-tab::after {
+  background: linear-gradient(180deg, #ffe2a1, #b9822e) !important;
+}
+
+/* Neumorphic refinement and brighter study feedback */
+.hub-bar,
+.topbar,
+.vault-heading,
+.quick-panel,
+.log-panel,
+.weekly-panel,
+.today-plan-panel,
+.sync-panel,
+.system-panel,
+.schedule-panel,
+.memo-panel,
+.history-panel,
+.calendar-panel,
+.score-panel,
+.date-marker-panel,
+.planner-view,
+.work-view,
+.vault-grid .sync-panel,
+.vault-grid .system-panel {
+  box-shadow:
+    18px 18px 42px rgba(116, 98, 76, 0.16),
+    -14px -14px 34px rgba(255, 255, 255, 0.62),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.72),
+    inset -1px -1px 0 rgba(139, 112, 72, 0.06) !important;
+}
+
+.memo-card,
+.preset-card,
+.entry-item,
+.today-plan-card,
+.calendar-month,
+.calendar-day,
+.date-marker,
+.schedule-day,
+.score-details > div,
+.work-category,
+.work-block,
+.mindfold-editor,
+.school-note {
+  box-shadow:
+    14px 14px 30px rgba(120, 100, 74, 0.13),
+    -10px -10px 24px rgba(255, 255, 255, 0.56),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.7),
+    inset -1px -1px 0 rgba(138, 104, 54, 0.06) !important;
+}
+
+.hub-nav-button,
+.topbar-controls .nav-button,
+.nav-button,
+.hub-vault-button,
+.settings-button,
+.icon-button,
+.text-button,
+.mini-button,
+.memo-index-button,
+.carry-adjust-button,
+.carry-reset-button,
+.mindfold-action,
+.mindfold-inline-add,
+.mindfold-ghost-add,
+.school-image-upload,
+.school-image-remove,
+.choice-button,
+.range-score-button {
+  box-shadow:
+    6px 6px 14px rgba(123, 101, 72, 0.13),
+    -5px -5px 12px rgba(255, 255, 255, 0.58),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.58),
+    inset -1px -1px 0 rgba(133, 98, 48, 0.07) !important;
+}
+
+.score-meter {
+  border-color: rgba(146, 112, 58, 0.14) !important;
+  background:
+    linear-gradient(145deg, rgba(255, 253, 248, 0.92), rgba(225, 214, 197, 0.82)),
+    #eee6d8 !important;
+  box-shadow:
+    inset 7px 7px 16px rgba(127, 106, 78, 0.12),
+    inset -7px -7px 16px rgba(255, 255, 255, 0.64),
+    10px 10px 24px rgba(118, 96, 68, 0.1) !important;
+}
+
+.score-meter::before,
+.score-meter::after {
+  opacity: 0 !important;
+}
+
+.score-kicker {
+  border-color: rgba(167, 130, 63, 0.16) !important;
+  background: rgba(255, 253, 248, 0.48) !important;
+  color: #92702f !important;
+  box-shadow:
+    inset 2px 2px 5px rgba(128, 105, 75, 0.08),
+    inset -2px -2px 5px rgba(255, 255, 255, 0.54) !important;
+}
+
+.score-number {
+  background: transparent !important;
+  color: #7f9658 !important;
+  text-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.72),
+    0 0 18px rgba(143, 190, 117, 0.22) !important;
+  box-shadow: none !important;
+}
+
+.score-number.negative {
+  background: transparent !important;
+  color: #b46b5e !important;
+  text-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.66),
+    0 0 18px rgba(244, 141, 131, 0.22) !important;
+}
+
+.score-number.neutral {
+  background: transparent !important;
+  color: #b68a3a !important;
+  text-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.7),
+    0 0 18px rgba(221, 181, 86, 0.22) !important;
+}
+
+.today-plan-panel .choice-button.yes,
+.today-plan-panel .range-score-button:not(.no) {
+  border-color: rgba(124, 229, 183, 0.38) !important;
+  background:
+    linear-gradient(180deg, rgba(246, 255, 251, 0.94), rgba(205, 250, 230, 0.78)),
+    #d8f8e8 !important;
+  color: #217653 !important;
+}
+
+.today-plan-panel .choice-button.no,
+.today-plan-panel .range-score-button.no {
+  border-color: rgba(255, 157, 184, 0.42) !important;
+  background:
+    linear-gradient(180deg, rgba(255, 249, 251, 0.96), rgba(255, 218, 230, 0.82)),
+    #ffe0ea !important;
+  color: #a64862 !important;
+}
+
+.today-plan-panel .choice-button.yes.selected,
+.today-plan-panel .range-score-button.selected:not(.no) {
+  border-color: rgba(93, 255, 180, 0.76) !important;
+  background:
+    linear-gradient(180deg, rgba(235, 255, 247, 0.98), rgba(142, 255, 207, 0.88)),
+    #9dffd2 !important;
+  color: #064f34 !important;
+  box-shadow:
+    0 0 0 1px rgba(93, 255, 180, 0.34),
+    0 0 22px rgba(93, 255, 180, 0.38),
+    0 0 44px rgba(93, 255, 180, 0.18),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.68) !important;
+}
+
+.today-plan-panel .choice-button.no.selected,
+.today-plan-panel .range-score-button.no.selected {
+  border-color: rgba(255, 136, 176, 0.78) !important;
+  background:
+    linear-gradient(180deg, rgba(255, 246, 250, 0.98), rgba(255, 164, 194, 0.9)),
+    #ffadc8 !important;
+  color: #6b1630 !important;
+  box-shadow:
+    0 0 0 1px rgba(255, 136, 176, 0.32),
+    0 0 22px rgba(255, 136, 176, 0.38),
+    0 0 44px rgba(255, 136, 176, 0.18),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.68) !important;
+}
+
+.today-plan-panel .choice-button.selected b,
+.today-plan-panel .range-score-button.selected {
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.56) !important;
+}
+
+/* Modern glass/neumorphic interface pass */
+:root {
+  --bg: #e8edf3;
+  --bg-2: #f7f9fc;
+  --panel: rgba(255, 255, 255, 0.48);
+  --panel-strong: rgba(255, 255, 255, 0.66);
+  --ink: #202733;
+  --muted: #718095;
+  --line: rgba(99, 116, 138, 0.16);
+  --line-hot: rgba(112, 142, 255, 0.32);
+  --cyan: #4e80ff;
+  --pink: #f073b8;
+  --acid: #60c79b;
+  --amber: #d9a94c;
+  --plus: #42c78f;
+  --plus-soft: rgba(66, 199, 143, 0.14);
+  --minus: #ee6d8d;
+  --minus-soft: rgba(238, 109, 141, 0.14);
+  --gold: #c59a43;
+  --blue: #4e80ff;
+  --shadow: 18px 18px 42px rgba(122, 137, 157, 0.22), -18px -18px 42px rgba(255, 255, 255, 0.78);
+}
+
+html,
+body {
+  background: #e8edf3 !important;
+}
+
+body {
+  color: var(--ink) !important;
+  background:
+    radial-gradient(circle at 12% 8%, rgba(112, 142, 255, 0.22), transparent 34%),
+    radial-gradient(circle at 88% 10%, rgba(240, 115, 184, 0.18), transparent 30%),
+    radial-gradient(circle at 50% 92%, rgba(96, 199, 155, 0.15), transparent 36%),
+    linear-gradient(135deg, #f8fafc 0%, #e8edf3 52%, #dfe6ef 100%) !important;
+}
+
+body::before {
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.32) 1px, transparent 1px),
+    linear-gradient(0deg, rgba(255, 255, 255, 0.26) 1px, transparent 1px) !important;
+  background-size: 72px 72px !important;
+  opacity: 0.42 !important;
+  mask-image: none !important;
+}
+
+body::after {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.32), transparent 42%),
+    linear-gradient(315deg, rgba(141, 158, 183, 0.16), transparent 46%) !important;
+}
+
+.hub-bar,
+.topbar,
+.vault-heading,
+.quick-panel,
+.log-panel,
+.weekly-panel,
+.today-plan-panel,
+.sync-panel,
+.system-panel,
+.schedule-panel,
+.memo-panel,
+.history-panel,
+.calendar-panel,
+.score-panel,
+.date-marker-panel,
+.planner-view,
+.work-view,
+.vault-grid .sync-panel,
+.vault-grid .system-panel,
+.mindfold-editor,
+.school-view {
+  border: 1px solid rgba(255, 255, 255, 0.56) !important;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.64), rgba(255, 255, 255, 0.28)),
+    rgba(255, 255, 255, 0.42) !important;
+  color: var(--ink) !important;
+  box-shadow:
+    18px 18px 42px rgba(122, 137, 157, 0.2),
+    -18px -18px 42px rgba(255, 255, 255, 0.75),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.72) !important;
+  backdrop-filter: blur(18px) saturate(1.18);
+}
+
+.quick-panel::before,
+.log-panel::before,
+.weekly-panel::before,
+.today-plan-panel::before,
+.sync-panel::before,
+.system-panel::before,
+.schedule-panel::before,
+.memo-panel::before,
+.history-panel::before,
+.calendar-panel::before,
+.quick-panel::after,
+.log-panel::after,
+.weekly-panel::after,
+.today-plan-panel::after,
+.sync-panel::after,
+.system-panel::after,
+.schedule-panel::after,
+.memo-panel::after,
+.history-panel::after,
+.calendar-panel::after {
+  content: none !important;
+  display: none !important;
+}
+
+.hub-brand span,
+.topbar h1,
+.vault-heading h1,
+.mindfold-editor-head h2 {
+  color: #202733 !important;
+  text-shadow: none !important;
+}
+
+.hub-brand small,
+.topbar .eyebrow,
+.vault-heading .eyebrow,
+.vault-heading p,
+.mindfold-editor-head p {
+  color: rgba(55, 68, 86, 0.66) !important;
+  text-shadow: none !important;
+}
+
+.hub-nav-button,
+.topbar-controls .nav-button,
+.nav-button,
+.hub-vault-button,
+.settings-button,
+.icon-button,
+.text-button,
+.mini-button,
+.memo-index-button,
+.carry-adjust-button,
+.carry-reset-button,
+.mindfold-action,
+.mindfold-inline-add,
+.mindfold-ghost-add,
+.school-image-upload,
+.school-image-remove,
+.choice-button,
+.range-score-button {
+  border: 1px solid rgba(255, 255, 255, 0.58) !important;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.72), rgba(226, 233, 242, 0.62)),
+    rgba(244, 247, 251, 0.7) !important;
+  color: #2c3646 !important;
+  box-shadow:
+    7px 7px 16px rgba(125, 141, 163, 0.18),
+    -7px -7px 16px rgba(255, 255, 255, 0.76),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.72) !important;
+  text-shadow: none !important;
+}
+
+.hub-nav-button:hover,
+.topbar-controls .nav-button:hover,
+.nav-button:hover,
+.hub-vault-button:hover,
+.hub-vault-button.active,
+.hub-vault-button[aria-current="page"],
+.icon-button:hover,
+.text-button:hover,
+.mini-button:hover,
+.mindfold-action:hover {
+  border-color: rgba(112, 142, 255, 0.34) !important;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.82), rgba(222, 231, 246, 0.72)),
+    rgba(240, 245, 253, 0.82) !important;
+  color: #244a9f !important;
+  box-shadow:
+    9px 9px 20px rgba(125, 141, 163, 0.2),
+    -8px -8px 18px rgba(255, 255, 255, 0.82),
+    0 0 18px rgba(112, 142, 255, 0.16) !important;
+}
+
+.hub-nav-button.active,
+.hub-nav-button[aria-current="page"],
+.topbar-controls .nav-button.active,
+.topbar-controls .nav-button[aria-current="page"],
+.nav-button.active,
+.nav-button[aria-current="page"] {
+  border-color: rgba(112, 142, 255, 0.46) !important;
+  background:
+    linear-gradient(145deg, rgba(235, 241, 255, 0.95), rgba(191, 210, 255, 0.72)),
+    rgba(222, 232, 255, 0.82) !important;
+  color: #1f49ad !important;
+  box-shadow:
+    inset 4px 4px 10px rgba(118, 137, 170, 0.18),
+    inset -4px -4px 10px rgba(255, 255, 255, 0.72),
+    0 0 20px rgba(112, 142, 255, 0.18) !important;
+}
+
+.memo-card,
+.preset-card,
+.entry-item,
+.today-plan-card,
+.calendar-month,
+.calendar-day,
+.date-marker,
+.schedule-day,
+.score-details > div,
+.work-category,
+.work-block,
+.school-note {
+  border: 1px solid rgba(255, 255, 255, 0.56) !important;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.78), rgba(232, 238, 247, 0.62)),
+    rgba(249, 251, 254, 0.68) !important;
+  color: #202733 !important;
+  box-shadow:
+    12px 12px 28px rgba(122, 137, 157, 0.17),
+    -10px -10px 24px rgba(255, 255, 255, 0.78),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.7) !important;
+  backdrop-filter: blur(12px) saturate(1.08);
+  text-shadow: none !important;
+}
+
+.school-note[data-color],
+.today-plan-card:nth-child(3n + 2),
+.today-plan-card:nth-child(3n),
+.today-plan-card.done,
+.today-plan-card.done.no {
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.78), rgba(232, 238, 247, 0.62)),
+    rgba(249, 251, 254, 0.68) !important;
+}
+
+.memo-card-grip,
+.school-note-heading,
+.mindfold-editor-head,
+.mindfold-toggle-line:hover,
+.mindfold-block:hover,
+.mindfold-block.dragging,
+.school-note-image-panel {
+  border-color: rgba(255, 255, 255, 0.54) !important;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.58), rgba(226, 233, 242, 0.48)),
+    rgba(244, 247, 251, 0.54) !important;
+  color: #202733 !important;
+  box-shadow:
+    inset 3px 3px 8px rgba(128, 143, 166, 0.1),
+    inset -3px -3px 8px rgba(255, 255, 255, 0.6) !important;
+}
+
+input,
+textarea,
+select,
+.memo-card-grip input,
+.memo-panel textarea,
+.memo-card textarea,
+.school-note-heading textarea,
+.school-note-textarea,
+.mindfold-toggle-title,
+.mindfold-block textarea,
+.work-manual-textarea,
+.calendar-day textarea {
+  border-color: rgba(255, 255, 255, 0.48) !important;
+  background:
+    linear-gradient(145deg, rgba(238, 243, 249, 0.68), rgba(255, 255, 255, 0.58)),
+    rgba(245, 248, 252, 0.62) !important;
+  color: #202733 !important;
+  box-shadow:
+    inset 5px 5px 12px rgba(128, 143, 166, 0.12),
+    inset -5px -5px 12px rgba(255, 255, 255, 0.78) !important;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  border-color: rgba(112, 142, 255, 0.42) !important;
+  box-shadow:
+    inset 5px 5px 12px rgba(128, 143, 166, 0.1),
+    inset -5px -5px 12px rgba(255, 255, 255, 0.8),
+    0 0 0 1px rgba(112, 142, 255, 0.16),
+    0 0 22px rgba(112, 142, 255, 0.16) !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: rgba(88, 103, 122, 0.5) !important;
+}
+
+.section-heading,
+.panel-title,
+.score-kicker,
+.schedule-week-title,
+.memo-grid label > span,
+.sync-body label span,
+.system-body label span {
+  color: #4a67ad !important;
+  text-shadow: none !important;
+}
+
+.score-meter {
+  border-color: rgba(255, 255, 255, 0.58) !important;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.74), rgba(227, 234, 244, 0.62)),
+    rgba(245, 248, 252, 0.72) !important;
+  box-shadow:
+    inset 8px 8px 18px rgba(128, 143, 166, 0.13),
+    inset -8px -8px 18px rgba(255, 255, 255, 0.78),
+    12px 12px 28px rgba(122, 137, 157, 0.15) !important;
+}
+
+.score-number,
+.score-number.negative,
+.score-number.neutral {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.score-number {
+  color: #34b989 !important;
+  text-shadow: 0 0 18px rgba(52, 185, 137, 0.2) !important;
+}
+
+.score-number.negative {
+  color: #e15f84 !important;
+  text-shadow: 0 0 18px rgba(225, 95, 132, 0.22) !important;
+}
+
+.score-number.neutral {
+  color: #b89138 !important;
+  text-shadow: 0 0 18px rgba(184, 145, 56, 0.2) !important;
+}
+
+.today-plan-panel .choice-button.yes,
+.today-plan-panel .range-score-button:not(.no) {
+  border-color: rgba(90, 230, 177, 0.34) !important;
+  background:
+    linear-gradient(145deg, rgba(247, 255, 252, 0.9), rgba(207, 250, 232, 0.68)),
+    rgba(224, 252, 240, 0.78) !important;
+  color: #1d8360 !important;
+}
+
+.today-plan-panel .choice-button.no,
+.today-plan-panel .range-score-button.no {
+  border-color: rgba(255, 142, 179, 0.36) !important;
+  background:
+    linear-gradient(145deg, rgba(255, 250, 252, 0.92), rgba(255, 220, 232, 0.72)),
+    rgba(255, 230, 239, 0.8) !important;
+  color: #b44966 !important;
+}
+
+.today-plan-panel .choice-button.yes.selected,
+.today-plan-panel .range-score-button.selected:not(.no) {
+  border-color: rgba(83, 255, 186, 0.78) !important;
+  background:
+    linear-gradient(145deg, rgba(239, 255, 248, 0.96), rgba(127, 255, 204, 0.82)),
+    #9dffd2 !important;
+  color: #064f34 !important;
+  box-shadow:
+    0 0 0 1px rgba(83, 255, 186, 0.32),
+    0 0 22px rgba(83, 255, 186, 0.36),
+    0 0 44px rgba(83, 255, 186, 0.16),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.74) !important;
+}
+
+.today-plan-panel .choice-button.no.selected,
+.today-plan-panel .range-score-button.no.selected {
+  border-color: rgba(255, 133, 176, 0.8) !important;
+  background:
+    linear-gradient(145deg, rgba(255, 246, 250, 0.96), rgba(255, 161, 196, 0.86)),
+    #ffadc8 !important;
+  color: #6b1630 !important;
+  box-shadow:
+    0 0 0 1px rgba(255, 133, 176, 0.32),
+    0 0 22px rgba(255, 133, 176, 0.36),
+    0 0 44px rgba(255, 133, 176, 0.16),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.74) !important;
+}
+
+.school-note-toggle-tab {
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.76), rgba(205, 216, 233, 0.72)),
+    rgba(235, 241, 249, 0.86) !important;
+  box-shadow:
+    8px 8px 18px rgba(122, 137, 157, 0.18),
+    -6px -6px 16px rgba(255, 255, 255, 0.72),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.74) !important;
+}
+
+.school-note-toggle-tab::before,
+.school-note-toggle-tab::after {
+  background: #5871ad !important;
+}
+
+/* Remove notebook ruling and score number boxes */
+body,
+.quick-panel,
+.log-panel,
+.weekly-panel,
+.today-plan-panel,
+.sync-panel,
+.system-panel,
+.schedule-panel,
+.memo-panel,
+.history-panel,
+.calendar-panel,
+.score-panel,
+.date-marker-panel,
+.planner-view,
+.work-view,
+.memo-card,
+.preset-card,
+.entry-item,
+.today-plan-card,
+.calendar-month,
+.calendar-day,
+.date-marker,
+.schedule-day,
+.score-details > div,
+.work-category,
+.work-block,
+.school-note,
+.school-note[data-color],
+.memo-card-grip,
+.school-note-heading,
+.school-note-image-panel,
+.mindfold-editor,
+.mindfold-editor-head,
+.mindfold-toggle-line:hover,
+.mindfold-block:hover,
+.mindfold-block.dragging,
+.vault-heading {
+  background-image: none !important;
+}
+
+.memo-card-grip input,
+.memo-panel textarea,
+.memo-card textarea,
+.school-note-heading textarea,
+.school-note-textarea,
+.mindfold-toggle-title,
+.mindfold-block textarea,
+.work-manual-textarea,
+.calendar-day textarea,
+input,
+textarea,
+select {
+  background-image: none !important;
+}
+
+.today-plan-card:nth-child(3n + 2),
+.today-plan-card:nth-child(3n),
+.today-plan-card.done,
+.today-plan-card.done.no {
+  background-image: none !important;
+}
+
+.score-number,
+.score-number.negative,
+.score-number.neutral,
+.score-details strong,
+.daily-left-rail .score-details > div strong,
+.daily-left-rail .score-details .carry-detail strong {
+  background: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  border: 0 !important;
+}
+
+.score-details strong,
+.daily-left-rail .score-details > div strong,
+.daily-left-rail .score-details .carry-detail strong {
+  color: #334155 !important;
+  text-shadow: none !important;
+}
+
+/* Modern warm notebook theme: bright base, refined gold accents */
+:root {
+  --bg: #ede7dc;
+  --bg-2: #f7f2e9;
+  --panel: rgba(255, 252, 246, 0.9);
+  --panel-strong: rgba(255, 252, 246, 0.98);
+  --ink: #26211a;
+  --muted: #817263;
+  --line: rgba(146, 112, 58, 0.18);
+  --line-hot: rgba(184, 137, 55, 0.32);
+  --cyan: #9a7532;
+  --pink: #9a6048;
+  --acid: #ad842e;
+  --amber: #b8832e;
+  --plus: #7e9353;
+  --plus-soft: rgba(126, 147, 83, 0.13);
+  --minus: #a25f53;
+  --minus-soft: rgba(162, 95, 83, 0.13);
+  --gold: #b88a37;
+  --blue: #6f7f90;
+  --shadow: 0 18px 48px rgba(64, 48, 30, 0.14);
+}
+
+html,
+body {
+  background: #ede7dc !important;
+}
+
+body {
+  color: var(--ink) !important;
+  background:
+    radial-gradient(circle at 14% 0%, rgba(201, 168, 105, 0.18), transparent 34%),
+    radial-gradient(circle at 88% 8%, rgba(142, 111, 79, 0.12), transparent 32%),
+    linear-gradient(180deg, #f5f0e7 0%, #ede7dc 52%, #e6ded1 100%) !important;
+}
+
+body::before {
+  background:
+    linear-gradient(90deg, rgba(112, 88, 55, 0.035) 1px, transparent 1px),
+    linear-gradient(0deg, rgba(112, 88, 55, 0.025) 1px, transparent 1px) !important;
+  background-size: 88px 88px !important;
+  opacity: 0.75 !important;
+}
+
+body::after {
+  background:
+    linear-gradient(180deg, rgba(255, 252, 246, 0.24), rgba(226, 217, 202, 0.34)),
+    linear-gradient(90deg, rgba(116, 91, 57, 0.08), transparent 22%, transparent 78%, rgba(116, 91, 57, 0.08)) !important;
+}
+
+.hub-bar,
+.topbar,
+.vault-heading {
+  border-color: rgba(146, 112, 58, 0.18) !important;
+  background:
+    linear-gradient(180deg, rgba(255, 253, 248, 0.96), rgba(236, 227, 211, 0.9)),
+    #f7f1e7 !important;
+  color: #2a241c !important;
+  box-shadow:
+    0 18px 42px rgba(74, 55, 32, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7) !important;
+}
+
+.hub-brand span,
+.topbar h1,
+.vault-heading h1 {
+  color: #211b14 !important;
+  text-shadow: none !important;
+}
+
+.hub-brand small,
+.topbar .eyebrow,
+.vault-heading .eyebrow,
+.vault-heading p {
+  color: rgba(55, 45, 34, 0.62) !important;
+  text-shadow: none !important;
+}
+
+.hub-nav-button,
+.topbar-controls .nav-button,
+.nav-button,
+.hub-vault-button,
+.settings-button,
+.icon-button,
+.text-button,
+.mini-button,
+.memo-index-button,
+.carry-adjust-button,
+.carry-reset-button,
+.mindfold-action,
+.mindfold-inline-add,
+.mindfold-ghost-add,
+.school-image-upload,
+.school-image-remove {
+  border-color: rgba(142, 106, 51, 0.2) !important;
+  background:
+    linear-gradient(180deg, rgba(255, 253, 248, 0.94), rgba(231, 218, 196, 0.84)),
+    #efe2c9 !important;
+  color: #3e3020 !important;
+  box-shadow:
+    0 5px 14px rgba(72, 50, 25, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.58) !important;
+}
+
+.hub-nav-button:hover,
+.topbar-controls .nav-button:hover,
+.nav-button:hover,
+.hub-vault-button:hover,
+.hub-vault-button.active,
+.hub-vault-button[aria-current="page"],
+.icon-button:hover,
+.text-button:hover,
+.mini-button:hover,
+.mindfold-action:hover {
+  border-color: rgba(184, 137, 55, 0.42) !important;
+  background:
+    linear-gradient(180deg, rgba(255, 253, 248, 0.98), rgba(222, 193, 137, 0.64)),
+    #ecd49d !important;
+  color: #21180f !important;
+}
+
+.hub-nav-button.active,
+.hub-nav-button[aria-current="page"],
+.topbar-controls .nav-button.active,
+.topbar-controls .nav-button[aria-current="page"],
+.nav-button.active,
+.nav-button[aria-current="page"] {
+  border-color: rgba(184, 137, 55, 0.5) !important;
+  background:
+    linear-gradient(180deg, rgba(255, 253, 248, 0.96), rgba(210, 164, 80, 0.58)),
+    #e6c06f !important;
+  color: #1e170f !important;
+  box-shadow:
+    0 8px 20px rgba(74, 55, 32, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.54) !important;
+}
+
+.quick-panel,
+.log-panel,
+.weekly-panel,
+.today-plan-panel,
+.sync-panel,
+.system-panel,
+.schedule-panel,
+.memo-panel,
+.history-panel,
+.calendar-panel,
+.score-panel,
+.date-marker-panel,
+.planner-view,
+.work-view,
+.vault-grid .sync-panel,
+.vault-grid .system-panel {
+  border-color: rgba(146, 112, 58, 0.16) !important;
+  background:
+    linear-gradient(180deg, rgba(255, 253, 248, 0.92), rgba(236, 226, 208, 0.88)),
+    var(--panel) !important;
+  color: #282119 !important;
+  box-shadow:
+    0 18px 44px rgba(74, 55, 32, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.64) !important;
+}
+
+.quick-panel::before,
+.log-panel::before,
+.weekly-panel::before,
+.today-plan-panel::before,
+.sync-panel::before,
+.system-panel::before,
+.schedule-panel::before,
+.memo-panel::before,
+.history-panel::before,
+.calendar-panel::before {
+  background:
+    linear-gradient(rgba(255, 252, 246, 0.88), rgba(255, 252, 246, 0.88)) padding-box,
+    linear-gradient(135deg, rgba(184, 137, 55, 0.32), rgba(146, 112, 58, 0.08), rgba(184, 137, 55, 0.12)) border-box !important;
+}
+
+.section-heading,
+.panel-title,
+.score-kicker,
+.schedule-week-title,
+.memo-grid label > span,
+.sync-body label span,
+.system-body label span {
+  color: #8f6721 !important;
+  text-shadow: none !important;
+}
+
+input,
+textarea,
+select {
+  border-color: rgba(146, 112, 58, 0.18) !important;
+  background: rgba(255, 253, 248, 0.66) !important;
+  color: #272018 !important;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  border-color: rgba(184, 137, 55, 0.46) !important;
+  box-shadow:
+    0 0 0 1px rgba(184, 137, 55, 0.14),
+    0 0 20px rgba(184, 137, 55, 0.08) !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: rgba(88, 72, 55, 0.45) !important;
+}
+
+.memo-card,
+.preset-card,
+.entry-item,
+.today-plan-card,
+.calendar-month,
+.calendar-day,
+.date-marker,
+.schedule-day,
+.score-details > div,
+.work-category,
+.work-block,
+.mindfold-editor,
+.school-note {
+  border-color: rgba(146, 112, 58, 0.16) !important;
+  background:
+    linear-gradient(180deg, rgba(255, 253, 248, 0.98), rgba(239, 229, 209, 0.92)),
+    #f6ecda !important;
+  color: #211a13 !important;
+  box-shadow:
+    0 14px 30px rgba(74, 55, 32, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.66) !important;
+}
+
+.school-note[data-color],
+.today-plan-card:nth-child(3n + 2),
+.today-plan-card:nth-child(3n),
+.today-plan-card.done,
+.today-plan-card.done.no {
+  background:
+    linear-gradient(90deg, rgba(184, 137, 55, 0.13) 0 6px, transparent 6px),
+    repeating-linear-gradient(0deg, transparent 0 29px, rgba(111, 86, 52, 0.055) 29px 30px),
+    #f6ecda !important;
+}
+
+.memo-card-grip,
+.school-note-heading,
+.mindfold-editor-head,
+.mindfold-toggle-line:hover,
+.mindfold-block:hover,
+.mindfold-block.dragging,
+.school-note-image-panel {
+  border-color: rgba(146, 112, 58, 0.15) !important;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.38), rgba(227, 211, 184, 0.28)),
+    rgba(245, 236, 219, 0.72) !important;
+  color: #241b13 !important;
+}
+
+.memo-card-grip input,
+.memo-panel textarea,
+.memo-card textarea,
+.school-note-heading textarea,
+.school-note-textarea,
+.mindfold-toggle-title,
+.mindfold-block textarea,
+.work-manual-textarea,
+.calendar-day textarea {
+  background:
+    repeating-linear-gradient(0deg, transparent 0 29px, rgba(96, 75, 45, 0.045) 29px 30px),
+    rgba(255, 253, 248, 0.56) !important;
+  color: #211a13 !important;
+  border-color: rgba(146, 112, 58, 0.14) !important;
+}
+
+.mindfold-document-view .mindfold-editor {
+  background:
+    linear-gradient(180deg, rgba(255, 253, 248, 0.98), rgba(235, 221, 197, 0.92)),
+    #f4e7d0 !important;
+}
+
+.mindfold-editor-head h2,
+.mindfold-toggle-title,
+.vault-heading h1 {
+  color: #211a13 !important;
+}
+
+.mindfold-editor-head p {
+  color: rgba(55, 45, 34, 0.58) !important;
+}
+
+.mindfold-toggle::before {
+  border-left-color: #9d722c !important;
+}
+
+.mindfold-cloze {
+  background: #3b3024 !important;
+}
+
+.mindfold-cloze:hover {
+  background: rgba(184, 137, 55, 0.22) !important;
+  color: #211a13 !important;
+}
+
+.school-note-toggle-tab {
+  background:
+    radial-gradient(circle at 18px 11px, rgba(255, 230, 165, 0.96) 0 2px, rgba(150, 108, 41, 0.92) 2px 3.5px, transparent 3.6px),
+    radial-gradient(circle at calc(100% - 18px) 11px, rgba(255, 230, 165, 0.96) 0 2px, rgba(150, 108, 41, 0.92) 2px 3.5px, transparent 3.6px),
+    linear-gradient(180deg, #a67b38 0%, #5d401d 56%, #362513 100%) !important;
+  box-shadow:
+    0 10px 22px rgba(74, 55, 32, 0.22),
+    inset 0 1px 0 rgba(255, 245, 210, 0.26) !important;
+}
+
+/* Final cleanup: no ruled paper textures, no boxed score numbers */
+body,
+body::before,
+body::after,
+.memo-card,
+.memo-card.active,
+.memo-panel,
+.memo-panel textarea,
+.memo-panel .memo-quick-textarea,
+.memo-panel .memo-large-textarea,
+.memo-card textarea,
+.memo-card.active .memo-card-columns textarea,
+.memo-block.editing textarea,
+.memo-block-textarea,
+.memo-quick-textarea,
+.memo-large-textarea,
+.school-note,
+.school-note[data-color],
+.school-note-heading,
+.school-note-heading textarea,
+.school-note-textarea,
+.school-note-image-panel,
+.mindfold-editor,
+.mindfold-block textarea,
+.mindfold-toggle-title,
+.today-plan-card,
+.today-plan-card:nth-child(3n + 2),
+.today-plan-card:nth-child(3n),
+.today-plan-card.done,
+.today-plan-card.done.no,
+.schedule-panel,
+.today-plan-panel,
+.schedule-day,
+.calendar-day textarea,
+.work-manual-textarea {
+  background-image: none !important;
+}
+
+.memo-panel textarea,
+.memo-panel .memo-quick-textarea,
+.memo-panel .memo-large-textarea,
+.memo-card textarea,
+.memo-card.active .memo-card-columns textarea,
+.memo-block.editing textarea,
+.memo-block-textarea,
+.memo-quick-textarea,
+.memo-large-textarea,
+.school-note-heading textarea,
+.school-note-textarea,
+.mindfold-block textarea,
+.mindfold-toggle-title {
+  background:
+    linear-gradient(145deg, rgba(238, 243, 249, 0.68), rgba(255, 255, 255, 0.58)),
+    rgba(245, 248, 252, 0.62) !important;
+}
+
+.school-note,
+.school-note[data-color],
+.memo-card,
+.today-plan-card,
+.today-plan-card:nth-child(3n + 2),
+.today-plan-card:nth-child(3n),
+.today-plan-card.done,
+.today-plan-card.done.no {
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.78), rgba(232, 238, 247, 0.62)),
+    rgba(249, 251, 254, 0.68) !important;
+}
+
+.score-number,
+.score-number.negative,
+.score-number.neutral,
+.score-details strong,
+.score-details > div strong,
+.score-details .carry-detail strong,
+.daily-left-rail .score-details strong,
+.daily-left-rail .score-details > div strong,
+.daily-left-rail .score-details .carry-detail strong {
+  border: 0 !important;
+  background: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+/* Neutral luxury theme: remove ivory warmth, keep color only as interaction accents */
+:root {
+  color-scheme: light;
+  --bg: #eef2f6;
+  --bg-2: #dfe5ec;
+  --panel: rgba(245, 247, 250, 0.68);
+  --panel-strong: rgba(248, 250, 252, 0.86);
+  --ink: #202733;
+  --muted: #687386;
+  --line: rgba(116, 128, 145, 0.18);
+  --line-hot: rgba(98, 125, 255, 0.32);
+  --cyan: #62d8ff;
+  --pink: #ff7caf;
+  --acid: #8ff0c6;
+  --amber: #d8a84c;
+  --plus: #63e6ad;
+  --plus-soft: rgba(99, 230, 173, 0.14);
+  --minus: #ff7c9f;
+  --minus-soft: rgba(255, 124, 159, 0.14);
+  --gold: #d8a84c;
+  --blue: #7e95ff;
+  --shadow: 18px 18px 42px rgba(116, 128, 145, 0.2), -18px -18px 42px rgba(255, 255, 255, 0.74);
+}
+
+html,
+body {
+  background:
+    radial-gradient(circle at 14% 8%, rgba(126, 149, 255, 0.14), transparent 30%),
+    radial-gradient(circle at 84% 12%, rgba(99, 230, 173, 0.1), transparent 28%),
+    linear-gradient(135deg, #f1f4f7 0%, #e5ebf1 52%, #d9e0e8 100%) !important;
+  color: var(--ink) !important;
+}
+
+body::before,
+body::after {
+  background: none !important;
+}
+
+.topbar,
+.hub-bar,
+.app-navigation,
+.score-panel,
+.quick-panel,
+.weekly-panel,
+.today-plan-panel,
+.sync-panel,
+.system-panel,
+.schedule-panel,
+.memo-panel,
+.log-panel,
+.history-panel,
+.planner-view,
+.work-view,
+.calendar-panel,
+.school-view,
+.mindfold-shell,
+.vault-view,
+.settings-panel,
+.dashboard-panel,
+.daily-section,
+.note-tab-bar,
+.mindfold-editor,
+.mindfold-sidebar,
+.mindfold-document-view .mindfold-editor {
+  border-color: rgba(255, 255, 255, 0.56) !important;
+  background:
+    linear-gradient(145deg, rgba(250, 252, 255, 0.72), rgba(224, 231, 240, 0.54)),
+    rgba(241, 244, 248, 0.62) !important;
+  background-image:
+    linear-gradient(145deg, rgba(250, 252, 255, 0.72), rgba(224, 231, 240, 0.54)) !important;
+  box-shadow:
+    18px 18px 42px rgba(116, 128, 145, 0.18),
+    -16px -16px 38px rgba(255, 255, 255, 0.76),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.74) !important;
+  color: #202733 !important;
+}
+
+.section-heading h2,
+.score-panel h2,
+.weekly-panel h2,
+.today-plan-panel h2,
+.memo-panel h2,
+.school-view h1,
+.school-view h2,
+.mindfold-editor-head h2,
+.vault-heading h1,
+.topbar h1 {
+  color: #1f2733 !important;
+  text-shadow: none !important;
+}
+
+.section-heading span,
+.eyebrow,
+.topbar p,
+.muted,
+.empty-state,
+.mindfold-editor-head p,
+.vault-heading p {
+  color: #687386 !important;
+  text-shadow: none !important;
+}
+
+input,
+textarea,
+select,
+.memo-panel textarea,
+.memo-card textarea,
+.memo-card.active .memo-card-columns textarea,
+.memo-block.editing textarea,
+.memo-block-textarea,
+.memo-quick-textarea,
+.memo-large-textarea,
+.school-note-heading input,
+.school-note-heading textarea,
+.school-note-textarea,
+.school-note textarea,
+.school-note input,
+.school-view textarea,
+.school-view input,
+.calendar-day textarea,
+.work-manual-textarea,
+.mindfold-block textarea,
+.mindfold-toggle-title {
+  border-color: rgba(255, 255, 255, 0.5) !important;
+  background:
+    linear-gradient(145deg, rgba(232, 238, 246, 0.66), rgba(250, 252, 255, 0.55)),
+    rgba(238, 242, 247, 0.58) !important;
+  background-image:
+    linear-gradient(145deg, rgba(232, 238, 246, 0.66), rgba(250, 252, 255, 0.55)) !important;
+  box-shadow:
+    inset 5px 5px 12px rgba(116, 128, 145, 0.12),
+    inset -5px -5px 12px rgba(255, 255, 255, 0.72) !important;
+  color: #263140 !important;
+}
+
+.memo-card,
+.memo-card.active,
+.school-note,
+.school-note[data-color],
+.school-note[data-color="cream"],
+.school-note[data-color="sage"],
+.school-note[data-color="peach"],
+.school-note[data-color="blue"],
+.school-note[data-color="rose"],
+.school-note[data-color="lavender"],
+.school-note[data-color="mint"],
+.school-note[data-color="butter"],
+.daily-workspace .memo-area,
+.today-plan-card,
+.today-plan-card:nth-child(3n + 2),
+.today-plan-card:nth-child(3n),
+.today-plan-card.done,
+.today-plan-card.done.no,
+.schedule-day,
+.calendar-day,
+.mindfold-toggle,
+.mindfold-block {
+  border-color: rgba(255, 255, 255, 0.58) !important;
+  background:
+    linear-gradient(145deg, rgba(249, 251, 254, 0.78), rgba(225, 232, 241, 0.58)),
+    rgba(240, 244, 249, 0.66) !important;
+  background-image:
+    linear-gradient(145deg, rgba(249, 251, 254, 0.78), rgba(225, 232, 241, 0.58)) !important;
+  box-shadow:
+    12px 12px 28px rgba(116, 128, 145, 0.16),
+    -10px -10px 24px rgba(255, 255, 255, 0.76),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.76) !important;
+  color: #263140 !important;
+}
+
+.school-note-heading,
+.school-note-image-panel,
+.school-note-image-panel *,
+.school-note-image-grid,
+.school-note-image-preview,
+.school-note-image-preview figcaption,
+.school-note-image-tools,
+.school-note-image-thumb,
+.daily-workspace .memo-area .memo-title-input,
+.daily-workspace .memo-area .memo-large-textarea,
+.daily-workspace .memo-area .memo-quick-textarea {
+  border-color: rgba(255, 255, 255, 0.52) !important;
+  background:
+    linear-gradient(145deg, rgba(236, 241, 248, 0.66), rgba(250, 252, 255, 0.48)),
+    rgba(240, 244, 249, 0.56) !important;
+  background-image:
+    linear-gradient(145deg, rgba(236, 241, 248, 0.66), rgba(250, 252, 255, 0.48)) !important;
+  color: #263140 !important;
+}
+
+.school-note-image-panel::before,
+.school-note-image-panel::after,
+.school-note-image-thumb::before,
+.school-note-image-thumb::after,
+.daily-workspace .memo-area::before,
+.daily-workspace .memo-area::after {
+  content: none !important;
+  display: none !important;
+  background: none !important;
+  background-image: none !important;
+}
+
+.hub-tab,
+.hub-action,
+.nav-tab,
+.note-tab,
+.note-tab-tool,
+.mini-button,
+.icon-button,
+.add-button,
+.topbar button,
+.school-note .school-color-button,
+.school-note-toggle-tab,
+.mindfold-toolbar button,
+.mindfold-node-action,
+.mindfold-block-button {
+  border-color: rgba(255, 255, 255, 0.56) !important;
+  background:
+    linear-gradient(145deg, rgba(248, 250, 253, 0.76), rgba(224, 231, 240, 0.62)),
+    rgba(240, 244, 249, 0.7) !important;
+  background-image:
+    linear-gradient(145deg, rgba(248, 250, 253, 0.76), rgba(224, 231, 240, 0.62)) !important;
+  color: #4a5568 !important;
+  box-shadow:
+    7px 7px 16px rgba(116, 128, 145, 0.14),
+    -6px -6px 14px rgba(255, 255, 255, 0.78),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.72) !important;
+  text-shadow: none !important;
+}
+
+.hub-tab.active,
+.nav-tab.active,
+.note-tab.active,
+.topbar button.active,
+.schedule-day.selected,
+.calendar-day.selected,
+.mindfold-node.active,
+.mindfold-block:focus-within,
+.school-note .school-color-button[aria-expanded="true"] {
+  border-color: rgba(126, 149, 255, 0.48) !important;
+  background:
+    radial-gradient(circle at 24% 18%, rgba(255, 255, 255, 0.9), transparent 34%),
+    linear-gradient(145deg, rgba(232, 237, 255, 0.92), rgba(196, 210, 255, 0.72)) !important;
+  color: #26335f !important;
+  box-shadow:
+    0 0 20px rgba(126, 149, 255, 0.22),
+    8px 8px 18px rgba(116, 128, 145, 0.16),
+    -7px -7px 16px rgba(255, 255, 255, 0.8),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.78) !important;
+}
+
+.add-button,
+.note-tab-add,
+.quick-add-button,
+.mindfold-add-button,
+.school-add-button {
+  color: #246a55 !important;
+}
+
+.add-button:hover,
+.note-tab-add:hover,
+.quick-add-button:hover,
+.mindfold-add-button:hover,
+.school-add-button:hover {
+  border-color: rgba(99, 230, 173, 0.56) !important;
+  background:
+    radial-gradient(circle at 26% 20%, rgba(248, 255, 252, 0.94), transparent 36%),
+    linear-gradient(145deg, rgba(224, 255, 243, 0.86), rgba(172, 245, 216, 0.68)) !important;
+  box-shadow:
+    0 0 18px rgba(99, 230, 173, 0.28),
+    7px 7px 16px rgba(116, 128, 145, 0.14),
+    -6px -6px 14px rgba(255, 255, 255, 0.8) !important;
+}
+
+.today-plan-panel .choice-button,
+.today-plan-panel .choice-button.yes,
+.today-plan-panel .choice-button.no,
+.today-plan-panel .range-score-button,
+.today-plan-panel .range-score-button.no {
+  border-color: rgba(255, 255, 255, 0.58) !important;
+  background:
+    linear-gradient(145deg, rgba(248, 250, 253, 0.74), rgba(224, 231, 240, 0.6)),
+    rgba(240, 244, 249, 0.7) !important;
+  color: #4a5568 !important;
+  box-shadow:
+    7px 7px 16px rgba(116, 128, 145, 0.14),
+    -6px -6px 14px rgba(255, 255, 255, 0.78),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.72) !important;
+}
+
+.today-plan-panel .choice-button.yes.selected,
+.today-plan-panel .range-score-button.selected:not(.no) {
+  border-color: rgba(99, 230, 173, 0.66) !important;
+  background:
+    radial-gradient(circle at 28% 20%, rgba(245, 255, 251, 0.96), transparent 34%),
+    linear-gradient(145deg, rgba(214, 255, 240, 0.92), rgba(134, 239, 202, 0.78)) !important;
+  color: #163c31 !important;
+  box-shadow:
+    0 0 20px rgba(99, 230, 173, 0.42),
+    7px 7px 16px rgba(55, 160, 132, 0.13),
+    -6px -6px 14px rgba(255, 255, 255, 0.84),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.78) !important;
+}
+
+.today-plan-panel .choice-button.no.selected,
+.today-plan-panel .range-score-button.no.selected {
+  border-color: rgba(255, 124, 159, 0.68) !important;
+  background:
+    radial-gradient(circle at 28% 20%, rgba(255, 247, 250, 0.96), transparent 34%),
+    linear-gradient(145deg, rgba(255, 226, 235, 0.94), rgba(255, 160, 190, 0.8)) !important;
+  color: #4a1d2a !important;
+  box-shadow:
+    0 0 20px rgba(255, 124, 159, 0.38),
+    7px 7px 16px rgba(164, 76, 101, 0.13),
+    -6px -6px 14px rgba(255, 255, 255, 0.84),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.78) !important;
+}
+
+.score-number,
+.score-details strong,
+.score-details > div strong,
+.score-details .carry-detail strong,
+.daily-left-rail .score-details strong,
+.daily-left-rail .score-details > div strong,
+.daily-left-rail .score-details .carry-detail strong {
+  background: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  color: #202733 !important;
+}
+
+/* Absolute final fix for the NOTE "+ Memo" button */
+.school-add-note,
+.school-view .school-add-note {
+  border-color: rgba(255, 255, 255, 0.56) !important;
+  background:
+    linear-gradient(145deg, rgba(248, 250, 253, 0.76), rgba(224, 231, 240, 0.62)),
+    rgba(240, 244, 249, 0.7) !important;
+  background-image:
+    linear-gradient(145deg, rgba(248, 250, 253, 0.76), rgba(224, 231, 240, 0.62)) !important;
+  color: #246a55 !important;
+  box-shadow:
+    7px 7px 16px rgba(116, 128, 145, 0.14),
+    -6px -6px 14px rgba(255, 255, 255, 0.78),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.72) !important;
+  text-shadow: none !important;
+}
+
+.school-add-note::before,
+.school-add-note::after {
+  content: none !important;
+  display: none !important;
+  background: none !important;
+  background-image: none !important;
+}
+
+/* Absolute final tab/date neutralization */
+.hub-bar,
+.app-navigation,
+.topbar-controls,
+.topbar-controls .app-navigation,
+.topbar-controls .nav-buttons,
+.topbar-controls .nav-row,
+.hub-nav,
+.hub-actions {
+  border-color: transparent !important;
+  background: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+.hub-nav-button,
+.hub-vault-button,
+.topbar-controls .nav-button,
+.nav-tab,
+.note-tab,
+.note-tab-tool {
+  border: 1px solid rgba(255, 255, 255, 0.6) !important;
+  background:
+    linear-gradient(145deg, rgba(241, 245, 249, 0.9), rgba(211, 220, 231, 0.72)),
+    rgba(229, 235, 243, 0.84) !important;
+  background-image:
+    linear-gradient(145deg, rgba(241, 245, 249, 0.9), rgba(211, 220, 231, 0.72)) !important;
+  color: #303946 !important;
+  box-shadow:
+    8px 8px 18px rgba(82, 94, 112, 0.18),
+    -7px -7px 16px rgba(255, 255, 255, 0.72),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.72) !important;
+  text-shadow: none !important;
+}
+
+.hub-nav-button::before,
+.hub-nav-button::after,
+.hub-vault-button::before,
+.hub-vault-button::after,
+.topbar-controls .nav-button::before,
+.topbar-controls .nav-button::after,
+.nav-tab::before,
+.nav-tab::after,
+.note-tab::before,
+.note-tab::after {
+  content: none !important;
+  display: none !important;
+  background: none !important;
+  background-image: none !important;
+}
+
+.hub-nav-button.active,
+.hub-nav-button[aria-current="page"],
+.hub-vault-button.active,
+.hub-vault-button[aria-current="page"],
+.topbar-controls .nav-button.active,
+.topbar-controls .nav-button[aria-current="page"],
+.nav-tab.active,
+.note-tab.active {
+  border-color: rgba(116, 137, 255, 0.5) !important;
+  background:
+    linear-gradient(145deg, rgba(229, 234, 246, 0.95), rgba(190, 202, 222, 0.8)),
+    rgba(218, 225, 236, 0.88) !important;
+  background-image:
+    linear-gradient(145deg, rgba(229, 234, 246, 0.95), rgba(190, 202, 222, 0.8)) !important;
+  color: #202b44 !important;
+  box-shadow:
+    inset 5px 5px 12px rgba(82, 94, 112, 0.16),
+    inset -5px -5px 12px rgba(255, 255, 255, 0.72),
+    0 0 16px rgba(116, 137, 255, 0.16) !important;
+}
+
+.topbar,
+.mindfold-view,
+.mindfold-shell,
+.mindfold-editor,
+.mindfold-sidebar,
+.mindfold-document-view .mindfold-editor {
+  border-color: rgba(255, 255, 255, 0.66) !important;
+  background:
+    linear-gradient(145deg, rgba(246, 249, 252, 0.88), rgba(214, 223, 234, 0.72)),
+    rgba(232, 238, 246, 0.82) !important;
+  background-image:
+    linear-gradient(145deg, rgba(246, 249, 252, 0.88), rgba(214, 223, 234, 0.72)) !important;
+  box-shadow:
+    18px 18px 40px rgba(82, 94, 112, 0.2),
+    -14px -14px 32px rgba(255, 255, 255, 0.78),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.78) !important;
+}
+
+.day-switcher input[type="date"],
+input[type="date"],
+.date-marker input,
+.date-marker-date,
+.date-marker .date-marker-date,
+.date-marker .date-marker-text {
+  border-color: rgba(255, 255, 255, 0.58) !important;
+  background:
+    linear-gradient(145deg, rgba(226, 233, 242, 0.86), rgba(247, 250, 253, 0.72)),
+    rgba(235, 241, 248, 0.82) !important;
+  background-image:
+    linear-gradient(145deg, rgba(226, 233, 242, 0.86), rgba(247, 250, 253, 0.72)) !important;
+  box-shadow:
+    inset 4px 4px 10px rgba(82, 94, 112, 0.14),
+    inset -4px -4px 10px rgba(255, 255, 255, 0.76) !important;
+  color: #253040 !important;
+  text-shadow: none !important;
+}
+
+.day-switcher input[type="date"]::-webkit-datetime-edit,
+.day-switcher input[type="date"]::-webkit-date-and-time-value,
+.day-switcher input[type="date"]::-webkit-datetime-edit-fields-wrapper,
+.day-switcher input[type="date"]::-webkit-datetime-edit-year-field,
+.day-switcher input[type="date"]::-webkit-datetime-edit-month-field,
+.day-switcher input[type="date"]::-webkit-datetime-edit-day-field,
+.day-switcher input[type="date"]::-webkit-datetime-edit-text,
+.date-marker-date::-webkit-datetime-edit,
+.date-marker-date::-webkit-date-and-time-value,
+.date-marker-date::-webkit-datetime-edit-fields-wrapper,
+.date-marker-date::-webkit-datetime-edit-year-field,
+.date-marker-date::-webkit-datetime-edit-month-field,
+.date-marker-date::-webkit-datetime-edit-day-field,
+.date-marker-date::-webkit-datetime-edit-text {
+  background: transparent !important;
+  background-image: none !important;
+  color: #253040 !important;
+}
+
+.date-marker,
+.date-marker-panel,
+.score-panel,
+.score-details > div,
+.score-details .carry-detail {
+  border-color: rgba(255, 255, 255, 0.66) !important;
+  background:
+    linear-gradient(145deg, rgba(246, 249, 252, 0.9), rgba(214, 223, 234, 0.74)),
+    rgba(232, 238, 246, 0.84) !important;
+  background-image:
+    linear-gradient(145deg, rgba(246, 249, 252, 0.9), rgba(214, 223, 234, 0.74)) !important;
+  box-shadow:
+    12px 12px 28px rgba(82, 94, 112, 0.18),
+    -10px -10px 24px rgba(255, 255, 255, 0.78),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.78) !important;
+}
+
+/* Final hard stop: date switcher and memo header surfaces */
+.day-switcher,
+.topbar .day-switcher,
+.topbar-controls .day-switcher {
+  border: 1px solid rgba(255, 255, 255, 0.48) !important;
+  background:
+    linear-gradient(145deg, rgba(238, 243, 249, 0.82), rgba(211, 220, 231, 0.66)),
+    rgba(228, 235, 243, 0.74) !important;
+  background-image:
+    linear-gradient(145deg, rgba(238, 243, 249, 0.82), rgba(211, 220, 231, 0.66)) !important;
+  box-shadow:
+    inset 3px 3px 9px rgba(82, 94, 112, 0.1),
+    inset -3px -3px 9px rgba(255, 255, 255, 0.7),
+    6px 6px 14px rgba(82, 94, 112, 0.12) !important;
+}
+
+.day-switcher::before,
+.day-switcher::after,
+.topbar .day-switcher::before,
+.topbar .day-switcher::after,
+.topbar-controls .day-switcher::before,
+.topbar-controls .day-switcher::after,
+.memo-card-grip::before,
+.memo-card-grip::after {
+  content: none !important;
+  display: none !important;
+  background: none !important;
+  background-image: none !important;
+}
+
+.day-switcher input,
+.day-switcher input[type="date"],
+.topbar .day-switcher input[type="date"],
+.topbar-controls .day-switcher input[type="date"] {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  border-color: rgba(255, 255, 255, 0.58) !important;
+  background:
+    linear-gradient(145deg, rgba(224, 231, 240, 0.9), rgba(248, 250, 253, 0.74)),
+    rgba(235, 241, 248, 0.84) !important;
+  background-image:
+    linear-gradient(145deg, rgba(224, 231, 240, 0.9), rgba(248, 250, 253, 0.74)) !important;
+  box-shadow:
+    inset 4px 4px 10px rgba(82, 94, 112, 0.14),
+    inset -4px -4px 10px rgba(255, 255, 255, 0.78) !important;
+  color: #253040 !important;
+  text-shadow: none !important;
+}
+
+.day-switcher input[type="date"]::-webkit-datetime-edit,
+.day-switcher input[type="date"]::-webkit-date-and-time-value,
+.day-switcher input[type="date"]::-webkit-datetime-edit-fields-wrapper,
+.day-switcher input[type="date"]::-webkit-datetime-edit-year-field,
+.day-switcher input[type="date"]::-webkit-datetime-edit-month-field,
+.day-switcher input[type="date"]::-webkit-datetime-edit-day-field,
+.day-switcher input[type="date"]::-webkit-datetime-edit-text,
+.day-switcher input[type="date"]::-webkit-calendar-picker-indicator {
+  background: transparent !important;
+  background-image: none !important;
+  color: #253040 !important;
+  text-shadow: none !important;
+}
+
+.memo-card-grip,
+.memo-card-grip span,
+.memo-card-grip input,
+.memo-panel .memo-title-input,
+.memo-title-input,
+.daily-workspace .memo-area .memo-title-input {
+  border-color: rgba(255, 255, 255, 0.58) !important;
+  background:
+    linear-gradient(145deg, rgba(229, 236, 245, 0.86), rgba(248, 250, 253, 0.66)),
+    rgba(235, 241, 248, 0.78) !important;
+  background-image:
+    linear-gradient(145deg, rgba(229, 236, 245, 0.86), rgba(248, 250, 253, 0.66)) !important;
+  box-shadow:
+    inset 4px 4px 10px rgba(82, 94, 112, 0.12),
+    inset -4px -4px 10px rgba(255, 255, 255, 0.74) !important;
+  color: #263140 !important;
+  text-shadow: none !important;
+}
+
+.memo-card-grip span {
+  border-color: rgba(116, 128, 145, 0.2) !important;
+  color: #3b4655 !important;
+}
+
+/* Cold neutral override: remove remaining ivory warmth from dashboard surfaces */
+:root {
+  --bg: #d7dde5;
+  --bg-2: #c8d0da;
+  --panel: rgba(218, 225, 234, 0.88);
+  --panel-strong: rgba(226, 232, 240, 0.94);
+  --ink: #202936;
+  --muted: #66717f;
+}
+
+html,
+body,
+#root,
+.app-shell,
+.hub-shell,
+.studio-shell,
+.daily-workspace,
+.dashboard-view {
+  background:
+    radial-gradient(circle at 14% 10%, rgba(116, 137, 255, 0.08), transparent 28%),
+    linear-gradient(135deg, #dce2ea 0%, #cfd7e1 52%, #c2ccd8 100%) !important;
+  background-image:
+    radial-gradient(circle at 14% 10%, rgba(116, 137, 255, 0.08), transparent 28%),
+    linear-gradient(135deg, #dce2ea 0%, #cfd7e1 52%, #c2ccd8 100%) !important;
+  color: #202936 !important;
+}
+
+body::before,
+body::after,
+#root::before,
+#root::after,
+.app-shell::before,
+.app-shell::after,
+.daily-workspace::before,
+.daily-workspace::after,
+.dashboard-view::before,
+.dashboard-view::after {
+  content: none !important;
+  display: none !important;
+  background: none !important;
+  background-image: none !important;
+}
+
+.day-switcher .icon-button,
+.icon-button,
+.memo-index-button,
+.memo-index-button.add-memo,
+.memo-card-grip,
+.memo-card-grip span,
+.memo-card-grip input,
+.memo-title-input,
+.memo-panel .memo-title-input,
+.daily-workspace .memo-area .memo-title-input,
+.score-panel,
+.score-details > div,
+.score-details .carry-detail,
+.date-marker-panel,
+.date-marker,
+.date-marker input,
+.date-marker-date,
+.date-marker .date-marker-text,
+.date-marker .date-marker-date,
+.date-marker-dday,
+.day-switcher,
+.day-switcher input,
+.day-switcher input[type="date"] {
+  border-color: rgba(110, 123, 140, 0.28) !important;
+  background:
+    linear-gradient(145deg, rgba(219, 226, 235, 0.96), rgba(188, 199, 213, 0.88)),
+    #ccd5df !important;
+  background-image:
+    linear-gradient(145deg, rgba(219, 226, 235, 0.96), rgba(188, 199, 213, 0.88)) !important;
+  box-shadow:
+    9px 9px 20px rgba(82, 94, 112, 0.2),
+    -7px -7px 16px rgba(235, 240, 246, 0.56),
+    inset 1px 1px 0 rgba(236, 241, 247, 0.58),
+    inset -1px -1px 0 rgba(82, 94, 112, 0.08) !important;
+  color: #233041 !important;
+  text-shadow: none !important;
+}
+
+.memo-index-button.active,
+.memo-index-button.add-memo:hover,
+.day-switcher .icon-button:hover {
+  border-color: rgba(116, 137, 255, 0.38) !important;
+  background:
+    linear-gradient(145deg, rgba(202, 212, 228, 0.98), rgba(167, 181, 201, 0.9)),
+    #bac6d4 !important;
+  background-image:
+    linear-gradient(145deg, rgba(202, 212, 228, 0.98), rgba(167, 181, 201, 0.9)) !important;
+  box-shadow:
+    inset 5px 5px 12px rgba(82, 94, 112, 0.17),
+    inset -4px -4px 10px rgba(235, 240, 246, 0.46),
+    0 0 14px rgba(116, 137, 255, 0.12) !important;
+}
+
+.score-number,
+.score-number.negative,
+.score-number.neutral,
+.score-details strong,
+.score-details > div strong,
+.score-details .carry-detail strong {
+  background: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  color: #202936 !important;
+}
+
+.day-switcher input[type="date"]::-webkit-datetime-edit,
+.day-switcher input[type="date"]::-webkit-date-and-time-value,
+.day-switcher input[type="date"]::-webkit-datetime-edit-fields-wrapper,
+.day-switcher input[type="date"]::-webkit-datetime-edit-year-field,
+.day-switcher input[type="date"]::-webkit-datetime-edit-month-field,
+.day-switcher input[type="date"]::-webkit-datetime-edit-day-field,
+.day-switcher input[type="date"]::-webkit-datetime-edit-text,
+.day-switcher input[type="date"]::-webkit-calendar-picker-indicator,
+.date-marker-date::-webkit-datetime-edit,
+.date-marker-date::-webkit-date-and-time-value,
+.date-marker-date::-webkit-datetime-edit-fields-wrapper,
+.date-marker-date::-webkit-datetime-edit-year-field,
+.date-marker-date::-webkit-datetime-edit-month-field,
+.date-marker-date::-webkit-datetime-edit-day-field,
+.date-marker-date::-webkit-datetime-edit-text,
+.date-marker-date::-webkit-calendar-picker-indicator {
+  background: transparent !important;
+  background-image: none !important;
+  color: #233041 !important;
+  text-shadow: none !important;
+}
+
+.day-switcher::before,
+.day-switcher::after,
+.day-switcher .icon-button::before,
+.day-switcher .icon-button::after,
+.memo-index-button::before,
+.memo-index-button::after,
+.memo-card-grip::before,
+.memo-card-grip::after,
+.score-panel::before,
+.score-panel::after,
+.date-marker-panel::before,
+.date-marker-panel::after,
+.date-marker::before,
+.date-marker::after {
+  content: none !important;
+  display: none !important;
+  background: none !important;
+  background-image: none !important;
+}
+
+/* Absolute final date switcher line removal */
+.day-switcher,
+.topbar .day-switcher,
+.topbar-controls .day-switcher {
+  border: 1px solid rgba(255, 255, 255, 0.48) !important;
+  background:
+    linear-gradient(145deg, rgba(238, 243, 249, 0.82), rgba(211, 220, 231, 0.66)),
+    rgba(228, 235, 243, 0.74) !important;
+  background-image:
+    linear-gradient(145deg, rgba(238, 243, 249, 0.82), rgba(211, 220, 231, 0.66)) !important;
+  box-shadow:
+    inset 3px 3px 9px rgba(82, 94, 112, 0.1),
+    inset -3px -3px 9px rgba(255, 255, 255, 0.7),
+    6px 6px 14px rgba(82, 94, 112, 0.12) !important;
+}
+
+.day-switcher::before,
+.day-switcher::after,
+.topbar .day-switcher::before,
+.topbar .day-switcher::after,
+.topbar-controls .day-switcher::before,
+.topbar-controls .day-switcher::after {
+  content: none !important;
+  display: none !important;
+  background: none !important;
+  background-image: none !important;
+}
+
+.day-switcher input,
+.day-switcher input[type="date"],
+.topbar .day-switcher input[type="date"],
+.topbar-controls .day-switcher input[type="date"] {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  border-color: rgba(255, 255, 255, 0.58) !important;
+  background:
+    linear-gradient(145deg, rgba(224, 231, 240, 0.9), rgba(248, 250, 253, 0.74)),
+    rgba(235, 241, 248, 0.84) !important;
+  background-image:
+    linear-gradient(145deg, rgba(224, 231, 240, 0.9), rgba(248, 250, 253, 0.74)) !important;
+  box-shadow:
+    inset 4px 4px 10px rgba(82, 94, 112, 0.14),
+    inset -4px -4px 10px rgba(255, 255, 255, 0.78) !important;
+  color: #253040 !important;
+  text-shadow: none !important;
+}
+
+.day-switcher input[type="date"]::-webkit-datetime-edit,
+.day-switcher input[type="date"]::-webkit-date-and-time-value,
+.day-switcher input[type="date"]::-webkit-datetime-edit-fields-wrapper,
+.day-switcher input[type="date"]::-webkit-datetime-edit-year-field,
+.day-switcher input[type="date"]::-webkit-datetime-edit-month-field,
+.day-switcher input[type="date"]::-webkit-datetime-edit-day-field,
+.day-switcher input[type="date"]::-webkit-datetime-edit-text,
+.day-switcher input[type="date"]::-webkit-calendar-picker-indicator {
+  background: transparent !important;
+  background-image: none !important;
+  color: #253040 !important;
+  text-shadow: none !important;
+}
+
+.school-add-note:hover,
+.school-view .school-add-note:hover {
+  border-color: rgba(99, 230, 173, 0.66) !important;
+  background:
+    radial-gradient(circle at 28% 20%, rgba(245, 255, 251, 0.96), transparent 34%),
+    linear-gradient(145deg, rgba(214, 255, 240, 0.92), rgba(134, 239, 202, 0.78)) !important;
+  color: #163c31 !important;
+  box-shadow:
+    0 0 20px rgba(99, 230, 173, 0.4),
+    7px 7px 16px rgba(55, 160, 132, 0.13),
+    -6px -6px 14px rgba(255, 255, 255, 0.84),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.78) !important;
+}
+
+/* True final fix for the NOTE "+ Memo" button */
+.school-add-note,
+.school-view .school-add-note {
+  border-color: rgba(255, 255, 255, 0.56) !important;
+  background:
+    linear-gradient(145deg, rgba(248, 250, 253, 0.76), rgba(224, 231, 240, 0.62)),
+    rgba(240, 244, 249, 0.7) !important;
+  background-image:
+    linear-gradient(145deg, rgba(248, 250, 253, 0.76), rgba(224, 231, 240, 0.62)) !important;
+  color: #246a55 !important;
+  box-shadow:
+    7px 7px 16px rgba(116, 128, 145, 0.14),
+    -6px -6px 14px rgba(255, 255, 255, 0.78),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.72) !important;
+  text-shadow: none !important;
+}
+
+.school-add-note::before,
+.school-add-note::after {
+  content: none !important;
+  display: none !important;
+  background: none !important;
+  background-image: none !important;
+}
+
+.school-add-note:hover,
+.school-view .school-add-note:hover {
+  border-color: rgba(99, 230, 173, 0.66) !important;
+  background:
+    radial-gradient(circle at 28% 20%, rgba(245, 255, 251, 0.96), transparent 34%),
+    linear-gradient(145deg, rgba(214, 255, 240, 0.92), rgba(134, 239, 202, 0.78)) !important;
+  color: #163c31 !important;
+  box-shadow:
+    0 0 20px rgba(99, 230, 173, 0.4),
+    7px 7px 16px rgba(55, 160, 132, 0.13),
+    -6px -6px 14px rgba(255, 255, 255, 0.84),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.78) !important;
+}
+
+/* Final note image cleanup: keep attachments clean, not ruled-paper styled */
+.school-note-image-panel,
+.school-note-image-panel *,
+.school-note-image-panel::before,
+.school-note-image-panel::after,
+.school-note-image-grid,
+.school-note-image-preview,
+.school-note-image-preview figcaption,
+.school-note-image-tools,
+.school-note-image-thumb,
+.school-note-image-thumb::before,
+.school-note-image-thumb::after {
+  background-image: none !important;
+}
+
+.school-note-image-panel {
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.48), rgba(232, 239, 248, 0.32)),
+    rgba(248, 251, 255, 0.42) !important;
+}
+
+.school-note-image-preview,
+.school-note-image-thumb {
+  background:
+    linear-gradient(145deg, rgba(247, 250, 254, 0.76), rgba(229, 236, 246, 0.52)),
+    rgba(244, 248, 252, 0.64) !important;
+}
+
+.school-note-image-preview figcaption,
+.school-note-image-tools {
+  background: transparent !important;
+}
+
+.score-details strong,
+.score-details > div strong,
+.score-details .carry-detail strong,
+.daily-left-rail .score-details strong,
+.daily-left-rail .score-details > div strong,
+.daily-left-rail .score-details .carry-detail strong {
+  color: #334155 !important;
+  text-shadow: none !important;
+}
+
+/* Final modern surface pass: remove every remaining ruled memo texture */
+.school-note,
+.school-note[data-color],
+.school-note[data-color="cream"],
+.school-note[data-color="sage"],
+.school-note[data-color="peach"],
+.school-note[data-color="blue"],
+.school-note[data-color="rose"],
+.school-note[data-color="lavender"],
+.school-note[data-color="mint"],
+.school-note[data-color="butter"],
+.school-note-heading,
+.school-note-image-panel,
+.school-note-heading input,
+.school-note-heading textarea,
+.school-note-textarea,
+.school-note textarea,
+.school-note input,
+.school-view textarea,
+.school-view input,
+.memo-card,
+.memo-card.active,
+.memo-panel,
+.memo-panel textarea,
+.memo-card textarea,
+.memo-card.active .memo-card-columns textarea,
+.memo-block.editing textarea,
+.memo-block-textarea,
+.memo-quick-textarea,
+.memo-large-textarea,
+.daily-workspace .memo-six-grid,
+.daily-workspace .memo-area,
+.daily-workspace .memo-area::before,
+.daily-workspace .memo-area .memo-title-input,
+.daily-workspace .memo-area .memo-large-textarea,
+.daily-workspace .memo-area .memo-quick-textarea {
+  background-image: none !important;
+}
+
+.school-note,
+.school-note[data-color],
+.school-note[data-color="cream"],
+.school-note[data-color="sage"],
+.school-note[data-color="peach"],
+.school-note[data-color="blue"],
+.school-note[data-color="rose"],
+.school-note[data-color="lavender"],
+.school-note[data-color="mint"],
+.school-note[data-color="butter"] {
+  border: 1px solid rgba(255, 255, 255, 0.6) !important;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.78), rgba(232, 238, 247, 0.62)),
+    rgba(249, 251, 254, 0.7) !important;
+  box-shadow:
+    14px 14px 34px rgba(119, 132, 154, 0.16),
+    -12px -12px 28px rgba(255, 255, 255, 0.74),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.72) !important;
+}
+
+.school-note-heading,
+.school-note-image-panel {
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.5), rgba(232, 239, 248, 0.34)),
+    rgba(248, 251, 255, 0.42) !important;
+  border-color: rgba(255, 255, 255, 0.58) !important;
+}
+
+.school-note-heading input,
+.school-note-heading textarea,
+.school-note-textarea,
+.school-note textarea,
+.school-view textarea,
+.memo-panel textarea,
+.memo-card textarea,
+.memo-card.active .memo-card-columns textarea,
+.memo-block.editing textarea,
+.memo-block-textarea,
+.memo-quick-textarea,
+.memo-large-textarea {
+  background:
+    linear-gradient(145deg, rgba(238, 243, 249, 0.68), rgba(255, 255, 255, 0.58)),
+    rgba(245, 248, 252, 0.64) !important;
+  box-shadow:
+    inset 4px 4px 10px rgba(128, 143, 166, 0.1),
+    inset -4px -4px 10px rgba(255, 255, 255, 0.72) !important;
+}
+
+.daily-workspace .memo-six-grid {
+  gap: 14px !important;
+}
+
+.daily-workspace .memo-area {
+  border: 1px solid rgba(255, 255, 255, 0.62) !important;
+  border-radius: 16px !important;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.78), rgba(230, 237, 247, 0.58)),
+    rgba(249, 251, 254, 0.66) !important;
+  box-shadow:
+    12px 12px 28px rgba(119, 132, 154, 0.17),
+    -10px -10px 24px rgba(255, 255, 255, 0.76),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.75) !important;
+  overflow: hidden !important;
+}
+
+.daily-workspace .memo-area::before,
+.daily-workspace .memo-area::after {
+  content: none !important;
+  display: none !important;
+}
+
+.daily-workspace .memo-area .memo-title-input {
+  min-height: 38px !important;
+  border: 1px solid rgba(255, 255, 255, 0.58) !important;
+  border-radius: 12px !important;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.5), rgba(231, 238, 247, 0.34)),
+    rgba(248, 251, 255, 0.48) !important;
+  box-shadow:
+    inset 3px 3px 8px rgba(128, 143, 166, 0.08),
+    inset -3px -3px 8px rgba(255, 255, 255, 0.72) !important;
+  color: #263140 !important;
+}
+
+.daily-workspace .memo-area .memo-large-textarea,
+.daily-workspace .memo-area .memo-quick-textarea {
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
+  border-radius: 12px !important;
+  background:
+    linear-gradient(145deg, rgba(239, 244, 250, 0.62), rgba(255, 255, 255, 0.48)),
+    rgba(246, 249, 253, 0.56) !important;
+  color: #293442 !important;
+}
+
+.today-plan-panel .choice-button,
+.today-plan-panel .choice-button.yes,
+.today-plan-panel .choice-button.no,
+.today-plan-panel .range-score-button,
+.today-plan-panel .range-score-button.no {
+  border-color: rgba(255, 255, 255, 0.62) !important;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.72), rgba(226, 233, 242, 0.62)),
+    rgba(244, 247, 251, 0.7) !important;
+  color: #4a5568 !important;
+  box-shadow:
+    7px 7px 16px rgba(119, 132, 154, 0.14),
+    -6px -6px 14px rgba(255, 255, 255, 0.78),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.72) !important;
+  text-shadow: none !important;
+}
+
+.today-plan-panel .choice-button.selected,
+.today-plan-panel .range-score-button.selected {
+  color: #14352f !important;
+}
+
+.today-plan-panel .choice-button.yes.selected,
+.today-plan-panel .range-score-button.selected:not(.no) {
+  border-color: rgba(89, 231, 186, 0.64) !important;
+  background:
+    radial-gradient(circle at 28% 20%, rgba(235, 255, 249, 0.96), transparent 34%),
+    linear-gradient(145deg, rgba(205, 255, 239, 0.92), rgba(135, 239, 208, 0.78)) !important;
+  box-shadow:
+    0 0 18px rgba(79, 231, 187, 0.44),
+    7px 7px 16px rgba(55, 160, 132, 0.14),
+    -6px -6px 14px rgba(255, 255, 255, 0.82),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.78) !important;
+}
+
+.today-plan-panel .choice-button.no.selected,
+.today-plan-panel .range-score-button.no.selected {
+  border-color: rgba(255, 145, 174, 0.68) !important;
+  background:
+    radial-gradient(circle at 28% 20%, rgba(255, 244, 248, 0.96), transparent 34%),
+    linear-gradient(145deg, rgba(255, 220, 230, 0.94), rgba(255, 157, 184, 0.8)) !important;
+  color: #4a1d2a !important;
+  box-shadow:
+    0 0 18px rgba(255, 126, 163, 0.42),
+    7px 7px 16px rgba(164, 76, 101, 0.14),
+    -6px -6px 14px rgba(255, 255, 255, 0.82),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.78) !important;
+}
+
+.score-number,
+.score-number.negative,
+.score-number.neutral,
+.score-details strong,
+.score-details > div strong,
+.score-details .carry-detail strong,
+.daily-left-rail .score-details strong,
+.daily-left-rail .score-details > div strong,
+.daily-left-rail .score-details .carry-detail strong {
+  border: 0 !important;
+  background: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+/* True final neutral theme: grayscale base, color only on active accents */
+:root {
+  color-scheme: light;
+  --bg: #eef2f6;
+  --bg-2: #dfe5ec;
+  --panel: rgba(245, 247, 250, 0.68);
+  --panel-strong: rgba(248, 250, 252, 0.86);
+  --ink: #202733;
+  --muted: #687386;
+  --line: rgba(116, 128, 145, 0.18);
+  --line-hot: rgba(126, 149, 255, 0.32);
+  --cyan: #62d8ff;
+  --pink: #ff7caf;
+  --acid: #8ff0c6;
+  --amber: #d8a84c;
+  --plus: #63e6ad;
+  --minus: #ff7c9f;
+  --gold: #d8a84c;
+  --blue: #7e95ff;
+  --shadow: 18px 18px 42px rgba(116, 128, 145, 0.2), -18px -18px 42px rgba(255, 255, 255, 0.74);
+}
+
+html,
+body {
+  background:
+    radial-gradient(circle at 14% 8%, rgba(126, 149, 255, 0.12), transparent 30%),
+    radial-gradient(circle at 84% 12%, rgba(99, 230, 173, 0.08), transparent 28%),
+    linear-gradient(135deg, #f1f4f7 0%, #e5ebf1 52%, #d9e0e8 100%) !important;
+  color: var(--ink) !important;
+}
+
+body::before,
+body::after {
+  background: none !important;
+}
+
+.topbar,
+.hub-bar,
+.app-navigation,
+.score-panel,
+.quick-panel,
+.weekly-panel,
+.today-plan-panel,
+.sync-panel,
+.system-panel,
+.schedule-panel,
+.memo-panel,
+.log-panel,
+.history-panel,
+.planner-view,
+.work-view,
+.calendar-panel,
+.school-view,
+.mindfold-shell,
+.vault-view,
+.settings-panel,
+.dashboard-panel,
+.daily-section,
+.note-tab-bar,
+.mindfold-editor,
+.mindfold-sidebar,
+.mindfold-document-view .mindfold-editor,
+.memo-card,
+.memo-card.active,
+.school-note,
+.school-note[data-color],
+.school-note[data-color="cream"],
+.school-note[data-color="sage"],
+.school-note[data-color="peach"],
+.school-note[data-color="blue"],
+.school-note[data-color="rose"],
+.school-note[data-color="lavender"],
+.school-note[data-color="mint"],
+.school-note[data-color="butter"],
+.daily-workspace .memo-area,
+.today-plan-card,
+.today-plan-card:nth-child(3n + 2),
+.today-plan-card:nth-child(3n),
+.today-plan-card.done,
+.today-plan-card.done.no,
+.schedule-day,
+.calendar-day,
+.mindfold-toggle,
+.mindfold-block {
+  border-color: rgba(255, 255, 255, 0.58) !important;
+  background:
+    linear-gradient(145deg, rgba(249, 251, 254, 0.78), rgba(225, 232, 241, 0.58)),
+    rgba(240, 244, 249, 0.66) !important;
+  background-image:
+    linear-gradient(145deg, rgba(249, 251, 254, 0.78), rgba(225, 232, 241, 0.58)) !important;
+  box-shadow:
+    14px 14px 34px rgba(116, 128, 145, 0.16),
+    -12px -12px 30px rgba(255, 255, 255, 0.76),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.76) !important;
+  color: #263140 !important;
+}
+
+input,
+textarea,
+select,
+.memo-panel textarea,
+.memo-card textarea,
+.memo-card.active .memo-card-columns textarea,
+.memo-block.editing textarea,
+.memo-block-textarea,
+.memo-quick-textarea,
+.memo-large-textarea,
+.school-note-heading,
+.school-note-image-panel,
+.school-note-image-panel *,
+.school-note-image-grid,
+.school-note-image-preview,
+.school-note-image-preview figcaption,
+.school-note-image-tools,
+.school-note-image-thumb,
+.school-note-heading input,
+.school-note-heading textarea,
+.school-note-textarea,
+.school-note textarea,
+.school-note input,
+.school-view textarea,
+.school-view input,
+.calendar-day textarea,
+.work-manual-textarea,
+.mindfold-block textarea,
+.mindfold-toggle-title,
+.daily-workspace .memo-area .memo-title-input,
+.daily-workspace .memo-area .memo-large-textarea,
+.daily-workspace .memo-area .memo-quick-textarea {
+  border-color: rgba(255, 255, 255, 0.5) !important;
+  background:
+    linear-gradient(145deg, rgba(232, 238, 246, 0.66), rgba(250, 252, 255, 0.55)),
+    rgba(238, 242, 247, 0.58) !important;
+  background-image:
+    linear-gradient(145deg, rgba(232, 238, 246, 0.66), rgba(250, 252, 255, 0.55)) !important;
+  box-shadow:
+    inset 5px 5px 12px rgba(116, 128, 145, 0.12),
+    inset -5px -5px 12px rgba(255, 255, 255, 0.72) !important;
+  color: #263140 !important;
+}
+
+.school-note-image-panel::before,
+.school-note-image-panel::after,
+.school-note-image-thumb::before,
+.school-note-image-thumb::after,
+.daily-workspace .memo-area::before,
+.daily-workspace .memo-area::after {
+  content: none !important;
+  display: none !important;
+  background: none !important;
+  background-image: none !important;
+}
+
+.section-heading h2,
+.score-panel h2,
+.weekly-panel h2,
+.today-plan-panel h2,
+.memo-panel h2,
+.school-view h1,
+.school-view h2,
+.mindfold-editor-head h2,
+.vault-heading h1,
+.topbar h1 {
+  color: #1f2733 !important;
+  text-shadow: none !important;
+}
+
+.section-heading span,
+.eyebrow,
+.topbar p,
+.muted,
+.empty-state,
+.mindfold-editor-head p,
+.vault-heading p {
+  color: #687386 !important;
+  text-shadow: none !important;
+}
+
+.hub-tab,
+.hub-action,
+.nav-tab,
+.note-tab,
+.note-tab-tool,
+.mini-button,
+.icon-button,
+.add-button,
+.topbar button,
+.school-note .school-color-button,
+.school-note-toggle-tab,
+.mindfold-toolbar button,
+.mindfold-node-action,
+.mindfold-block-button,
+.today-plan-panel .choice-button,
+.today-plan-panel .choice-button.yes,
+.today-plan-panel .choice-button.no,
+.today-plan-panel .range-score-button,
+.today-plan-panel .range-score-button.no {
+  border-color: rgba(255, 255, 255, 0.56) !important;
+  background:
+    linear-gradient(145deg, rgba(248, 250, 253, 0.76), rgba(224, 231, 240, 0.62)),
+    rgba(240, 244, 249, 0.7) !important;
+  background-image:
+    linear-gradient(145deg, rgba(248, 250, 253, 0.76), rgba(224, 231, 240, 0.62)) !important;
+  color: #4a5568 !important;
+  box-shadow:
+    7px 7px 16px rgba(116, 128, 145, 0.14),
+    -6px -6px 14px rgba(255, 255, 255, 0.78),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.72) !important;
+  text-shadow: none !important;
+}
+
+.hub-tab.active,
+.nav-tab.active,
+.note-tab.active,
+.topbar button.active,
+.schedule-day.selected,
+.calendar-day.selected,
+.mindfold-node.active,
+.mindfold-block:focus-within,
+.school-note .school-color-button[aria-expanded="true"] {
+  border-color: rgba(126, 149, 255, 0.48) !important;
+  background:
+    radial-gradient(circle at 24% 18%, rgba(255, 255, 255, 0.9), transparent 34%),
+    linear-gradient(145deg, rgba(232, 237, 255, 0.92), rgba(196, 210, 255, 0.72)) !important;
+  color: #26335f !important;
+  box-shadow:
+    0 0 20px rgba(126, 149, 255, 0.22),
+    8px 8px 18px rgba(116, 128, 145, 0.16),
+    -7px -7px 16px rgba(255, 255, 255, 0.8),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.78) !important;
+}
+
+.add-button,
+.note-tab-add,
+.quick-add-button,
+.mindfold-add-button,
+.school-add-button {
+  color: #246a55 !important;
+}
+
+.add-button:hover,
+.note-tab-add:hover,
+.quick-add-button:hover,
+.mindfold-add-button:hover,
+.school-add-button:hover,
+.today-plan-panel .choice-button.yes.selected,
+.today-plan-panel .range-score-button.selected:not(.no) {
+  border-color: rgba(99, 230, 173, 0.66) !important;
+  background:
+    radial-gradient(circle at 28% 20%, rgba(245, 255, 251, 0.96), transparent 34%),
+    linear-gradient(145deg, rgba(214, 255, 240, 0.92), rgba(134, 239, 202, 0.78)) !important;
+  color: #163c31 !important;
+  box-shadow:
+    0 0 20px rgba(99, 230, 173, 0.4),
+    7px 7px 16px rgba(55, 160, 132, 0.13),
+    -6px -6px 14px rgba(255, 255, 255, 0.84),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.78) !important;
+}
+
+.today-plan-panel .choice-button.no.selected,
+.today-plan-panel .range-score-button.no.selected {
+  border-color: rgba(255, 124, 159, 0.68) !important;
+  background:
+    radial-gradient(circle at 28% 20%, rgba(255, 247, 250, 0.96), transparent 34%),
+    linear-gradient(145deg, rgba(255, 226, 235, 0.94), rgba(255, 160, 190, 0.8)) !important;
+  color: #4a1d2a !important;
+  box-shadow:
+    0 0 20px rgba(255, 124, 159, 0.38),
+    7px 7px 16px rgba(164, 76, 101, 0.13),
+    -6px -6px 14px rgba(255, 255, 255, 0.84),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.78) !important;
+}
+
+.score-number,
+.score-details strong,
+.score-details > div strong,
+.score-details .carry-detail strong,
+.daily-left-rail .score-details strong,
+.daily-left-rail .score-details > div strong,
+.daily-left-rail .score-details .carry-detail strong {
+  background: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  color: #202733 !important;
+}
+/* Absolute final dashboard clarity layer */
+html,
+body,
+#root,
+.app-shell,
+.studio-shell,
+.daily-workspace,
+.dashboard-view {
+  background-image: none !important;
+}
+
+html,
+body {
+  background:
+    radial-gradient(circle at 10% 8%, rgba(126, 149, 255, 0.1), transparent 26%),
+    radial-gradient(circle at 88% 14%, rgba(99, 230, 173, 0.07), transparent 24%),
+    linear-gradient(135deg, #edf1f5 0%, #dfe6ee 52%, #d1d9e3 100%) !important;
+}
+
+body::before,
+body::after,
+.app-shell::before,
+.app-shell::after,
+.daily-workspace::before,
+.daily-workspace::after,
+.dashboard-view::before,
+.dashboard-view::after,
+.score-panel::before,
+.score-panel::after,
+.date-marker-panel::before,
+.date-marker-panel::after {
+  content: none !important;
+  display: none !important;
+  background: none !important;
+  background-image: none !important;
+}
+
+.topbar,
+.hub-bar,
+.app-navigation,
+.score-panel,
+.date-marker-panel,
+.quick-panel,
+.weekly-panel,
+.today-plan-panel,
+.schedule-panel,
+.memo-panel,
+.history-panel,
+.school-view,
+.mindfold-shell,
+.vault-view {
+  border: 1px solid rgba(255, 255, 255, 0.72) !important;
+  background:
+    linear-gradient(145deg, rgba(252, 253, 255, 0.86), rgba(219, 227, 237, 0.68)),
+    rgba(238, 243, 248, 0.78) !important;
+  background-image:
+    linear-gradient(145deg, rgba(252, 253, 255, 0.86), rgba(219, 227, 237, 0.68)) !important;
+  box-shadow:
+    20px 20px 46px rgba(91, 103, 120, 0.22),
+    -16px -16px 36px rgba(255, 255, 255, 0.82),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.82),
+    inset -1px -1px 0 rgba(91, 103, 120, 0.08) !important;
+}
+
+.today-plan-card,
+.memo-card,
+.school-note,
+.daily-workspace .memo-area,
+.score-details > div,
+.score-details .carry-detail,
+.date-marker,
+.schedule-day,
+.calendar-day {
+  border: 1px solid rgba(255, 255, 255, 0.64) !important;
+  background:
+    linear-gradient(145deg, rgba(248, 251, 254, 0.9), rgba(218, 226, 236, 0.72)),
+    rgba(236, 241, 247, 0.82) !important;
+  background-image:
+    linear-gradient(145deg, rgba(248, 251, 254, 0.9), rgba(218, 226, 236, 0.72)) !important;
+  box-shadow:
+    10px 10px 24px rgba(91, 103, 120, 0.18),
+    -8px -8px 20px rgba(255, 255, 255, 0.78),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.78) !important;
+}
+
+.score-number,
+.score-number.negative,
+.score-number.neutral {
+  border: 0 !important;
+  background: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  color: #1f2733 !important;
+  text-shadow: none !important;
+}
+
+.score-kicker,
+.score-note,
+.detail-label,
+.date-marker-dday.empty {
+  color: #6b7482 !important;
+  text-shadow: none !important;
+}
+
+.date-marker input,
+.date-marker-date,
+.date-marker .date-marker-text,
+.date-marker .date-marker-date,
+.date-marker-dday {
+  border-color: rgba(255, 255, 255, 0.58) !important;
+  background:
+    linear-gradient(145deg, rgba(230, 236, 244, 0.78), rgba(251, 252, 254, 0.64)),
+    rgba(239, 243, 248, 0.72) !important;
+  background-image:
+    linear-gradient(145deg, rgba(230, 236, 244, 0.78), rgba(251, 252, 254, 0.64)) !important;
+  box-shadow:
+    inset 4px 4px 10px rgba(91, 103, 120, 0.12),
+    inset -4px -4px 10px rgba(255, 255, 255, 0.76) !important;
+  color: #253040 !important;
+}
+
+.date-marker-date::-webkit-datetime-edit,
+.date-marker-date::-webkit-date-and-time-value {
+  color: #253040 !important;
+}
+
+.date-marker-dday {
+  color: #26335f !important;
+}
+
+.score-details strong,
+.score-details > div strong,
+.score-details .carry-detail strong,
+.daily-left-rail .score-details strong,
+.daily-left-rail .score-details > div strong,
+.daily-left-rail .score-details .carry-detail strong {
+  color: #202733 !important;
+  background: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+.school-add-note,
+.school-view .school-add-note {
+  border-color: rgba(255, 255, 255, 0.56) !important;
+  background:
+    linear-gradient(145deg, rgba(248, 250, 253, 0.76), rgba(224, 231, 240, 0.62)),
+    rgba(240, 244, 249, 0.7) !important;
+  background-image:
+    linear-gradient(145deg, rgba(248, 250, 253, 0.76), rgba(224, 231, 240, 0.62)) !important;
+  color: #246a55 !important;
+  box-shadow:
+    7px 7px 16px rgba(116, 128, 145, 0.14),
+    -6px -6px 14px rgba(255, 255, 255, 0.78),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.72) !important;
+  text-shadow: none !important;
+}
+
+.school-add-note::before,
+.school-add-note::after {
+  content: none !important;
+  display: none !important;
+  background: none !important;
+  background-image: none !important;
+}
+
+/* Final top navigation and date cleanup */
+.hub-bar,
+.app-navigation,
+.topbar-controls,
+.topbar-controls .app-navigation,
+.topbar-controls .nav-buttons,
+.topbar-controls .nav-row,
+.hub-nav,
+.hub-actions {
+  border-color: transparent !important;
+  background: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+.hub-nav-button,
+.hub-vault-button,
+.topbar-controls .nav-button,
+.nav-tab,
+.note-tab,
+.note-tab-tool {
+  border: 1px solid rgba(255, 255, 255, 0.6) !important;
+  background:
+    linear-gradient(145deg, rgba(241, 245, 249, 0.9), rgba(211, 220, 231, 0.72)),
+    rgba(229, 235, 243, 0.84) !important;
+  background-image:
+    linear-gradient(145deg, rgba(241, 245, 249, 0.9), rgba(211, 220, 231, 0.72)) !important;
+  color: #303946 !important;
+  box-shadow:
+    8px 8px 18px rgba(82, 94, 112, 0.18),
+    -7px -7px 16px rgba(255, 255, 255, 0.72),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.72) !important;
+  text-shadow: none !important;
+}
+
+.hub-nav-button::before,
+.hub-nav-button::after,
+.hub-vault-button::before,
+.hub-vault-button::after,
+.topbar-controls .nav-button::before,
+.topbar-controls .nav-button::after,
+.nav-tab::before,
+.nav-tab::after,
+.note-tab::before,
+.note-tab::after {
+  content: none !important;
+  display: none !important;
+  background: none !important;
+  background-image: none !important;
+}
+
+.hub-nav-button.active,
+.hub-nav-button[aria-current="page"],
+.hub-vault-button.active,
+.hub-vault-button[aria-current="page"],
+.topbar-controls .nav-button.active,
+.topbar-controls .nav-button[aria-current="page"],
+.nav-tab.active,
+.note-tab.active {
+  border-color: rgba(116, 137, 255, 0.5) !important;
+  background:
+    linear-gradient(145deg, rgba(229, 234, 246, 0.95), rgba(190, 202, 222, 0.8)),
+    rgba(218, 225, 236, 0.88) !important;
+  background-image:
+    linear-gradient(145deg, rgba(229, 234, 246, 0.95), rgba(190, 202, 222, 0.8)) !important;
+  color: #202b44 !important;
+  box-shadow:
+    inset 5px 5px 12px rgba(82, 94, 112, 0.16),
+    inset -5px -5px 12px rgba(255, 255, 255, 0.72),
+    0 0 16px rgba(116, 137, 255, 0.16) !important;
+}
+
+.topbar,
+.mindfold-view,
+.mindfold-shell,
+.mindfold-editor,
+.mindfold-sidebar,
+.mindfold-document-view .mindfold-editor {
+  border-color: rgba(255, 255, 255, 0.66) !important;
+  background:
+    linear-gradient(145deg, rgba(246, 249, 252, 0.88), rgba(214, 223, 234, 0.72)),
+    rgba(232, 238, 246, 0.82) !important;
+  background-image:
+    linear-gradient(145deg, rgba(246, 249, 252, 0.88), rgba(214, 223, 234, 0.72)) !important;
+  box-shadow:
+    18px 18px 40px rgba(82, 94, 112, 0.2),
+    -14px -14px 32px rgba(255, 255, 255, 0.78),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.78) !important;
+}
+
+.day-switcher input[type="date"],
+input[type="date"],
+.date-marker input,
+.date-marker-date,
+.date-marker .date-marker-date,
+.date-marker .date-marker-text {
+  border-color: rgba(255, 255, 255, 0.58) !important;
+  background:
+    linear-gradient(145deg, rgba(226, 233, 242, 0.86), rgba(247, 250, 253, 0.72)),
+    rgba(235, 241, 248, 0.82) !important;
+  background-image:
+    linear-gradient(145deg, rgba(226, 233, 242, 0.86), rgba(247, 250, 253, 0.72)) !important;
+  box-shadow:
+    inset 4px 4px 10px rgba(82, 94, 112, 0.14),
+    inset -4px -4px 10px rgba(255, 255, 255, 0.76) !important;
+  color: #253040 !important;
+  text-shadow: none !important;
+}
+
+.day-switcher input[type="date"]::-webkit-datetime-edit,
+.day-switcher input[type="date"]::-webkit-date-and-time-value,
+.day-switcher input[type="date"]::-webkit-datetime-edit-fields-wrapper,
+.day-switcher input[type="date"]::-webkit-datetime-edit-year-field,
+.day-switcher input[type="date"]::-webkit-datetime-edit-month-field,
+.day-switcher input[type="date"]::-webkit-datetime-edit-day-field,
+.day-switcher input[type="date"]::-webkit-datetime-edit-text,
+.date-marker-date::-webkit-datetime-edit,
+.date-marker-date::-webkit-date-and-time-value,
+.date-marker-date::-webkit-datetime-edit-fields-wrapper,
+.date-marker-date::-webkit-datetime-edit-year-field,
+.date-marker-date::-webkit-datetime-edit-month-field,
+.date-marker-date::-webkit-datetime-edit-day-field,
+.date-marker-date::-webkit-datetime-edit-text {
+  background: transparent !important;
+  background-image: none !important;
+  color: #253040 !important;
+}
+
+.date-marker,
+.date-marker-panel,
+.score-panel,
+.score-details > div,
+.score-details .carry-detail {
+  border-color: rgba(255, 255, 255, 0.66) !important;
+  background:
+    linear-gradient(145deg, rgba(246, 249, 252, 0.9), rgba(214, 223, 234, 0.74)),
+    rgba(232, 238, 246, 0.84) !important;
+  background-image:
+    linear-gradient(145deg, rgba(246, 249, 252, 0.9), rgba(214, 223, 234, 0.74)) !important;
+  box-shadow:
+    12px 12px 28px rgba(82, 94, 112, 0.18),
+    -10px -10px 24px rgba(255, 255, 255, 0.78),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.78) !important;
+}
+/* Last-resort visual cleanup: date switcher and memo header surfaces */
+.day-switcher,
+.topbar .day-switcher,
+.topbar-controls .day-switcher {
+  border: 1px solid rgba(255, 255, 255, 0.48) !important;
+  background:
+    linear-gradient(145deg, rgba(238, 243, 249, 0.82), rgba(211, 220, 231, 0.66)),
+    rgba(228, 235, 243, 0.74) !important;
+  background-image:
+    linear-gradient(145deg, rgba(238, 243, 249, 0.82), rgba(211, 220, 231, 0.66)) !important;
+  box-shadow:
+    inset 3px 3px 9px rgba(82, 94, 112, 0.1),
+    inset -3px -3px 9px rgba(255, 255, 255, 0.7),
+    6px 6px 14px rgba(82, 94, 112, 0.12) !important;
+}
+
+.day-switcher::before,
+.day-switcher::after,
+.topbar .day-switcher::before,
+.topbar .day-switcher::after,
+.topbar-controls .day-switcher::before,
+.topbar-controls .day-switcher::after,
+.memo-card-grip::before,
+.memo-card-grip::after {
+  content: none !important;
+  display: none !important;
+  background: none !important;
+  background-image: none !important;
+}
+
+.day-switcher input,
+.day-switcher input[type="date"],
+.topbar .day-switcher input[type="date"],
+.topbar-controls .day-switcher input[type="date"] {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  border-color: rgba(255, 255, 255, 0.58) !important;
+  background:
+    linear-gradient(145deg, rgba(224, 231, 240, 0.9), rgba(248, 250, 253, 0.74)),
+    rgba(235, 241, 248, 0.84) !important;
+  background-image:
+    linear-gradient(145deg, rgba(224, 231, 240, 0.9), rgba(248, 250, 253, 0.74)) !important;
+  box-shadow:
+    inset 4px 4px 10px rgba(82, 94, 112, 0.14),
+    inset -4px -4px 10px rgba(255, 255, 255, 0.78) !important;
+  color: #253040 !important;
+  text-shadow: none !important;
+}
+
+.day-switcher input[type="date"]::-webkit-datetime-edit,
+.day-switcher input[type="date"]::-webkit-date-and-time-value,
+.day-switcher input[type="date"]::-webkit-datetime-edit-fields-wrapper,
+.day-switcher input[type="date"]::-webkit-datetime-edit-year-field,
+.day-switcher input[type="date"]::-webkit-datetime-edit-month-field,
+.day-switcher input[type="date"]::-webkit-datetime-edit-day-field,
+.day-switcher input[type="date"]::-webkit-datetime-edit-text,
+.day-switcher input[type="date"]::-webkit-calendar-picker-indicator {
+  background: transparent !important;
+  background-image: none !important;
+  color: #253040 !important;
+  text-shadow: none !important;
+}
+
+.memo-card-grip,
+.memo-card-grip span,
+.memo-card-grip input,
+.memo-panel .memo-title-input,
+.memo-title-input,
+.daily-workspace .memo-area .memo-title-input {
+  border-color: rgba(255, 255, 255, 0.58) !important;
+  background:
+    linear-gradient(145deg, rgba(229, 236, 245, 0.86), rgba(248, 250, 253, 0.66)),
+    rgba(235, 241, 248, 0.78) !important;
+  background-image:
+    linear-gradient(145deg, rgba(229, 236, 245, 0.86), rgba(248, 250, 253, 0.66)) !important;
+  box-shadow:
+    inset 4px 4px 10px rgba(82, 94, 112, 0.12),
+    inset -4px -4px 10px rgba(255, 255, 255, 0.74) !important;
+  color: #263140 !important;
+  text-shadow: none !important;
+}
+
+.memo-card-grip span {
+  border-color: rgba(116, 128, 145, 0.2) !important;
+  color: #3b4655 !important;
+}
+
+/* Final cold neutral pass: no ivory on background, arrows, memo controls, score, markers */
+html,
+body,
+#root,
+.app-shell,
+.hub-shell,
+.studio-shell,
+.daily-workspace,
+.dashboard-view {
+  background:
+    radial-gradient(circle at 14% 10%, rgba(116, 137, 255, 0.08), transparent 28%),
+    linear-gradient(135deg, #dce2ea 0%, #cfd7e1 52%, #c2ccd8 100%) !important;
+  background-image:
+    radial-gradient(circle at 14% 10%, rgba(116, 137, 255, 0.08), transparent 28%),
+    linear-gradient(135deg, #dce2ea 0%, #cfd7e1 52%, #c2ccd8 100%) !important;
+  color: #202936 !important;
+}
+
+body::before,
+body::after,
+#root::before,
+#root::after,
+.app-shell::before,
+.app-shell::after,
+.daily-workspace::before,
+.daily-workspace::after,
+.dashboard-view::before,
+.dashboard-view::after {
+  content: none !important;
+  display: none !important;
+  background: none !important;
+  background-image: none !important;
+}
+
+.day-switcher .icon-button,
+.icon-button,
+.memo-index-button,
+.memo-index-button.add-memo,
+.memo-card-grip,
+.memo-card-grip span,
+.memo-card-grip input,
+.memo-title-input,
+.memo-panel .memo-title-input,
+.daily-workspace .memo-area .memo-title-input,
+.score-panel,
+.score-details > div,
+.score-details .carry-detail,
+.date-marker-panel,
+.date-marker,
+.date-marker input,
+.date-marker-date,
+.date-marker .date-marker-text,
+.date-marker .date-marker-date,
+.date-marker-dday,
+.day-switcher,
+.day-switcher input,
+.day-switcher input[type="date"] {
+  border-color: rgba(110, 123, 140, 0.28) !important;
+  background:
+    linear-gradient(145deg, rgba(219, 226, 235, 0.96), rgba(188, 199, 213, 0.88)),
+    #ccd5df !important;
+  background-image:
+    linear-gradient(145deg, rgba(219, 226, 235, 0.96), rgba(188, 199, 213, 0.88)) !important;
+  box-shadow:
+    9px 9px 20px rgba(82, 94, 112, 0.2),
+    -7px -7px 16px rgba(235, 240, 246, 0.56),
+    inset 1px 1px 0 rgba(236, 241, 247, 0.58),
+    inset -1px -1px 0 rgba(82, 94, 112, 0.08) !important;
+  color: #233041 !important;
+  text-shadow: none !important;
+}
+
+.memo-index-button.active,
+.memo-index-button.add-memo:hover,
+.day-switcher .icon-button:hover {
+  border-color: rgba(116, 137, 255, 0.38) !important;
+  background:
+    linear-gradient(145deg, rgba(202, 212, 228, 0.98), rgba(167, 181, 201, 0.9)),
+    #bac6d4 !important;
+  background-image:
+    linear-gradient(145deg, rgba(202, 212, 228, 0.98), rgba(167, 181, 201, 0.9)) !important;
+  box-shadow:
+    inset 5px 5px 12px rgba(82, 94, 112, 0.17),
+    inset -4px -4px 10px rgba(235, 240, 246, 0.46),
+    0 0 14px rgba(116, 137, 255, 0.12) !important;
+}
+
+.score-number,
+.score-number.negative,
+.score-number.neutral,
+.score-details strong,
+.score-details > div strong,
+.score-details .carry-detail strong {
+  background: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  color: #202936 !important;
+}
+
+.day-switcher input[type="date"]::-webkit-datetime-edit,
+.day-switcher input[type="date"]::-webkit-date-and-time-value,
+.day-switcher input[type="date"]::-webkit-datetime-edit-fields-wrapper,
+.day-switcher input[type="date"]::-webkit-datetime-edit-year-field,
+.day-switcher input[type="date"]::-webkit-datetime-edit-month-field,
+.day-switcher input[type="date"]::-webkit-datetime-edit-day-field,
+.day-switcher input[type="date"]::-webkit-datetime-edit-text,
+.day-switcher input[type="date"]::-webkit-calendar-picker-indicator,
+.date-marker-date::-webkit-datetime-edit,
+.date-marker-date::-webkit-date-and-time-value,
+.date-marker-date::-webkit-datetime-edit-fields-wrapper,
+.date-marker-date::-webkit-datetime-edit-year-field,
+.date-marker-date::-webkit-datetime-edit-month-field,
+.date-marker-date::-webkit-datetime-edit-day-field,
+.date-marker-date::-webkit-datetime-edit-text,
+.date-marker-date::-webkit-calendar-picker-indicator {
+  background: transparent !important;
+  background-image: none !important;
+  color: #233041 !important;
+  text-shadow: none !important;
+}
+
+.day-switcher::before,
+.day-switcher::after,
+.day-switcher .icon-button::before,
+.day-switcher .icon-button::after,
+.memo-index-button::before,
+.memo-index-button::after,
+.memo-card-grip::before,
+.memo-card-grip::after,
+.score-panel::before,
+.score-panel::after,
+.date-marker-panel::before,
+.date-marker-panel::after,
+.date-marker::before,
+.date-marker::after {
+  content: none !important;
+  display: none !important;
+  background: none !important;
+  background-image: none !important;
+}
+/* Absolute final cold cleanup for every remaining beige/orange dashboard control */
+html,
+body,
+#root,
+.app-shell,
+.hub-shell,
+.studio-shell,
+.daily-workspace,
+.dashboard-view,
+.planner-view,
+.work-view {
+  background-color: #cbd4df !important;
+  background:
+    radial-gradient(circle at 14% 10%, rgba(103, 122, 190, 0.08), transparent 28%),
+    linear-gradient(135deg, #d7dee8 0%, #c9d2dd 52%, #bcc7d4 100%) !important;
+  background-image:
+    radial-gradient(circle at 14% 10%, rgba(103, 122, 190, 0.08), transparent 28%),
+    linear-gradient(135deg, #d7dee8 0%, #c9d2dd 52%, #bcc7d4 100%) !important;
+}
+
+body::before,
+body::after,
+#root::before,
+#root::after,
+.app-shell::before,
+.app-shell::after,
+.daily-workspace::before,
+.daily-workspace::after,
+.dashboard-view::before,
+.dashboard-view::after,
+.topbar::before,
+.topbar::after,
+.score-panel::before,
+.score-panel::after,
+.date-marker-panel::before,
+.date-marker-panel::after,
+.weekly-panel::before,
+.weekly-panel::after,
+.history-panel::before,
+.history-panel::after,
+.memo-panel::before,
+.memo-panel::after {
+  content: none !important;
+  display: none !important;
+  background: none !important;
+  background-image: none !important;
+}
+
+.topbar,
+.score-panel,
+.date-marker-panel,
+.weekly-panel,
+.today-plan-panel,
+.memo-panel,
+.history-panel,
+.school-view,
+.schedule-panel {
+  border-color: rgba(92, 107, 126, 0.26) !important;
+  background:
+    linear-gradient(145deg, rgba(215, 223, 233, 0.96), rgba(186, 198, 213, 0.9)),
+    #c7d0dc !important;
+  background-image:
+    linear-gradient(145deg, rgba(215, 223, 233, 0.96), rgba(186, 198, 213, 0.9)) !important;
+  box-shadow:
+    16px 16px 36px rgba(69, 82, 100, 0.22),
+    -12px -12px 28px rgba(226, 233, 241, 0.55),
+    inset 1px 1px 0 rgba(232, 238, 246, 0.52),
+    inset -1px -1px 0 rgba(69, 82, 100, 0.1) !important;
+  color: #202936 !important;
+}
+
+.day-switcher,
+.day-switcher input,
+.day-switcher input[type="date"],
+.day-switcher .icon-button,
+.icon-button,
+.text-button,
+.daily-tool,
+.weekly-tool,
+.school-add-note,
+.quick-add-button,
+.add-button,
+.memo-index-button,
+.memo-index-button.add-memo,
+.memo-card-grip,
+.memo-card-grip span,
+.memo-card-grip input,
+.memo-card-grip .mini-button.danger,
+.memo-title-input,
+.memo-panel .memo-title-input,
+.daily-workspace .memo-area .memo-title-input,
+.score-details > div,
+.score-details .carry-detail,
+.score-details .carry-detail .carry-reset-button,
+.score-details .carry-detail .carry-adjust-button,
+.carry-reset-button,
+.carry-adjust-button,
+.date-marker,
+.date-marker input,
+.date-marker-date,
+.date-marker-dday,
+.history-heading-actions,
+.flag-button,
+.history-day,
+.history-fill,
+.history-flag,
+.history-attempt,
+.history-date,
+.history-score,
+.weekly-corner,
+.weekly-day,
+.weekly-category,
+.weekly-input {
+  border-color: rgba(92, 107, 126, 0.28) !important;
+  background:
+    linear-gradient(145deg, rgba(213, 222, 232, 0.96), rgba(181, 194, 209, 0.88)),
+    #c4ceda !important;
+  background-image:
+    linear-gradient(145deg, rgba(213, 222, 232, 0.96), rgba(181, 194, 209, 0.88)) !important;
+  box-shadow:
+    8px 8px 18px rgba(69, 82, 100, 0.18),
+    -6px -6px 14px rgba(226, 233, 241, 0.5),
+    inset 1px 1px 0 rgba(232, 238, 246, 0.48),
+    inset -1px -1px 0 rgba(69, 82, 100, 0.08) !important;
+  color: #233041 !important;
+  text-shadow: none !important;
+}
+
+.memo-card-grip {
+  display: grid !important;
+  grid-template-columns: 34px minmax(0, 1fr) 34px !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+
+.memo-card-grip span {
+  grid-column: 1 !important;
+  grid-row: 1 !important;
+}
+
+.memo-card-grip input {
+  grid-column: 2 !important;
+  grid-row: 1 !important;
+}
+
+.memo-card-grip .mini-button.danger {
+  grid-column: 3 !important;
+  grid-row: 1 !important;
+  position: static !important;
+  width: 30px !important;
+  height: 30px !important;
+  min-width: 30px !important;
+  border-radius: 9px !important;
+  font-size: 0 !important;
+  line-height: 1 !important;
+}
+
+.memo-card-grip .mini-button.danger::before,
+.memo-card-grip .mini-button.danger::after {
+  content: "" !important;
+  display: block !important;
+  position: absolute !important;
+  width: 13px !important;
+  height: 2px !important;
+  border-radius: 999px !important;
+  background: #5d6877 !important;
+  background-image: none !important;
+  left: 50% !important;
+  top: 50% !important;
+  transform-origin: center !important;
+}
+
+.memo-card-grip .mini-button.danger::before {
+  transform: translate(-50%, -50%) rotate(45deg) !important;
+}
+
+.memo-card-grip .mini-button.danger::after {
+  transform: translate(-50%, -50%) rotate(-45deg) !important;
+}
+
+.memo-index-button.active,
+.memo-index-button.add-memo:hover,
+.day-switcher .icon-button:hover,
+.daily-tool:hover,
+.weekly-tool:hover,
+.school-add-note:hover,
+.quick-add-button:hover,
+.add-button:hover,
+.flag-button.active,
+.flag-button:hover,
+.history-flag.active,
+.history-attempt.checked,
+.weekly-day.active,
+.weekly-input.active {
+  border-color: rgba(103, 122, 190, 0.38) !important;
+  background:
+    linear-gradient(145deg, rgba(195, 207, 224, 0.98), rgba(158, 174, 195, 0.9)),
+    #b6c2d1 !important;
+  background-image:
+    linear-gradient(145deg, rgba(195, 207, 224, 0.98), rgba(158, 174, 195, 0.9)) !important;
+  box-shadow:
+    inset 5px 5px 12px rgba(69, 82, 100, 0.17),
+    inset -4px -4px 10px rgba(226, 233, 241, 0.44),
+    0 0 14px rgba(103, 122, 190, 0.12) !important;
+  color: #1f2b3b !important;
+}
+
+.history-fill.plus,
+.history-fill.minus,
+.history-attempt.history-penalty,
+.history-attempt.history-penalty.checked {
+  border-color: rgba(92, 107, 126, 0.3) !important;
+  background:
+    linear-gradient(180deg, #8998aa, #6f7e91) !important;
+  background-image:
+    linear-gradient(180deg, #8998aa, #6f7e91) !important;
+  color: #202936 !important;
+  box-shadow: inset 1px 1px 0 rgba(226, 233, 241, 0.3) !important;
+}
+
+.score-number,
+.score-number.negative,
+.score-number.neutral,
+.score-details strong,
+.score-details > div strong,
+.score-details .carry-detail strong,
+.history-score {
+  background: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  color: #202936 !important;
+  text-shadow: none !important;
+}
+
+.day-switcher input[type="date"]::-webkit-datetime-edit,
+.day-switcher input[type="date"]::-webkit-date-and-time-value,
+.day-switcher input[type="date"]::-webkit-datetime-edit-fields-wrapper,
+.day-switcher input[type="date"]::-webkit-datetime-edit-year-field,
+.day-switcher input[type="date"]::-webkit-datetime-edit-month-field,
+.day-switcher input[type="date"]::-webkit-datetime-edit-day-field,
+.day-switcher input[type="date"]::-webkit-datetime-edit-text,
+.day-switcher input[type="date"]::-webkit-calendar-picker-indicator,
+.date-marker-date::-webkit-datetime-edit,
+.date-marker-date::-webkit-date-and-time-value,
+.date-marker-date::-webkit-datetime-edit-fields-wrapper,
+.date-marker-date::-webkit-datetime-edit-year-field,
+.date-marker-date::-webkit-datetime-edit-month-field,
+.date-marker-date::-webkit-datetime-edit-day-field,
+.date-marker-date::-webkit-datetime-edit-text,
+.date-marker-date::-webkit-calendar-picker-indicator {
+  background: transparent !important;
+  background-image: none !important;
+  color: #233041 !important;
+  text-shadow: none !important;
+}
+
+.day-switcher::before,
+.day-switcher::after,
+.day-switcher .icon-button::before,
+.day-switcher .icon-button::after,
+.text-button::before,
+.text-button::after,
+.daily-tool::before,
+.daily-tool::after,
+.weekly-tool::before,
+.weekly-tool::after,
+.school-add-note::before,
+.school-add-note::after,
+.quick-add-button::before,
+.quick-add-button::after,
+.memo-index-button::before,
+.memo-index-button::after,
+.score-panel::before,
+.score-panel::after,
+.date-marker-panel::before,
+.date-marker-panel::after,
+.history-panel::before,
+.history-panel::after,
+.history-day::before,
+.history-day::after,
+.history-score::before,
+.history-score::after {
+  content: none !important;
+  display: none !important;
+  background: none !important;
+  background-image: none !important;
+}
+
+/* Final structural cleanup: left rail, score/date, calendar, daily, weekly, history */
+.daily-left-rail,
+.daily-left-rail *,
+.score-panel,
+.score-panel *,
+.date-marker-panel,
+.date-marker-panel *,
+.quick-panel,
+.quick-panel *,
+.weekly-panel,
+.weekly-panel *,
+.calendar-panel,
+.calendar-panel *,
+.history-panel,
+.history-panel * {
+  background-image: none !important;
+  text-shadow: none !important;
+}
+
+.daily-left-rail {
+  border: 1px solid rgba(87, 101, 120, 0.18) !important;
+  border-radius: 20px !important;
+  background:
+    linear-gradient(145deg, rgba(203, 213, 225, 0.92), rgba(174, 188, 205, 0.82)),
+    #bcc8d6 !important;
+  box-shadow:
+    18px 18px 38px rgba(62, 75, 94, 0.22),
+    -12px -12px 28px rgba(221, 228, 236, 0.5),
+    inset 1px 1px 0 rgba(226, 233, 241, 0.45) !important;
+}
+
+.daily-left-rail::before,
+.daily-left-rail::after,
+.quick-panel::before,
+.quick-panel::after,
+.weekly-panel::before,
+.weekly-panel::after,
+.calendar-panel::before,
+.calendar-panel::after,
+.history-panel::before,
+.history-panel::after,
+.score-panel::before,
+.score-panel::after,
+.date-marker-panel::before,
+.date-marker-panel::after {
+  content: none !important;
+  display: none !important;
+}
+
+.score-panel,
+.date-marker-panel,
+.quick-panel,
+.weekly-panel,
+.calendar-panel,
+.history-panel {
+  border: 1px solid rgba(82, 96, 115, 0.26) !important;
+  border-radius: 18px !important;
+  background:
+    linear-gradient(145deg, rgba(211, 220, 231, 0.96), rgba(181, 194, 209, 0.88)),
+    #c3ceda !important;
+  box-shadow:
+    12px 12px 26px rgba(62, 75, 94, 0.2),
+    -9px -9px 20px rgba(224, 231, 239, 0.52),
+    inset 1px 1px 0 rgba(232, 238, 246, 0.44) !important;
+  color: #202936 !important;
+}
+
+.score-meter,
+.score-details > div,
+.score-details .carry-detail,
+.date-marker,
+.preset-card,
+.weekly-corner,
+.weekly-day,
+.weekly-category,
+.weekly-input,
+.calendar-month,
+.calendar-weekdays span,
+.calendar-day,
+.calendar-duty,
+.calendar-day textarea {
+  border: 1px solid rgba(82, 96, 115, 0.24) !important;
+  border-radius: 12px !important;
+  background:
+    linear-gradient(145deg, rgba(207, 216, 228, 0.96), rgba(176, 190, 206, 0.9)),
+    #bdc9d7 !important;
+  box-shadow:
+    6px 6px 14px rgba(62, 75, 94, 0.16),
+    -5px -5px 12px rgba(224, 231, 239, 0.46),
+    inset 1px 1px 0 rgba(232, 238, 246, 0.38) !important;
+  color: #233041 !important;
+}
+
+.preset-name-input,
+.preset-score-input,
+.category-name-input,
+.category-score-input,
+.weekly-input,
+.calendar-day textarea,
+.date-marker input,
+.date-marker-date {
+  border-color: rgba(82, 96, 115, 0.22) !important;
+  background:
+    linear-gradient(145deg, rgba(190, 202, 217, 0.92), rgba(220, 228, 237, 0.72)),
+    #c6d0dc !important;
+  box-shadow:
+    inset 4px 4px 10px rgba(62, 75, 94, 0.13),
+    inset -4px -4px 10px rgba(224, 231, 239, 0.48) !important;
+  color: #233041 !important;
+}
+
+.daily-tool,
+.weekly-tool,
+.school-add-note,
+.quick-add-button,
+.add-button,
+.text-button,
+.carry-adjust-button,
+.carry-reset-button,
+.flag-button,
+.calendar-month-toggle,
+.mini-button,
+.calendar-duty {
+  border-color: rgba(82, 96, 115, 0.25) !important;
+  background:
+    linear-gradient(145deg, rgba(203, 213, 226, 0.96), rgba(171, 185, 202, 0.9)),
+    #bac6d4 !important;
+  box-shadow:
+    6px 6px 13px rgba(62, 75, 94, 0.16),
+    -5px -5px 11px rgba(224, 231, 239, 0.44),
+    inset 1px 1px 0 rgba(232, 238, 246, 0.36) !important;
+  color: #233041 !important;
+}
+
+.weekly-day.active,
+.weekly-input.active,
+.calendar-day.today,
+.calendar-day.selected,
+.calendar-month.open,
+.calendar-duty.checked,
+.flag-button.active {
+  border-color: rgba(91, 111, 178, 0.42) !important;
+  background:
+    linear-gradient(145deg, rgba(185, 198, 218, 0.98), rgba(148, 166, 190, 0.92)),
+    #aebccc !important;
+  box-shadow:
+    inset 4px 4px 10px rgba(62, 75, 94, 0.16),
+    inset -4px -4px 10px rgba(224, 231, 239, 0.36),
+    0 0 13px rgba(91, 111, 178, 0.13) !important;
+  color: #1f2b3b !important;
+}
+
+.score-number,
+.score-number.negative,
+.score-number.neutral,
+.score-details strong,
+.score-details > div strong,
+.score-details .carry-detail strong,
+.date-marker-dday {
+  background: transparent !important;
+  box-shadow: none !important;
+  color: #202936 !important;
+}
+
+/* Rebuild Last 7 Days as a simple chart, not a pile of boxes */
+.history-heading-actions,
+.history-bars,
+.history-day,
+.history-date,
+.history-score,
+.history-flag,
+.history-attempt {
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.history-bars {
+  display: grid !important;
+  grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
+  gap: 10px !important;
+  align-items: end !important;
+  padding: 8px 2px 0 !important;
+}
+
+.history-day {
+  min-width: 0 !important;
+  display: grid !important;
+  grid-template-rows: 118px 18px 18px !important;
+  justify-items: center !important;
+  gap: 5px !important;
+  color: #394657 !important;
+}
+
+.history-fill {
+  align-self: end !important;
+  width: 18px !important;
+  min-height: 16px !important;
+  border: 1px solid rgba(82, 96, 115, 0.26) !important;
+  border-radius: 999px !important;
+  background:
+    linear-gradient(180deg, #8b9aab, #6e7d90) !important;
+  box-shadow:
+    inset 1px 1px 0 rgba(224, 231, 239, 0.28),
+    0 6px 12px rgba(62, 75, 94, 0.18) !important;
+}
+
+.history-fill.plus,
+.history-fill.minus {
+  background:
+    linear-gradient(180deg, #8b9aab, #6e7d90) !important;
+}
+
+.history-flag,
+.history-attempt {
+  position: absolute !important;
+  width: auto !important;
+  min-width: 0 !important;
+  height: auto !important;
+  color: #6f7e91 !important;
+}
+
+.history-flag.active,
+.history-attempt.checked,
+.history-attempt.history-penalty.checked {
+  color: #344257 !important;
+}
+
+.history-date,
+.history-score {
+  font-size: 0.78rem !important;
+  line-height: 1 !important;
+  color: #344257 !important;
+}
+
+/* Absolute neutral viewport cleanup: remove the last beige strip outside the app */
+html,
+body,
+#root {
+  min-height: 100% !important;
+  margin: 0 !important;
+  background:
+    linear-gradient(135deg, #d2dae4 0%, #c4ceda 52%, #b7c3d1 100%) !important;
+  background-color: #c4ceda !important;
+  background-image:
+    linear-gradient(135deg, #d2dae4 0%, #c4ceda 52%, #b7c3d1 100%) !important;
+  box-shadow: none !important;
+}
+
+html::before,
+html::after,
+body::before,
+body::after,
+#root::before,
+#root::after,
+.app-shell::before,
+.app-shell::after,
+.hub-shell::before,
+.hub-shell::after,
+.studio-shell::before,
+.studio-shell::after,
+.daily-workspace::before,
+.daily-workspace::after {
+  content: none !important;
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  background: none !important;
+  background-image: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+.app-shell,
+.hub-shell,
+.studio-shell,
+.hub-view-dashboard,
+.daily-workspace {
+  background: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+/* Schedule cleanup visible in the screenshot */
+.schedule-panel,
+.two-week-schedule,
+.schedule-weeks,
+.schedule-week,
+.schedule-week-scroll,
+.schedule-weekdays,
+.schedule-weekdays span,
+.schedule-week-title,
+.schedule-week-title + *,
+.schedule-week-grid,
+.schedule-day,
+.schedule-day.selected,
+.schedule-day.today,
+.schedule-date,
+.schedule-date b,
+.schedule-date span,
+.schedule-day-items,
+.schedule-day-items.empty,
+.schedule-day-items.empty i,
+.schedule-day-items span,
+.schedule-duty-item {
+  background-image: none !important;
+  text-shadow: none !important;
+}
+
+.schedule-panel,
+.two-week-schedule {
+  border: 1px solid rgba(82, 96, 115, 0.24) !important;
+  border-radius: 18px !important;
+  background:
+    linear-gradient(145deg, rgba(211, 220, 231, 0.96), rgba(181, 194, 209, 0.88)),
+    #c3ceda !important;
+  box-shadow:
+    12px 12px 26px rgba(62, 75, 94, 0.2),
+    -9px -9px 20px rgba(224, 231, 239, 0.52),
+    inset 1px 1px 0 rgba(232, 238, 246, 0.44) !important;
+  color: #202936 !important;
+}
+
+.schedule-panel::before,
+.schedule-panel::after,
+.two-week-schedule::before,
+.two-week-schedule::after,
+.schedule-week::before,
+.schedule-week::after,
+.schedule-week-title::before,
+.schedule-week-title::after,
+.schedule-day::before,
+.schedule-day::after {
+  content: none !important;
+  display: none !important;
+  background: none !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+.schedule-week-title {
+  width: fit-content !important;
+  min-width: 112px !important;
+  border: 1px solid rgba(82, 96, 115, 0.26) !important;
+  border-radius: 10px !important;
+  background:
+    linear-gradient(145deg, rgba(196, 207, 221, 0.98), rgba(162, 177, 195, 0.92)),
+    #b3c0cf !important;
+  box-shadow:
+    5px 5px 12px rgba(62, 75, 94, 0.16),
+    -4px -4px 10px rgba(224, 231, 239, 0.42) !important;
+  color: #233041 !important;
+}
+
+.schedule-weekdays span {
+  border: 1px solid rgba(82, 96, 115, 0.18) !important;
+  border-radius: 10px !important;
+  background:
+    linear-gradient(145deg, rgba(204, 214, 226, 0.78), rgba(181, 194, 209, 0.62)),
+    #c0cad7 !important;
+  box-shadow: inset 1px 1px 0 rgba(232, 238, 246, 0.4) !important;
+  color: #263344 !important;
+}
+
+.schedule-day {
+  border: 1px solid rgba(82, 96, 115, 0.2) !important;
+  border-radius: 12px !important;
+  background:
+    linear-gradient(145deg, rgba(215, 223, 233, 0.84), rgba(190, 202, 216, 0.7)),
+    #c9d3df !important;
+  box-shadow:
+    7px 7px 15px rgba(62, 75, 94, 0.13),
+    -5px -5px 12px rgba(224, 231, 239, 0.44),
+    inset 1px 1px 0 rgba(239, 244, 249, 0.44) !important;
+  color: #202936 !important;
+}
+
+.schedule-day.selected,
+.schedule-day.today {
+  border-color: rgba(91, 111, 178, 0.38) !important;
+  background:
+    linear-gradient(145deg, rgba(197, 208, 224, 0.96), rgba(166, 182, 201, 0.84)),
+    #b5c2d1 !important;
+  box-shadow:
+    inset 4px 4px 10px rgba(62, 75, 94, 0.13),
+    inset -4px -4px 10px rgba(224, 231, 239, 0.36),
+    0 0 13px rgba(91, 111, 178, 0.12) !important;
+}
+
+.schedule-date {
+  border-bottom-color: rgba(82, 96, 115, 0.16) !important;
+  color: #202936 !important;
+}
+
+.schedule-day-items,
+.schedule-day-items.empty,
+.schedule-day-items.empty i,
+.schedule-day-items span {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  color: #6a7280 !important;
+}
+
+.history-day {
+  position: relative !important;
+}
+
+.history-flag {
+  top: 0 !important;
+  right: 2px !important;
+}
+
+.history-attempt {
+  top: 18px !important;
+  right: 2px !important;
+}
+
+/* Kill remaining warm marker fills and ruled lines */
+.date-marker-panel,
+.date-marker-list,
+.date-marker,
+.date-marker:nth-child(odd),
+.date-marker:nth-child(even),
+.date-marker:nth-child(4n),
+.date-marker:nth-child(4n + 1),
+.date-marker:nth-child(4n + 2),
+.date-marker:nth-child(4n + 3),
+.daily-left-rail .date-marker,
+.daily-left-rail .date-marker:nth-child(odd),
+.daily-left-rail .date-marker:nth-child(even),
+.daily-left-rail .date-marker:nth-child(4n),
+.daily-left-rail .date-marker:nth-child(4n + 1),
+.daily-left-rail .date-marker:nth-child(4n + 2),
+.daily-left-rail .date-marker:nth-child(4n + 3) {
+  border-color: rgba(82, 96, 115, 0.24) !important;
+  border-left-color: rgba(82, 96, 115, 0.24) !important;
+  border-right-color: rgba(82, 96, 115, 0.24) !important;
+  background:
+    linear-gradient(145deg, rgba(205, 215, 227, 0.92), rgba(177, 190, 206, 0.82)),
+    #bfCBD8 !important;
+  background-image:
+    linear-gradient(145deg, rgba(205, 215, 227, 0.92), rgba(177, 190, 206, 0.82)) !important;
+  box-shadow:
+    6px 6px 14px rgba(62, 75, 94, 0.14),
+    -5px -5px 12px rgba(224, 231, 239, 0.42),
+    inset 1px 1px 0 rgba(232, 238, 246, 0.36) !important;
+}
+
+.date-marker::before,
+.date-marker::after,
+.date-marker-panel::before,
+.date-marker-panel::after,
+.daily-left-rail .date-marker::before,
+.daily-left-rail .date-marker::after {
+  content: none !important;
+  display: none !important;
+  background: none !important;
+  background-image: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+.date-marker input,
+.date-marker-date,
+.date-marker .date-marker-text,
+.date-marker .date-marker-date,
+.daily-left-rail .date-marker .date-marker-text,
+.daily-left-rail .date-marker .date-marker-date,
+.date-marker-dday {
+  border-color: rgba(82, 96, 115, 0.24) !important;
+  background:
+    linear-gradient(145deg, rgba(196, 207, 221, 0.9), rgba(174, 188, 205, 0.76)),
+    #bfCBD8 !important;
+  background-image:
+    linear-gradient(145deg, rgba(196, 207, 221, 0.9), rgba(174, 188, 205, 0.76)) !important;
+  box-shadow:
+    inset 3px 3px 8px rgba(62, 75, 94, 0.12),
+    inset -3px -3px 8px rgba(224, 231, 239, 0.44) !important;
+  color: #202936 !important;
+}
+
+.date-marker-date::-webkit-datetime-edit,
+.date-marker-date::-webkit-date-and-time-value,
+.date-marker-date::-webkit-datetime-edit-fields-wrapper,
+.date-marker-date::-webkit-datetime-edit-year-field,
+.date-marker-date::-webkit-datetime-edit-month-field,
+.date-marker-date::-webkit-datetime-edit-day-field,
+.date-marker-date::-webkit-datetime-edit-text {
+  background: transparent !important;
+  color: #202936 !important;
+}
+
+.date-marker-date::-webkit-calendar-picker-indicator {
+  filter: grayscale(1) brightness(0.7) !important;
+  opacity: 0.72 !important;
+}
+
+.schedule-panel .schedule-day.today,
+.schedule-panel .schedule-day.selected,
+.schedule-day.today,
+.schedule-day.selected {
+  border-color: rgba(91, 111, 178, 0.36) !important;
+  background:
+    linear-gradient(145deg, rgba(199, 210, 224, 0.96), rgba(168, 184, 203, 0.86)),
+    #b7c4d2 !important;
+  background-image:
+    linear-gradient(145deg, rgba(199, 210, 224, 0.96), rgba(168, 184, 203, 0.86)) !important;
+  box-shadow:
+    inset 4px 4px 10px rgba(62, 75, 94, 0.14),
+    inset -4px -4px 10px rgba(224, 231, 239, 0.36),
+    0 0 15px rgba(91, 111, 178, 0.13) !important;
+  color: #202936 !important;
+}
+
+.schedule-panel .schedule-day.today::before,
+.schedule-panel .schedule-day.today::after,
+.schedule-panel .schedule-day.selected::before,
+.schedule-panel .schedule-day.selected::after,
+.schedule-day.today::before,
+.schedule-day.today::after,
+.schedule-day.selected::before,
+.schedule-day.selected::after,
+.schedule-panel .schedule-day.today .schedule-date b::after,
+.schedule-panel .schedule-day.selected .schedule-date b::after {
+  content: none !important;
+  display: none !important;
+  background: none !important;
+  background-image: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+.schedule-panel .schedule-day.today *,
+.schedule-panel .schedule-day.selected *,
+.schedule-day.today *,
+.schedule-day.selected * {
+  background-image: none !important;
+  text-shadow: none !important;
+}
+
+.schedule-panel .schedule-day.today .schedule-date,
+.schedule-panel .schedule-day.selected .schedule-date {
+  border-bottom-color: rgba(82, 96, 115, 0.14) !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Last 7 Days flag marker: attach it to the bar and remove the square shell */
+.history-panel .flag-button {
+  display: inline-grid !important;
+  place-items: center !important;
+  width: 30px !important;
+  height: 30px !important;
+  min-width: 30px !important;
+  padding: 0 !important;
+  border: 1px solid rgba(82, 96, 115, 0.22) !important;
+  border-radius: 999px !important;
+  background:
+    linear-gradient(145deg, rgba(202, 212, 225, 0.88), rgba(174, 188, 205, 0.74)) !important;
+  box-shadow:
+    4px 4px 10px rgba(62, 75, 94, 0.14),
+    -3px -3px 8px rgba(224, 231, 239, 0.42) !important;
+  color: #344257 !important;
+  line-height: 1 !important;
+}
+
+.history-panel .flag-button.active {
+  border-color: rgba(91, 111, 178, 0.38) !important;
+  background:
+    linear-gradient(145deg, rgba(190, 203, 221, 0.92), rgba(159, 176, 197, 0.84)) !important;
+  box-shadow:
+    inset 3px 3px 7px rgba(62, 75, 94, 0.14),
+    inset -3px -3px 7px rgba(224, 231, 239, 0.34),
+    0 0 12px rgba(91, 111, 178, 0.16) !important;
+}
+
+.history-panel .history-day {
+  position: relative !important;
+  grid-template-rows: 118px 18px 18px !important;
+  overflow: visible !important;
+}
+
+.history-panel .history-fill {
+  position: relative !important;
+  display: block !important;
+  overflow: visible !important;
+}
+
+.history-panel .history-flag,
+.history-panel .history-attempt {
+  position: absolute !important;
+  left: 50% !important;
+  right: auto !important;
+  top: auto !important;
+  bottom: calc(100% + 5px) !important;
+  transform: translateX(-50%) !important;
+  display: inline-grid !important;
+  place-items: center !important;
+  width: 16px !important;
+  height: 16px !important;
+  min-width: 16px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  color: transparent !important;
+  font-size: 0.92rem !important;
+  line-height: 1 !important;
+  pointer-events: none !important;
+}
+
+.history-panel .history-flag.active {
+  color: #344257 !important;
+  filter: drop-shadow(0 2px 3px rgba(62, 75, 94, 0.22)) !important;
+}
+
+.history-panel .history-attempt {
+  bottom: auto !important;
+  top: calc(100% + 4px) !important;
+  color: transparent !important;
+  font-size: 0.72rem !important;
+}
+
+.history-panel .history-attempt.checked {
+  color: #5f6d7d !important;
+}
+
+/* Final font lock */
+:root {
+  --display-font: "NexonCartGothic", "Noto Sans KR", system-ui, sans-serif !important;
+  --hand-font: "NexonCartGothic", "Noto Sans KR", system-ui, sans-serif !important;
+}
+
+body,
+.app-shell,
+.app-shell *,
+button,
+input,
+textarea,
+select {
+  font-family: "NexonCartGothic", "Noto Sans KR", system-ui, sans-serif !important;
 }

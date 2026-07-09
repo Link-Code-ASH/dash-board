@@ -1900,27 +1900,42 @@ function HubBar({ activeView, setActiveView }) {
   const hubItems = [
     { key: "studio", label: "Studio", target: "dashboard", active: activeView === "dashboard" || activeView === "note" },
     { key: "mindfold", label: "Mindfold", target: "mindfold", active: activeView === "mindfold" },
-    { key: "vault", label: "Vault", target: "vault", active: activeView === "vault" },
   ];
   return h(
     "header",
     { className: "hub-bar", "aria-label": "Hub navigation" },
-    h("div", { className: "hub-brand" }, h("span", null, "Hub"), h("small", null, "Studio / Mindfold / Vault")),
+    h("div", { className: "hub-brand" }, h("span", null, "Hub"), h("small", null, "Studio / Mindfold")),
     h(
-      "nav",
-      { className: "hub-nav", "aria-label": "Hub sections" },
-      hubItems.map((item) =>
-        h(
-          "button",
-          {
-            className: `hub-nav-button ${item.active ? "active" : ""}`,
-            key: item.key,
-            type: "button",
-            "aria-current": item.active ? "page" : undefined,
-            onClick: () => setActiveView(item.target),
-          },
-          item.label,
+      "div",
+      { className: "hub-actions" },
+      h(
+        "nav",
+        { className: "hub-nav", "aria-label": "Hub sections" },
+        hubItems.map((item) =>
+          h(
+            "button",
+            {
+              className: `hub-nav-button ${item.active ? "active" : ""}`,
+              key: item.key,
+              type: "button",
+              "aria-current": item.active ? "page" : undefined,
+              onClick: () => setActiveView(item.target),
+            },
+            item.label,
+          ),
         ),
+      ),
+      h(
+        "button",
+        {
+          className: `hub-vault-button ${activeView === "vault" ? "active" : ""}`,
+          type: "button",
+          title: "Vault",
+          "aria-label": "Vault",
+          "aria-current": activeView === "vault" ? "page" : undefined,
+          onClick: () => setActiveView("vault"),
+        },
+        "\u2699",
       ),
     ),
   );
@@ -3611,9 +3626,12 @@ function HistoryPanel({ carryPenalties, flaggedDate, getDayTotal, onToggleFlag, 
         h(
           "div",
           { className: "history-day", key: day.key },
-          h("div", { className: `history-fill ${day.total > 0 ? "plus" : day.total < 0 ? "minus" : ""}`, style: { height: `${Math.max(16, (Math.abs(day.total) / maxAbs) * 112)}px` } }),
-          h("span", { className: `history-flag ${day.flagged ? "active" : ""}`, title: day.flagged ? "Flagged date" : "" }, day.flagged ? "\u2691" : ""),
-          h("span", { className: `history-attempt ${day.penalized ? "history-penalty checked" : day.tried ? "checked" : ""}`, title: day.penalized ? "Carry -2 marked" : day.tried ? "Routine tried" : "Not checked" }, day.penalized || day.tried ? "\u2713" : ""),
+          h(
+            "div",
+            { className: `history-fill ${day.total > 0 ? "plus" : day.total < 0 ? "minus" : ""}`, style: { height: `${Math.max(16, (Math.abs(day.total) / maxAbs) * 112)}px` } },
+            h("span", { className: `history-flag ${day.flagged ? "active" : ""}`, title: day.flagged ? "Flagged date" : "" }, day.flagged ? "\u2691" : ""),
+            h("span", { className: `history-attempt ${day.penalized ? "history-penalty checked" : day.tried ? "checked" : ""}`, title: day.penalized ? "Carry -2 marked" : day.tried ? "Routine tried" : "Not checked" }, day.penalized || day.tried ? "\u2713" : ""),
+          ),
           h("span", { className: "history-date" }, day.key.slice(5).replace("-", ".")),
           h("strong", { className: "history-score" }, formatScore(day.total)),
         ),
