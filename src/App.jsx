@@ -953,7 +953,7 @@ function App() {
   }, []);
 
   useEffect(() => {
-    document.querySelectorAll(".collapsible-panel, .schedule-panel, .memo-panel, .today-plan-panel, .history-panel, .score-meter, .score-details > div, .today-plan-card, .preset-card, .entry-item, .calendar-month, .calendar-day").forEach((element) => {
+    document.querySelectorAll(".collapsible-panel, .schedule-panel, .memo-panel, .today-plan-panel, .history-panel, .score-meter, .score-details > div, .today-plan-card, .preset-card, .entry-item").forEach((element) => {
       if (element.dataset.glowReady) return;
       element.dataset.glowReady = "true";
       element.addEventListener("pointermove", (event) => {
@@ -1286,111 +1286,6 @@ function App() {
     });
   };
 
-  const updateWorkBlock = (id, field, value) => {
-    saveData((draft) => {
-      draft.work = normalizeWork(draft.work);
-      const block = draft.work.categories.flatMap((category) => category.blocks).find((item) => item.id === id);
-      if (block) block[field] = value;
-      return draft;
-    });
-  };
-
-  const toggleWorkBlock = (id) => {
-    saveData((draft) => {
-      draft.work = normalizeWork(draft.work);
-      const block = draft.work.categories.flatMap((category) => category.blocks).find((item) => item.id === id);
-      if (block) block.open = !block.open;
-      return draft;
-    });
-  };
-
-  const addWorkCategory = () => {
-    saveData((draft) => {
-      draft.work = normalizeWork(draft.work);
-      draft.work.categories.push({ id: createKey("work-category"), title: `Category ${draft.work.categories.length + 1}`, blocks: [] });
-      return draft;
-    });
-  };
-
-  const updateWorkCategory = (id, value) => {
-    saveData((draft) => {
-      draft.work = normalizeWork(draft.work);
-      const category = draft.work.categories.find((item) => item.id === id);
-      if (category) category.title = value;
-      return draft;
-    });
-  };
-
-  const toggleWorkCategory = (id) => {
-    saveData((draft) => {
-      draft.work = normalizeWork(draft.work);
-      const category = draft.work.categories.find((item) => item.id === id);
-      if (category) category.open = !category.open;
-      return draft;
-    });
-  };
-
-  const removeWorkCategory = (id) => {
-    const confirmed = window.confirm("Delete this work category and all blocks inside it?");
-    if (!confirmed) return;
-    saveData((draft) => {
-      draft.work = normalizeWork(draft.work);
-      if (draft.work.categories.length <= 1) return draft;
-      draft.work.categories = draft.work.categories.filter((category) => category.id !== id);
-      return draft;
-    });
-  };
-
-  const moveWorkCategory = (fromId, toId) => {
-    if (!fromId || !toId || fromId === toId) return;
-    saveData((draft) => {
-      draft.work = normalizeWork(draft.work);
-      const fromIndex = draft.work.categories.findIndex((category) => category.id === fromId);
-      const toIndex = draft.work.categories.findIndex((category) => category.id === toId);
-      if (fromIndex < 0 || toIndex < 0) return draft;
-      const [category] = draft.work.categories.splice(fromIndex, 1);
-      draft.work.categories.splice(toIndex, 0, category);
-      return draft;
-    });
-  };
-
-  const addWorkBlock = (categoryId) => {
-    saveData((draft) => {
-      draft.work = normalizeWork(draft.work);
-      const category = draft.work.categories.find((item) => item.id === categoryId) || draft.work.categories[0];
-      if (!category) return draft;
-      category.blocks.push({ id: createKey("work"), title: `Work ${category.blocks.length + 1}`, content: "", open: true });
-      return draft;
-    });
-  };
-
-  const removeWorkBlock = (id) => {
-    const confirmed = window.confirm("Delete this work block?");
-    if (!confirmed) return;
-    saveData((draft) => {
-      draft.work = normalizeWork(draft.work);
-      draft.work.categories.forEach((category) => {
-        category.blocks = category.blocks.filter((block) => block.id !== id);
-      });
-      return draft;
-    });
-  };
-
-  const moveWorkBlock = (fromId, toId) => {
-    if (!fromId || !toId || fromId === toId) return;
-    saveData((draft) => {
-      draft.work = normalizeWork(draft.work);
-      const category = draft.work.categories.find((item) => item.blocks.some((block) => block.id === fromId) && item.blocks.some((block) => block.id === toId));
-      if (!category) return draft;
-      const fromIndex = category.blocks.findIndex((block) => block.id === fromId);
-      const toIndex = category.blocks.findIndex((block) => block.id === toId);
-      if (fromIndex < 0 || toIndex < 0) return draft;
-      const [block] = category.blocks.splice(fromIndex, 1);
-      category.blocks.splice(toIndex, 0, block);
-      return draft;
-    });
-  };
-
   const setActiveMindfoldNode = (id) => {
     saveData((draft) => {
       draft.mindfold = normalizeMindfold(draft.mindfold);
@@ -1635,27 +1530,6 @@ function App() {
       return draft;
     });
   };
-
-  const addSchoolNote = () => addMemoNote("school", "school-note");
-  const updateSchoolNote = (id, field, value) => updateMemoNote("school", id, field, value);
-  const toggleSchoolNote = (id) => toggleMemoNote("school", id);
-  const removeSchoolNote = (id) => removeMemoNote("school", id, "school");
-  const moveSchoolNote = (fromId, toId) => moveMemoNote("school", fromId, toId);
-  const addUnivNote = () => addMemoNote("univ", "univ-note");
-  const updateUnivNote = (id, field, value) => updateMemoNote("univ", id, field, value);
-  const toggleUnivNote = (id) => toggleMemoNote("univ", id);
-  const removeUnivNote = (id) => removeMemoNote("univ", id, "UNIV");
-  const moveUnivNote = (fromId, toId) => moveMemoNote("univ", fromId, toId);
-  const addProgressNote = () => addMemoNote("progress", "progress-note");
-  const updateProgressNote = (id, field, value) => updateMemoNote("progress", id, field, value);
-  const toggleProgressNote = (id) => toggleMemoNote("progress", id);
-  const removeProgressNote = (id) => removeMemoNote("progress", id, "Progress");
-  const moveProgressNote = (fromId, toId) => moveMemoNote("progress", fromId, toId);
-  const addLifeNote = () => addMemoNote("life", "life-note");
-  const updateLifeNote = (id, field, value) => updateMemoNote("life", id, field, value);
-  const toggleLifeNote = (id) => toggleMemoNote("life", id);
-  const removeLifeNote = (id) => removeMemoNote("life", id, "Life");
-  const moveLifeNote = (fromId, toId) => moveMemoNote("life", fromId, toId);
 
   const connectSync = async () => {
     const nextSyncId = normalizeSyncId(syncRef.current.syncId);
@@ -2452,159 +2326,6 @@ function MindfoldView({ addBlock, addNode, mindfold, moveBlock, removeBlock, rem
   );
 }
 
-function WorkView({ addWorkBlock, addWorkCategory, moveWorkBlock, moveWorkCategory, removeWorkBlock, removeWorkCategory, toggleWorkBlock, toggleWorkCategory, updateWorkBlock, updateWorkCategory, work }) {
-  const categories = normalizeWork(work).categories;
-  const [dragBlockId, setDragBlockId] = useState("");
-  const [dragCategoryId, setDragCategoryId] = useState("");
-  return h(
-    "section",
-    { className: "work-view", "aria-label": "Work" },
-    h(
-      "div",
-      { className: "section-heading" },
-      h("div", null, h("h2", null, "Work"), h("p", null, "A workspace for manuals, procedures, and work notes.")),
-      h("button", { className: "text-button", type: "button", onClick: addWorkCategory }, "+ Category"),
-    ),
-    h(
-      "div",
-      { className: "work-category-list" },
-      categories.map((category) =>
-        h(
-          "section",
-          {
-            className: `work-category ${category.open ? "" : "collapsed"} ${dragCategoryId === category.id ? "dragging" : ""}`,
-            draggable: true,
-            key: category.id,
-            onDragStart: (event) => {
-              if (panelClickIsInteractive(event.target) || event.target.closest?.(".work-manual-card")) {
-                event.preventDefault();
-                return;
-              }
-              setDragCategoryId(category.id);
-              event.dataTransfer.effectAllowed = "move";
-              event.dataTransfer.setData("text/work-category", category.id);
-            },
-            onDragOver: (event) => {
-              if (!dragCategoryId) return;
-              event.preventDefault();
-              event.dataTransfer.dropEffect = "move";
-            },
-            onDrop: (event) => {
-              const fromId = event.dataTransfer.getData("text/work-category") || dragCategoryId;
-              if (!fromId) return;
-              event.preventDefault();
-              moveWorkCategory(fromId, category.id);
-              setDragCategoryId("");
-            },
-            onDragEnd: () => setDragCategoryId(""),
-          },
-          h(
-            "div",
-            { className: "work-category-heading" },
-            h("input", {
-              type: "text",
-              value: category.title,
-              "aria-label": "Work category title",
-              onChange: (event) => updateWorkCategory(category.id, event.target.value),
-              onKeyDown: (event) => {
-                if (event.key === "Enter") event.currentTarget.blur();
-              },
-            }),
-            h("button", {
-              className: "work-category-toggle-zone",
-              type: "button",
-              "aria-expanded": String(category.open),
-              "aria-label": category.open ? "Close work category" : "Open work category",
-              onClick: () => toggleWorkCategory(category.id),
-            }),
-            h(
-              "div",
-              { className: "work-category-actions" },
-              h("button", { className: "text-button", type: "button", onClick: () => addWorkBlock(category.id) }, "+ Block"),
-              h("button", { className: "mini-button danger", type: "button", disabled: categories.length <= 1, title: "Delete work category", onClick: () => removeWorkCategory(category.id) }, "\u00d7"),
-            ),
-          ),
-          h(
-            "div",
-            { className: "work-manual-grid" },
-            category.open
-              ? category.blocks.map((block) =>
-                  h(
-                    "article",
-                    {
-                      className: `work-manual-card ${block.open ? "" : "collapsed"} ${dragBlockId === block.id ? "dragging" : ""}`,
-                      draggable: true,
-                      key: block.id,
-                      onDragStart: (event) => {
-                        event.stopPropagation();
-                        if (panelClickIsInteractive(event.target)) {
-                          event.preventDefault();
-                          return;
-                        }
-                        setDragBlockId(block.id);
-                        event.dataTransfer.effectAllowed = "move";
-                        event.dataTransfer.setData("text/plain", block.id);
-                      },
-                      onDragOver: (event) => {
-                        event.stopPropagation();
-                        event.preventDefault();
-                        event.dataTransfer.dropEffect = "move";
-                      },
-                      onDrop: (event) => {
-                        event.stopPropagation();
-                        event.preventDefault();
-                        const fromId = event.dataTransfer.getData("text/plain") || dragBlockId;
-                        moveWorkBlock(fromId, block.id);
-                        setDragBlockId("");
-                      },
-                      onDragEnd: () => setDragBlockId(""),
-                    },
-                    h(
-                      "div",
-                      { className: "work-manual-heading" },
-                      h("input", {
-                        type: "text",
-                        value: block.title,
-                        "aria-label": "Work block title",
-                        onChange: (event) => updateWorkBlock(block.id, "title", event.target.value),
-                        onKeyDown: (event) => {
-                          if (event.key === "Enter") event.currentTarget.blur();
-                        },
-                      }),
-                      h(
-                        "button",
-                        {
-                          className: "work-toggle-zone",
-                          type: "button",
-                          "aria-expanded": String(block.open),
-                          "aria-label": block.open ? "Close work block" : "Open work block",
-                          onClick: () => toggleWorkBlock(block.id),
-                        },
-                      ),
-                      h(
-                        "div",
-                        { className: "work-block-actions" },
-                        h("button", { className: "mini-button danger", type: "button", title: "Delete work block", onClick: () => removeWorkBlock(block.id) }, "\u00d7"),
-                      ),
-                    ),
-                    block.open
-                      ? h("textarea", {
-                          className: "work-manual-textarea",
-                          placeholder: "Write work manuals, procedures, notes, links, or templates...",
-                          value: block.content,
-                          onChange: (event) => updateWorkBlock(block.id, "content", event.target.value),
-                        })
-                      : null,
-                  ),
-                )
-              : null,
-          ),
-        ),
-      ),
-    ),
-  );
-}
-
 function Topbar({ activeView, selectedDate, settingsPanels, setActiveView, setSelectedDate, shiftDate }) {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const settingsRef = useRef(null);
@@ -3025,132 +2746,6 @@ function MemoArea({ cardId, field, titleField, titleValue, updateMemoCard, value
   );
 }
 
-function getMemoBlocks(value) {
-  return String(value || "")
-    .split(/\n+/)
-    .map((line) => line.trim())
-    .filter(Boolean);
-}
-
-function growMemoTextarea(textarea) {
-  if (!textarea) return;
-  textarea.style.height = "auto";
-  textarea.style.height = `${textarea.scrollHeight}px`;
-}
-
-function MemoBlockColumn({ cardId, extraField, extraTitleField, extraTitleValue, extraValue, field, split, titleField, titleValue, updateMemoCard, value }) {
-  const [quickMemo, setQuickMemo] = useState("");
-  const [quickExtraMemo, setQuickExtraMemo] = useState("");
-  const splitRef = useRef(null);
-  const addQuickMemo = (targetField, currentValue, textValue, clearText) => {
-    const text = textValue.trim();
-    if (!text) return;
-    const taggedText = text.startsWith("#") ? text : `# ${text}`;
-    updateMemoCard(cardId, targetField, currentValue ? `${taggedText}\n${currentValue}` : taggedText);
-    clearText("");
-  };
-  const startResize = (event) => {
-    event.preventDefault();
-    event.stopPropagation();
-    const container = splitRef.current;
-    if (!container) return;
-    const rect = container.getBoundingClientRect();
-    const pointerId = event.pointerId;
-    event.currentTarget.setPointerCapture?.(pointerId);
-    const move = (moveEvent) => {
-      const next = clampNumber(((moveEvent.clientX - rect.left) / rect.width) * 100, 24, 76);
-      updateMemoCard(cardId, "memoSplits", { [field]: Math.round(next) });
-    };
-    const stop = () => {
-      window.removeEventListener("pointermove", move);
-      window.removeEventListener("pointerup", stop);
-      window.removeEventListener("pointercancel", stop);
-    };
-    window.addEventListener("pointermove", move);
-    window.addEventListener("pointerup", stop);
-    window.addEventListener("pointercancel", stop);
-  };
-  const renderQuickInput = (targetField, currentValue, textValue, setTextValue) =>
-    h("textarea", {
-      className: "memo-quick-textarea",
-      placeholder: "Quick add...",
-      rows: 1,
-      value: textValue,
-      onChange: (event) => setTextValue(event.target.value),
-      onKeyDown: (event) => {
-        event.stopPropagation();
-        if (event.key === "Enter" && !event.shiftKey) {
-          event.preventDefault();
-          addQuickMemo(targetField, currentValue, textValue, setTextValue);
-        }
-      },
-    });
-  const renderTitleInput = (targetTitleField, currentTitle) =>
-    h("input", {
-      className: "memo-title-input",
-      maxLength: 48,
-      placeholder: "Title",
-      type: "text",
-      value: currentTitle,
-      onChange: (event) => updateMemoCard(cardId, targetTitleField, event.target.value),
-      onKeyDown: (event) => event.stopPropagation(),
-    });
-  const renderMemoTextarea = (targetField, currentValue) =>
-    h("textarea", {
-      className: "memo-large-textarea memo-split-textarea",
-      placeholder: "Write freely...",
-      value: currentValue,
-      onChange: (event) => updateMemoCard(cardId, targetField, event.target.value),
-      onKeyDown: (event) => event.stopPropagation(),
-    });
-  return h(
-    "section",
-    { className: "memo-block-column" },
-    h(
-      "div",
-      {
-        className: "memo-quick-split",
-        style: { "--memo-split": `${clampNumber(split, 24, 76)}%` },
-      },
-      renderQuickInput(field, value, quickMemo, setQuickMemo),
-      h("div", { className: "memo-quick-split-gap" }),
-      renderQuickInput(extraField, extraValue, quickExtraMemo, setQuickExtraMemo),
-    ),
-    h(
-      "div",
-      {
-        className: "memo-title-split",
-        style: { "--memo-split": `${clampNumber(split, 24, 76)}%` },
-      },
-      renderTitleInput(titleField, titleValue),
-      h("div", { className: "memo-title-split-gap" }),
-      renderTitleInput(extraTitleField, extraTitleValue),
-    ),
-    h(
-      "div",
-      {
-        className: "memo-split-editor",
-        ref: splitRef,
-        style: { "--memo-split": `${clampNumber(split, 24, 76)}%` },
-      },
-      renderMemoTextarea(field, value),
-      h("button", {
-        "aria-label": "Resize memo columns",
-        className: "memo-split-handle",
-        onPointerDown: startResize,
-        type: "button",
-      }),
-      renderMemoTextarea(extraField, extraValue),
-    ),
-    h(
-      "div",
-      { className: "memo-mobile-flow" },
-      h("div", { className: "memo-mobile-area" }, renderQuickInput(field, value, quickMemo, setQuickMemo), renderTitleInput(titleField, titleValue), renderMemoTextarea(field, value)),
-      h("div", { className: "memo-mobile-area" }, renderQuickInput(extraField, extraValue, quickExtraMemo, setQuickExtraMemo), renderTitleInput(extraTitleField, extraTitleValue), renderMemoTextarea(extraField, extraValue)),
-    ),
-  );
-}
-
 function ScorePanel({ carryPenaltyMarked, entryCount, onAdjustCarry, onResetCarry, onToggleAttempt, onToggleCarryPenalty, routineTried, scoreInfo }) {
   const totalClass = scoreInfo.total < 0 ? "negative" : scoreInfo.total === 0 ? "neutral" : "";
   const fillClass = scoreInfo.total > 0 ? "positive" : scoreInfo.total < 0 ? "negative" : "neutral";
@@ -3158,27 +2753,27 @@ function ScorePanel({ carryPenaltyMarked, entryCount, onAdjustCarry, onResetCarr
   const totalMagnitude = String(Math.abs(scoreNumber(scoreInfo.total)));
   return h(
     "section",
-    { className: "score-panel", "aria-label": "Score summary" },
+    { className: "score-panel score-panel-compact", "aria-label": "Score summary" },
     h(
       "div",
-      { className: "score-meter" },
-      h("span", { className: "score-kicker" }, "Total Score"),
+      { className: "score-meter score-meter-compact" },
+      h("span", { className: "score-kicker score-kicker-compact" }, "Total Score"),
       h(
         "div",
-        { className: "carry-controls score-carry-controls" },
+        { className: "carry-controls score-carry-controls score-carry-controls-compact" },
         h("button", { className: "carry-adjust-button", type: "button", title: "Decrease Carry", "aria-label": "Decrease Carry", onClick: () => onAdjustCarry(-1) }, "-"),
         h("button", { className: "carry-reset-button", type: "button", title: "Reset Carry", "aria-label": "Reset Carry", onClick: onResetCarry }, "R"),
         h("button", { className: "carry-adjust-button", type: "button", title: "Increase Carry", "aria-label": "Increase Carry", onClick: () => onAdjustCarry(1) }, "+"),
       ),
       h(
         "div",
-        { className: `score-number ${totalClass}` },
+        { className: `score-number score-number-compact ${totalClass}` },
         h("span", { className: `score-number-sign ${totalSign ? "" : "empty"}` }, totalSign),
         h("span", { className: "score-number-digits" }, totalMagnitude),
       ),
       h(
         "div",
-        { className: "score-checks" },
+        { className: "score-checks score-checks-compact" },
         h(
           "button",
           {
@@ -3204,11 +2799,11 @@ function ScorePanel({ carryPenaltyMarked, entryCount, onAdjustCarry, onResetCarr
           h("span", { className: "score-toggle-mark", "aria-hidden": "true" }),
         ),
       ),
-      h("div", { className: "score-track", "aria-hidden": "true" }, h("span", { className: fillClass, style: { width: `${Math.max(0, Math.min(100, 50 + scoreInfo.total * 2))}%` } })),
+      h("div", { className: "score-track score-track-compact", "aria-hidden": "true" }, h("span", { className: fillClass, style: { width: `${Math.max(0, Math.min(100, 50 + scoreInfo.total * 2))}%` } })),
     ),
     h(
       "div",
-      { className: "score-details" },
+      { className: "score-details score-details-compact" },
       h(
         "div",
         { className: "carry-detail" },
