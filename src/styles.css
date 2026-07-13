@@ -9550,6 +9550,302 @@ select {
   transform: none !important;
 }
 
+/* Match the eight-marker panel height with larger, evenly spaced score controls. */
+.daily-left-rail .score-panel.score-panel-compact {
+  height: 100% !important;
+  align-self: stretch !important;
+  grid-template-rows: 135px 94px !important;
+  gap: 6px !important;
+}
+
+.daily-left-rail .score-panel.score-panel-compact .score-meter.score-meter-compact {
+  grid-template-rows: 26px minmax(0, 1fr) 10px !important;
+  min-height: 135px !important;
+  height: 135px !important;
+  padding: 11px !important;
+}
+
+.daily-left-rail .score-panel.score-panel-compact .score-number.score-number-compact,
+.daily-left-rail .score-panel.score-panel-compact .score-number.score-number-compact.negative,
+.daily-left-rail .score-panel.score-panel-compact .score-number.score-number-compact.neutral,
+.daily-left-rail .score-panel.score-panel-compact .score-number.score-number-compact .score-number-sign,
+.daily-left-rail .score-panel.score-panel-compact .score-number.score-number-compact .score-number-digits {
+  min-height: 76px !important;
+  height: 76px !important;
+  font-size: 56px !important;
+  line-height: 76px !important;
+}
+
+.daily-left-rail .score-panel.score-panel-compact .score-actions .score-checks,
+.daily-left-rail .score-panel.score-panel-compact .score-actions .score-toggle-button {
+  height: 28px !important;
+  min-height: 28px !important;
+}
+
+.daily-left-rail .score-panel.score-panel-compact .score-actions .score-toggle-button {
+  width: 28px !important;
+  min-width: 28px !important;
+}
+
+.daily-left-rail .score-panel.score-panel-compact .score-actions .score-carry-controls .carry-adjust-button,
+.daily-left-rail .score-panel.score-panel-compact .score-actions .score-carry-controls .carry-reset-button {
+  width: 24px !important;
+  min-width: 24px !important;
+  height: 24px !important;
+  min-height: 24px !important;
+  font-size: 0.76rem !important;
+}
+
+.daily-left-rail .score-panel.score-panel-compact .score-actions .score-carry-controls {
+  grid-template-columns: repeat(3, 28px) !important;
+  gap: 4px !important;
+}
+
+.daily-left-rail .score-panel.score-panel-compact .score-details.score-details-compact {
+  min-height: 94px !important;
+  height: 94px !important;
+  gap: 8px !important;
+}
+
+.daily-left-rail .score-panel.score-panel-compact .score-details.score-details-compact > div {
+  padding: 7px 9px !important;
+}
+
+.daily-left-rail .score-panel.score-panel-compact .score-actions {
+  gap: 4px !important;
+}
+
+/* Lock Y-selected cards to the same fixed state as N-selected cards. */
+html body #root .app-shell .today-plan-card.done:not(.no),
+html body #root .app-shell .today-plan-card.done:not(.no):hover {
+  --plan-line: #79c99e !important;
+  border-color: rgba(121, 201, 158, 0.58) !important;
+  background:
+    linear-gradient(180deg, rgba(121, 201, 158, 0.16), transparent 62%),
+    linear-gradient(145deg, rgba(39, 25, 32, 0.94), rgba(17, 20, 28, 0.94)) !important;
+  background-image:
+    linear-gradient(180deg, rgba(121, 201, 158, 0.16), transparent 62%),
+    linear-gradient(145deg, rgba(39, 25, 32, 0.94), rgba(17, 20, 28, 0.94)) !important;
+  box-shadow:
+    12px 12px 28px rgba(116, 128, 145, 0.16),
+    -10px -10px 24px rgba(255, 255, 255, 0.76),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.76) !important;
+  color: #f9fafb !important;
+  transform: none !important;
+  transition: none !important;
+}
+
+html body #root .app-shell .today-plan-card.done:not(.no) .plan-title,
+html body #root .app-shell .today-plan-card.done:not(.no) .plan-label,
+html body #root .app-shell .today-plan-card.done:not(.no) strong,
+html body #root .app-shell .today-plan-card.done:not(.no) span {
+  color: #f9fafb !important;
+}
+
+/* Match N exactly: the dark hover overlay is not part of a selected card. */
+html body #root .app-shell .today-plan-card.done:not(.no)::before,
+html body #root .app-shell .today-plan-card.done:not(.no)::after,
+html body #root .app-shell .today-plan-card.done:not(.no):hover::before,
+html body #root .app-shell .today-plan-card.done:not(.no):hover::after {
+  content: none !important;
+  display: none !important;
+  opacity: 0 !important;
+  background: none !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+/* Fresh Today selection styles, isolated from the legacy done/no rules above. */
+html body #root .app-shell .today-plan-card.selected-positive,
+html body #root .app-shell .today-plan-card.selected-positive:hover,
+html body #root .app-shell .today-plan-card.selected-negative,
+html body #root .app-shell .today-plan-card.selected-negative:hover {
+  background: linear-gradient(145deg, rgba(37, 43, 54, 0.96), rgba(17, 21, 29, 0.96)) !important;
+  background-image: linear-gradient(145deg, rgba(37, 43, 54, 0.96), rgba(17, 21, 29, 0.96)) !important;
+  color: #f8fafc !important;
+  transform: none !important;
+  transition: none !important;
+}
+
+html body #root .app-shell .today-plan-card.selected-positive,
+html body #root .app-shell .today-plan-card.selected-positive:hover {
+  --plan-line: #79c99e !important;
+  border-color: rgba(121, 201, 158, 0.62) !important;
+  box-shadow:
+    12px 12px 28px rgba(83, 95, 112, 0.17),
+    -10px -10px 24px rgba(255, 255, 255, 0.7),
+    inset 3px 0 0 rgba(121, 201, 158, 0.9),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
+}
+
+html body #root .app-shell .today-plan-card.selected-negative,
+html body #root .app-shell .today-plan-card.selected-negative:hover {
+  --plan-line: #d77b91 !important;
+  border-color: rgba(215, 123, 145, 0.62) !important;
+  box-shadow:
+    12px 12px 28px rgba(83, 95, 112, 0.17),
+    -10px -10px 24px rgba(255, 255, 255, 0.7),
+    inset 3px 0 0 rgba(215, 123, 145, 0.9),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
+}
+
+html body #root .app-shell .today-plan-card.selected-positive::before,
+html body #root .app-shell .today-plan-card.selected-positive::after,
+html body #root .app-shell .today-plan-card.selected-negative::before,
+html body #root .app-shell .today-plan-card.selected-negative::after,
+html body #root .app-shell .today-plan-card.selected-positive > .edge-light,
+html body #root .app-shell .today-plan-card.selected-negative > .edge-light {
+  content: none !important;
+  display: none !important;
+  opacity: 0 !important;
+  background: none !important;
+  box-shadow: none !important;
+}
+
+html body #root .app-shell .today-plan-card.selected-positive .plan-title,
+html body #root .app-shell .today-plan-card.selected-positive .plan-label,
+html body #root .app-shell .today-plan-card.selected-positive strong,
+html body #root .app-shell .today-plan-card.selected-positive span,
+html body #root .app-shell .today-plan-card.selected-negative .plan-title,
+html body #root .app-shell .today-plan-card.selected-negative .plan-label,
+html body #root .app-shell .today-plan-card.selected-negative strong,
+html body #root .app-shell .today-plan-card.selected-negative span {
+  color: #f8fafc !important;
+  text-shadow: none !important;
+}
+
+html body #root .app-shell .today-plan-card.selected-positive .plan-title::before {
+  background: #79c99e !important;
+  box-shadow: 0 0 10px rgba(121, 201, 158, 0.36) !important;
+}
+
+html body #root .app-shell .today-plan-card.selected-negative .plan-title::before {
+  background: #d77b91 !important;
+  box-shadow: 0 0 10px rgba(215, 123, 145, 0.36) !important;
+}
+
+html body #root .app-shell .today-plan-panel .choice-button.yes.selected,
+html body #root .app-shell .today-plan-panel .range-score-button.yes.selected {
+  border-color: rgba(121, 201, 158, 0.65) !important;
+  background: linear-gradient(145deg, rgba(202, 232, 215, 0.95), rgba(121, 201, 158, 0.84)) !important;
+  box-shadow: none !important;
+  color: #183c2a !important;
+}
+
+html body #root .app-shell .today-plan-panel .choice-button.no.selected,
+html body #root .app-shell .today-plan-panel .range-score-button.no.selected {
+  border-color: rgba(215, 123, 145, 0.65) !important;
+  background: linear-gradient(145deg, rgba(239, 211, 219, 0.95), rgba(215, 123, 145, 0.84)) !important;
+  box-shadow: none !important;
+  color: #552b36 !important;
+}
+
+/* Unselected cards get a quiet silver hover, never a dark color inversion. */
+html body #root .app-shell .today-plan-card:not(.selected-positive):not(.selected-negative):hover {
+  border-color: rgba(137, 151, 169, 0.42) !important;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.88), rgba(225, 232, 241, 0.76)),
+    rgba(240, 244, 249, 0.76) !important;
+  background-image: linear-gradient(145deg, rgba(255, 255, 255, 0.88), rgba(225, 232, 241, 0.76)) !important;
+  box-shadow:
+    10px 10px 22px rgba(93, 106, 124, 0.13),
+    -8px -8px 18px rgba(255, 255, 255, 0.72),
+    inset 0 1px 0 rgba(255, 255, 255, 0.84) !important;
+  color: #263140 !important;
+  transform: none !important;
+  transition: border-color 160ms ease, background 160ms ease, box-shadow 160ms ease !important;
+}
+
+html body #root .app-shell .today-plan-card:not(.selected-positive):not(.selected-negative):hover .plan-title,
+html body #root .app-shell .today-plan-card:not(.selected-positive):not(.selected-negative):hover .plan-label,
+html body #root .app-shell .today-plan-card:not(.selected-positive):not(.selected-negative):hover strong,
+html body #root .app-shell .today-plan-card:not(.selected-positive):not(.selected-negative):hover span {
+  color: #263140 !important;
+}
+
+html body #root .app-shell .today-plan-card:not(.selected-positive):not(.selected-negative):hover .plan-title::before {
+  background: #7d8b9d !important;
+  box-shadow: none !important;
+}
+
+html body #root .app-shell .today-plan-card:not(.selected-positive):not(.selected-negative):hover::before,
+html body #root .app-shell .today-plan-card:not(.selected-positive):not(.selected-negative):hover::after,
+html body #root .app-shell .today-plan-card:not(.selected-positive):not(.selected-negative):hover > .edge-light {
+  content: none !important;
+  display: none !important;
+  opacity: 0 !important;
+  background: none !important;
+  box-shadow: none !important;
+}
+
+/* Compact the left rail after trimming the marker list to eight entries. */
+.daily-left-rail .score-panel {
+  height: auto !important;
+  align-self: start !important;
+}
+
+.daily-left-rail .date-marker-panel {
+  height: auto !important;
+  align-self: start !important;
+}
+
+.daily-left-rail .date-marker-list {
+  grid-template-rows: repeat(4, 52px) !important;
+  height: auto !important;
+}
+
+/* Score actions share one row: checks first, then carry adjustments. */
+.daily-left-rail .score-panel.score-panel-compact .score-meter.score-meter-compact {
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  grid-template-rows: 24px 70px 10px !important;
+  min-height: 124px !important;
+  height: 124px !important;
+}
+
+.daily-left-rail .score-panel.score-panel-compact .score-actions {
+  grid-column: 2 !important;
+  grid-row: 1 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: 8px !important;
+}
+
+.daily-left-rail .score-panel.score-panel-compact .score-actions .score-checks {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: auto !important;
+  min-width: 0 !important;
+  height: 24px !important;
+  min-height: 24px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  gap: 4px !important;
+}
+
+.daily-left-rail .score-panel.score-panel-compact .score-actions .score-toggle-button {
+  width: 24px !important;
+  min-width: 24px !important;
+  height: 24px !important;
+  min-height: 24px !important;
+}
+
+.daily-left-rail .score-panel.score-panel-compact .score-actions .score-carry-controls {
+  display: grid !important;
+  grid-template-columns: repeat(3, 20px) !important;
+  grid-template-areas: "plus reset minus" !important;
+  gap: 2px !important;
+}
+
+.daily-left-rail .score-panel.score-panel-compact .score-actions .score-carry-controls .carry-adjust-button,
+.daily-left-rail .score-panel.score-panel-compact .score-actions .score-carry-controls .carry-reset-button {
+  width: 20px !important;
+  min-width: 20px !important;
+  height: 20px !important;
+  min-height: 20px !important;
+}
+
 /* High-specificity final surface rules keep older theme layers from returning. */
 html body #root .app-shell .date-marker .date-marker-date {
   appearance: auto !important;
@@ -10913,6 +11209,168 @@ html body #root .app-shell * {
   color: #32101b !important;
 }
 
+/* Today cards remain visually still when the pointer passes over them. */
+.today-plan-card {
+  transition: none !important;
+}
+
+.today-plan-card:hover {
+  transform: none !important;
+}
+
+/* Today panel: remove the cyan/pink pointer-following backdrop. */
+.today-plan-panel::after,
+.today-plan-panel:hover::after {
+  display: none !important;
+  opacity: 0 !important;
+  background: none !important;
+  transition: none !important;
+}
+
+/* Today uses a restrained neutral glass surface; status is the only color cue. */
+.today-plan-panel,
+.today-plan-panel:hover {
+  border-color: rgba(255, 255, 255, 0.62) !important;
+  background:
+    linear-gradient(145deg, rgba(249, 251, 254, 0.8), rgba(222, 229, 238, 0.65)),
+    rgba(236, 241, 247, 0.72) !important;
+  box-shadow:
+    16px 16px 34px rgba(83, 95, 112, 0.15),
+    -12px -12px 26px rgba(255, 255, 255, 0.7),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.76) !important;
+}
+
+.today-plan-panel::before {
+  border-color: rgba(255, 255, 255, 0.54) !important;
+  background:
+    linear-gradient(rgba(238, 243, 249, 0.3), rgba(238, 243, 249, 0.3)) padding-box,
+    linear-gradient(135deg, rgba(255, 255, 255, 0.66), rgba(121, 133, 149, 0.2)) border-box !important;
+  opacity: 1 !important;
+}
+
+.today-plan-panel .choice-button,
+.today-plan-panel .choice-button.yes,
+.today-plan-panel .choice-button.no,
+.today-plan-panel .range-score-button,
+.today-plan-panel .range-score-button.no {
+  border-color: rgba(255, 255, 255, 0.62) !important;
+  background: linear-gradient(145deg, rgba(250, 252, 254, 0.82), rgba(221, 228, 237, 0.7)) !important;
+  box-shadow:
+    4px 4px 10px rgba(83, 95, 112, 0.1),
+    -3px -3px 8px rgba(255, 255, 255, 0.64) !important;
+  color: #3d4858 !important;
+}
+
+.today-plan-panel .choice-button.no.selected,
+.today-plan-panel .choice-button.no.selected:hover,
+.today-plan-panel .range-score-button.no.selected,
+.today-plan-panel .range-score-button.no.selected:hover {
+  border-color: rgba(173, 103, 122, 0.56) !important;
+  background: linear-gradient(145deg, rgba(239, 214, 220, 0.92), rgba(211, 159, 173, 0.82)) !important;
+  box-shadow: 0 5px 12px rgba(150, 82, 101, 0.16) !important;
+  color: #552b36 !important;
+}
+
+.today-plan-panel .choice-button.no.selected *,
+.today-plan-panel .choice-button.no.selected:hover *,
+.today-plan-panel .range-score-button.no.selected *,
+.today-plan-panel .range-score-button.no.selected:hover * {
+  color: #552b36 !important;
+}
+
+/* A completed Y card mirrors the N card, using green as its only distinction. */
+.today-plan-card.done:not(.no),
+.today-plan-card.done:not(.no):hover,
+.today-plan-card.done:not(.no):nth-child(3n),
+.today-plan-card.done:not(.no):nth-child(3n + 2) {
+  --plan-line: #79c99e !important;
+  border-color: rgba(121, 201, 158, 0.56) !important;
+  background:
+    linear-gradient(180deg, rgba(121, 201, 158, 0.16), transparent 62%),
+    linear-gradient(145deg, rgba(39, 25, 32, 0.94), rgba(17, 20, 28, 0.94)) !important;
+  background-image:
+    linear-gradient(180deg, rgba(121, 201, 158, 0.16), transparent 62%),
+    linear-gradient(145deg, rgba(39, 25, 32, 0.94), rgba(17, 20, 28, 0.94)) !important;
+  color: #f9fafb !important;
+}
+
+.today-plan-card.done:not(.no) .plan-title,
+.today-plan-card.done:not(.no) .plan-label,
+.today-plan-card.done:not(.no) strong,
+.today-plan-card.done:not(.no) span,
+.today-plan-card.done:not(.no):hover .plan-title,
+.today-plan-card.done:not(.no):hover .plan-label,
+.today-plan-card.done:not(.no):hover strong,
+.today-plan-card.done:not(.no):hover span {
+  color: #f9fafb !important;
+  text-shadow: none !important;
+}
+
+.today-plan-card.done:not(.no) .plan-title::before,
+.today-plan-card.done:not(.no):hover .plan-title::before {
+  background: #79c99e !important;
+  box-shadow:
+    0 0 10px rgba(121, 201, 158, 0.38),
+    0 0 18px rgba(121, 201, 158, 0.18) !important;
+}
+
+.today-plan-card.done:not(.no) > .edge-light,
+.today-plan-card.done:not(.no):hover > .edge-light {
+  display: block !important;
+  opacity: 0.52 !important;
+}
+
+.today-plan-card.done:not(.no) > .edge-light::before,
+.today-plan-card.done:not(.no):hover > .edge-light::before {
+  box-shadow:
+    inset 0 0 0 1px rgba(121, 201, 158, 0.56),
+    inset 0 0 8px rgba(121, 201, 158, 0.24),
+    0 0 18px rgba(121, 201, 158, 0.18) !important;
+}
+
+.today-plan-panel .choice-button.yes.selected,
+.today-plan-panel .choice-button.yes.selected:hover,
+.today-plan-panel .range-score-button.selected:not(.no),
+.today-plan-panel .range-score-button.selected:not(.no):hover {
+  border-color: rgba(121, 201, 158, 0.64) !important;
+  background: linear-gradient(145deg, rgba(204, 235, 217, 0.94), rgba(121, 201, 158, 0.82)) !important;
+  box-shadow: 0 5px 12px rgba(71, 145, 107, 0.16) !important;
+  color: #183c2a !important;
+}
+
+.today-plan-panel .choice-button.yes.selected *,
+.today-plan-panel .choice-button.yes.selected:hover *,
+.today-plan-panel .range-score-button.selected:not(.no) *,
+.today-plan-panel .range-score-button.selected:not(.no):hover * {
+  color: #183c2a !important;
+}
+
+.today-plan-card:not(.done):hover {
+  border-color: rgba(255, 255, 255, 0.58) !important;
+  background:
+    linear-gradient(145deg, rgba(249, 251, 254, 0.82), rgba(224, 231, 240, 0.66)),
+    rgba(240, 244, 249, 0.72) !important;
+  background-image:
+    linear-gradient(145deg, rgba(249, 251, 254, 0.82), rgba(224, 231, 240, 0.66)) !important;
+  box-shadow:
+    12px 12px 28px rgba(116, 128, 145, 0.16),
+    -10px -10px 24px rgba(255, 255, 255, 0.76),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.76) !important;
+  color: #263140 !important;
+}
+
+.today-plan-card:not(.done):hover .plan-title,
+.today-plan-card:not(.done):hover .plan-label,
+.today-plan-card:not(.done):hover strong,
+.today-plan-card:not(.done):hover span {
+  color: #263140 !important;
+}
+
+.today-plan-card:not(.done):hover .plan-title::before {
+  background: #7d8b9d !important;
+  box-shadow: none !important;
+}
+
 .score-meter {
   grid-template-rows: 24px 70px 38px 10px !important;
   min-height: 182px !important;
@@ -10968,4 +11426,105 @@ html body #root .app-shell * {
   text-align: center !important;
   color: #202936 !important;
   transform: none !important;
+}
+
+/* Final score-panel sizing: match the adjacent four-row marker panel. */
+.daily-left-rail .score-panel.score-panel-compact {
+  height: 100% !important;
+  align-self: stretch !important;
+  grid-template-rows: 135px 94px !important;
+  gap: 6px !important;
+}
+
+.daily-left-rail .score-panel.score-panel-compact .score-meter.score-meter-compact {
+  grid-template-rows: 26px minmax(0, 1fr) 10px !important;
+  min-height: 135px !important;
+  height: 135px !important;
+  padding: 11px !important;
+}
+
+.daily-left-rail .score-panel.score-panel-compact .score-number.score-number-compact,
+.daily-left-rail .score-panel.score-panel-compact .score-number.score-number-compact.negative,
+.daily-left-rail .score-panel.score-panel-compact .score-number.score-number-compact.neutral,
+.daily-left-rail .score-panel.score-panel-compact .score-number.score-number-compact .score-number-sign,
+.daily-left-rail .score-panel.score-panel-compact .score-number.score-number-compact .score-number-digits {
+  min-height: 76px !important;
+  height: 76px !important;
+  font-size: 56px !important;
+  line-height: 76px !important;
+}
+
+.daily-left-rail .score-panel.score-panel-compact .score-actions .score-checks,
+.daily-left-rail .score-panel.score-panel-compact .score-actions .score-toggle-button {
+  height: 28px !important;
+  min-height: 28px !important;
+}
+
+.daily-left-rail .score-panel.score-panel-compact .score-actions .score-toggle-button {
+  width: 28px !important;
+  min-width: 28px !important;
+}
+
+.daily-left-rail .score-panel.score-panel-compact .score-actions .score-carry-controls {
+  display: grid !important;
+  grid-template-columns: repeat(3, 28px) !important;
+  grid-template-areas: "minus reset plus" !important;
+  gap: 0 !important;
+  padding: 3px !important;
+  border: 1px solid rgba(104, 118, 136, 0.26) !important;
+  border-radius: 9px !important;
+  background: linear-gradient(145deg, rgba(247, 250, 253, 0.72), rgba(211, 220, 230, 0.58)) !important;
+  box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.72) !important;
+}
+
+.daily-left-rail .score-panel.score-panel-compact .score-actions .score-carry-controls .carry-adjust-button,
+.daily-left-rail .score-panel.score-panel-compact .score-actions .score-carry-controls .carry-reset-button {
+  width: 28px !important;
+  min-width: 28px !important;
+  height: 28px !important;
+  min-height: 28px !important;
+  font-size: 0.76rem !important;
+  border: 0 !important;
+  border-radius: 4px !important;
+  box-shadow: none !important;
+}
+
+.daily-left-rail .score-panel.score-panel-compact .score-details.score-details-compact {
+  min-height: 94px !important;
+  height: 94px !important;
+  gap: 8px !important;
+}
+
+.daily-left-rail .score-panel.score-panel-compact .score-details.score-details-compact > div {
+  padding: 7px 9px !important;
+}
+
+/* Two grouped score controls: checks and carry adjustments. */
+.daily-left-rail .score-panel.score-panel-compact .score-actions {
+  gap: 10px !important;
+}
+
+.daily-left-rail .score-panel.score-panel-compact .score-actions .score-checks {
+  width: auto !important;
+  min-width: 0 !important;
+  height: auto !important;
+  min-height: 0 !important;
+  padding: 3px !important;
+  gap: 0 !important;
+  border: 1px solid rgba(104, 118, 136, 0.26) !important;
+  border-radius: 9px !important;
+  background: linear-gradient(145deg, rgba(247, 250, 253, 0.72), rgba(211, 220, 230, 0.58)) !important;
+  box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.72) !important;
+}
+
+.daily-left-rail .score-panel.score-panel-compact .score-actions .score-toggle-button {
+  border: 0 !important;
+  border-radius: 4px !important;
+  box-shadow: none !important;
+}
+
+.daily-left-rail .score-panel.score-panel-compact .score-actions .score-toggle-button + .score-toggle-button,
+.daily-left-rail .score-panel.score-panel-compact .score-actions .carry-adjust-button + .carry-reset-button,
+.daily-left-rail .score-panel.score-panel-compact .score-actions .carry-reset-button + .carry-adjust-button {
+  border-left: 1px solid rgba(104, 118, 136, 0.2) !important;
 }

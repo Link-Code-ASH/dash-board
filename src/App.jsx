@@ -148,7 +148,7 @@ function normalizeWeeklyPlan(plan, categories) {
 }
 
 function normalizeDateMarkers(markers) {
-  return Array.from({ length: 12 }, (_, index) => ({
+  return Array.from({ length: 8 }, (_, index) => ({
     text: markers?.[index]?.text || "",
     date: markers?.[index]?.date || "",
   }));
@@ -953,7 +953,7 @@ function App() {
   }, []);
 
   useEffect(() => {
-    document.querySelectorAll(".collapsible-panel, .schedule-panel, .memo-panel, .today-plan-panel, .history-panel, .score-meter, .score-details > div, .today-plan-card, .preset-card, .entry-item").forEach((element) => {
+    document.querySelectorAll(".collapsible-panel, .schedule-panel, .memo-panel, .history-panel, .score-meter, .score-details > div, .preset-card, .entry-item").forEach((element) => {
       if (element.dataset.glowReady) return;
       element.dataset.glowReady = "true";
       element.addEventListener("pointermove", (event) => {
@@ -2760,44 +2760,48 @@ function ScorePanel({ carryPenaltyMarked, entryCount, onAdjustCarry, onResetCarr
       h("span", { className: "score-kicker score-kicker-compact" }, "Total Score"),
       h(
         "div",
-        { className: "carry-controls score-carry-controls score-carry-controls-compact" },
-        h("button", { className: "carry-adjust-button", type: "button", title: "Decrease Carry", "aria-label": "Decrease Carry", onClick: () => onAdjustCarry(-1) }, "-"),
-        h("button", { className: "carry-reset-button", type: "button", title: "Reset Carry", "aria-label": "Reset Carry", onClick: onResetCarry }, "R"),
-        h("button", { className: "carry-adjust-button", type: "button", title: "Increase Carry", "aria-label": "Increase Carry", onClick: () => onAdjustCarry(1) }, "+"),
+        { className: "score-actions" },
+        h(
+          "div",
+          { className: "score-checks score-checks-compact" },
+          h(
+            "button",
+            {
+              className: `score-toggle-button score-toggle-good ${routineTried ? "active" : ""}`,
+              type: "button",
+              "aria-pressed": String(routineTried),
+              "aria-label": "Tried today",
+              title: "Tried today",
+              onClick: onToggleAttempt,
+            },
+            h("span", { className: "score-toggle-mark", "aria-hidden": "true" }),
+          ),
+          h(
+            "button",
+            {
+              className: `score-toggle-button score-toggle-bad ${carryPenaltyMarked ? "active" : ""}`,
+              type: "button",
+              "aria-pressed": String(carryPenaltyMarked),
+              "aria-label": "Add -2 Carry",
+              title: "Add -2 Carry",
+              onClick: onToggleCarryPenalty,
+            },
+            h("span", { className: "score-toggle-mark", "aria-hidden": "true" }),
+          ),
+        ),
+        h(
+          "div",
+          { className: "carry-controls score-carry-controls score-carry-controls-compact" },
+          h("button", { className: "carry-adjust-button", type: "button", title: "Decrease Carry", "aria-label": "Decrease Carry", onClick: () => onAdjustCarry(-1) }, "-"),
+          h("button", { className: "carry-reset-button", type: "button", title: "Reset Carry", "aria-label": "Reset Carry", onClick: onResetCarry }, "R"),
+          h("button", { className: "carry-adjust-button", type: "button", title: "Increase Carry", "aria-label": "Increase Carry", onClick: () => onAdjustCarry(1) }, "+"),
+        ),
       ),
       h(
         "div",
         { className: `score-number score-number-compact ${totalClass}` },
         h("span", { className: `score-number-sign ${totalSign ? "" : "empty"}` }, totalSign),
         h("span", { className: "score-number-digits" }, totalMagnitude),
-      ),
-      h(
-        "div",
-        { className: "score-checks score-checks-compact" },
-        h(
-          "button",
-          {
-            className: `score-toggle-button score-toggle-good ${routineTried ? "active" : ""}`,
-            type: "button",
-            "aria-pressed": String(routineTried),
-            "aria-label": "Tried today",
-            title: "Tried today",
-            onClick: onToggleAttempt,
-          },
-          h("span", { className: "score-toggle-mark", "aria-hidden": "true" }),
-        ),
-        h(
-          "button",
-          {
-            className: `score-toggle-button score-toggle-bad ${carryPenaltyMarked ? "active" : ""}`,
-            type: "button",
-            "aria-pressed": String(carryPenaltyMarked),
-            "aria-label": "Add -2 Carry",
-            title: "Add -2 Carry",
-            onClick: onToggleCarryPenalty,
-          },
-          h("span", { className: "score-toggle-mark", "aria-hidden": "true" }),
-        ),
       ),
       h("div", { className: "score-track score-track-compact", "aria-hidden": "true" }, h("span", { className: fillClass, style: { width: `${Math.max(0, Math.min(100, 50 + scoreInfo.total * 2))}%` } })),
     ),
@@ -2840,6 +2844,7 @@ function DateMarkerPanel({ dateMarkers, selectedDate, updateDateMarker }) {
             className: "date-marker-date",
             type: "date",
             value: marker.date,
+            onClick: (event) => event.currentTarget.showPicker?.(),
             onChange: (event) => updateDateMarker(index, "date", event.target.value),
           }),
           h("span", { className: `date-marker-dday ${marker.date ? "" : "empty"}` }, formatDDay(marker.date, selectedDate)),
@@ -2985,9 +2990,11 @@ function PlanRow({ cards, className = "", title }) {
 function PlanCard({ label, nScore, onToggle, scoreRange, selectedChoice, value, yScore }) {
   const selectedScore = scoreNumber(selectedChoice, 0);
   const isRangeCard = Array.isArray(scoreRange);
+  const isNegativeSelection = selectedChoice === "N" || (isRangeCard && selectedScore < 0);
+  const selectionClass = selectedChoice ? (isNegativeSelection ? "selected-negative" : "selected-positive") : "";
   return h(
     "article",
-    { className: `today-plan-card ${isRangeCard ? "range-card" : ""} ${selectedChoice ? "done" : ""} ${selectedChoice === "N" || (isRangeCard && selectedScore < 0) ? "no" : ""}` },
+    { className: `today-plan-card ${isRangeCard ? "range-card" : ""} ${selectionClass}` },
     h("span", { className: "edge-light", "aria-hidden": "true" }),
     h("span", { className: "plan-label" }, label),
     h("strong", { className: "plan-title" }, value),
@@ -2998,7 +3005,7 @@ function PlanCard({ label, nScore, onToggle, scoreRange, selectedChoice, value, 
           ...scoreRange.map((score) =>
             h(
               "button",
-              { className: `range-score-button ${String(score) === selectedChoice ? "selected" : ""}`, key: score, type: "button", onClick: () => onToggle(score) },
+              { className: `range-score-button ${scoreNumber(score) < 0 ? "no" : "yes"} ${String(score) === selectedChoice ? "selected" : ""}`, key: score, type: "button", onClick: () => onToggle(score) },
               formatScore(score),
             ),
           ),
