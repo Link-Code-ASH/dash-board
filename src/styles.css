@@ -11528,3 +11528,112 @@ html body #root .app-shell * {
 .daily-left-rail .score-panel.score-panel-compact .score-actions .carry-reset-button + .carry-adjust-button {
   border-left: 1px solid rgba(104, 118, 136, 0.2) !important;
 }
+
+/* Weekly day headers: neutral glass instead of the old yellow paper treatment. */
+html body #root .app-shell .weekly-panel .weekly-day,
+html body #root .app-shell .weekly-panel .weekly-day.active {
+  min-height: 58px !important;
+  border: 1px solid rgba(102, 117, 136, 0.28) !important;
+  border-bottom-color: rgba(84, 98, 117, 0.34) !important;
+  border-radius: 7px !important;
+  background:
+    linear-gradient(145deg, rgba(240, 244, 249, 0.88), rgba(191, 203, 217, 0.72)),
+    #c8d3df !important;
+  background-image: linear-gradient(145deg, rgba(240, 244, 249, 0.88), rgba(191, 203, 217, 0.72)) !important;
+  color: #263140 !important;
+  font-size: 1rem !important;
+  font-weight: 700 !important;
+  text-shadow: none !important;
+  box-shadow:
+    5px 5px 11px rgba(73, 87, 105, 0.13),
+    -4px -4px 9px rgba(255, 255, 255, 0.62),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.68) !important;
+}
+
+html body #root .app-shell .weekly-panel .weekly-day.active {
+  border-color: rgba(92, 111, 151, 0.46) !important;
+  background:
+    linear-gradient(145deg, rgba(218, 227, 239, 0.96), rgba(166, 181, 204, 0.86)),
+    #b4c1d2 !important;
+  background-image: linear-gradient(145deg, rgba(218, 227, 239, 0.96), rgba(166, 181, 204, 0.86)) !important;
+  box-shadow:
+    inset 3px 3px 8px rgba(73, 87, 105, 0.13),
+    inset -3px -3px 7px rgba(255, 255, 255, 0.52) !important;
+  color: #1f2c3e !important;
+}
+
+/* Keep schedule dates legible on the light glass cards. */
+html body #root .app-shell .schedule-panel .schedule-date b,
+html body #root .app-shell .schedule-date b {
+  color: #18212e !important;
+  font-weight: 700 !important;
+  text-shadow: none !important;
+}
+
+html body #root .app-shell .schedule-panel .schedule-date span,
+html body #root .app-shell .schedule-date span {
+  color: #4a586a !important;
+  font-weight: 600 !important;
+  text-shadow: none !important;
+}
+
+html body #root .app-shell .schedule-day-items {
+  gap: 3px !important;
+}
+
+html body #root .app-shell .schedule-day-items span {
+  padding-top: 4px !important;
+  padding-bottom: 4px !important;
+}
+
+/* Rebuilt dashboard header: bright glass surface with high-contrast date controls. */
+html body #root .app-shell .topbar {
+  min-height: 126px !important;
+  padding: 20px 22px !important;
+  border: 1px solid rgba(111, 126, 145, 0.3) !important;
+  border-radius: 10px !important;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.92), rgba(225, 233, 242, 0.78) 54%, rgba(202, 214, 228, 0.7)) !important;
+  background-image: linear-gradient(135deg, rgba(255, 255, 255, 0.92), rgba(225, 233, 242, 0.78) 54%, rgba(202, 214, 228, 0.7)) !important;
+  box-shadow:
+    14px 14px 30px rgba(76, 90, 108, 0.15),
+    -10px -10px 22px rgba(255, 255, 255, 0.7),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.86) !important;
+  color: #172131 !important;
+}
+
+html body #root .app-shell .topbar::after {
+  display: none !important;
+  content: none !important;
+}
+
+html body #root .app-shell .topbar .eyebrow {
+  margin-bottom: 8px !important;
+  padding: 5px 9px !important;
+  border: 1px solid rgba(99, 115, 134, 0.26) !important;
+  border-left-color: rgba(99, 115, 134, 0.26) !important;
+  border-radius: 5px !important;
+  background: rgba(233, 239, 246, 0.72) !important;
+  box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.68) !important;
+  color: #4a596b !important;
+  font-size: 0.78rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.12em !important;
+  text-shadow: none !important;
+}
+
+html body #root .app-shell .topbar h1 {
+  color: #172131 !important;
+  font-size: clamp(2.35rem, 5vw, 4.4rem) !important;
+  font-weight: 800 !important;
+  line-height: 1 !important;
+  text-shadow: none !important;
+}
+
+html body #root .app-shell .topbar .day-switcher {
+  border-color: rgba(111, 126, 145, 0.28) !important;
+  background: rgba(244, 247, 251, 0.72) !important;
+  box-shadow:
+    inset 1px 1px 0 rgba(255, 255, 255, 0.78),
+    4px 4px 10px rgba(76, 90, 108, 0.1) !important;
+}
