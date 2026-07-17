@@ -12388,3 +12388,936 @@ html body #root .app-shell .topbar .day-switcher {
     -6px -6px 15px rgba(255, 255, 255, 0.44),
     inset 1px 1px 0 rgba(255, 255, 255, 0.58) !important;
 }
+
+/* Mindfold block editor */
+.mindfold-notion-view .mindfold-editor {
+  min-height: 760px;
+  padding: clamp(20px, 3vw, 42px) clamp(14px, 5vw, 74px) 54px !important;
+  overflow: visible;
+}
+
+.mindfold-notion-view .mindfold-editor-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 26px;
+  padding: 0 4px 18px;
+  border-bottom: 1px solid rgba(91, 110, 137, 0.14);
+}
+
+.mindfold-notion-view .mindfold-editor-head h2 {
+  font-size: clamp(1.7rem, 3vw, 2.35rem);
+  color: #26364c !important;
+}
+
+.mindfold-notion-view .mindfold-editor-head p {
+  margin-top: 3px;
+  color: #758196 !important;
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.mindfold-notion-view .mindfold-add-root {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  min-width: 38px;
+  border: 1px solid rgba(255, 255, 255, 0.72) !important;
+  border-radius: 10px;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.82), rgba(207, 220, 236, 0.68)) !important;
+  box-shadow: 4px 5px 10px rgba(77, 92, 113, 0.13), inset 1px 1px 0 rgba(255, 255, 255, 0.78) !important;
+}
+
+.mindfold-notion-view .mindfold-add-root::before,
+.mindfold-notion-view .mindfold-add-root::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 13px;
+  height: 2px;
+  border: 0;
+  border-radius: 999px;
+  background: #52637c;
+  transform: translate(-50%, -50%);
+}
+
+.mindfold-notion-view .mindfold-add-root::after {
+  transform: translate(-50%, -50%) rotate(90deg);
+}
+
+.mindfold-block-tree {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+}
+
+.mindfold-notion-block {
+  position: relative;
+  min-width: 0;
+  border-radius: 7px;
+  transition: opacity 130ms ease, transform 130ms ease;
+}
+
+.mindfold-notion-block.dragging {
+  opacity: 0.38;
+  transform: scale(0.992);
+}
+
+.mindfold-block-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: 30px 22px minmax(0, 1fr);
+  align-items: center;
+  min-height: 42px;
+  padding: 2px 7px 2px 2px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  transition: background 120ms ease, border-color 120ms ease, box-shadow 120ms ease;
+}
+
+.mindfold-notion-block:hover > .mindfold-block-row,
+.mindfold-notion-block:focus-within > .mindfold-block-row {
+  border-color: rgba(255, 255, 255, 0.52);
+  background: rgba(247, 250, 254, 0.42);
+  box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.48);
+}
+
+.mindfold-block-menu-wrap {
+  position: relative;
+  display: grid;
+  place-items: center;
+  align-self: stretch;
+  width: 30px;
+  min-height: 0;
+  padding-top: 0;
+  z-index: 20;
+}
+
+.mindfold-block-menu-trigger {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: 8px;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.8), rgba(211, 222, 236, 0.68));
+  color: #596a82;
+  font-size: 1.08rem;
+  font-weight: 700;
+  line-height: 1;
+  opacity: 0;
+  transform: translateX(3px);
+  box-shadow: 3px 3px 7px rgba(75, 91, 112, 0.12), inset 1px 1px 0 rgba(255, 255, 255, 0.76);
+  transition: opacity 120ms ease, transform 120ms ease, background 120ms ease;
+}
+
+.mindfold-block-menu-wrap:hover .mindfold-block-menu-trigger,
+.mindfold-block-menu-wrap:focus-within .mindfold-block-menu-trigger,
+.mindfold-block-menu-trigger.active {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.mindfold-notion-view.menu-open .mindfold-notion-block:not(.menu-open) .mindfold-block-menu-trigger {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(3px);
+}
+
+.mindfold-block-menu-trigger:hover,
+.mindfold-block-menu-trigger.active {
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.94), rgba(197, 212, 231, 0.78));
+  color: #344b6b;
+}
+
+.mindfold-block-menu {
+  position: absolute;
+  left: 0;
+  top: 35px;
+  display: grid;
+  width: 286px;
+  max-height: min(620px, calc(100dvh - 32px));
+  padding: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.78);
+  border-radius: 10px;
+  background: rgba(235, 242, 250, 0.94);
+  box-shadow: 12px 14px 30px rgba(58, 72, 92, 0.2), inset 1px 1px 0 rgba(255, 255, 255, 0.86);
+  backdrop-filter: blur(18px) saturate(115%);
+  overflow-y: auto;
+  z-index: 100;
+}
+
+.mindfold-menu-label {
+  margin: 1px 4px 7px;
+  color: #7a8799;
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.mindfold-type-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 5px;
+}
+
+.mindfold-block-menu button {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  align-items: center;
+  min-height: 34px;
+  padding: 4px 8px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: transparent;
+  color: #3f4f65;
+  text-align: left;
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.mindfold-block-menu button > span {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  color: #61728a;
+  font-size: 0.95rem;
+}
+
+.mindfold-block-menu button:hover:not(:disabled),
+.mindfold-block-menu button.active {
+  border-color: rgba(255, 255, 255, 0.72);
+  background: rgba(255, 255, 255, 0.56);
+  color: #263b59;
+  box-shadow: 2px 3px 7px rgba(70, 86, 107, 0.08), inset 1px 1px 0 rgba(255, 255, 255, 0.72);
+}
+
+.mindfold-block-menu button:disabled {
+  opacity: 0.36;
+}
+
+.mindfold-block-menu button.danger {
+  color: #a24f60;
+}
+
+.mindfold-menu-divider {
+  height: 1px;
+  margin: 7px 3px;
+  background: rgba(92, 109, 133, 0.13);
+}
+
+.mindfold-toggle-option {
+  margin-top: 6px;
+}
+
+.mindfold-color-label {
+  margin-bottom: 6px;
+}
+
+.mindfold-color-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 6px;
+  padding: 0 3px;
+}
+
+.mindfold-block-menu button.mindfold-color-option {
+  display: grid;
+  grid-template-columns: none;
+  place-items: center;
+  min-height: 30px;
+  padding: 4px;
+  border-color: rgba(87, 106, 132, 0.16);
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.34);
+}
+
+.mindfold-block-menu button.mindfold-color-option::before {
+  content: "";
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: var(--mindfold-swatch);
+  box-shadow: inset 1px 1px 1px rgba(255, 255, 255, 0.42), 0 1px 3px rgba(54, 69, 91, 0.18);
+}
+
+.mindfold-block-menu button.mindfold-color-option:hover,
+.mindfold-block-menu button.mindfold-color-option.active {
+  border-color: var(--mindfold-swatch);
+  background: color-mix(in srgb, var(--mindfold-swatch) 12%, rgba(255, 255, 255, 0.66));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--mindfold-swatch) 30%, transparent);
+}
+
+.mindfold-notion-toggle,
+.mindfold-type-mark {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #64748a;
+}
+
+.mindfold-notion-toggle::before {
+  content: "";
+  width: 0;
+  height: 0;
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+  border-left: 7px solid #61728a;
+  transform-origin: 38% 50%;
+  transition: transform 120ms ease;
+}
+
+.mindfold-notion-toggle.open::before {
+  transform: rotate(90deg);
+}
+
+.mindfold-type-mark {
+  font-size: 1.25rem;
+  font-weight: 800;
+}
+
+.mindfold-block-editor {
+  min-width: 0;
+}
+
+.mindfold-block-input,
+.mindfold-block-preview {
+  width: 100%;
+  min-height: 36px;
+  margin: 0;
+  padding: 6px 8px !important;
+  border: 0 !important;
+  border-radius: 5px;
+  background: transparent !important;
+  color: var(--mindfold-text-color, #2d394a) !important;
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.5 !important;
+  letter-spacing: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  outline: 0;
+}
+
+.mindfold-block-input {
+  display: block;
+  resize: none;
+  overflow: hidden;
+  caret-color: #405f8a;
+}
+
+.mindfold-block-input:focus {
+  background: rgba(255, 255, 255, 0.28) !important;
+  box-shadow: inset 0 0 0 1px rgba(114, 137, 169, 0.13) !important;
+}
+
+.mindfold-block-preview {
+  cursor: grab;
+}
+
+.mindfold-block-preview:active {
+  cursor: grabbing;
+}
+
+.mindfold-empty-placeholder {
+  color: #98a2b1;
+}
+
+.mindfold-notion-block.type-heading-1 > .mindfold-block-row .mindfold-block-input,
+.mindfold-notion-block.type-heading-1 > .mindfold-block-row .mindfold-block-preview,
+.mindfold-notion-block.type-heading-2 > .mindfold-block-row .mindfold-block-input,
+.mindfold-notion-block.type-heading-2 > .mindfold-block-row .mindfold-block-preview,
+.mindfold-notion-block.type-heading-3 > .mindfold-block-row .mindfold-block-input,
+.mindfold-notion-block.type-heading-3 > .mindfold-block-row .mindfold-block-preview,
+.mindfold-notion-block.type-heading-4 > .mindfold-block-row .mindfold-block-input,
+.mindfold-notion-block.type-heading-4 > .mindfold-block-row .mindfold-block-preview {
+  color: var(--mindfold-text-color, #24344b) !important;
+  font-weight: 700;
+  line-height: 1.3 !important;
+}
+
+.mindfold-notion-block.type-heading-1 > .mindfold-block-row .mindfold-block-input,
+.mindfold-notion-block.type-heading-1 > .mindfold-block-row .mindfold-block-preview {
+  min-height: 54px;
+  font-size: 2rem;
+}
+
+.mindfold-notion-block.type-heading-2 > .mindfold-block-row .mindfold-block-input,
+.mindfold-notion-block.type-heading-2 > .mindfold-block-row .mindfold-block-preview {
+  min-height: 49px;
+  font-size: 1.65rem;
+}
+
+.mindfold-notion-block.type-heading-3 > .mindfold-block-row .mindfold-block-input,
+.mindfold-notion-block.type-heading-3 > .mindfold-block-row .mindfold-block-preview {
+  min-height: 44px;
+  font-size: 1.35rem;
+}
+
+.mindfold-notion-block.type-heading-4 > .mindfold-block-row .mindfold-block-input,
+.mindfold-notion-block.type-heading-4 > .mindfold-block-row .mindfold-block-preview {
+  min-height: 40px;
+  font-size: 1.15rem;
+}
+
+.mindfold-notion-block.type-callout > .mindfold-block-row {
+  margin: 3px 0;
+  border-color: rgba(255, 255, 255, 0.58);
+  background: linear-gradient(145deg, rgba(229, 238, 249, 0.64), rgba(210, 222, 238, 0.5));
+  box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.58);
+}
+
+.mindfold-notion-block.type-callout > .mindfold-block-row .mindfold-type-mark::before {
+  content: "";
+  width: 9px;
+  height: 9px;
+  border: 2px solid #7790b1;
+  border-radius: 3px;
+}
+
+.mindfold-notion-block.type-quote > .mindfold-block-row {
+  border-left: 3px solid rgba(91, 111, 139, 0.55);
+  border-radius: 2px 7px 7px 2px;
+}
+
+.mindfold-notion-block.type-quote > .mindfold-block-row .mindfold-block-input,
+.mindfold-notion-block.type-quote > .mindfold-block-row .mindfold-block-preview {
+  color: var(--mindfold-text-color, #526078) !important;
+  font-style: italic;
+}
+
+.mindfold-block-children {
+  display: grid;
+  gap: 2px;
+  margin-left: 45px;
+  padding-left: 12px;
+  border-left: 1px solid rgba(102, 122, 150, 0.16);
+}
+
+.mindfold-add-child,
+.mindfold-root-ghost-add {
+  min-height: 32px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #7d899a;
+  text-align: left;
+  font-size: 0.82rem;
+  font-weight: 600;
+  opacity: 0.42;
+}
+
+.mindfold-add-child {
+  margin-left: 54px;
+  padding-left: 12px;
+}
+
+.mindfold-root-ghost-add {
+  margin: 5px 0 0 54px;
+  padding: 0 10px;
+}
+
+.mindfold-notion-block:hover > .mindfold-add-child,
+.mindfold-add-child:hover,
+.mindfold-root-ghost-add:hover {
+  background: rgba(255, 255, 255, 0.28);
+  color: #53657d;
+  opacity: 1;
+}
+
+.mindfold-mask {
+  display: inline;
+  border-radius: 4px;
+  background: rgba(55, 66, 82, 0.88);
+  color: transparent;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+  padding: 0 3px;
+  cursor: default;
+  transition: color 140ms ease, background 140ms ease, box-shadow 140ms ease;
+}
+
+.mindfold-mask:hover,
+.mindfold-mask:focus {
+  background: rgba(194, 208, 226, 0.62);
+  color: #26364b;
+  box-shadow: inset 0 -1px 0 rgba(85, 105, 132, 0.2);
+  outline: 0;
+}
+
+.mindfold-notion-block.drop-before::before,
+.mindfold-notion-block.drop-after::after {
+  content: "";
+  position: absolute;
+  left: 36px;
+  right: 8px;
+  height: 2px;
+  border-radius: 999px;
+  background: #728bb0;
+  box-shadow: 0 0 6px rgba(114, 139, 176, 0.28);
+  z-index: 30;
+}
+
+.mindfold-notion-block.drop-before::before {
+  top: -2px;
+}
+
+.mindfold-notion-block.drop-after::after {
+  bottom: -2px;
+}
+
+.mindfold-notion-block.drop-inside > .mindfold-block-row {
+  border-color: rgba(105, 132, 171, 0.48);
+  background: rgba(212, 225, 242, 0.58);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.4);
+}
+
+.mindfold-block-handle,
+.mindfold-toggle-block,
+.mindfold-toggle-line,
+.mindfold-toggle-body,
+.mindfold-ghost-add,
+.mindfold-inline-add {
+  background-image: none;
+}
+
+@media (max-width: 640px) {
+  .mindfold-notion-view .mindfold-editor {
+    min-height: 680px;
+    padding: 18px 7px 40px !important;
+  }
+
+  .mindfold-notion-view .mindfold-editor-head {
+    margin: 0 7px 18px;
+    padding-bottom: 14px;
+  }
+
+  .mindfold-block-row {
+    grid-template-columns: 30px 20px minmax(0, 1fr);
+    padding-right: 2px;
+  }
+
+  .mindfold-block-menu-trigger {
+    opacity: 0.58;
+    transform: none;
+  }
+
+  .mindfold-block-menu {
+    width: min(286px, calc(100vw - 32px));
+  }
+
+  .mindfold-block-children {
+    margin-left: 28px;
+    padding-left: 5px;
+  }
+
+  .mindfold-add-child,
+  .mindfold-root-ghost-add {
+    margin-left: 38px;
+  }
+}
+
+/* Mindfold uses the full available monitor instead of the dashboard max width. */
+.app-shell.hub-view-mindfold {
+  width: 100% !important;
+  max-width: none !important;
+  min-height: 100dvh;
+  margin: 0 !important;
+  padding: clamp(10px, 1.4vw, 22px) !important;
+  box-sizing: border-box;
+}
+
+.hub-view-mindfold .hub-bar {
+  width: 100%;
+  margin-inline: 0;
+  box-sizing: border-box;
+}
+
+.hub-view-mindfold .mindfold-document-view {
+  width: 100% !important;
+  max-width: none !important;
+  margin: 12px 0 0 !important;
+}
+
+.hub-view-mindfold .mindfold-notion-view .mindfold-editor {
+  width: 100%;
+  min-height: calc(100dvh - 118px);
+  box-sizing: border-box;
+}
+
+.mindfold-notion-view .mindfold-editor-head {
+  justify-content: flex-start;
+}
+
+/* A compact menu glyph replaces the add-shaped block options control. */
+.mindfold-menu-glyph {
+  display: block;
+  width: 14px;
+  height: 11px;
+  background:
+    linear-gradient(#596a82, #596a82) left top / 14px 1.5px no-repeat,
+    linear-gradient(#596a82, #596a82) left center / 10px 1.5px no-repeat,
+    linear-gradient(#596a82, #596a82) left bottom / 14px 1.5px no-repeat;
+}
+
+.mindfold-block-menu-trigger:hover .mindfold-menu-glyph,
+.mindfold-block-menu-trigger.active .mindfold-menu-glyph {
+  background:
+    linear-gradient(#344b6b, #344b6b) left top / 14px 1.5px no-repeat,
+    linear-gradient(#344b6b, #344b6b) left center / 10px 1.5px no-repeat,
+    linear-gradient(#344b6b, #344b6b) left bottom / 14px 1.5px no-repeat;
+}
+
+@media (max-width: 640px) {
+  .app-shell.hub-view-mindfold {
+    padding: 7px !important;
+  }
+
+  .hub-view-mindfold .mindfold-document-view {
+    margin-top: 8px !important;
+  }
+
+  .hub-view-mindfold .mindfold-notion-view .mindfold-editor {
+    min-height: calc(100dvh - 96px);
+  }
+}
+
+/* Mindfold page tabs replace the old title header. */
+.mindfold-tabs-shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+  padding: 0 2px 12px;
+  border-bottom: 1px solid rgba(91, 110, 137, 0.14);
+}
+
+.mindfold-tabs {
+  display: flex;
+  align-items: end;
+  gap: 5px;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(105, 122, 148, 0.24) transparent;
+}
+
+.mindfold-tab-item {
+  flex: 0 0 auto;
+  min-width: 84px;
+  max-width: 190px;
+  border: 1px solid rgba(255, 255, 255, 0.48);
+  border-bottom-color: rgba(103, 121, 147, 0.18);
+  border-radius: 8px 8px 4px 4px;
+  background: rgba(220, 230, 242, 0.44);
+  box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.5);
+  transition: background 120ms ease, border-color 120ms ease, box-shadow 120ms ease, opacity 120ms ease;
+}
+
+.mindfold-tab-item:hover {
+  background: rgba(238, 244, 251, 0.66);
+}
+
+.mindfold-tab-item.active {
+  border-color: rgba(255, 255, 255, 0.72);
+  border-bottom-color: rgba(101, 123, 156, 0.42);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.82), rgba(203, 217, 235, 0.7));
+  box-shadow: 3px 4px 9px rgba(72, 88, 110, 0.11), inset 1px 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.mindfold-tab-item.dragging {
+  opacity: 0.42;
+}
+
+.mindfold-tab-button,
+.mindfold-tab-input {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  height: 36px;
+  padding: 5px 12px !important;
+  border: 0 !important;
+  background: transparent !important;
+  color: #485a72 !important;
+  overflow: hidden;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.9rem;
+  font-weight: 700;
+  line-height: 1.4 !important;
+  outline: 0;
+}
+
+.mindfold-tab-item.active .mindfold-tab-button,
+.mindfold-tab-item.active .mindfold-tab-input {
+  color: #263c5b !important;
+}
+
+.mindfold-tab-input {
+  box-shadow: inset 0 -2px 0 rgba(83, 108, 145, 0.42) !important;
+}
+
+.mindfold-tab-tools {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.mindfold-tab-tools button {
+  min-width: 48px;
+  height: 34px;
+  padding: 4px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.66);
+  border-radius: 8px;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.76), rgba(207, 220, 236, 0.64));
+  color: #50627a;
+  box-shadow: 3px 4px 8px rgba(75, 91, 112, 0.11), inset 1px 1px 0 rgba(255, 255, 255, 0.7);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.mindfold-tab-tools button:hover:not(:disabled) {
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.9), rgba(195, 211, 231, 0.72));
+  color: #314a6b;
+}
+
+.mindfold-tab-tools button.danger {
+  color: #9b5362;
+}
+
+.mindfold-tab-tools button:disabled {
+  opacity: 0.34;
+}
+
+@media (max-width: 640px) {
+  .mindfold-tabs-shell {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 7px;
+    padding: 0 4px 10px;
+  }
+
+  .mindfold-tab-tools {
+    justify-content: flex-end;
+  }
+
+  .mindfold-tab-tools button {
+    min-width: 44px;
+    height: 32px;
+    padding-inline: 8px;
+  }
+}
+
+/* Collapsible page sidebar for the Mindfold workspace. */
+.mindfold-workspace {
+  position: relative;
+  display: grid;
+  grid-template-columns: 248px minmax(0, 1fr);
+  align-items: stretch;
+  gap: 12px;
+  width: 100%;
+  min-height: calc(100dvh - 118px);
+}
+
+.mindfold-workspace.sidebar-closed {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.mindfold-page-sidebar {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 13px 10px 11px;
+  border: 1px solid rgba(255, 255, 255, 0.68);
+  border-radius: 9px;
+  background: linear-gradient(145deg, rgba(239, 245, 251, 0.76), rgba(204, 217, 233, 0.64));
+  box-shadow: 8px 9px 20px rgba(75, 91, 112, 0.13), inset 1px 1px 0 rgba(255, 255, 255, 0.74);
+  backdrop-filter: blur(15px) saturate(108%);
+  overflow: hidden;
+}
+
+.mindfold-workspace.sidebar-closed .mindfold-page-sidebar {
+  display: none;
+}
+
+.mindfold-sidebar-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 38px;
+  margin-bottom: 11px;
+  padding: 0 3px 9px 8px;
+  border-bottom: 1px solid rgba(87, 106, 133, 0.14);
+}
+
+.mindfold-sidebar-head strong {
+  color: #3a4c64;
+  font-size: 0.96rem;
+  font-weight: 700;
+}
+
+.mindfold-sidebar-toggle {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: 8px;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.82), rgba(207, 220, 236, 0.68));
+  color: #52637a;
+  box-shadow: 3px 4px 8px rgba(75, 91, 112, 0.12), inset 1px 1px 0 rgba(255, 255, 255, 0.74);
+}
+
+.mindfold-sidebar-toggle:hover {
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.94), rgba(195, 212, 232, 0.76));
+}
+
+.mindfold-sidebar-glyph {
+  position: relative;
+  display: block;
+  width: 16px;
+  height: 14px;
+  border: 1.5px solid #5b6d84;
+  border-radius: 3px;
+  box-sizing: border-box;
+}
+
+.mindfold-sidebar-glyph::before {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 0;
+  bottom: 0;
+  border-right: 1.5px solid #5b6d84;
+}
+
+.mindfold-sidebar-open-button {
+  position: absolute;
+  left: 14px;
+  top: 14px;
+  z-index: 45;
+}
+
+.mindfold-workspace.sidebar-closed .mindfold-document {
+  margin-top: 42px;
+}
+
+.mindfold-page-sidebar .mindfold-tabs {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 5px;
+  width: 100%;
+  min-height: 0;
+  padding: 1px 2px 8px;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.mindfold-page-sidebar .mindfold-tab-item {
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+  border-radius: 7px;
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+}
+
+.mindfold-page-sidebar .mindfold-tab-item:hover {
+  border-color: rgba(255, 255, 255, 0.48);
+  background: rgba(247, 250, 254, 0.42);
+}
+
+.mindfold-page-sidebar .mindfold-tab-item.active {
+  border-color: rgba(255, 255, 255, 0.68);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.76), rgba(196, 212, 232, 0.66));
+  box-shadow: 3px 4px 9px rgba(72, 88, 110, 0.1), inset 1px 1px 0 rgba(255, 255, 255, 0.72);
+}
+
+.mindfold-page-sidebar .mindfold-tab-button,
+.mindfold-page-sidebar .mindfold-tab-input {
+  height: 38px;
+  padding-inline: 11px !important;
+  text-align: left;
+}
+
+.mindfold-page-sidebar .mindfold-tab-tools {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 5px;
+  margin-top: 8px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(87, 106, 133, 0.14);
+}
+
+.mindfold-page-sidebar .mindfold-tab-tools button {
+  min-width: 0;
+  padding-inline: 5px;
+}
+
+.mindfold-workspace > .mindfold-editor {
+  min-width: 0;
+  min-height: 100%;
+}
+
+.mindfold-sidebar-backdrop {
+  display: none;
+}
+
+@media (max-width: 760px) {
+  .mindfold-workspace,
+  .mindfold-workspace.sidebar-closed {
+    display: block;
+    min-height: calc(100dvh - 96px);
+  }
+
+  .mindfold-page-sidebar {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: min(286px, calc(100vw - 54px));
+    min-height: 520px;
+    z-index: 100;
+  }
+
+  .mindfold-sidebar-backdrop {
+    position: absolute;
+    left: min(286px, calc(100vw - 54px));
+    right: 0;
+    top: 0;
+    bottom: 0;
+    display: block;
+    border: 0;
+    border-radius: 9px;
+    background: rgba(74, 88, 108, 0.2);
+    backdrop-filter: blur(2px);
+    z-index: 90;
+  }
+
+  .mindfold-sidebar-open-button {
+    left: 10px;
+    top: 10px;
+  }
+
+  .mindfold-workspace.sidebar-closed .mindfold-document {
+    margin-top: 40px;
+  }
+}
