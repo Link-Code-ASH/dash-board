@@ -749,7 +749,6 @@ function App() {
     schoolDaily: false,
     daily: false,
     weekly: false,
-    record: false,
     calendar: false,
   });
   const [openMonths, setOpenMonths] = useState(() => new Set([new Date().getMonth()]));
@@ -1072,20 +1071,6 @@ function App() {
     });
   };
 
-  const removeEntry = (id) => {
-    saveData((draft) => {
-      draft.days[selectedDate] = getEntries().filter((entry) => entry.id !== id);
-      return draft;
-    });
-  };
-
-  const clearSelectedDay = () => {
-    saveData((draft) => {
-      draft.days[selectedDate] = [];
-      return draft;
-    });
-  };
-
   const setActiveMemo = (memoId) => {
     saveData((draft) => {
       draft.memos.activeMemoId = memoId;
@@ -1399,7 +1384,7 @@ function App() {
         title: `Memo ${draft[sectionKey].notes.length + 1}`,
         content: "",
         open: true,
-        color: schoolNoteColors[draft[sectionKey].notes.length % schoolNoteColors.length],
+        color: "lavender",
       });
       return draft;
     });
@@ -1690,13 +1675,6 @@ function App() {
       updateCategory,
       updateWeeklyPlan,
       weeklyPlan: data.weeklyPlan,
-    }),
-    h(RecordPanel, {
-      clearSelectedDay,
-      entries,
-      isOpen: openPanels.record,
-      onToggle: () => togglePanel("record"),
-      removeEntry,
     }),
     h(HistoryPanel, { carryPenalties: data.carryPenalties, flaggedDate: data.flaggedDate, getDayTotal, onToggleFlag: toggleFlaggedDate, routineAttempts: data.routineAttempts, selectedDate }),
   );
@@ -2089,7 +2067,7 @@ function SchoolView({ addSchoolNote, attachMemoImage, moveSchoolNote, notes, rem
                       setOpenColorNoteId((current) => (current === note.id ? "" : note.id));
                     },
                   },
-                  h("img", { alt: "", "aria-hidden": "true", src: "./paint-brush.png" }),
+                  h("span", { className: "school-color-icon", "aria-hidden": "true" }),
                 ),
                 openColorNoteId === note.id
                   ? h(
@@ -3153,46 +3131,15 @@ function WeeklyPanel({ addCategory, categories, isOpen, moveCategory, onToggle, 
   });
 }
 
-function RecordPanel({ clearSelectedDay, entries, isOpen, onToggle, removeEntry }) {
-  return h(CollapsiblePanel, {
-    className: "log-panel",
-    controls: "entryList",
-    isOpen,
-    onToggle,
-    title: "Record",
-    children: {
-      actions: h("button", { className: "text-button danger log-tool", type: "button", onClick: clearSelectedDay }, "Clear Today"),
-      body: h(
-        React.Fragment,
-        null,
-        h("div", { className: `empty-state ${entries.length ? "hidden" : ""}` }, h("strong", null, "No records yet."), h("span", null, "Press Y/N on Daily or Weekly cards to record points.")),
-        h(
-          "ul",
-          { className: "entry-list", id: "entryList" },
-          [...entries].reverse().map((entry) =>
-            h(
-              "li",
-              { className: "entry-item", key: entry.id },
-              h("div", { className: "entry-main" }, h("span", { className: "entry-name" }, entry.name), h("span", { className: "entry-time" }, new Intl.DateTimeFormat("en-US", { hour: "2-digit", minute: "2-digit" }).format(new Date(entry.createdAt)))),
-              h("strong", { className: `entry-score ${entry.score > 0 ? "plus" : "minus"}` }, formatScore(entry.score)),
-              h("button", { className: "icon-button remove-entry", type: "button", title: "Delete", "aria-label": "Delete", onClick: () => removeEntry(entry.id) }, "\u00d7"),
-            ),
-          ),
-        ),
-      ),
-    },
-  });
-}
-
 function HistoryPanel({ carryPenalties, flaggedDate, getDayTotal, onToggleFlag, routineAttempts, selectedDate }) {
   const days = Array.from({ length: 7 }, (_, index) => {
     const date = new Date(`${selectedDate}T00:00:00`);
-    date.setDate(date.getDate() - (6 - index));
+    date.setDate(date.getDate() + index - 3);
     const key = toDateKey(date);
     const penalized = Boolean(carryPenalties?.[key]);
     return { key, flagged: key === flaggedDate, penalized, total: getDayTotal(key), tried: !penalized && Boolean(routineAttempts?.[key]) };
   });
-  const maxAbs = Math.max(10, ...days.map((day) => Math.abs(day.total)));
+  const scoreScaleMax = 25;
   let uncheckedSinceFlag = 0;
   if (flaggedDate && flaggedDate < selectedDate) {
     let cursor = flaggedDate;
@@ -3210,7 +3157,7 @@ function HistoryPanel({ carryPenalties, flaggedDate, getDayTotal, onToggleFlag, 
     h(
       "div",
       { className: "section-heading history-heading" },
-      h("h2", null, "Last 7 Days"),
+      h("h2", null, "Weekly Overview"),
       h(
         "div",
         { className: "history-heading-actions" },
@@ -3234,10 +3181,10 @@ function HistoryPanel({ carryPenalties, flaggedDate, getDayTotal, onToggleFlag, 
       days.map((day) =>
         h(
           "div",
-          { className: "history-day", key: day.key },
+          { className: `history-day ${day.key === selectedDate ? "today" : ""}`, key: day.key },
           h(
             "div",
-            { className: `history-fill ${day.total > 0 ? "plus" : day.total < 0 ? "minus" : ""}`, style: { height: `${Math.max(16, (Math.abs(day.total) / maxAbs) * 112)}px` } },
+            { className: `history-fill ${day.total > 0 ? "plus" : day.total < 0 ? "minus" : ""}`, style: { height: `${Math.max(16, (Math.min(scoreScaleMax, Math.abs(day.total)) / scoreScaleMax) * 112)}px` } },
             h("span", { className: `history-flag ${day.flagged ? "active" : ""}`, title: day.flagged ? "Flagged date" : "" }, day.flagged ? "\u2691" : ""),
             h("span", { className: `history-attempt ${day.penalized ? "history-penalty checked" : day.tried ? "checked" : ""}`, title: day.penalized ? "Carry -2 marked" : day.tried ? "Routine tried" : "Not checked" }, day.penalized || day.tried ? "\u2713" : ""),
           ),

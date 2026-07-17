@@ -9040,10 +9040,20 @@ body::after,
     0 6px 12px rgba(62, 75, 94, 0.18) !important;
 }
 
-.history-fill.plus,
+.history-fill.plus {
+  border-color: rgba(49, 130, 91, 0.42) !important;
+  background: linear-gradient(180deg, #75c79d, #3d8f69) !important;
+  box-shadow:
+    inset 1px 1px 0 rgba(231, 255, 241, 0.42),
+    0 6px 14px rgba(47, 128, 88, 0.2) !important;
+}
+
 .history-fill.minus {
-  background:
-    linear-gradient(180deg, #8b9aab, #6e7d90) !important;
+  border-color: rgba(171, 66, 84, 0.4) !important;
+  background: linear-gradient(180deg, #df8791, #b84d60) !important;
+  box-shadow:
+    inset 1px 1px 0 rgba(255, 235, 238, 0.4),
+    0 6px 14px rgba(164, 60, 79, 0.2) !important;
 }
 
 .history-flag,
@@ -9388,52 +9398,88 @@ body::after,
   height: 30px !important;
   min-width: 30px !important;
   padding: 0 !important;
-  border: 1px solid rgba(82, 96, 115, 0.22) !important;
+  border: 1px solid rgba(184, 132, 35, 0.34) !important;
   border-radius: 999px !important;
-  background:
-    linear-gradient(145deg, rgba(202, 212, 225, 0.88), rgba(174, 188, 205, 0.74)) !important;
+  background: linear-gradient(145deg, rgba(255, 235, 172, 0.9), rgba(224, 190, 102, 0.72)) !important;
   box-shadow:
     4px 4px 10px rgba(62, 75, 94, 0.14),
     -3px -3px 8px rgba(224, 231, 239, 0.42) !important;
-  color: #344257 !important;
+  color: #8e6418 !important;
   line-height: 1 !important;
 }
 
 .history-panel .flag-button.active {
-  border-color: rgba(91, 111, 178, 0.38) !important;
-  background:
-    linear-gradient(145deg, rgba(190, 203, 221, 0.92), rgba(159, 176, 197, 0.84)) !important;
+  border-color: rgba(178, 116, 16, 0.58) !important;
+  background: linear-gradient(145deg, #ffe58e, #dca52f) !important;
   box-shadow:
-    inset 3px 3px 7px rgba(62, 75, 94, 0.14),
-    inset -3px -3px 7px rgba(224, 231, 239, 0.34),
-    0 0 12px rgba(91, 111, 178, 0.16) !important;
+    inset 2px 2px 5px rgba(137, 91, 15, 0.14),
+    inset -2px -2px 5px rgba(255, 248, 214, 0.44),
+    0 5px 14px rgba(174, 111, 19, 0.22) !important;
+  color: #6e4710 !important;
+}
+
+.history-panel .history-heading-actions > span {
+  color: #806126 !important;
+  font-weight: 650 !important;
 }
 
 .history-panel .history-day {
   position: relative !important;
-  grid-template-rows: 118px 18px 18px !important;
+  grid-template-rows: 124px 20px 20px !important;
+  gap: 4px !important;
+  padding: 8px 4px 6px !important;
+  border: 1px solid rgba(93, 108, 127, 0.14) !important;
+  border-radius: 10px !important;
+  background: rgba(210, 222, 237, 0.38) !important;
+  box-shadow:
+    inset 0 4px 0 rgba(105, 133, 169, 0.24),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.42) !important;
   overflow: visible !important;
 }
 
+.history-panel .history-day:has(.history-fill.plus) {
+  border-color: rgba(62, 139, 99, 0.22) !important;
+  background: rgba(177, 225, 199, 0.22) !important;
+  box-shadow:
+    inset 0 4px 0 rgba(67, 153, 104, 0.42),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.42) !important;
+}
+
+.history-panel .history-day:has(.history-fill.minus) {
+  border-color: rgba(179, 73, 91, 0.2) !important;
+  background: rgba(235, 183, 191, 0.22) !important;
+  box-shadow:
+    inset 0 4px 0 rgba(191, 77, 96, 0.4),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.42) !important;
+}
+
+.history-panel .history-day.today {
+  border-color: rgba(82, 111, 160, 0.32) !important;
+  background: rgba(184, 205, 232, 0.28) !important;
+  box-shadow:
+    inset 1px 1px 0 rgba(255, 255, 255, 0.5),
+    0 5px 14px rgba(76, 101, 137, 0.1) !important;
+}
+
 .history-panel .history-fill {
-  position: relative !important;
+  position: static !important;
   display: block !important;
   overflow: visible !important;
+  transition: height 180ms ease, background 180ms ease !important;
 }
 
 .history-panel .history-flag,
 .history-panel .history-attempt {
   position: absolute !important;
-  left: 50% !important;
   right: auto !important;
-  top: auto !important;
-  bottom: calc(100% + 5px) !important;
-  transform: translateX(-50%) !important;
+  top: 12px !important;
+  bottom: auto !important;
+  transform: none !important;
   display: inline-grid !important;
   place-items: center !important;
-  width: 16px !important;
-  height: 16px !important;
-  min-width: 16px !important;
+  width: 20px !important;
+  height: 20px !important;
+  min-width: 20px !important;
   padding: 0 !important;
   border: 0 !important;
   border-radius: 0 !important;
@@ -9446,20 +9492,101 @@ body::after,
   pointer-events: none !important;
 }
 
+.history-panel .history-flag {
+  left: calc(50% + 10px) !important;
+}
+
 .history-panel .history-flag.active {
-  color: #344257 !important;
-  filter: drop-shadow(0 2px 3px rgba(62, 75, 94, 0.22)) !important;
+  color: #c58a16 !important;
+  filter: drop-shadow(0 3px 3px rgba(133, 85, 11, 0.28)) !important;
+  transform: rotate(-7deg) !important;
 }
 
 .history-panel .history-attempt {
-  bottom: auto !important;
-  top: calc(100% + 4px) !important;
+  left: calc(50% - 22px) !important;
+  border: 1px solid rgba(92, 108, 127, 0.34) !important;
+  border-radius: 999px !important;
+  background: rgba(239, 243, 248, 0.68) !important;
+  box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.62) !important;
   color: transparent !important;
   font-size: 0.72rem !important;
 }
 
 .history-panel .history-attempt.checked {
-  color: #5f6d7d !important;
+  border-color: rgba(39, 122, 79, 0.48) !important;
+  background: #56a978 !important;
+  box-shadow: 0 3px 8px rgba(43, 119, 76, 0.22) !important;
+  color: #ffffff !important;
+}
+
+.history-panel .history-attempt.history-penalty.checked {
+  border-color: rgba(159, 49, 67, 0.5) !important;
+  background: #c95a6d !important;
+  box-shadow: 0 3px 8px rgba(158, 51, 70, 0.22) !important;
+  color: #ffffff !important;
+}
+
+.history-panel .history-date {
+  color: #303c4d !important;
+  font-weight: 600 !important;
+}
+
+.history-panel .history-score {
+  justify-self: center !important;
+  min-width: 38px !important;
+  padding: 3px 8px 2px !important;
+  border: 1px solid rgba(92, 108, 127, 0.18) !important;
+  border-radius: 999px !important;
+  background: rgba(211, 224, 239, 0.88) !important;
+  color: #354f70 !important;
+}
+
+.history-panel .history-day:has(.history-fill.plus) .history-score {
+  border-color: rgba(49, 130, 91, 0.3) !important;
+  background: rgba(184, 226, 202, 0.7) !important;
+  color: #246341 !important;
+}
+
+.history-panel .history-day:has(.history-fill.minus) .history-score {
+  border-color: rgba(171, 66, 84, 0.3) !important;
+  background: rgba(238, 194, 201, 0.72) !important;
+  color: #8f3142 !important;
+}
+
+@media (max-width: 600px) {
+  .history-panel .history-attempt {
+    left: calc(50% - 10px) !important;
+    top: 12px !important;
+  }
+
+  .history-panel .history-flag {
+    left: calc(50% - 10px) !important;
+    top: 38px !important;
+  }
+}
+
+/* Last 7 Days check marker: enlarged and anchored to the upper-left corner. */
+.history-panel .history-attempt {
+  left: 8px !important;
+  top: 8px !important;
+  width: 30px !important;
+  height: 30px !important;
+  min-width: 30px !important;
+  font-size: 1.08rem !important;
+  line-height: 1 !important;
+  transform: none !important;
+}
+
+@media (max-width: 600px) {
+  .history-panel .history-attempt {
+    left: 3px !important;
+    top: 6px !important;
+  }
+
+  .history-panel .history-flag,
+  .history-panel .history-flag.active {
+    top: 40px !important;
+  }
 }
 
 /* Final font lock */
@@ -11428,7 +11555,7 @@ html body #root .app-shell * {
   transform: none !important;
 }
 
-/* Final score-panel sizing: match the adjacent four-row marker panel. */
+/* Final score-panel layout: reserve separate space for the total and controls. */
 .daily-left-rail .score-panel.score-panel-compact {
   height: 100% !important;
   align-self: stretch !important;
@@ -11437,56 +11564,139 @@ html body #root .app-shell * {
 }
 
 .daily-left-rail .score-panel.score-panel-compact .score-meter.score-meter-compact {
-  grid-template-rows: 26px minmax(0, 1fr) 10px !important;
+  grid-template-columns: minmax(82px, 1fr) 84px !important;
+  grid-template-rows: 22px 68px 8px !important;
   min-height: 135px !important;
   height: 135px !important;
-  padding: 11px !important;
+  padding: 10px 11px !important;
+  column-gap: 8px !important;
+  row-gap: 4px !important;
+}
+
+.daily-left-rail .score-panel.score-panel-compact .score-kicker.score-kicker-compact {
+  grid-column: 1 / -1 !important;
+  grid-row: 1 !important;
+  justify-self: start !important;
+  width: auto !important;
+  max-width: 100% !important;
+  padding: 2px 5px !important;
+  font-size: 0.66rem !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
 }
 
 .daily-left-rail .score-panel.score-panel-compact .score-number.score-number-compact,
 .daily-left-rail .score-panel.score-panel-compact .score-number.score-number-compact.negative,
-.daily-left-rail .score-panel.score-panel-compact .score-number.score-number-compact.neutral,
+.daily-left-rail .score-panel.score-panel-compact .score-number.score-number-compact.neutral {
+  grid-column: 1 !important;
+  grid-row: 2 !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 68px !important;
+  height: 68px !important;
+  font-size: 50px !important;
+  line-height: 68px !important;
+}
+
 .daily-left-rail .score-panel.score-panel-compact .score-number.score-number-compact .score-number-sign,
 .daily-left-rail .score-panel.score-panel-compact .score-number.score-number-compact .score-number-digits {
-  min-height: 76px !important;
-  height: 76px !important;
-  font-size: 56px !important;
-  line-height: 76px !important;
+  min-height: 68px !important;
+  height: 68px !important;
+  font-size: 50px !important;
+  line-height: 68px !important;
 }
 
-.daily-left-rail .score-panel.score-panel-compact .score-actions .score-checks,
-.daily-left-rail .score-panel.score-panel-compact .score-actions .score-toggle-button {
+.daily-left-rail .score-panel.score-panel-compact .score-actions {
+  grid-column: 2 !important;
+  grid-row: 2 !important;
+  align-self: center !important;
+  justify-self: stretch !important;
+  display: grid !important;
+  grid-template-rows: repeat(2, 28px) !important;
+  place-items: center !important;
+  width: 84px !important;
+  min-width: 84px !important;
+  height: 60px !important;
+  min-height: 60px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  gap: 4px !important;
+}
+
+.daily-left-rail .score-panel.score-panel-compact .score-actions .score-checks {
+  grid-column: 1 !important;
+  grid-row: 1 !important;
+  display: grid !important;
+  grid-template-columns: repeat(2, 24px) !important;
+  place-items: center !important;
+  width: 54px !important;
+  min-width: 54px !important;
   height: 28px !important;
   min-height: 28px !important;
+  margin: 0 !important;
+  padding: 1px 2px !important;
+  gap: 2px !important;
+  border: 1px solid rgba(104, 118, 136, 0.26) !important;
+  border-radius: 7px !important;
+  background: linear-gradient(145deg, rgba(247, 250, 253, 0.72), rgba(211, 220, 230, 0.58)) !important;
+  box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.72) !important;
 }
 
 .daily-left-rail .score-panel.score-panel-compact .score-actions .score-toggle-button {
-  width: 28px !important;
-  min-width: 28px !important;
+  width: 24px !important;
+  min-width: 24px !important;
+  height: 24px !important;
+  min-height: 24px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 5px !important;
+  box-shadow: none !important;
 }
 
 .daily-left-rail .score-panel.score-panel-compact .score-actions .score-carry-controls {
+  grid-column: 1 !important;
+  grid-row: 2 !important;
   display: grid !important;
-  grid-template-columns: repeat(3, 28px) !important;
+  grid-template-columns: repeat(3, 24px) !important;
   grid-template-areas: "minus reset plus" !important;
+  place-items: center !important;
+  width: 78px !important;
+  min-width: 78px !important;
+  height: 28px !important;
+  min-height: 28px !important;
+  margin: 0 !important;
+  padding: 1px 2px !important;
   gap: 0 !important;
-  padding: 3px !important;
   border: 1px solid rgba(104, 118, 136, 0.26) !important;
-  border-radius: 9px !important;
+  border-radius: 7px !important;
   background: linear-gradient(145deg, rgba(247, 250, 253, 0.72), rgba(211, 220, 230, 0.58)) !important;
   box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.72) !important;
 }
 
 .daily-left-rail .score-panel.score-panel-compact .score-actions .score-carry-controls .carry-adjust-button,
 .daily-left-rail .score-panel.score-panel-compact .score-actions .score-carry-controls .carry-reset-button {
-  width: 28px !important;
-  min-width: 28px !important;
-  height: 28px !important;
-  min-height: 28px !important;
-  font-size: 0.76rem !important;
+  width: 24px !important;
+  min-width: 24px !important;
+  height: 24px !important;
+  min-height: 24px !important;
+  padding: 0 !important;
+  font-size: 0.72rem !important;
   border: 0 !important;
   border-radius: 4px !important;
   box-shadow: none !important;
+}
+
+.daily-left-rail .score-panel.score-panel-compact .score-actions .score-toggle-button + .score-toggle-button,
+.daily-left-rail .score-panel.score-panel-compact .score-actions .carry-adjust-button + .carry-reset-button,
+.daily-left-rail .score-panel.score-panel-compact .score-actions .carry-reset-button + .carry-adjust-button {
+  border-left: 1px solid rgba(104, 118, 136, 0.2) !important;
+}
+
+.daily-left-rail .score-panel.score-panel-compact .score-track.score-track-compact {
+  grid-column: 1 / -1 !important;
+  grid-row: 3 !important;
+  align-self: center !important;
+  height: 6px !important;
 }
 
 .daily-left-rail .score-panel.score-panel-compact .score-details.score-details-compact {
@@ -11497,36 +11707,6 @@ html body #root .app-shell * {
 
 .daily-left-rail .score-panel.score-panel-compact .score-details.score-details-compact > div {
   padding: 7px 9px !important;
-}
-
-/* Two grouped score controls: checks and carry adjustments. */
-.daily-left-rail .score-panel.score-panel-compact .score-actions {
-  gap: 10px !important;
-}
-
-.daily-left-rail .score-panel.score-panel-compact .score-actions .score-checks {
-  width: auto !important;
-  min-width: 0 !important;
-  height: auto !important;
-  min-height: 0 !important;
-  padding: 3px !important;
-  gap: 0 !important;
-  border: 1px solid rgba(104, 118, 136, 0.26) !important;
-  border-radius: 9px !important;
-  background: linear-gradient(145deg, rgba(247, 250, 253, 0.72), rgba(211, 220, 230, 0.58)) !important;
-  box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.72) !important;
-}
-
-.daily-left-rail .score-panel.score-panel-compact .score-actions .score-toggle-button {
-  border: 0 !important;
-  border-radius: 4px !important;
-  box-shadow: none !important;
-}
-
-.daily-left-rail .score-panel.score-panel-compact .score-actions .score-toggle-button + .score-toggle-button,
-.daily-left-rail .score-panel.score-panel-compact .score-actions .carry-adjust-button + .carry-reset-button,
-.daily-left-rail .score-panel.score-panel-compact .score-actions .carry-reset-button + .carry-adjust-button {
-  border-left: 1px solid rgba(104, 118, 136, 0.2) !important;
 }
 
 /* Weekly day headers: neutral glass instead of the old yellow paper treatment. */
@@ -11586,6 +11766,53 @@ html body #root .app-shell .schedule-day-items span {
   padding-bottom: 4px !important;
 }
 
+/* Today > Weekly keeps its cards inside the panel at every breakpoint. */
+html body #root .app-shell .weekly-plan-row .plan-card-grid {
+  grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+}
+
+html body #root .app-shell .weekly-plan-row .today-plan-card,
+html body #root .app-shell .weekly-plan-row .choice-buttons,
+html body #root .app-shell .weekly-plan-row .choice-button {
+  min-width: 0 !important;
+}
+
+html body #root .app-shell .weekly-plan-row .choice-buttons {
+  width: 100% !important;
+}
+
+@media (max-width: 940px) {
+  html body #root .app-shell .weekly-plan-row .plan-card-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 620px) {
+  html body #root .app-shell .weekly-plan-row .plan-card-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+/* Last 7 Days: both status marks share the exact horizontal center of each day. */
+.history-panel .history-attempt,
+.history-panel .history-flag {
+  left: 50% !important;
+}
+
+.history-panel .history-attempt {
+  top: 12px !important;
+  transform: translateX(-50%) !important;
+}
+
+.history-panel .history-flag {
+  top: 40px !important;
+  transform: translateX(-50%) !important;
+}
+
+.history-panel .history-flag.active {
+  transform: translateX(-50%) rotate(-7deg) !important;
+}
+
 /* Rebuilt dashboard header: bright glass surface with high-contrast date controls. */
 html body #root .app-shell .topbar {
   min-height: 126px !important;
@@ -11636,4 +11863,528 @@ html body #root .app-shell .topbar .day-switcher {
   box-shadow:
     inset 1px 1px 0 rgba(255, 255, 255, 0.78),
     4px 4px 10px rgba(76, 90, 108, 0.1) !important;
+}
+
+/* Last 7 Days: the flag is a prominent top-right marker, separate from the check. */
+.history-panel .history-flag {
+  left: auto !important;
+  right: 8px !important;
+  top: 8px !important;
+  width: 30px !important;
+  height: 30px !important;
+  min-width: 30px !important;
+  font-family: "Segoe UI Symbol", "Arial Unicode MS", sans-serif !important;
+  font-size: 1.5rem !important;
+  font-weight: 700 !important;
+  line-height: 1 !important;
+  transform: rotate(-7deg) !important;
+}
+
+.history-panel .history-flag.active {
+  transform: rotate(-7deg) !important;
+}
+
+.history-panel .history-date,
+.history-panel .history-day.today .history-date {
+  width: 100% !important;
+  display: grid !important;
+  place-items: center !important;
+  justify-self: stretch !important;
+  align-self: center !important;
+  line-height: 1.2 !important;
+}
+
+@media (max-width: 600px) {
+  .history-panel .history-attempt {
+    left: 6px !important;
+    transform: none !important;
+  }
+
+  .history-panel .history-flag,
+  .history-panel .history-flag.active {
+    left: auto !important;
+    right: 3px !important;
+    top: 6px !important;
+    transform: rotate(-7deg) !important;
+  }
+}
+
+/* Final history marker placement: checks must stay in the card's upper-left corner. */
+.history-panel .history-attempt {
+  left: 8px !important;
+  top: 8px !important;
+  width: 30px !important;
+  height: 30px !important;
+  min-width: 30px !important;
+  font-size: 1.08rem !important;
+  line-height: 1 !important;
+  transform: none !important;
+}
+
+@media (max-width: 600px) {
+  .history-panel .history-attempt {
+    left: 3px !important;
+    top: 6px !important;
+  }
+}
+
+/* Unified bright glass panels: shared translucency, soft exterior lift, and inset depth. */
+.score-panel,
+.date-marker-panel,
+.quick-panel,
+.weekly-panel,
+.schedule-panel,
+.memo-panel,
+.history-panel,
+.calendar-panel,
+.today-plan-panel,
+.today-plan-panel:hover {
+  border-color: rgba(255, 255, 255, 0.74) !important;
+  background:
+    linear-gradient(145deg, rgba(250, 253, 255, 0.84), rgba(214, 225, 238, 0.7)),
+    rgba(225, 234, 244, 0.62) !important;
+  background-image: linear-gradient(145deg, rgba(250, 253, 255, 0.84), rgba(214, 225, 238, 0.7)) !important;
+  box-shadow:
+    15px 15px 32px rgba(73, 88, 108, 0.16),
+    -11px -11px 24px rgba(255, 255, 255, 0.78),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.88),
+    inset -1px -1px 0 rgba(110, 127, 148, 0.08) !important;
+  backdrop-filter: blur(18px) saturate(1.08) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(1.08) !important;
+}
+
+/* Today remains the focal panel, but only a shade brighter than the shared surface. */
+.today-plan-panel,
+.today-plan-panel:hover {
+  background:
+    linear-gradient(145deg, rgba(253, 254, 255, 0.86), rgba(220, 230, 241, 0.72)),
+    rgba(230, 238, 247, 0.66) !important;
+  background-image: linear-gradient(145deg, rgba(253, 254, 255, 0.86), rgba(220, 230, 241, 0.72)) !important;
+  box-shadow:
+    15px 15px 32px rgba(73, 88, 108, 0.15),
+    -11px -11px 24px rgba(255, 255, 255, 0.82),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.92),
+    inset -1px -1px 0 rgba(110, 127, 148, 0.07) !important;
+}
+
+/* Lift the score meter and date-marker rows to the same bright glass level. */
+.score-panel .score-meter,
+.score-panel .score-details > div,
+.score-panel .score-details .carry-detail,
+.date-marker-panel .date-marker {
+  border-color: rgba(255, 255, 255, 0.76) !important;
+  background:
+    linear-gradient(145deg, rgba(253, 254, 255, 0.86), rgba(216, 227, 240, 0.72)),
+    rgba(226, 235, 245, 0.68) !important;
+  background-image: linear-gradient(145deg, rgba(253, 254, 255, 0.86), rgba(216, 227, 240, 0.72)) !important;
+  box-shadow:
+    8px 8px 18px rgba(73, 88, 108, 0.13),
+    -6px -6px 14px rgba(255, 255, 255, 0.76),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.9),
+    inset -1px -1px 0 rgba(110, 127, 148, 0.06) !important;
+}
+
+.date-marker-panel .date-marker input,
+.date-marker-panel .date-marker-dday,
+.score-panel .score-actions .score-carry-controls,
+.score-panel .score-toggle-button {
+  border-color: rgba(255, 255, 255, 0.72) !important;
+  background: rgba(249, 252, 255, 0.7) !important;
+  box-shadow:
+    inset 1px 1px 0 rgba(255, 255, 255, 0.82),
+    inset -1px -1px 0 rgba(110, 127, 148, 0.07) !important;
+  color: #314154 !important;
+}
+
+/* Note workspace: a bright glass surface with soft, tactile controls. */
+.note-subnav {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  min-height: 64px !important;
+  padding: 10px 12px !important;
+  border: 1px solid rgba(255, 255, 255, 0.74) !important;
+  border-radius: 10px !important;
+  background:
+    linear-gradient(145deg, rgba(249, 252, 255, 0.84), rgba(208, 220, 235, 0.68)),
+    rgba(222, 232, 243, 0.64) !important;
+  box-shadow:
+    14px 14px 28px rgba(72, 87, 106, 0.15),
+    -10px -10px 22px rgba(255, 255, 255, 0.76),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.86) !important;
+  backdrop-filter: blur(18px) saturate(1.08) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(1.08) !important;
+}
+
+.note-subnav-tabs {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  min-width: 0 !important;
+}
+
+.note-subnav-item,
+.note-subnav-item[data-color],
+.note-subnav-item[data-color].active,
+.note-subnav-item[data-color][aria-current="page"] {
+  min-height: 40px !important;
+  padding: 0 16px !important;
+  border: 1px solid rgba(255, 255, 255, 0.68) !important;
+  border-radius: 7px !important;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.78), rgba(214, 225, 238, 0.62)),
+    rgba(231, 238, 246, 0.62) !important;
+  box-shadow:
+    5px 5px 10px rgba(81, 96, 116, 0.13),
+    -4px -4px 9px rgba(255, 255, 255, 0.72),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.76) !important;
+  color: #435268 !important;
+  transition: background 160ms ease, box-shadow 160ms ease, color 160ms ease !important;
+}
+
+.note-subnav-item.active,
+.note-subnav-item[aria-current="page"] {
+  border-color: rgba(111, 138, 183, 0.44) !important;
+  background:
+    linear-gradient(145deg, rgba(231, 241, 252, 0.94), rgba(177, 199, 224, 0.76)),
+    rgba(205, 220, 239, 0.76) !important;
+  box-shadow:
+    inset 3px 3px 7px rgba(78, 99, 128, 0.12),
+    inset -3px -3px 7px rgba(255, 255, 255, 0.56) !important;
+  color: #283e5d !important;
+}
+
+.note-subnav-label,
+.note-subnav-editor,
+.note-subnav-editor:hover,
+.note-subnav-editor:focus {
+  background: transparent !important;
+  color: inherit !important;
+  text-shadow: none !important;
+}
+
+.note-tab-toolbar {
+  margin-left: auto !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 7px !important;
+}
+
+.note-tab-tool {
+  width: 32px !important;
+  height: 32px !important;
+  min-width: 32px !important;
+  padding: 0 !important;
+  border: 1px solid rgba(255, 255, 255, 0.7) !important;
+  border-radius: 999px !important;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.82), rgba(208, 220, 234, 0.7)) !important;
+  box-shadow:
+    3px 3px 8px rgba(76, 91, 110, 0.14),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.78) !important;
+  color: #40526a !important;
+}
+
+.school-view {
+  padding: 16px !important;
+  border: 1px solid rgba(255, 255, 255, 0.64) !important;
+  border-radius: 10px !important;
+  background: rgba(231, 239, 248, 0.42) !important;
+  box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.64) !important;
+}
+
+.school-note-list {
+  gap: 16px !important;
+}
+
+.school-note,
+.school-note[data-color] {
+  min-height: 380px !important;
+  border: 1px solid rgba(255, 255, 255, 0.72) !important;
+  border-radius: 10px !important;
+  background:
+    linear-gradient(145deg, rgba(252, 254, 255, 0.84), rgba(213, 225, 239, 0.68)),
+    rgba(228, 237, 247, 0.64) !important;
+  box-shadow:
+    10px 10px 20px rgba(73, 88, 108, 0.14),
+    -7px -7px 15px rgba(255, 255, 255, 0.76),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.86) !important;
+  color: #2d3d52 !important;
+}
+
+.school-note.collapsed {
+  min-height: 72px !important;
+}
+
+.school-note-heading,
+.school-note-image-panel {
+  border: 1px solid rgba(255, 255, 255, 0.7) !important;
+  border-radius: 8px !important;
+  background: rgba(247, 251, 255, 0.56) !important;
+  box-shadow:
+    inset 2px 2px 5px rgba(104, 122, 145, 0.09),
+    inset -2px -2px 5px rgba(255, 255, 255, 0.7) !important;
+}
+
+.school-note-heading textarea,
+.school-note-textarea {
+  border-color: rgba(255, 255, 255, 0.68) !important;
+  background: rgba(250, 253, 255, 0.68) !important;
+  box-shadow:
+    inset 2px 2px 5px rgba(105, 123, 146, 0.09),
+    inset -2px -2px 5px rgba(255, 255, 255, 0.72) !important;
+  color: #34475d !important;
+}
+
+.school-note-heading textarea {
+  font-weight: 700 !important;
+}
+
+.school-add-note,
+.school-view .school-add-note {
+  min-height: 132px !important;
+  border: 1px dashed rgba(105, 132, 170, 0.52) !important;
+  border-radius: 10px !important;
+  background:
+    linear-gradient(145deg, rgba(247, 252, 255, 0.76), rgba(204, 220, 238, 0.58)),
+    rgba(222, 233, 246, 0.56) !important;
+  box-shadow:
+    8px 8px 18px rgba(73, 90, 112, 0.12),
+    -6px -6px 14px rgba(255, 255, 255, 0.7),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.78) !important;
+  color: #3d6f78 !important;
+}
+
+.school-note .school-color-button,
+.school-delete-note,
+.school-note-toggle-tab {
+  border-color: rgba(255, 255, 255, 0.72) !important;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.8), rgba(210, 222, 236, 0.68)) !important;
+  box-shadow:
+    3px 3px 8px rgba(76, 91, 110, 0.12),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.78) !important;
+}
+
+.school-delete-note {
+  position: relative !important;
+  color: transparent !important;
+}
+
+.school-delete-note::before,
+.school-delete-note::after {
+  background: #a95062 !important;
+}
+
+/* Override the remaining legacy dark toolbar treatments in Note. */
+.note-tab-toolbar {
+  padding: 6px !important;
+  border: 1px solid rgba(255, 255, 255, 0.68) !important;
+  border-radius: 9px !important;
+  background: rgba(240, 246, 253, 0.5) !important;
+  box-shadow:
+    inset 1px 1px 0 rgba(255, 255, 255, 0.74),
+    3px 3px 8px rgba(80, 95, 114, 0.1) !important;
+}
+
+.note-tab-toolbar .note-tab-tool,
+.note-tab-toolbar .note-tab-tool:hover:not(:disabled) {
+  border-color: rgba(255, 255, 255, 0.72) !important;
+  border-radius: 999px !important;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.86), rgba(209, 222, 237, 0.72)) !important;
+  color: #40526a !important;
+  box-shadow:
+    3px 3px 8px rgba(76, 91, 110, 0.13),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.8) !important;
+  transform: none !important;
+}
+
+.note-subnav-item .note-subnav-label,
+.note-subnav-item .note-subnav-editor,
+.note-subnav-item.active .note-subnav-label,
+.note-subnav-item.active .note-subnav-editor {
+  color: #40526a !important;
+  opacity: 1 !important;
+  text-shadow: none !important;
+}
+
+.note-subnav-item.active .note-subnav-label,
+.note-subnav-item.active .note-subnav-editor {
+  color: #263e60 !important;
+}
+
+/* Memo delete button: keep the X centered within its own visible control. */
+.memo-card-grip .mini-button.danger {
+  position: relative !important;
+  display: inline-grid !important;
+  place-items: center !important;
+  width: 30px !important;
+  height: 30px !important;
+  min-width: 30px !important;
+  padding: 0 !important;
+  overflow: visible !important;
+  border: 1px solid rgba(177, 88, 105, 0.34) !important;
+  border-radius: 999px !important;
+  background: linear-gradient(145deg, rgba(255, 241, 244, 0.9), rgba(235, 190, 200, 0.78)) !important;
+  box-shadow:
+    3px 3px 8px rgba(143, 68, 84, 0.14),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.76) !important;
+}
+
+.memo-card-grip .mini-button.danger::before,
+.memo-card-grip .mini-button.danger::after {
+  width: 12px !important;
+  height: 2px !important;
+  background: #a34c5e !important;
+  z-index: 1 !important;
+}
+
+/* Note memo colors stay translucent, but each one now has its own visible tint. */
+.school-note[data-color] {
+  --note-tint: 219, 210, 242;
+  --note-shadow: 126, 108, 166;
+  border-color: rgba(255, 255, 255, 0.82) !important;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.88), rgba(var(--note-tint), 0.66)),
+    rgba(var(--note-tint), 0.48) !important;
+  box-shadow:
+    9px 10px 20px rgba(var(--note-shadow), 0.15),
+    -6px -6px 15px rgba(255, 255, 255, 0.7),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.82) !important;
+}
+
+.school-note[data-color="cream"] { --note-tint: 244, 226, 181; --note-shadow: 166, 132, 74; }
+.school-note[data-color="sage"] { --note-tint: 208, 229, 210; --note-shadow: 88, 137, 106; }
+.school-note[data-color="peach"] { --note-tint: 247, 211, 191; --note-shadow: 183, 113, 88; }
+.school-note[data-color="blue"] { --note-tint: 196, 218, 241; --note-shadow: 88, 126, 170; }
+.school-note[data-color="rose"] { --note-tint: 242, 203, 215; --note-shadow: 178, 99, 126; }
+.school-note[data-color="lavender"] { --note-tint: 219, 210, 242; --note-shadow: 126, 108, 166; }
+.school-note[data-color="mint"] { --note-tint: 194, 232, 220; --note-shadow: 74, 145, 121; }
+.school-note[data-color="butter"] { --note-tint: 250, 229, 161; --note-shadow: 183, 142, 49; }
+
+.school-note[data-color] .school-note-heading,
+.school-note[data-color] .school-note-image-panel {
+  background: rgba(255, 255, 255, 0.42) !important;
+}
+
+.school-note .school-color-button {
+  position: relative !important;
+  display: inline-grid !important;
+  place-items: center !important;
+  overflow: visible !important;
+}
+
+.school-color-icon {
+  position: relative;
+  display: block;
+  width: 16px;
+  height: 16px;
+  border-radius: 50% 50% 50% 6px;
+  transform: rotate(-35deg);
+  background: conic-gradient(from 30deg, #dc8d9d 0 25%, #efc66d 25% 50%, #84b9aa 50% 75%, #98a9dc 75% 100%);
+  box-shadow: inset 1px 1px 1px rgba(255, 255, 255, 0.56), 0 1px 2px rgba(56, 73, 95, 0.25);
+}
+
+.school-color-icon::after {
+  content: "";
+  position: absolute;
+  right: 2px;
+  bottom: 2px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: rgba(249, 252, 255, 0.92);
+}
+
+.school-color-menu {
+  border: 1px solid rgba(255, 255, 255, 0.82) !important;
+  background: rgba(239, 246, 253, 0.88) !important;
+  box-shadow: 7px 8px 18px rgba(71, 89, 111, 0.16), inset 1px 1px 0 rgba(255, 255, 255, 0.76) !important;
+  backdrop-filter: blur(14px);
+}
+
+.note-tab-toolbar .note-tab-add,
+.note-tab-toolbar .note-tab-add:hover:not(:disabled) {
+  width: 36px !important;
+  height: 36px !important;
+  min-width: 36px !important;
+  border: 1px solid rgba(79, 151, 130, 0.46) !important;
+  border-radius: 10px !important;
+  background: linear-gradient(145deg, rgba(239, 255, 250, 0.94), rgba(146, 212, 189, 0.78)) !important;
+  box-shadow: 4px 5px 10px rgba(58, 124, 106, 0.18), inset 1px 1px 0 rgba(255, 255, 255, 0.84) !important;
+}
+
+.note-tab-toolbar .note-tab-add::before,
+.note-tab-toolbar .note-tab-add::after {
+  width: 14px !important;
+  height: 2px !important;
+  background: #27745f !important;
+  box-shadow: none !important;
+}
+
+/* Keep the memo add surface quiet on hover instead of switching to a mint accent. */
+.school-add-note:hover,
+.school-view .school-add-note:hover {
+  border-color: rgba(126, 147, 176, 0.52) !important;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.88), rgba(214, 225, 240, 0.7)),
+    rgba(232, 239, 248, 0.64) !important;
+  box-shadow:
+    7px 8px 17px rgba(73, 90, 112, 0.14),
+    -5px -5px 13px rgba(255, 255, 255, 0.76),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.86) !important;
+  color: #40526a !important;
+}
+
+/* The add-tab control belongs to the same glass tool group as edit and delete. */
+.note-tab-toolbar .note-tab-add,
+.note-tab-toolbar .note-tab-add:hover:not(:disabled) {
+  width: 34px !important;
+  height: 34px !important;
+  min-width: 34px !important;
+  border: 1px solid rgba(255, 255, 255, 0.72) !important;
+  border-radius: 999px !important;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.86), rgba(209, 222, 237, 0.72)) !important;
+  box-shadow:
+    3px 3px 8px rgba(76, 91, 110, 0.13),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.8) !important;
+}
+
+.note-tab-toolbar .note-tab-add::before,
+.note-tab-toolbar .note-tab-add::after {
+  width: 12px !important;
+  height: 2px !important;
+  background: #40526a !important;
+}
+
+/* Tone down the Mindfold backlight while keeping its soft glass depth. */
+.mindfold-view .mindfold-editor {
+  background:
+    linear-gradient(145deg, rgba(239, 244, 250, 0.78), rgba(210, 220, 232, 0.66)),
+    rgba(225, 233, 243, 0.72) !important;
+  background-image: linear-gradient(145deg, rgba(239, 244, 250, 0.78), rgba(210, 220, 232, 0.66)) !important;
+  box-shadow:
+    14px 14px 30px rgba(82, 94, 112, 0.15),
+    -8px -8px 20px rgba(255, 255, 255, 0.42),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.58) !important;
+}
+
+.mindfold-view .mindfold-toggle,
+.mindfold-view .mindfold-block {
+  background:
+    linear-gradient(145deg, rgba(242, 246, 251, 0.72), rgba(218, 226, 237, 0.56)),
+    rgba(230, 237, 246, 0.6) !important;
+  background-image: linear-gradient(145deg, rgba(242, 246, 251, 0.72), rgba(218, 226, 237, 0.56)) !important;
+  box-shadow:
+    8px 8px 18px rgba(116, 128, 145, 0.12),
+    -6px -6px 15px rgba(255, 255, 255, 0.42),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.58) !important;
+}
+
+.mindfold-view .mindfold-block:focus-within,
+.mindfold-view .mindfold-node.active {
+  border-color: rgba(126, 149, 255, 0.3) !important;
+  box-shadow:
+    0 0 10px rgba(126, 149, 255, 0.1),
+    8px 8px 18px rgba(116, 128, 145, 0.12),
+    -6px -6px 15px rgba(255, 255, 255, 0.44),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.58) !important;
 }
