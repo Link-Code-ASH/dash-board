@@ -280,6 +280,18 @@ const mindfoldTextColorOptions = [
   { id: "amber", label: "황갈색" },
   { id: "orange", label: "주황" },
 ];
+const mindfoldBlockTypeOptions = [
+  { type: "text", icon: "T", label: "텍스트" },
+  { type: "heading-1", icon: "H1", label: "제목 1" },
+  { type: "heading-2", icon: "H2", label: "제목 2" },
+  { type: "heading-3", icon: "H3", label: "제목 3" },
+  { type: "heading-4", icon: "H4", label: "제목 4" },
+  { type: "bullet", icon: "\u2022", label: "목록" },
+  { type: "callout", icon: "\u2610", label: "체크" },
+  { type: "quote", icon: "\u201c", label: "인용" },
+];
+const mindfoldTrashRetentionDays = 30;
+const mindfoldTrashRetentionMs = mindfoldTrashRetentionDays * 24 * 60 * 60 * 1000;
 
 function normalizeMindfoldMasks(masks, textLength) {
   return (Array.isArray(masks) ? masks : [])
@@ -439,9 +451,13 @@ function normalizeMindfold(mindfold) {
     tabs = [normalizeTab({ id: "mindfold-tab-main", label: "페이지 1", blocks: legacyBlocks, activeId: mindfold?.activeId }, 0)];
   }
   const activeTabId = tabs.some((tab) => tab.id === mindfold?.activeTabId) ? mindfold.activeTabId : tabs[0].id;
+  const trash = (Array.isArray(mindfold?.trash) ? mindfold.trash : [])
+    .filter((tab) => tab && Number.isFinite(Date.parse(tab.deletedAt)) && Date.now() - Date.parse(tab.deletedAt) < mindfoldTrashRetentionMs)
+    .map((tab, index) => ({ ...normalizeTab(tab, index), deletedAt: tab.deletedAt }));
   return {
     tabs,
     activeTabId,
+    trash,
   };
 }
 
@@ -1906,13 +1922,38 @@ function App() {
     const currentMindfold = normalizeMindfold(dataRef.current.mindfold);
     if (currentMindfold.tabs.length <= 1) return;
     const target = currentMindfold.tabs.find((tab) => tab.id === id);
-    if (!window.confirm(`'${target?.label || "이 페이지"}' 탭을 삭제하시겠습니까?`)) return;
+    if (!window.confirm(`'${target?.label || "이 페이지"}' 페이지를 휴지통으로 이동하시겠습니까?`)) return;
     saveData((draft) => {
       draft.mindfold = normalizeMindfold(draft.mindfold);
       const index = draft.mindfold.tabs.findIndex((tab) => tab.id === id);
       if (index < 0 || draft.mindfold.tabs.length <= 1) return draft;
-      draft.mindfold.tabs.splice(index, 1);
+      const [removedTab] = draft.mindfold.tabs.splice(index, 1);
+      draft.mindfold.trash.push({ ...removedTab, deletedAt: new Date().toISOString() });
       if (draft.mindfold.activeTabId === id) draft.mindfold.activeTabId = draft.mindfold.tabs[Math.min(index, draft.mindfold.tabs.length - 1)].id;
+      return draft;
+    }, { captureMindfold: true });
+  };
+
+  const restoreMindfoldTab = (id) => {
+    saveData((draft) => {
+      draft.mindfold = normalizeMindfold(draft.mindfold);
+      const index = draft.mindfold.trash.findIndex((tab) => tab.id === id);
+      if (index < 0) return draft;
+      const [restoredTab] = draft.mindfold.trash.splice(index, 1);
+      delete restoredTab.deletedAt;
+      draft.mindfold.tabs.push(restoredTab);
+      draft.mindfold.activeTabId = restoredTab.id;
+      return draft;
+    }, { captureMindfold: true });
+  };
+
+  const permanentlyRemoveMindfoldTab = (id) => {
+    const currentMindfold = normalizeMindfold(dataRef.current.mindfold);
+    const target = currentMindfold.trash.find((tab) => tab.id === id);
+    if (!target || !window.confirm(`'${target.label}' 페이지를 영구 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.`)) return;
+    saveData((draft) => {
+      draft.mindfold = normalizeMindfold(draft.mindfold);
+      draft.mindfold.trash = draft.mindfold.trash.filter((tab) => tab.id !== id);
       return draft;
     }, { captureMindfold: true });
   };
@@ -2278,7 +2319,9 @@ function App() {
           outdentBlock: outdentMindfoldBlock,
           removeBlock: removeMindfoldBlock,
           removeTab: removeMindfoldTab,
+          permanentlyRemoveTab: permanentlyRemoveMindfoldTab,
           renameTab: renameMindfoldTab,
+          restoreTab: restoreMindfoldTab,
           setActiveBlock: setActiveMindfoldBlock,
           setActiveTab: setActiveMindfoldTab,
           setColumns: setMindfoldColumns,
@@ -2772,7 +2815,7 @@ function SchoolView({ addSchoolNote, attachMemoImage, moveSchoolNote, notes, rem
   );
 }
 
-function MindfoldView({ addBlock, addTab, clearMasks, indentBlock, maskSelection, mindfold, moveBlock, moveTab, outdentBlock, redo, removeBlock, removeTab, renameTab, setActiveBlock, setActiveTab, setColumns, toggleMark, undo, updateBlock }) {
+function MindfoldView({ addBlock, addTab, clearMasks, indentBlock, maskSelection, mindfold, moveBlock, moveTab, outdentBlock, permanentlyRemoveTab, redo, removeBlock, removeTab, renameTab, restoreTab, setActiveBlock, setActiveTab, setColumns, toggleMark, undo, updateBlock }) {
   const normalized = normalizeMindfold(mindfold);
   const activeTab = getActiveMindfoldTab(normalized);
   const [dragBlockId, setDragBlockId] = useState("");
@@ -2783,21 +2826,12 @@ function MindfoldView({ addBlock, addTab, clearMasks, indentBlock, maskSelection
   const [editingTabLabel, setEditingTabLabel] = useState("");
   const [dragTabId, setDragTabId] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth > 760);
+  const [trashOpen, setTrashOpen] = useState(false);
   const selectionRef = useRef({});
   const pendingFocusRef = useRef(null);
   const pointerDragRef = useRef(null);
   const suppressMenuClickRef = useRef(false);
-
-  const blockTypeOptions = [
-    { type: "text", icon: "T", label: "텍스트" },
-    { type: "heading-1", icon: "H1", label: "제목 1" },
-    { type: "heading-2", icon: "H2", label: "제목 2" },
-    { type: "heading-3", icon: "H3", label: "제목 3" },
-    { type: "heading-4", icon: "H4", label: "제목 4" },
-    { type: "bullet", icon: "\u2022", label: "목록" },
-    { type: "callout", icon: "\u2610", label: "체크" },
-    { type: "quote", icon: "\u201c", label: "인용" },
-  ];
+  const composingBlockIdsRef = useRef(new Set());
 
   const beginTabRename = (tab) => {
     setEditingTabId(tab.id);
@@ -3021,35 +3055,54 @@ function MindfoldView({ addBlock, addTab, clearMasks, indentBlock, maskSelection
         onKeyUp: (event) => {
           selectionRef.current[block.id] = getMindfoldEditableSelection(event.currentTarget);
         },
+        onCompositionStart: () => {
+          composingBlockIdsRef.current.add(block.id);
+        },
+        onCompositionEnd: (event) => {
+          composingBlockIdsRef.current.delete(block.id);
+          const field = event.currentTarget;
+          const selection = getMindfoldEditableSelection(field);
+          const value = field.textContent.replace(/\u00a0/g, " ").replace(/\r?\n/g, " ");
+          selectionRef.current[block.id] = selection;
+          updateBlock(block.id, { text: value });
+        },
         onInput: (event) => {
+          if (event.nativeEvent.isComposing || composingBlockIdsRef.current.has(block.id)) return;
           const field = event.currentTarget;
           const selection = getMindfoldEditableSelection(field);
           const value = field.textContent.replace(/\u00a0/g, " ").replace(/\r?\n/g, " ");
           let patch = { text: value };
           let caret = selection.end;
-          if (value === "#### ") patch = { type: "heading-4", text: "" };
-          else if (value === "### ") patch = { type: "heading-3", text: "" };
-          else if (value === "## ") patch = { type: "heading-2", text: "" };
-          else if (value === "# ") patch = { type: "heading-1", text: "" };
-          else if (["- ", "* ", "+ "].includes(value)) patch = { type: "bullet", text: "" };
-          else if (value === "> ") patch = { type: "quote", text: "" };
-          else {
-            const boldMatch = value.match(/^(.*)\*\*([^*]+)\*\*(.*)$/);
-            const italicMatch = !boldMatch ? value.match(/^(.*)_([^_]+)_(.*)$/) : null;
-            if (boldMatch) {
-              const nextText = `${boldMatch[1]}${boldMatch[2]}${boldMatch[3]}`;
-              patch = {
-                text: nextText,
-                addMark: { type: "bold", start: boldMatch[1].length, end: boldMatch[1].length + boldMatch[2].length },
-              };
-              caret = Math.max(boldMatch[1].length, caret - 4);
-            } else if (italicMatch) {
-              const nextText = `${italicMatch[1]}${italicMatch[2]}${italicMatch[3]}`;
-              patch = {
-                text: nextText,
-                addMark: { type: "italic", start: italicMatch[1].length, end: italicMatch[1].length + italicMatch[2].length },
-              };
-              caret = Math.max(italicMatch[1].length, caret - 2);
+          const headingMatch = value.match(/^(#{1,4}) (.*)$/);
+          if (headingMatch) {
+            const level = headingMatch[1].length;
+            patch = { type: `heading-${level}`, text: headingMatch[2] };
+            caret = Math.max(0, caret - level - 1);
+          } else {
+            const bulletMatch = value.match(/^([-*+]) (.*)$/);
+            if (bulletMatch) {
+              patch = { type: "bullet", text: bulletMatch[2] };
+              caret = Math.max(0, caret - 2);
+            } else if (value === "> ") {
+              patch = { type: "quote", text: "" };
+            } else {
+              const boldMatch = value.match(/^(.*)\*\*([^*]+)\*\*(.*)$/);
+              const italicMatch = !boldMatch ? value.match(/^(.*)_([^_]+)_(.*)$/) : null;
+              if (boldMatch) {
+                const nextText = `${boldMatch[1]}${boldMatch[2]}${boldMatch[3]}`;
+                patch = {
+                  text: nextText,
+                  addMark: { type: "bold", start: boldMatch[1].length, end: boldMatch[1].length + boldMatch[2].length },
+                };
+                caret = Math.max(boldMatch[1].length, caret - 4);
+              } else if (italicMatch) {
+                const nextText = `${italicMatch[1]}${italicMatch[2]}${italicMatch[3]}`;
+                patch = {
+                  text: nextText,
+                  addMark: { type: "italic", start: italicMatch[1].length, end: italicMatch[1].length + italicMatch[2].length },
+                };
+                caret = Math.max(italicMatch[1].length, caret - 2);
+              }
             }
           }
           if (patch.text === "") caret = 0;
@@ -3064,6 +3117,7 @@ function MindfoldView({ addBlock, addTab, clearMasks, indentBlock, maskSelection
           });
         },
         onKeyDown: (event) => {
+          if (event.nativeEvent.isComposing || event.keyCode === 229) return;
           const modifier = event.ctrlKey || event.metaKey;
           const selection = getMindfoldEditableSelection(event.currentTarget);
           const selectionStart = selection.start;
@@ -3200,7 +3254,7 @@ function MindfoldView({ addBlock, addTab, clearMasks, indentBlock, maskSelection
       h(
         "div",
         { className: "mindfold-type-grid" },
-        ...blockTypeOptions.map((option) =>
+        ...mindfoldBlockTypeOptions.map((option) =>
           h(
             "button",
             {
@@ -3361,21 +3415,6 @@ function MindfoldView({ addBlock, addTab, clearMasks, indentBlock, maskSelection
         ? true
         : childrenVisible
     ));
-    const setInsideDropTarget = (event) => {
-      if (!dragBlockId || dragBlockId === block.id) return false;
-      event.preventDefault();
-      event.stopPropagation();
-      setDropTarget({ id: block.id, placement: "inside" });
-      event.dataTransfer.dropEffect = "move";
-      return true;
-    };
-    const dropInsideToggle = (event) => {
-      if (!setInsideDropTarget(event)) return;
-      const fromId = event.dataTransfer.getData("text/mindfold-block") || dragBlockId;
-      moveBlock(fromId, block.id, "inside");
-      setDragBlockId("");
-      setDropTarget(null);
-    };
     const blockRow = h(
       "div",
       { className: "mindfold-block-row" },
@@ -3448,8 +3487,6 @@ function MindfoldView({ addBlock, addTab, clearMasks, indentBlock, maskSelection
             "div",
             {
               className: `mindfold-block-children ${dropTarget?.id === block.id && dropTarget.placement === "inside" ? "drop-target" : ""}`,
-              onDragOver: block.toggle && block.open ? setInsideDropTarget : undefined,
-              onDrop: block.toggle && block.open ? dropInsideToggle : undefined,
             },
             ...nestedBlocks.map((child) => renderBlock(child, depth + 1)),
           )
@@ -3486,8 +3523,6 @@ function MindfoldView({ addBlock, addTab, clearMasks, indentBlock, maskSelection
             "div",
             {
               className: `mindfold-block-children ${dropTarget?.id === block.id && dropTarget.placement === "inside" ? "drop-target" : ""}`,
-              onDragOver: block.toggle && block.open ? setInsideDropTarget : undefined,
-              onDrop: block.toggle && block.open ? dropInsideToggle : undefined,
             },
             ...visibleChildren.map((child) => renderBlock(
               child,
@@ -3583,6 +3618,32 @@ function MindfoldView({ addBlock, addTab, clearMasks, indentBlock, maskSelection
                       if (window.innerWidth <= 760) setSidebarOpen(false);
                     },
                   }, tab.label),
+              editingTabId !== tab.id
+                ? h(
+                    "div",
+                    { className: "mindfold-tab-actions" },
+                    h("button", {
+                      type: "button",
+                      title: "페이지 이름 수정",
+                      "aria-label": `${tab.label} 이름 수정`,
+                      onClick: (event) => {
+                        event.stopPropagation();
+                        beginTabRename(tab);
+                      },
+                    }, "수정"),
+                    h("button", {
+                      className: "danger",
+                      type: "button",
+                      title: "휴지통으로 이동",
+                      "aria-label": `${tab.label} 삭제`,
+                      disabled: normalized.tabs.length <= 1,
+                      onClick: (event) => {
+                        event.stopPropagation();
+                        removeTab(tab.id);
+                      },
+                    }, "삭제"),
+                  )
+                : null,
             ),
           ),
         ),
@@ -3593,9 +3654,37 @@ function MindfoldView({ addBlock, addTab, clearMasks, indentBlock, maskSelection
             const nextId = addTab();
             setEditingTabId(nextId);
             setEditingTabLabel(`페이지 ${normalized.tabs.length + 1}`);
-          } }, "추가"),
-          h("button", { type: "button", onClick: () => beginTabRename(activeTab) }, "수정"),
-          h("button", { className: "danger", type: "button", disabled: normalized.tabs.length <= 1, onClick: () => removeTab(activeTab.id) }, "삭제"),
+          } }, "+ 페이지 추가"),
+        ),
+        h(
+          "div",
+          { className: `mindfold-trash ${trashOpen ? "open" : ""}` },
+          h("button", {
+            className: "mindfold-trash-toggle",
+            type: "button",
+            "aria-expanded": trashOpen,
+            onClick: () => setTrashOpen((current) => !current),
+          }, h("span", null, "휴지통"), h("small", null, normalized.trash.length)),
+          trashOpen
+            ? h(
+                "div",
+                { className: "mindfold-trash-list" },
+                normalized.trash.length
+                  ? normalized.trash.map((tab) => {
+                      const remainingDays = Math.max(1, Math.ceil((mindfoldTrashRetentionMs - (Date.now() - Date.parse(tab.deletedAt))) / (24 * 60 * 60 * 1000)));
+                      return h(
+                        "div",
+                        { className: "mindfold-trash-item", key: tab.id },
+                        h("div", null, h("span", null, tab.label), h("small", null, `${remainingDays}일 후 삭제`)),
+                        h("div", { className: "mindfold-trash-actions" },
+                          h("button", { type: "button", onClick: () => restoreTab(tab.id) }, "복원"),
+                          h("button", { className: "danger", type: "button", onClick: () => permanentlyRemoveTab(tab.id) }, "영구 삭제"),
+                        ),
+                      );
+                    })
+                  : h("p", null, "휴지통이 비어 있습니다."),
+              )
+            : null,
         ),
       ),
       sidebarOpen

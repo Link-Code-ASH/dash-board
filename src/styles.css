@@ -6616,7 +6616,6 @@ input::placeholder {
   margin-top: 18px;
 }
 
-.mindfold-sidebar,
 .mindfold-editor {
   border: 1px solid rgba(88, 66, 40, 0.18);
   border-radius: 8px;
@@ -6629,299 +6628,8 @@ input::placeholder {
     inset 0 1px 0 rgba(255, 255, 255, 0.48);
 }
 
-.mindfold-sidebar {
-  align-self: start;
-  display: grid;
-  gap: 12px;
-  padding: 14px;
-  position: sticky;
-  top: 16px;
-  max-height: calc(100vh - 32px);
-  overflow: auto;
-}
-
-.mindfold-sidebar-head,
-.mindfold-editor-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  border-bottom: 1px solid rgba(88, 66, 40, 0.14);
-  padding-bottom: 12px;
-}
-
-.mindfold-sidebar-head h2 {
-  margin: 0;
-  color: #2f2116;
-  font-size: 1.2rem;
-}
-
-.mindfold-sidebar-head p {
-  margin: 2px 0 0;
-  color: rgba(47, 33, 22, 0.58);
-  font-size: 0.82rem;
-  font-weight: 800;
-}
-
-.mindfold-add-root,
-.mindfold-mini-add {
-  position: relative;
-  display: grid;
-  place-items: center;
-  border: 1px solid rgba(91, 67, 39, 0.2);
-  border-radius: 6px;
-  background:
-    linear-gradient(180deg, rgba(255, 252, 241, 0.82), rgba(226, 209, 181, 0.72)),
-    #ead9bd;
-  color: transparent;
-  box-shadow:
-    0 1px 3px rgba(72, 45, 22, 0.08),
-    inset 0 1px 0 rgba(255, 255, 255, 0.34);
-}
-
-.mindfold-add-root {
-  width: 34px;
-  height: 34px;
-}
-
-.mindfold-mini-add {
-  width: 24px;
-  height: 24px;
-  opacity: 0;
-}
-
-.mindfold-add-root::before,
-.mindfold-add-root::after,
-.mindfold-mini-add::before,
-.mindfold-mini-add::after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 12px;
-  height: 2px;
-  border-radius: 999px;
-  background: #5c4125;
-  transform: translate(-50%, -50%);
-}
-
-.mindfold-mini-add::before,
-.mindfold-mini-add::after {
-  width: 9px;
-}
-
-.mindfold-add-root::after,
-.mindfold-mini-add::after {
-  transform: translate(-50%, -50%) rotate(90deg);
-}
-
-.mindfold-tree {
-  display: grid;
-  gap: 4px;
-}
-
-.mindfold-tree-row {
-  display: grid;
-  grid-template-columns: 24px minmax(0, 1fr) 24px;
-  align-items: center;
-  gap: 4px;
-  min-height: 34px;
-  padding-left: calc(var(--depth) * 18px);
-  border-radius: 6px;
-}
-
-.mindfold-tree-row:hover,
-.mindfold-tree-row.active {
-  background: rgba(93, 68, 40, 0.09);
-}
-
-.mindfold-tree-row:hover .mindfold-mini-add,
-.mindfold-tree-row.active .mindfold-mini-add {
-  opacity: 1;
-}
-
-.mindfold-toggle,
-.mindfold-title-button {
-  border: 0;
-  background: transparent;
-  color: #3d2b1c;
-}
-
-.mindfold-toggle {
-  width: 24px;
-  height: 24px;
-  display: grid;
-  place-items: center;
-}
-
-.mindfold-toggle::before {
-  content: "";
-  width: 0;
-  height: 0;
-  border-top: 5px solid transparent;
-  border-bottom: 5px solid transparent;
-  border-left: 7px solid rgba(61, 43, 28, 0.68);
-}
-
-.mindfold-tree-row-wrap:has(.mindfold-tree-children) > .mindfold-tree-row .mindfold-toggle::before {
-  transform: rotate(90deg);
-}
-
-.mindfold-title-button {
-  min-width: 0;
-  overflow: hidden;
-  text-align: left;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-weight: 850;
-}
-
 .mindfold-editor {
   padding: 22px;
-}
-
-.mindfold-title-input {
-  width: 100%;
-  min-height: 54px;
-  border: 0 !important;
-  background: transparent !important;
-  color: #21170f !important;
-  font-size: 2rem;
-  font-weight: 900;
-  outline: 0;
-}
-
-.mindfold-editor-actions {
-  display: flex;
-  gap: 8px;
-}
-
-.mindfold-action {
-  min-height: 34px;
-  border: 1px solid rgba(91, 67, 39, 0.18);
-  border-radius: 6px;
-  background: rgba(255, 251, 241, 0.72);
-  color: #4a3320;
-  padding: 0 12px;
-  font-weight: 900;
-}
-
-.mindfold-action.danger {
-  color: #8a4b3d;
-}
-
-.mindfold-block-list {
-  display: grid;
-  gap: 10px;
-  margin-top: 18px;
-}
-
-.mindfold-block {
-  display: grid;
-  grid-template-columns: 24px minmax(0, 1fr) 28px;
-  align-items: start;
-  gap: 8px;
-  border-radius: 7px;
-  padding: 7px 6px;
-}
-
-.mindfold-block:hover,
-.mindfold-block.dragging {
-  background: rgba(93, 68, 40, 0.08);
-}
-
-.mindfold-block-handle {
-  width: 24px;
-  height: 34px;
-  opacity: 0.42;
-  background:
-    radial-gradient(circle, #6a4c2e 1.4px, transparent 1.6px) 6px 8px / 7px 7px;
-}
-
-.mindfold-block textarea {
-  width: 100%;
-  min-height: 62px;
-  resize: vertical;
-  border: 0 !important;
-  border-radius: 6px;
-  background: transparent !important;
-  color: #241b13 !important;
-  padding: 8px 10px !important;
-  line-height: 1.55;
-  outline: 0;
-}
-
-.mindfold-block textarea:focus {
-  background: rgba(255, 255, 255, 0.34) !important;
-  box-shadow: inset 0 0 0 1px rgba(91, 67, 39, 0.12) !important;
-}
-
-.mindfold-block-remove {
-  position: relative;
-  width: 28px;
-  height: 28px;
-  border: 0;
-  border-radius: 6px;
-  background: transparent;
-  color: transparent;
-  opacity: 0;
-}
-
-.mindfold-block:hover .mindfold-block-remove {
-  opacity: 1;
-}
-
-.mindfold-block-remove::before,
-.mindfold-block-remove::after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 12px;
-  height: 2px;
-  border-radius: 999px;
-  background: #8a4b3d;
-  transform: translate(-50%, -50%) rotate(45deg);
-}
-
-.mindfold-block-remove::after {
-  transform: translate(-50%, -50%) rotate(-45deg);
-}
-
-.mindfold-preview {
-  margin-top: 22px;
-  padding-top: 16px;
-  border-top: 1px solid rgba(88, 66, 40, 0.14);
-}
-
-.mindfold-preview h3 {
-  margin: 0 0 10px;
-  color: rgba(47, 33, 22, 0.68);
-  font-size: 0.82rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-
-.mindfold-preview p {
-  margin: 0 0 8px;
-  color: #2f2116;
-  line-height: 1.6;
-  white-space: pre-wrap;
-}
-
-.mindfold-cloze {
-  display: inline-block;
-  min-width: 64px;
-  border-radius: 5px;
-  background: #2f2418;
-  color: transparent;
-  padding: 0 7px;
-  transition: color 120ms ease, background 120ms ease;
-}
-
-.mindfold-cloze:hover {
-  background: rgba(216, 183, 106, 0.24);
-  color: #2f2116;
 }
 
 @media (max-width: 900px) {
@@ -6929,11 +6637,6 @@ input::placeholder {
     grid-template-columns: 1fr;
   }
 
-  .mindfold-sidebar {
-    position: relative;
-    top: auto;
-    max-height: none;
-  }
 }
 
 .mindfold-document-view {
@@ -6948,166 +6651,10 @@ input::placeholder {
   padding: 22px clamp(16px, 2.6vw, 38px);
 }
 
-.mindfold-editor-head h2 {
-  margin: 0;
-  color: #21170f;
-  font-size: 1.65rem;
-}
-
-.mindfold-editor-head p {
-  margin: 4px 0 0;
-  color: rgba(47, 33, 22, 0.58);
-  font-size: 0.9rem;
-  font-weight: 800;
-}
-
 .mindfold-document {
   display: grid;
   gap: 3px;
   margin-top: 14px;
-}
-
-.mindfold-toggle-block {
-  display: grid;
-  gap: 3px;
-  padding-left: calc(var(--depth) * 18px);
-}
-
-.mindfold-toggle-line {
-  display: grid;
-  grid-template-columns: 22px minmax(0, 1fr) auto 24px 24px;
-  align-items: center;
-  gap: 4px;
-  min-height: 36px;
-  border-radius: 7px;
-  padding: 2px 4px;
-}
-
-.mindfold-toggle-line:hover {
-  background: rgba(93, 68, 40, 0.08);
-}
-
-.mindfold-toggle-line:hover .mindfold-mini-add,
-.mindfold-toggle-line:hover .mindfold-node-remove {
-  opacity: 1;
-}
-
-.mindfold-toggle-title {
-  width: 100%;
-  height: 32px !important;
-  min-height: 32px !important;
-  border: 0 !important;
-  background: transparent !important;
-  color: #241b13 !important;
-  padding: 0 4px !important;
-  font-size: 1.06rem;
-  font-weight: 900;
-  outline: 0;
-}
-
-.mindfold-toggle-body {
-  display: grid;
-  gap: 4px;
-  padding-left: 24px;
-}
-
-.mindfold-children {
-  display: grid;
-  gap: 6px;
-}
-
-.mindfold-document-view .mindfold-toggle {
-  border-radius: 5px;
-  background: transparent;
-}
-
-.mindfold-document-view .mindfold-toggle::before {
-  transition: transform 120ms ease;
-}
-
-.mindfold-document-view .mindfold-toggle.open::before {
-  transform: rotate(90deg);
-}
-
-.mindfold-inline-add,
-.mindfold-ghost-add {
-  min-height: 28px;
-  border: 1px solid rgba(91, 67, 39, 0.14);
-  border-radius: 6px;
-  background: rgba(255, 251, 241, 0.54);
-  color: rgba(61, 43, 28, 0.68);
-  padding: 0 9px;
-  font-size: 0.78rem;
-  font-weight: 900;
-}
-
-.mindfold-inline-add {
-  opacity: 0;
-}
-
-.mindfold-toggle-line:hover .mindfold-inline-add {
-  opacity: 1;
-}
-
-.mindfold-ghost-add {
-  justify-self: start;
-  margin-left: 22px;
-  opacity: 0.58;
-}
-
-.mindfold-ghost-add:hover {
-  opacity: 1;
-}
-
-.mindfold-document-view .mindfold-mini-add {
-  opacity: 0;
-}
-
-.mindfold-node-remove {
-  opacity: 0;
-}
-
-.mindfold-document-view .mindfold-block-list {
-  margin-top: 0;
-}
-
-.mindfold-document-view .mindfold-block {
-  grid-template-columns: 12px minmax(0, 1fr) 24px;
-  gap: 5px;
-  padding: 2px 4px;
-}
-
-.mindfold-document-view .mindfold-block textarea {
-  min-height: 34px;
-  padding: 5px 7px !important;
-}
-
-.mindfold-document-view .mindfold-block-handle {
-  width: 12px;
-  height: 30px;
-  background:
-    radial-gradient(circle, #6a4c2e 1px, transparent 1.2px) 2px 7px / 5px 5px;
-}
-
-.mindfold-block.heading-one textarea {
-  min-height: 52px;
-  font-size: 1.78rem;
-  font-weight: 950;
-  line-height: 1.18 !important;
-}
-
-.mindfold-block.heading-two textarea {
-  min-height: 46px;
-  font-size: 1.36rem;
-  font-weight: 920;
-  line-height: 1.24 !important;
-}
-
-.mindfold-block.heading-three textarea {
-  min-height: 40px;
-  font-size: 1.12rem;
-  font-weight: 900;
-  line-height: 1.32 !important;
 }
 
 .hub-shell {
@@ -7337,14 +6884,12 @@ input::placeholder {
 .planner-view,
 .calendar-panel,
 .school-view,
-.mindfold-shell,
 .vault-view,
 .settings-panel,
 .dashboard-panel,
 .daily-section,
 .note-tab-bar,
 .mindfold-editor,
-.mindfold-sidebar,
 .mindfold-document-view .mindfold-editor {
   border-color: rgba(255, 255, 255, 0.56) !important;
   background:
@@ -7376,9 +6921,7 @@ select,
 .school-note input,
 .school-view textarea,
 .school-view input,
-.calendar-day textarea,
-.mindfold-block textarea,
-.mindfold-toggle-title {
+.calendar-day textarea {
   border-color: rgba(255, 255, 255, 0.5) !important;
   background:
     linear-gradient(145deg, rgba(232, 238, 246, 0.66), rgba(250, 252, 255, 0.55)),
@@ -7410,9 +6953,7 @@ select,
 .today-plan-card.done,
 .today-plan-card.done.no,
 .schedule-day,
-.calendar-day,
-.mindfold-toggle,
-.mindfold-block {
+.calendar-day {
   border-color: rgba(255, 255, 255, 0.58) !important;
   background:
     linear-gradient(145deg, rgba(249, 251, 254, 0.78), rgba(225, 232, 241, 0.58)),
@@ -7456,10 +6997,7 @@ select,
 .add-button,
 .topbar button,
 .school-note .school-color-button,
-.school-note-toggle-tab,
-.mindfold-toolbar button,
-.mindfold-node-action,
-.mindfold-block-button {
+.school-note-toggle-tab {
   border-color: rgba(255, 255, 255, 0.56) !important;
   background:
     linear-gradient(145deg, rgba(248, 250, 253, 0.76), rgba(224, 231, 240, 0.62)),
@@ -7477,7 +7015,6 @@ select,
 .add-button:hover,
 .note-tab-add:hover,
 .quick-add-button:hover,
-.mindfold-add-button:hover,
 .school-add-button:hover {
   border-color: rgba(99, 230, 173, 0.56) !important;
   background:
@@ -7805,14 +7342,12 @@ body::after {
 .planner-view,
 .calendar-panel,
 .school-view,
-.mindfold-shell,
 .vault-view,
 .settings-panel,
 .dashboard-panel,
 .daily-section,
 .note-tab-bar,
 .mindfold-editor,
-.mindfold-sidebar,
 .mindfold-document-view .mindfold-editor,
 .memo-card,
 .memo-card.active,
@@ -7833,9 +7368,7 @@ body::after {
 .today-plan-card.done,
 .today-plan-card.done.no,
 .schedule-day,
-.calendar-day,
-.mindfold-toggle,
-.mindfold-block {
+.calendar-day {
   border-color: rgba(255, 255, 255, 0.58) !important;
   background:
     linear-gradient(145deg, rgba(249, 251, 254, 0.78), rgba(225, 232, 241, 0.58)),
@@ -7875,8 +7408,6 @@ select,
 .school-view textarea,
 .school-view input,
 .calendar-day textarea,
-.mindfold-block textarea,
-.mindfold-toggle-title,
 .daily-workspace .memo-area .memo-title-input,
 .daily-workspace .memo-area .memo-large-textarea,
 .daily-workspace .memo-area .memo-quick-textarea {
@@ -7911,7 +7442,6 @@ select,
 .memo-panel h2,
 .school-view h1,
 .school-view h2,
-.mindfold-editor-head h2,
 .vault-heading h1,
 .topbar h1 {
   color: #1f2733 !important;
@@ -7923,7 +7453,6 @@ select,
 .topbar p,
 .muted,
 .empty-state,
-.mindfold-editor-head p,
 .vault-heading p {
   color: #687386 !important;
   text-shadow: none !important;
@@ -7940,9 +7469,6 @@ select,
 .topbar button,
 .school-note .school-color-button,
 .school-note-toggle-tab,
-.mindfold-toolbar button,
-.mindfold-node-action,
-.mindfold-block-button,
 .today-plan-panel .choice-button,
 .today-plan-panel .choice-button.yes,
 .today-plan-panel .choice-button.no,
@@ -7968,8 +7494,6 @@ select,
 .topbar button.active,
 .schedule-day.selected,
 .calendar-day.selected,
-.mindfold-node.active,
-.mindfold-block:focus-within,
 .school-note .school-color-button[aria-expanded="true"] {
   border-color: rgba(126, 149, 255, 0.48) !important;
   background:
@@ -7986,7 +7510,6 @@ select,
 .add-button,
 .note-tab-add,
 .quick-add-button,
-.mindfold-add-button,
 .school-add-button {
   color: #246a55 !important;
 }
@@ -7994,7 +7517,6 @@ select,
 .add-button:hover,
 .note-tab-add:hover,
 .quick-add-button:hover,
-.mindfold-add-button:hover,
 .school-add-button:hover,
 .today-plan-panel .choice-button.yes.selected,
 .today-plan-panel .range-score-button.selected:not(.no) {
@@ -8082,7 +7604,6 @@ body::after,
 .memo-panel,
 .history-panel,
 .school-view,
-.mindfold-shell,
 .vault-view {
   border: 1px solid rgba(255, 255, 255, 0.72) !important;
   background:
@@ -8273,9 +7794,7 @@ body::after,
 
 .topbar,
 .mindfold-view,
-.mindfold-shell,
 .mindfold-editor,
-.mindfold-sidebar,
 .mindfold-document-view .mindfold-editor {
   border-color: rgba(255, 255, 255, 0.66) !important;
   background:
@@ -11240,9 +10759,7 @@ html body #root .app-shell * {
 
 .app-shell h1,
 .hero-date,
-.score-number,
-.mindfold-brand,
-.mindfold-title {
+.score-number {
   font-weight: 800 !important;
 }
 
@@ -12367,86 +11884,11 @@ html body #root .app-shell .topbar .day-switcher {
     inset 1px 1px 0 rgba(255, 255, 255, 0.58) !important;
 }
 
-.mindfold-view .mindfold-toggle,
-.mindfold-view .mindfold-block {
-  background:
-    linear-gradient(145deg, rgba(242, 246, 251, 0.72), rgba(218, 226, 237, 0.56)),
-    rgba(230, 237, 246, 0.6) !important;
-  background-image: linear-gradient(145deg, rgba(242, 246, 251, 0.72), rgba(218, 226, 237, 0.56)) !important;
-  box-shadow:
-    8px 8px 18px rgba(116, 128, 145, 0.12),
-    -6px -6px 15px rgba(255, 255, 255, 0.42),
-    inset 1px 1px 0 rgba(255, 255, 255, 0.58) !important;
-}
-
-.mindfold-view .mindfold-block:focus-within,
-.mindfold-view .mindfold-node.active {
-  border-color: rgba(126, 149, 255, 0.3) !important;
-  box-shadow:
-    0 0 10px rgba(126, 149, 255, 0.1),
-    8px 8px 18px rgba(116, 128, 145, 0.12),
-    -6px -6px 15px rgba(255, 255, 255, 0.44),
-    inset 1px 1px 0 rgba(255, 255, 255, 0.58) !important;
-}
-
 /* Mindfold block editor */
 .mindfold-notion-view .mindfold-editor {
   min-height: 760px;
   padding: clamp(20px, 3vw, 42px) clamp(14px, 5vw, 74px) 54px !important;
   overflow: visible;
-}
-
-.mindfold-notion-view .mindfold-editor-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 18px;
-  margin-bottom: 26px;
-  padding: 0 4px 18px;
-  border-bottom: 1px solid rgba(91, 110, 137, 0.14);
-}
-
-.mindfold-notion-view .mindfold-editor-head h2 {
-  font-size: clamp(1.7rem, 3vw, 2.35rem);
-  color: #26364c !important;
-}
-
-.mindfold-notion-view .mindfold-editor-head p {
-  margin-top: 3px;
-  color: #758196 !important;
-  font-size: 0.92rem;
-  font-weight: 600;
-}
-
-.mindfold-notion-view .mindfold-add-root {
-  position: relative;
-  display: grid;
-  place-items: center;
-  width: 38px;
-  height: 38px;
-  min-width: 38px;
-  border: 1px solid rgba(255, 255, 255, 0.72) !important;
-  border-radius: 10px;
-  background: linear-gradient(145deg, rgba(255, 255, 255, 0.82), rgba(207, 220, 236, 0.68)) !important;
-  box-shadow: 4px 5px 10px rgba(77, 92, 113, 0.13), inset 1px 1px 0 rgba(255, 255, 255, 0.78) !important;
-}
-
-.mindfold-notion-view .mindfold-add-root::before,
-.mindfold-notion-view .mindfold-add-root::after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 13px;
-  height: 2px;
-  border: 0;
-  border-radius: 999px;
-  background: #52637c;
-  transform: translate(-50%, -50%);
-}
-
-.mindfold-notion-view .mindfold-add-root::after {
-  transform: translate(-50%, -50%) rotate(90deg);
 }
 
 .mindfold-block-tree {
@@ -12955,7 +12397,9 @@ body.mindfold-pointer-dragging * {
 }
 
 .mindfold-add-child {
+  margin-left: 54px;
   min-height: 32px;
+  padding-left: 12px;
   border: 0;
   border-radius: 6px;
   background: transparent;
@@ -12964,11 +12408,6 @@ body.mindfold-pointer-dragging * {
   font-size: 0.82rem;
   font-weight: 600;
   opacity: 0.42;
-}
-
-.mindfold-add-child {
-  margin-left: 54px;
-  padding-left: 12px;
 }
 
 .mindfold-notion-block:hover > .mindfold-add-child,
@@ -13026,24 +12465,10 @@ body.mindfold-pointer-dragging * {
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.4);
 }
 
-.mindfold-block-handle,
-.mindfold-toggle-block,
-.mindfold-toggle-line,
-.mindfold-toggle-body,
-.mindfold-ghost-add,
-.mindfold-inline-add {
-  background-image: none;
-}
-
 @media (max-width: 640px) {
   .mindfold-notion-view .mindfold-editor {
     min-height: 680px;
     padding: 18px 7px 40px !important;
-  }
-
-  .mindfold-notion-view .mindfold-editor-head {
-    margin: 0 7px 18px;
-    padding-bottom: 14px;
   }
 
   .mindfold-block-row {
@@ -13108,10 +12533,6 @@ body.mindfold-pointer-dragging * {
   box-sizing: border-box;
 }
 
-.mindfold-notion-view .mindfold-editor-head {
-  justify-content: flex-start;
-}
-
 /* A compact menu glyph replaces the add-shaped block options control. */
 .mindfold-menu-glyph {
   display: block;
@@ -13146,16 +12567,6 @@ body.mindfold-pointer-dragging * {
 }
 
 /* Mindfold page tabs replace the old title header. */
-.mindfold-tabs-shell {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 18px;
-  padding: 0 2px 12px;
-  border-bottom: 1px solid rgba(91, 110, 137, 0.14);
-}
-
 .mindfold-tabs {
   display: flex;
   align-items: end;
@@ -13256,12 +12667,6 @@ body.mindfold-pointer-dragging * {
 }
 
 @media (max-width: 640px) {
-  .mindfold-tabs-shell {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 7px;
-    padding: 0 4px 10px;
-  }
-
   .mindfold-tab-tools {
     justify-content: flex-end;
   }
@@ -13384,6 +12789,7 @@ body.mindfold-pointer-dragging * {
 }
 
 .mindfold-page-sidebar .mindfold-tab-item {
+  position: relative;
   width: 100%;
   min-width: 0;
   max-width: none;
@@ -13407,13 +12813,56 @@ body.mindfold-pointer-dragging * {
 .mindfold-page-sidebar .mindfold-tab-button,
 .mindfold-page-sidebar .mindfold-tab-input {
   height: 38px;
-  padding-inline: 11px !important;
+  padding: 0 92px 0 11px !important;
   text-align: left;
 }
 
+.mindfold-tab-actions {
+  position: absolute;
+  top: 50%;
+  right: 5px;
+  display: flex;
+  gap: 3px;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-50%);
+  transition: opacity 140ms ease;
+}
+
+.mindfold-tab-item:hover .mindfold-tab-actions,
+.mindfold-tab-item:focus-within .mindfold-tab-actions {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.mindfold-tab-actions button {
+  min-width: 34px;
+  height: 26px;
+  padding: 0 6px;
+  border: 1px solid rgba(91, 109, 133, 0.16);
+  border-radius: 6px;
+  color: #4f5e72;
+  background: rgba(255, 255, 255, 0.58);
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.mindfold-tab-actions button:hover {
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.mindfold-tab-actions button.danger:hover {
+  color: #9b4b55;
+  background: rgba(255, 229, 232, 0.9);
+}
+
+.mindfold-tab-actions button:disabled {
+  display: none;
+}
+
 .mindfold-page-sidebar .mindfold-tab-tools {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  display: block;
   gap: 5px;
   margin-top: 8px;
   padding-top: 10px;
@@ -13421,8 +12870,105 @@ body.mindfold-pointer-dragging * {
 }
 
 .mindfold-page-sidebar .mindfold-tab-tools button {
+  width: 100%;
   min-width: 0;
-  padding-inline: 5px;
+  padding-inline: 10px;
+}
+
+.mindfold-trash {
+  margin-top: 8px;
+  border-top: 1px solid rgba(87, 106, 133, 0.14);
+  padding-top: 8px;
+}
+
+.mindfold-trash-toggle {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 36px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 7px;
+  color: #526176;
+  background: transparent;
+  cursor: pointer;
+}
+
+.mindfold-trash-toggle:hover,
+.mindfold-trash.open .mindfold-trash-toggle {
+  background: rgba(247, 250, 254, 0.48);
+}
+
+.mindfold-trash-toggle small {
+  min-width: 21px;
+  margin-left: auto;
+  border-radius: 10px;
+  background: rgba(111, 128, 151, 0.12);
+  text-align: center;
+}
+
+.mindfold-trash-list {
+  display: grid;
+  gap: 6px;
+  max-height: 220px;
+  padding: 6px 2px 2px;
+  overflow-y: auto;
+}
+
+.mindfold-trash-list > p {
+  margin: 8px;
+  color: #7b8798;
+  font-size: 12px;
+  text-align: center;
+}
+
+.mindfold-trash-item {
+  padding: 8px;
+  border: 1px solid rgba(100, 118, 142, 0.12);
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.mindfold-trash-item > div:first-child {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.mindfold-trash-item span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mindfold-trash-item small {
+  margin-left: auto;
+  color: #8b7580;
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.mindfold-trash-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 5px;
+  margin-top: 7px;
+}
+
+.mindfold-trash-actions button {
+  height: 25px;
+  padding: 0 7px;
+  border: 1px solid rgba(91, 109, 133, 0.14);
+  border-radius: 6px;
+  color: #536278;
+  background: rgba(255, 255, 255, 0.55);
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.mindfold-trash-actions button.danger {
+  color: #98505a;
 }
 
 .mindfold-workspace > .mindfold-editor {
