@@ -301,6 +301,46 @@ function normalizeMindfoldMasks(masks, textLength) {
     }, []);
 }
 
+const mindfoldMarkTypes = ["bold", "italic"];
+
+function normalizeMindfoldMarks(marks, textLength) {
+  const normalized = (Array.isArray(marks) ? marks : [])
+    .map((mark) => ({
+      id: mark?.id || createKey("mindfold-mark"),
+      type: mindfoldMarkTypes.includes(mark?.type) ? mark.type : "",
+      start: Math.max(0, Math.min(textLength, Number(mark?.start) || 0)),
+      end: Math.max(0, Math.min(textLength, Number(mark?.end) || 0)),
+    }))
+    .filter((mark) => mark.type && mark.end > mark.start);
+
+  return mindfoldMarkTypes.flatMap((type) => normalized
+    .filter((mark) => mark.type === type)
+    .sort((a, b) => a.start - b.start)
+    .reduce((merged, mark) => {
+      const previous = merged[merged.length - 1];
+      if (previous && mark.start <= previous.end) {
+        previous.end = Math.max(previous.end, mark.end);
+        return merged;
+      }
+      merged.push({ ...mark });
+      return merged;
+    }, []));
+}
+
+function mindfoldSelectionHasMark(marks, type, start, end) {
+  if (end <= start) return false;
+  const ranges = normalizeMindfoldMarks(marks, end)
+    .filter((mark) => mark.type === type && mark.end > start && mark.start < end)
+    .sort((a, b) => a.start - b.start);
+  let coveredUntil = start;
+  for (const range of ranges) {
+    if (range.start > coveredUntil) return false;
+    coveredUntil = Math.max(coveredUntil, range.end);
+    if (coveredUntil >= end) return true;
+  }
+  return false;
+}
+
 function normalizeMindfoldBlock(block, index = 0) {
   const text = String(block?.text == null ? "" : block.text).replace(/\r\n/g, "\n");
   const inferredType = /^####\s+/.test(text)
@@ -325,11 +365,30 @@ function normalizeMindfoldBlock(block, index = 0) {
     type,
     color: Object.prototype.hasOwnProperty.call(mindfoldTextColors, block?.color) ? block.color : "ink",
     toggle: legacyType === "toggle" || block?.toggle === true,
+    checked: block?.checked === true,
+    columns: [2, 3, 4].includes(Number(block?.columns)) ? Number(block.columns) : 1,
+    column: [0, 1, 2, 3].includes(Number(block?.column)) ? Number(block.column) : null,
+    columnPlaceholder: block?.columnPlaceholder === true,
     text: text || (index === 0 ? "" : ""),
     open: block?.open !== false,
     masks: normalizeMindfoldMasks(block?.masks, text.length),
+    marks: normalizeMindfoldMarks(block?.marks, text.length),
     children: (Array.isArray(block?.children) ? block.children : []).filter(Boolean).map(normalizeMindfoldBlock),
   };
+}
+
+function ensureMindfoldColumnInputs(block) {
+  if (!block || block.columns <= 1) return;
+  for (let column = 1; column < block.columns; column += 1) {
+    if (!block.children.some((child) => child.column === column)) {
+      block.children.push(normalizeMindfoldBlock({
+        type: "text",
+        text: "",
+        column,
+        columnPlaceholder: true,
+      }));
+    }
+  }
 }
 
 function migrateMindfoldNode(node, index = 0) {
@@ -436,6 +495,76 @@ function adjustMindfoldMasks(masks, previousText, nextText) {
     };
   });
   return normalizeMindfoldMasks(adjusted, nextText.length);
+}
+
+function adjustMindfoldMarks(marks, previousText, nextText) {
+  if (!marks?.length || previousText === nextText) return normalizeMindfoldMarks(marks, nextText.length);
+  let prefix = 0;
+  while (prefix < previousText.length && prefix < nextText.length && previousText[prefix] === nextText[prefix]) prefix += 1;
+  let suffix = 0;
+  while (
+    suffix < previousText.length - prefix
+    && suffix < nextText.length - prefix
+    && previousText[previousText.length - 1 - suffix] === nextText[nextText.length - 1 - suffix]
+  ) suffix += 1;
+  const previousEditEnd = previousText.length - suffix;
+  const nextEditEnd = nextText.length - suffix;
+  const delta = nextText.length - previousText.length;
+  const adjusted = (marks || []).map((mark) => {
+    if (mark.end <= prefix) return { ...mark };
+    if (mark.start >= previousEditEnd) return { ...mark, start: mark.start + delta, end: mark.end + delta };
+    return {
+      ...mark,
+      start: Math.min(mark.start, prefix),
+      end: Math.max(prefix, Math.min(nextText.length, mark.end + (nextEditEnd - previousEditEnd))),
+    };
+  });
+  return normalizeMindfoldMarks(adjusted, nextText.length);
+}
+
+function getMindfoldEditableSelection(root) {
+  const selection = window.getSelection();
+  if (!root || !selection?.rangeCount || !root.contains(selection.anchorNode) || !root.contains(selection.focusNode)) {
+    return { start: 0, end: 0 };
+  }
+  const getOffset = (node, offset) => {
+    const range = document.createRange();
+    range.selectNodeContents(root);
+    range.setEnd(node, offset);
+    return range.toString().length;
+  };
+  const anchor = getOffset(selection.anchorNode, selection.anchorOffset);
+  const focus = getOffset(selection.focusNode, selection.focusOffset);
+  return { start: Math.min(anchor, focus), end: Math.max(anchor, focus) };
+}
+
+function setMindfoldEditableSelection(root, start, end = start) {
+  if (!root) return;
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  const nodes = [];
+  let totalLength = 0;
+  while (walker.nextNode()) {
+    nodes.push({ node: walker.currentNode, start: totalLength });
+    totalLength += walker.currentNode.textContent.length;
+  }
+  const resolvePoint = (offset) => {
+    const clamped = Math.max(0, Math.min(totalLength, Number(offset) || 0));
+    for (const entry of nodes) {
+      const length = entry.node.textContent.length;
+      if (clamped <= entry.start + length) return { node: entry.node, offset: clamped - entry.start };
+    }
+    return nodes.length
+      ? { node: nodes[nodes.length - 1].node, offset: nodes[nodes.length - 1].node.textContent.length }
+      : { node: root, offset: 0 };
+  };
+  const startPoint = resolvePoint(start);
+  const endPoint = resolvePoint(end);
+  const range = document.createRange();
+  range.setStart(startPoint.node, startPoint.offset);
+  range.setEnd(endPoint.node, endPoint.offset);
+  const selection = window.getSelection();
+  selection.removeAllRanges();
+  selection.addRange(range);
 }
 
 function getStableSchoolColor(id, index = 0) {
@@ -890,6 +1019,9 @@ function App() {
   const pushTimerRef = useRef(null);
   const pollTimerRef = useRef(null);
   const autoConnectRef = useRef(false);
+  const mindfoldUndoRef = useRef([]);
+  const mindfoldRedoRef = useRef([]);
+  const mindfoldHistoryGroupRef = useRef({ key: "", timestamp: 0 });
 
   useEffect(() => {
     dataRef.current = data;
@@ -906,8 +1038,24 @@ function App() {
 
   const saveData = (updater, options = {}) => {
     setData((current) => {
+      const previousMindfold = options.captureMindfold
+        ? normalizeMindfold(JSON.parse(JSON.stringify(current.mindfold)))
+        : null;
       const next = typeof updater === "function" ? updater(JSON.parse(JSON.stringify(current))) : updater;
       const normalized = normalizeState({ ...next, updatedAt: new Date().toISOString() });
+      if (previousMindfold && JSON.stringify(previousMindfold) !== JSON.stringify(normalized.mindfold)) {
+        const now = Date.now();
+        const historyGroup = String(options.historyGroup || "");
+        const canMerge = historyGroup
+          && mindfoldHistoryGroupRef.current.key === historyGroup
+          && now - mindfoldHistoryGroupRef.current.timestamp < 800;
+        if (!canMerge) {
+          mindfoldUndoRef.current.push(previousMindfold);
+          if (mindfoldUndoRef.current.length > 100) mindfoldUndoRef.current.shift();
+        }
+        mindfoldRedoRef.current = [];
+        mindfoldHistoryGroupRef.current = { key: historyGroup, timestamp: now };
+      }
       dataRef.current = normalized;
       localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized));
       if (!options.skipSync) scheduleAutoSync();
@@ -1404,7 +1552,37 @@ function App() {
     });
   };
 
+  const restoreMindfoldHistory = (direction) => {
+    const source = direction === "redo" ? mindfoldRedoRef.current : mindfoldUndoRef.current;
+    const target = direction === "redo" ? mindfoldUndoRef.current : mindfoldRedoRef.current;
+    const currentSnapshot = normalizeMindfold(JSON.parse(JSON.stringify(dataRef.current.mindfold)));
+    const currentSignature = JSON.stringify(currentSnapshot);
+    let snapshot = null;
+    while (source.length && !snapshot) {
+      const candidate = source.pop();
+      if (JSON.stringify(candidate) !== currentSignature) snapshot = candidate;
+    }
+    if (!snapshot) return false;
+    target.push(currentSnapshot);
+    if (target.length > 100) target.shift();
+    mindfoldHistoryGroupRef.current = { key: "", timestamp: 0 };
+    saveData((draft) => {
+      draft.mindfold = snapshot;
+      return draft;
+    });
+    return true;
+  };
+
   const updateMindfoldBlock = (id, patch) => {
+    const patchObject = typeof patch === "string" ? { text: patch } : patch || {};
+    const isTextOnlyChange = Object.prototype.hasOwnProperty.call(patchObject, "text")
+      && !patchObject.addMark
+      && !patchObject.type
+      && !Object.prototype.hasOwnProperty.call(patchObject, "toggle")
+      && !Object.prototype.hasOwnProperty.call(patchObject, "checked")
+      && !Object.prototype.hasOwnProperty.call(patchObject, "columns")
+      && !Object.prototype.hasOwnProperty.call(patchObject, "open")
+      && !Object.prototype.hasOwnProperty.call(patchObject, "color");
     saveData((draft) => {
       draft.mindfold = normalizeMindfold(draft.mindfold);
       const activeTab = getActiveMindfoldTab(draft.mindfold);
@@ -1414,28 +1592,123 @@ function App() {
       if (Object.prototype.hasOwnProperty.call(nextPatch, "text")) {
         const nextText = String(nextPatch.text).replace(/\r?\n/g, " ");
         block.masks = adjustMindfoldMasks(block.masks, block.text, nextText);
+        block.marks = adjustMindfoldMarks(block.marks, block.text, nextText);
         block.text = nextText;
+        if (nextText) block.columnPlaceholder = false;
       }
       if (mindfoldBlockTypes.includes(nextPatch.type)) block.type = nextPatch.type;
       if (Object.prototype.hasOwnProperty.call(mindfoldTextColors, nextPatch.color)) block.color = nextPatch.color;
       if (Object.prototype.hasOwnProperty.call(nextPatch, "toggle")) block.toggle = Boolean(nextPatch.toggle);
+      if (Object.prototype.hasOwnProperty.call(nextPatch, "checked")) block.checked = Boolean(nextPatch.checked);
+      if (Object.prototype.hasOwnProperty.call(nextPatch, "columns")) block.columns = [2, 3, 4].includes(Number(nextPatch.columns)) ? Number(nextPatch.columns) : 1;
       if (Object.prototype.hasOwnProperty.call(nextPatch, "open")) block.open = Boolean(nextPatch.open);
+      if (
+        nextPatch.addMark
+        && mindfoldMarkTypes.includes(nextPatch.addMark.type)
+        && Number.isFinite(nextPatch.addMark.start)
+        && Number.isFinite(nextPatch.addMark.end)
+      ) {
+        block.marks = normalizeMindfoldMarks([
+          ...block.marks,
+          { id: createKey("mindfold-mark"), ...nextPatch.addMark },
+        ], block.text.length);
+      }
       activeTab.activeId = id;
       return draft;
-    });
+    }, { captureMindfold: true, historyGroup: isTextOnlyChange ? `text:${id}` : "" });
   };
 
-  const addMindfoldBlock = (parentId = "", afterId = "", type = "text", text = "") => {
-    const nextId = createKey("mindfold-block");
+  const setMindfoldColumns = (id, columns, removeId = "") => {
+    const columnCount = [2, 3, 4].includes(Number(columns)) ? Number(columns) : 1;
     saveData((draft) => {
       draft.mindfold = normalizeMindfold(draft.mindfold);
       const activeTab = getActiveMindfoldTab(draft.mindfold);
-      const nextBlock = normalizeMindfoldBlock({ id: nextId, type, text, open: true, children: [], masks: [] });
+      let location = findMindfoldBlockLocation(activeTab.blocks, id);
+      if (!location) return draft;
+
+      if (location.parent?.columns > 1 && Number.isInteger(location.block.column)) {
+        const layout = location.parent;
+        const layoutLocation = findMindfoldBlockLocation(activeTab.blocks, layout.id);
+        if (!layoutLocation) return draft;
+        const splitIndex = layout.children.findIndex((child) => child.id === id);
+        const promoted = layout.children
+          .splice(splitIndex)
+          .filter((child) => child.id !== removeId)
+          .filter((child) => !child.columnPlaceholder)
+          .map((child) => ({ ...child, column: null }));
+        ensureMindfoldColumnInputs(layout);
+        layoutLocation.siblings.splice(layoutLocation.index + 1, 0, ...promoted);
+        location = findMindfoldBlockLocation(activeTab.blocks, id);
+        if (columnCount === 1 || !location) {
+          activeTab.activeId = promoted[0]?.id || layout.id;
+          return draft;
+        }
+      }
+
+      const { block } = location;
+      if (columnCount === 1) {
+        const nestedChildren = block.children.filter((child) => !Number.isInteger(child.column));
+        const promotedChildren = block.children
+          .filter((child) => Number.isInteger(child.column))
+          .filter((child) => child.id !== removeId)
+          .filter((child) => !child.columnPlaceholder)
+          .map((child) => ({ ...child, column: null }));
+        block.columns = 1;
+        block.children = nestedChildren;
+        location.siblings.splice(location.index + 1, 0, ...promotedChildren);
+        activeTab.activeId = id;
+        return draft;
+      }
+
+      const wasColumnLayout = block.columns > 1;
+      if (!wasColumnLayout) {
+        let sectionEnd = location.index + 1;
+        while (sectionEnd < location.siblings.length && location.siblings[sectionEnd].columns === 1) {
+          sectionEnd += 1;
+        }
+        const followingBlocks = location.siblings.splice(location.index + 1, sectionEnd - location.index - 1);
+        followingBlocks.forEach((child) => {
+          child.column = 0;
+        });
+        block.children.push(...followingBlocks);
+      }
+      block.columns = columnCount;
+      block.children.forEach((child) => {
+        child.column = Number.isInteger(child.column) && child.column >= 0 && child.column < columnCount
+          ? child.column
+          : null;
+      });
+      ensureMindfoldColumnInputs(block);
+      activeTab.activeId = id;
+      return draft;
+    }, { captureMindfold: true });
+  };
+
+  const addMindfoldBlock = (parentId = "", afterId = "", type = "text", text = "", column = null) => {
+    let nextId = createKey("mindfold-block");
+    saveData((draft) => {
+      draft.mindfold = normalizeMindfold(draft.mindfold);
+      const activeTab = getActiveMindfoldTab(draft.mindfold);
+      const nextBlock = normalizeMindfoldBlock({ id: nextId, type, text, open: true, children: [], masks: [], column });
       if (parentId) {
         const parent = findMindfoldBlock(activeTab.blocks, parentId);
         if (parent) {
-          parent.open = true;
-          parent.children.push(nextBlock);
+          const placeholder = Number.isInteger(column)
+            ? parent.children.find((child) => child.column === column && child.columnPlaceholder)
+            : null;
+          if (placeholder) {
+            nextId = placeholder.id;
+            activeTab.activeId = nextId;
+            return draft;
+          }
+          if (!(parent.columns > 1 && Number.isInteger(nextBlock.column))) parent.open = true;
+          const afterIndex = afterId ? parent.children.findIndex((child) => child.id === afterId) : -1;
+          if (afterId === parent.id && Number.isInteger(column)) {
+            const firstColumnBlock = parent.children.findIndex((child) => child.column === column);
+            if (firstColumnBlock >= 0) parent.children.splice(firstColumnBlock, 0, nextBlock);
+            else parent.children.push(nextBlock);
+          } else if (afterIndex >= 0) parent.children.splice(afterIndex + 1, 0, nextBlock);
+          else parent.children.push(nextBlock);
         } else {
           activeTab.blocks.push(nextBlock);
         }
@@ -1448,7 +1721,7 @@ function App() {
       }
       activeTab.activeId = nextId;
       return draft;
-    });
+    }, { captureMindfold: true });
     return nextId;
   };
 
@@ -1459,15 +1732,16 @@ function App() {
       const location = findMindfoldBlockLocation(activeTab.blocks, id);
       if (!location) return draft;
       location.siblings.splice(location.index, 1);
+      if (location.parent?.columns > 1) ensureMindfoldColumnInputs(location.parent);
       if (!activeTab.blocks.length) activeTab.blocks.push(normalizeMindfoldBlock({ type: "text", text: "" }));
       if (!findMindfoldBlock(activeTab.blocks, activeTab.activeId)) {
         activeTab.activeId = collectMindfoldBlockIds(activeTab.blocks)[0] || "";
       }
       return draft;
-    });
+    }, { captureMindfold: true });
   };
 
-  const moveMindfoldBlock = (fromId, toId, placement = "after") => {
+  const moveMindfoldBlock = (fromId, toId, placement = "after", targetColumn = null) => {
     if (!fromId || !toId || fromId === toId) return;
     saveData((draft) => {
       draft.mindfold = normalizeMindfold(draft.mindfold);
@@ -1475,22 +1749,38 @@ function App() {
       const source = findMindfoldBlockLocation(activeTab.blocks, fromId);
       const targetBlock = findMindfoldBlock(activeTab.blocks, toId);
       if (!source || !targetBlock || mindfoldBlockContains(source.block, toId)) return draft;
+      const sourceLayout = source.parent?.columns > 1 ? source.parent : null;
       const [movingBlock] = source.siblings.splice(source.index, 1);
       const target = findMindfoldBlockLocation(activeTab.blocks, toId);
       if (!target) {
         source.siblings.splice(source.index, 0, movingBlock);
         return draft;
       }
-      if (placement === "inside") {
+      if (placement === "column") {
+        const column = Math.max(0, Math.min(target.block.columns - 1, Number(targetColumn) || 0));
+        movingBlock.column = column;
+        movingBlock.columnPlaceholder = false;
+        target.block.children = target.block.children.filter((child) => (
+          child.id === movingBlock.id || child.column !== column || !child.columnPlaceholder
+        ));
+        target.block.children.push(movingBlock);
+      } else if (placement === "inside") {
+        movingBlock.column = null;
         target.block.toggle = true;
         target.block.open = true;
         target.block.children.push(movingBlock);
       } else {
+        movingBlock.column = target.parent?.columns > 1
+          ? (Number.isInteger(target.block.column) ? target.block.column : 0)
+          : null;
         target.siblings.splice(target.index + (placement === "after" ? 1 : 0), 0, movingBlock);
       }
+      ensureMindfoldColumnInputs(sourceLayout);
+      if (placement === "column") ensureMindfoldColumnInputs(target.block);
+      else if (target.parent?.columns > 1) ensureMindfoldColumnInputs(target.parent);
       activeTab.activeId = fromId;
       return draft;
-    });
+    }, { captureMindfold: true });
   };
 
   const indentMindfoldBlock = (id) => {
@@ -1506,7 +1796,7 @@ function App() {
       previous.children.push(movingBlock);
       activeTab.activeId = id;
       return draft;
-    });
+    }, { captureMindfold: true });
   };
 
   const outdentMindfoldBlock = (id) => {
@@ -1521,7 +1811,7 @@ function App() {
       parentLocation.siblings.splice(parentLocation.index + 1, 0, movingBlock);
       activeTab.activeId = id;
       return draft;
-    });
+    }, { captureMindfold: true });
   };
 
   const maskMindfoldSelection = (id, start, end) => {
@@ -1532,7 +1822,7 @@ function App() {
       if (!block) return draft;
       block.masks = normalizeMindfoldMasks([...block.masks, { id: createKey("mindfold-mask"), start, end }], block.text.length);
       return draft;
-    });
+    }, { captureMindfold: true });
   };
 
   const clearMindfoldMasks = (id) => {
@@ -1541,7 +1831,32 @@ function App() {
       const block = findMindfoldBlock(getActiveMindfoldTab(draft.mindfold).blocks, id);
       if (block) block.masks = [];
       return draft;
-    });
+    }, { captureMindfold: true });
+  };
+
+  const toggleMindfoldMark = (id, type, start, end) => {
+    if (!mindfoldMarkTypes.includes(type) || !Number.isFinite(start) || !Number.isFinite(end) || end <= start) return;
+    saveData((draft) => {
+      draft.mindfold = normalizeMindfold(draft.mindfold);
+      const block = findMindfoldBlock(getActiveMindfoldTab(draft.mindfold).blocks, id);
+      if (!block) return draft;
+      const marks = normalizeMindfoldMarks(block.marks, block.text.length);
+      if (mindfoldSelectionHasMark(marks, type, start, end)) {
+        block.marks = normalizeMindfoldMarks(marks.flatMap((mark) => {
+          if (mark.type !== type || mark.end <= start || mark.start >= end) return [mark];
+          const pieces = [];
+          if (mark.start < start) pieces.push({ ...mark, id: createKey("mindfold-mark"), end: start });
+          if (mark.end > end) pieces.push({ ...mark, id: createKey("mindfold-mark"), start: end });
+          return pieces;
+        }), block.text.length);
+      } else {
+        block.marks = normalizeMindfoldMarks([
+          ...marks,
+          { id: createKey("mindfold-mark"), type, start, end },
+        ], block.text.length);
+      }
+      return draft;
+    }, { captureMindfold: true });
   };
 
   const setActiveMindfoldTab = (id) => {
@@ -1561,7 +1876,7 @@ function App() {
       draft.mindfold.tabs.push({ id: nextId, label: `페이지 ${nextIndex}`, blocks: [firstBlock], activeId: firstBlock.id });
       draft.mindfold.activeTabId = nextId;
       return draft;
-    });
+    }, { captureMindfold: true });
     return nextId;
   };
 
@@ -1571,7 +1886,7 @@ function App() {
       const tab = draft.mindfold.tabs.find((item) => item.id === id);
       if (tab) tab.label = String(label || "이름 없는 페이지").trim().slice(0, 28) || "이름 없는 페이지";
       return draft;
-    });
+    }, { captureMindfold: true });
   };
 
   const moveMindfoldTab = (fromId, toId) => {
@@ -1584,7 +1899,7 @@ function App() {
       const [movingTab] = draft.mindfold.tabs.splice(fromIndex, 1);
       draft.mindfold.tabs.splice(toIndex, 0, movingTab);
       return draft;
-    });
+    }, { captureMindfold: true });
   };
 
   const removeMindfoldTab = (id) => {
@@ -1599,7 +1914,7 @@ function App() {
       draft.mindfold.tabs.splice(index, 1);
       if (draft.mindfold.activeTabId === id) draft.mindfold.activeTabId = draft.mindfold.tabs[Math.min(index, draft.mindfold.tabs.length - 1)].id;
       return draft;
-    });
+    }, { captureMindfold: true });
   };
 
   const addMemoNote = (sectionKey, idPrefix) => {
@@ -1966,6 +2281,10 @@ function App() {
           renameTab: renameMindfoldTab,
           setActiveBlock: setActiveMindfoldBlock,
           setActiveTab: setActiveMindfoldTab,
+          setColumns: setMindfoldColumns,
+          toggleMark: toggleMindfoldMark,
+          redo: () => restoreMindfoldHistory("redo"),
+          undo: () => restoreMindfoldHistory("undo"),
           updateBlock: updateMindfoldBlock,
         })
       : activeView === "vault"
@@ -2453,7 +2772,7 @@ function SchoolView({ addSchoolNote, attachMemoImage, moveSchoolNote, notes, rem
   );
 }
 
-function MindfoldView({ addBlock, addTab, clearMasks, indentBlock, maskSelection, mindfold, moveBlock, moveTab, outdentBlock, removeBlock, removeTab, renameTab, setActiveBlock, setActiveTab, updateBlock }) {
+function MindfoldView({ addBlock, addTab, clearMasks, indentBlock, maskSelection, mindfold, moveBlock, moveTab, outdentBlock, redo, removeBlock, removeTab, renameTab, setActiveBlock, setActiveTab, setColumns, toggleMark, undo, updateBlock }) {
   const normalized = normalizeMindfold(mindfold);
   const activeTab = getActiveMindfoldTab(normalized);
   const [dragBlockId, setDragBlockId] = useState("");
@@ -2466,6 +2785,8 @@ function MindfoldView({ addBlock, addTab, clearMasks, indentBlock, maskSelection
   const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth > 760);
   const selectionRef = useRef({});
   const pendingFocusRef = useRef(null);
+  const pointerDragRef = useRef(null);
+  const suppressMenuClickRef = useRef(false);
 
   const blockTypeOptions = [
     { type: "text", icon: "T", label: "텍스트" },
@@ -2474,7 +2795,7 @@ function MindfoldView({ addBlock, addTab, clearMasks, indentBlock, maskSelection
     { type: "heading-3", icon: "H3", label: "제목 3" },
     { type: "heading-4", icon: "H4", label: "제목 4" },
     { type: "bullet", icon: "\u2022", label: "목록" },
-    { type: "callout", icon: "\u25a1", label: "메모" },
+    { type: "callout", icon: "\u2610", label: "체크" },
     { type: "quote", icon: "\u201c", label: "인용" },
   ];
 
@@ -2501,15 +2822,100 @@ function MindfoldView({ addBlock, addTab, clearMasks, indentBlock, maskSelection
   }, [menuBlockId]);
 
   useEffect(() => {
+    const handlePointerMove = (event) => {
+      const dragState = pointerDragRef.current;
+      if (!dragState) return;
+      const distance = Math.hypot(event.clientX - dragState.startX, event.clientY - dragState.startY);
+      if (!dragState.dragging && distance < 6) return;
+      if (!dragState.dragging) {
+        dragState.dragging = true;
+        suppressMenuClickRef.current = true;
+        setDragBlockId(dragState.id);
+        setMenuBlockId("");
+        document.getSelection()?.removeAllRanges();
+        document.body.classList.add("mindfold-pointer-dragging");
+      }
+      event.preventDefault();
+      const pointElement = document.elementFromPoint(event.clientX, event.clientY);
+      const columnElement = pointElement?.closest?.("[data-column-layout-id]");
+      const targetElement = pointElement?.closest?.("[data-block-id]");
+      const targetId = targetElement?.getAttribute("data-block-id") || "";
+      const layoutId = columnElement?.getAttribute("data-column-layout-id") || "";
+      if (layoutId && (!targetId || targetId === layoutId || targetId === dragState.id)) {
+        const column = Number(columnElement.getAttribute("data-column-index")) || 0;
+        dragState.target = { id: layoutId, placement: "column", column };
+        setDropTarget(dragState.target);
+        return;
+      }
+      if (!targetId || targetId === dragState.id) {
+        dragState.target = null;
+        setDropTarget(null);
+        return;
+      }
+      const targetBlock = findMindfoldBlock(activeTab.blocks, targetId);
+      if (!targetBlock) return;
+      const rect = targetElement.getBoundingClientRect();
+      const edgeZone = Math.min(12, rect.height * 0.24);
+      const placement = event.clientY < rect.top + edgeZone
+        ? "before"
+        : event.clientY > rect.bottom - edgeZone
+          ? "after"
+          : targetBlock.toggle && event.clientX > rect.left + 54
+            ? "inside"
+            : "after";
+      dragState.target = { id: targetId, placement };
+      setDropTarget(dragState.target);
+    };
+    const handlePointerUp = () => {
+      const dragState = pointerDragRef.current;
+      if (!dragState) return;
+      if (dragState.dragging && dragState.target) {
+        moveBlock(dragState.id, dragState.target.id, dragState.target.placement, dragState.target.column);
+      }
+      if (dragState.sourceElement?.hasPointerCapture?.(dragState.pointerId)) {
+        dragState.sourceElement.releasePointerCapture(dragState.pointerId);
+      }
+      document.body.classList.remove("mindfold-pointer-dragging");
+      pointerDragRef.current = null;
+      setDragBlockId("");
+      setDropTarget(null);
+      window.setTimeout(() => {
+        suppressMenuClickRef.current = false;
+      }, 0);
+    };
+    window.addEventListener("pointermove", handlePointerMove, { passive: false });
+    window.addEventListener("pointerup", handlePointerUp);
+    window.addEventListener("pointercancel", handlePointerUp);
+    return () => {
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerup", handlePointerUp);
+      window.removeEventListener("pointercancel", handlePointerUp);
+      document.body.classList.remove("mindfold-pointer-dragging");
+    };
+  }, [activeTab.blocks, moveBlock]);
+
+  const beginPointerDrag = (event, id) => {
+    if (event.button !== 0 || menuBlockId) return;
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+    pointerDragRef.current = {
+      id,
+      pointerId: event.pointerId,
+      sourceElement: event.currentTarget,
+      startX: event.clientX,
+      startY: event.clientY,
+      dragging: false,
+      target: null,
+    };
+  };
+
+  useEffect(() => {
     if (!editingBlockId) return;
     const pending = pendingFocusRef.current;
-    const field = document.querySelector(`[data-block-id="${editingBlockId}"] .mindfold-block-input`);
+    const field = document.querySelector(`[data-block-id="${editingBlockId}"] .mindfold-rich-editor`);
     if (!field) return;
-    field.style.height = "0px";
-    field.style.height = `${Math.max(36, field.scrollHeight)}px`;
     field.focus();
-    const caret = pending?.id === editingBlockId ? pending.caret : field.value.length;
-    field.setSelectionRange(Math.max(0, caret), Math.max(0, caret));
+    const caret = pending?.id === editingBlockId ? pending.caret : field.textContent.length;
+    setMindfoldEditableSelection(field, caret ?? field.textContent.length);
     pendingFocusRef.current = null;
   }, [editingBlockId]);
 
@@ -2527,28 +2933,246 @@ function MindfoldView({ addBlock, addTab, clearMasks, indentBlock, maskSelection
     return result;
   };
 
-  const renderMaskedPreview = (block) => {
-    const masks = normalizeMindfoldMasks(block.masks, block.text.length);
-    const parts = [];
-    let cursor = 0;
-    masks.forEach((mask) => {
-      if (mask.start > cursor) parts.push(block.text.slice(cursor, mask.start));
-      parts.push(h("span", { className: "mindfold-mask", key: mask.id, tabIndex: 0 }, block.text.slice(mask.start, mask.end)));
-      cursor = mask.end;
+  const focusAdjacentBlock = (id, direction) => {
+    const visibleBlocks = flattenBlocks(activeTab.blocks);
+    const currentIndex = visibleBlocks.findIndex((item) => item.id === id);
+    const target = visibleBlocks[currentIndex + direction];
+    if (!target) return false;
+    focusBlock(target.id, direction < 0 ? target.text.length : 0);
+    return true;
+  };
+
+  const reorderBlockWithKeyboard = (id, direction) => {
+    const visibleBlocks = flattenBlocks(activeTab.blocks);
+    const currentIndex = visibleBlocks.findIndex((item) => item.id === id);
+    const target = visibleBlocks[currentIndex + direction];
+    if (!target) return false;
+    moveBlock(id, target.id, direction < 0 ? "before" : "after");
+    window.requestAnimationFrame(() => focusBlock(id));
+    return true;
+  };
+
+  const handleMindfoldHistoryShortcut = (event) => {
+    const modifier = event.ctrlKey || event.metaKey;
+    const key = event.key.toLowerCase();
+    if (!modifier || event.altKey || (key !== "z" && key !== "y")) return;
+    event.preventDefault();
+    event.stopPropagation();
+    const activeEditor = document.activeElement?.classList?.contains("mindfold-rich-editor")
+      ? document.activeElement
+      : null;
+    const activeId = activeEditor?.closest?.("[data-block-id]")?.getAttribute("data-block-id") || "";
+    const restored = key === "y" || event.shiftKey ? redo() : undo();
+    if (!restored || !activeId) return;
+    window.requestAnimationFrame(() => {
+      const field = document.querySelector(`[data-block-id="${activeId}"] .mindfold-rich-editor`);
+      if (field) {
+        field.focus();
+        setMindfoldEditableSelection(field, field.textContent.length);
+      }
     });
-    if (cursor < block.text.length) parts.push(block.text.slice(cursor));
-    if (!parts.length) parts.push(h("span", { className: "mindfold-empty-placeholder", key: "empty" }, "Type something..."));
+  };
+
+  const renderRichEditor = (block) => {
+    const masks = normalizeMindfoldMasks(block.masks, block.text.length);
+    const marks = normalizeMindfoldMarks(block.marks, block.text.length);
+    const boundaries = [...new Set([
+      0,
+      block.text.length,
+      ...masks.flatMap((mask) => [mask.start, mask.end]),
+      ...marks.flatMap((mark) => [mark.start, mark.end]),
+    ])].sort((a, b) => a - b);
+    const parts = boundaries.slice(0, -1).map((start, index) => {
+      const end = boundaries[index + 1];
+      if (end <= start) return null;
+      const isMasked = masks.some((mask) => mask.start <= start && mask.end >= end);
+      const activeMarks = marks.filter((mark) => mark.start <= start && mark.end >= end).map((mark) => mark.type);
+      const className = [
+        isMasked ? "mindfold-mask" : "",
+        activeMarks.includes("bold") ? "mindfold-inline-bold" : "",
+        activeMarks.includes("italic") ? "mindfold-inline-italic" : "",
+      ].filter(Boolean).join(" ");
+      return h("span", {
+        className: className || undefined,
+        key: `${start}-${end}`,
+      }, block.text.slice(start, end));
+    }).filter(Boolean);
     return h(
       "div",
       {
-        className: "mindfold-block-preview",
+        key: `editor-${block.id}-${block.text}-${masks.map((mask) => `${mask.start}:${mask.end}`).join(".")}-${marks.map((mark) => `${mark.type}:${mark.start}:${mark.end}`).join(".")}`,
+        className: "mindfold-rich-editor",
+        contentEditable: "plaintext-only",
+        suppressContentEditableWarning: true,
         role: "textbox",
         tabIndex: 0,
-        onClick: () => focusBlock(block.id, block.text.length),
+        "aria-label": "Mindfold block text",
+        "data-placeholder": block.toggle ? "토글 제목" : "내용 입력...",
+        onFocus: () => {
+          setEditingBlockId(block.id);
+          setActiveBlock(block.id);
+        },
+        onBlur: () => window.setTimeout(() => {
+          if (menuBlockId !== block.id) setEditingBlockId((current) => (current === block.id ? "" : current));
+        }, 80),
+        onMouseUp: (event) => {
+          selectionRef.current[block.id] = getMindfoldEditableSelection(event.currentTarget);
+        },
+        onKeyUp: (event) => {
+          selectionRef.current[block.id] = getMindfoldEditableSelection(event.currentTarget);
+        },
+        onInput: (event) => {
+          const field = event.currentTarget;
+          const selection = getMindfoldEditableSelection(field);
+          const value = field.textContent.replace(/\u00a0/g, " ").replace(/\r?\n/g, " ");
+          let patch = { text: value };
+          let caret = selection.end;
+          if (value === "#### ") patch = { type: "heading-4", text: "" };
+          else if (value === "### ") patch = { type: "heading-3", text: "" };
+          else if (value === "## ") patch = { type: "heading-2", text: "" };
+          else if (value === "# ") patch = { type: "heading-1", text: "" };
+          else if (["- ", "* ", "+ "].includes(value)) patch = { type: "bullet", text: "" };
+          else if (value === "> ") patch = { type: "quote", text: "" };
+          else {
+            const boldMatch = value.match(/^(.*)\*\*([^*]+)\*\*(.*)$/);
+            const italicMatch = !boldMatch ? value.match(/^(.*)_([^_]+)_(.*)$/) : null;
+            if (boldMatch) {
+              const nextText = `${boldMatch[1]}${boldMatch[2]}${boldMatch[3]}`;
+              patch = {
+                text: nextText,
+                addMark: { type: "bold", start: boldMatch[1].length, end: boldMatch[1].length + boldMatch[2].length },
+              };
+              caret = Math.max(boldMatch[1].length, caret - 4);
+            } else if (italicMatch) {
+              const nextText = `${italicMatch[1]}${italicMatch[2]}${italicMatch[3]}`;
+              patch = {
+                text: nextText,
+                addMark: { type: "italic", start: italicMatch[1].length, end: italicMatch[1].length + italicMatch[2].length },
+              };
+              caret = Math.max(italicMatch[1].length, caret - 2);
+            }
+          }
+          if (patch.text === "") caret = 0;
+          selectionRef.current[block.id] = { start: caret, end: caret };
+          updateBlock(block.id, patch);
+          window.requestAnimationFrame(() => {
+            const nextField = document.querySelector(`[data-block-id="${block.id}"] .mindfold-rich-editor`);
+            if (nextField) {
+              nextField.focus();
+              setMindfoldEditableSelection(nextField, caret);
+            }
+          });
+        },
         onKeyDown: (event) => {
-          if (event.key === "Enter" || event.key === " ") {
+          const modifier = event.ctrlKey || event.metaKey;
+          const selection = getMindfoldEditableSelection(event.currentTarget);
+          const selectionStart = selection.start;
+          const selectionEnd = selection.end;
+          const selectedStart = selectionStart === selectionEnd ? 0 : selectionStart;
+          const selectedEnd = selectionStart === selectionEnd ? block.text.length : selectionEnd;
+
+          if (modifier && !event.altKey && ["b", "i"].includes(event.key.toLowerCase())) {
             event.preventDefault();
-            focusBlock(block.id, block.text.length);
+            if (selectedEnd > selectedStart) {
+              toggleMark(block.id, event.key.toLowerCase() === "b" ? "bold" : "italic", selectedStart, selectedEnd);
+              window.requestAnimationFrame(() => {
+                const field = document.querySelector(`[data-block-id="${block.id}"] .mindfold-rich-editor`);
+                if (field) {
+                  field.focus();
+                  setMindfoldEditableSelection(field, selectionStart, selectionEnd);
+                }
+              });
+            }
+            return;
+          }
+          if (modifier && event.altKey && /^[0-4]$/.test(event.key)) {
+            event.preventDefault();
+            updateBlock(block.id, { type: event.key === "0" ? "text" : `heading-${event.key}` });
+            return;
+          }
+          if (modifier && event.shiftKey && event.code === "Digit8") {
+            event.preventDefault();
+            updateBlock(block.id, { type: "bullet" });
+            return;
+          }
+          if (modifier && event.shiftKey && event.key === "ArrowUp") {
+            event.preventDefault();
+            reorderBlockWithKeyboard(block.id, -1);
+            return;
+          }
+          if (modifier && event.shiftKey && event.key === "ArrowDown") {
+            event.preventDefault();
+            reorderBlockWithKeyboard(block.id, 1);
+            return;
+          }
+          if (!modifier && !event.altKey && !event.shiftKey && event.key === "ArrowUp" && selectionStart === 0 && selectionEnd === 0) {
+            if (focusAdjacentBlock(block.id, -1)) event.preventDefault();
+            return;
+          }
+          if (!modifier && !event.altKey && !event.shiftKey && event.key === "ArrowDown" && selectionStart === block.text.length && selectionEnd === block.text.length) {
+            if (focusAdjacentBlock(block.id, 1)) event.preventDefault();
+            return;
+          }
+          if (event.key === "/" && !block.text) {
+            event.preventDefault();
+            setMenuBlockId(block.id);
+            return;
+          }
+          if (event.key === "Enter") {
+            event.preventDefault();
+            const left = block.text.slice(0, selectionStart);
+            const right = block.text.slice(selectionEnd);
+            const location = findMindfoldBlockLocation(activeTab.blocks, block.id);
+            updateBlock(block.id, { text: left });
+            if (block.columns > 1) {
+              addAndFocus({ parentId: block.id, afterId: block.id, text: right, caret: 0, column: 0 });
+            } else if (location?.parent?.columns > 1) {
+              addAndFocus({
+                parentId: location.parent.id,
+                afterId: block.id,
+                text: right,
+                caret: 0,
+                column: Number.isInteger(block.column) ? block.column : 0,
+              });
+            } else {
+              addAndFocus({ afterId: block.id, text: right, caret: 0 });
+            }
+            return;
+          }
+          if (event.key === "Tab") {
+            event.preventDefault();
+            if (event.shiftKey) outdentBlock(block.id);
+            else indentBlock(block.id);
+            return;
+          }
+          if (event.key === "Backspace" && !block.text) {
+            const visibleBlocks = flattenBlocks(activeTab.blocks);
+            const blockIndex = visibleBlocks.findIndex((item) => item.id === block.id);
+            const location = findMindfoldBlockLocation(activeTab.blocks, block.id);
+            if (location?.parent?.columns > 1) {
+              event.preventDefault();
+              const previous = visibleBlocks[Math.max(0, blockIndex - 1)] || location.parent;
+              setColumns(block.id, 1, block.id);
+              window.requestAnimationFrame(() => focusBlock(previous.id, previous.text.length));
+              return;
+            }
+            if (block.columns > 1) {
+              event.preventDefault();
+              setColumns(block.id, 1);
+              window.requestAnimationFrame(() => focusBlock(block.id, 0));
+              return;
+            }
+            if (blockIndex > 0) {
+              event.preventDefault();
+              const previous = visibleBlocks[blockIndex - 1];
+              removeBlock(block.id);
+              window.requestAnimationFrame(() => focusBlock(previous.id, previous.text.length));
+            }
+            return;
+          }
+          if (event.key === "Escape") {
+            event.currentTarget.blur();
+            setMenuBlockId("");
           }
         },
       },
@@ -2556,8 +3180,8 @@ function MindfoldView({ addBlock, addTab, clearMasks, indentBlock, maskSelection
     );
   };
 
-  const addAndFocus = ({ parentId = "", afterId = "", type = "text", text = "", caret = 0 } = {}) => {
-    const nextId = addBlock(parentId, afterId, type, text);
+  const addAndFocus = ({ parentId = "", afterId = "", type = "text", text = "", caret = 0, column = null } = {}) => {
+    const nextId = addBlock(parentId, afterId, type, text, column);
     window.requestAnimationFrame(() => focusBlock(nextId, caret));
     return nextId;
   };
@@ -2565,6 +3189,10 @@ function MindfoldView({ addBlock, addTab, clearMasks, indentBlock, maskSelection
   const renderMenu = (block, location) => {
     const selection = selectionRef.current[block.id];
     const hasSelection = selection && selection.end > selection.start;
+    const inheritedColumns = location.parent?.columns > 1 && Number.isInteger(block.column)
+      ? location.parent.columns
+      : 1;
+    const activeColumns = block.columns > 1 ? block.columns : inheritedColumns;
     return h(
       "div",
       { className: "mindfold-block-menu", role: "menu", onPointerDown: (event) => event.stopPropagation() },
@@ -2591,6 +3219,38 @@ function MindfoldView({ addBlock, addTab, clearMasks, indentBlock, maskSelection
           ),
         ),
       ),
+      h("div", { className: "mindfold-menu-divider" }),
+      h("p", { className: "mindfold-menu-label mindfold-columns-label" }, "열 나누기"),
+      h(
+        "div",
+        { className: "mindfold-columns-grid", role: "group", "aria-label": "열 나누기" },
+        ...[2, 3, 4].map((columns) =>
+          h("button", {
+            className: `mindfold-columns-option ${activeColumns === columns ? "active" : ""}`,
+            type: "button",
+            role: "menuitem",
+            key: columns,
+            "aria-pressed": activeColumns === columns,
+            onMouseDown: (event) => event.preventDefault(),
+            onClick: () => {
+              setColumns(block.id, columns);
+              setMenuBlockId("");
+            },
+          }, h("span", { "aria-hidden": "true" }, columns), `${columns}열`),
+        ),
+      ),
+      block.columns > 1 || inheritedColumns > 1
+        ? h("button", {
+            className: "mindfold-columns-reset",
+            type: "button",
+            role: "menuitem",
+            onMouseDown: (event) => event.preventDefault(),
+            onClick: () => {
+              setColumns(block.id, 1);
+              setMenuBlockId("");
+            },
+          }, h("span", { "aria-hidden": "true" }, "1"), "여기서부터 1열")
+        : null,
       h("button", {
         className: `mindfold-toggle-option ${block.toggle ? "active" : ""}`,
         type: "button",
@@ -2625,9 +3285,38 @@ function MindfoldView({ addBlock, addTab, clearMasks, indentBlock, maskSelection
         ),
       ),
       h("div", { className: "mindfold-menu-divider" }),
+      h("p", { className: "mindfold-menu-label mindfold-format-label" }, "글자 서식"),
+      h(
+        "div",
+        { className: "mindfold-format-grid", role: "group", "aria-label": "글자 서식" },
+        h("button", {
+          className: `mindfold-format-option ${hasSelection && mindfoldSelectionHasMark(block.marks, "bold", selection.start, selection.end) ? "active" : ""}`,
+          type: "button",
+          role: "menuitem",
+          disabled: !hasSelection,
+          title: "굵게 (Ctrl+B)",
+          onMouseDown: (event) => event.preventDefault(),
+          onClick: () => {
+            if (hasSelection) toggleMark(block.id, "bold", selection.start, selection.end);
+            setMenuBlockId("");
+          },
+        }, h("span", { "aria-hidden": "true" }, "B"), "굵게"),
+        h("button", {
+          className: `mindfold-format-option ${hasSelection && mindfoldSelectionHasMark(block.marks, "italic", selection.start, selection.end) ? "active" : ""}`,
+          type: "button",
+          role: "menuitem",
+          disabled: !hasSelection,
+          title: "기울임 (Ctrl+I)",
+          onMouseDown: (event) => event.preventDefault(),
+          onClick: () => {
+            if (hasSelection) toggleMark(block.id, "italic", selection.start, selection.end);
+            setMenuBlockId("");
+          },
+        }, h("span", { "aria-hidden": "true" }, "I"), "기울임"),
+      ),
+      h("div", { className: "mindfold-menu-divider" }),
       h("button", { type: "button", role: "menuitem", disabled: !hasSelection, onMouseDown: (event) => event.preventDefault(), onClick: () => {
         if (hasSelection) maskSelection(block.id, selection.start, selection.end);
-        setEditingBlockId("");
         setMenuBlockId("");
       } }, h("span", { "aria-hidden": "true" }, "\u25a0"), "선택 영역 가리기"),
       block.masks.length
@@ -2661,171 +3350,152 @@ function MindfoldView({ addBlock, addTab, clearMasks, indentBlock, maskSelection
     );
   };
 
-  const renderBlock = (block, depth = 0) => {
+  const renderBlock = (block, depth = 0, layoutColumn = null) => {
     const location = findMindfoldBlockLocation(activeTab.blocks, block.id);
     const isEditing = editingBlockId === block.id;
     const isMenuOpen = menuBlockId === block.id;
     const dropClass = dropTarget?.id === block.id ? `drop-${dropTarget.placement}` : "";
     const childrenVisible = !block.toggle || block.open;
+    const visibleChildren = (block.children || []).filter((child) => (
+      block.columns > 1 && Number.isInteger(child.column)
+        ? true
+        : childrenVisible
+    ));
+    const setInsideDropTarget = (event) => {
+      if (!dragBlockId || dragBlockId === block.id) return false;
+      event.preventDefault();
+      event.stopPropagation();
+      setDropTarget({ id: block.id, placement: "inside" });
+      event.dataTransfer.dropEffect = "move";
+      return true;
+    };
+    const dropInsideToggle = (event) => {
+      if (!setInsideDropTarget(event)) return;
+      const fromId = event.dataTransfer.getData("text/mindfold-block") || dragBlockId;
+      moveBlock(fromId, block.id, "inside");
+      setDragBlockId("");
+      setDropTarget(null);
+    };
+    const blockRow = h(
+      "div",
+      { className: "mindfold-block-row" },
+      h(
+        "div",
+        { className: "mindfold-block-menu-wrap" },
+        h("button", {
+          className: `mindfold-block-menu-trigger ${isMenuOpen ? "active" : ""}`,
+          type: "button",
+          title: "블록 메뉴",
+          "aria-label": "블록 메뉴",
+          "aria-expanded": isMenuOpen,
+          onPointerDown: (event) => beginPointerDrag(event, block.id),
+          onMouseDown: (event) => {
+            const activeField = document.activeElement;
+            if (activeField?.classList?.contains("mindfold-rich-editor") && activeField.closest?.("[data-block-id]")?.getAttribute("data-block-id") === block.id) {
+              selectionRef.current[block.id] = getMindfoldEditableSelection(activeField);
+            }
+          },
+          onClick: (event) => {
+            if (suppressMenuClickRef.current) {
+              event.preventDefault();
+              event.stopPropagation();
+              return;
+            }
+            event.stopPropagation();
+            setMenuBlockId((current) => (current === block.id ? "" : block.id));
+          },
+        }, h("span", { className: "mindfold-menu-glyph", "aria-hidden": "true" })),
+        isMenuOpen ? renderMenu(block, location) : null,
+      ),
+      block.toggle
+        ? h("button", {
+            className: `mindfold-notion-toggle ${block.open ? "open" : ""}`,
+            type: "button",
+            title: block.open ? "Collapse" : "Expand",
+            "aria-label": block.open ? "Collapse" : "Expand",
+            onClick: () => updateBlock(block.id, { open: !block.open }),
+          })
+        : block.type === "callout"
+          ? h("button", {
+              className: "mindfold-check-control",
+              type: "button",
+              title: block.checked ? "완료 취소" : "완료로 표시",
+              "aria-label": block.checked ? "완료 취소" : "완료로 표시",
+              "aria-pressed": block.checked,
+              onMouseDown: (event) => event.preventDefault(),
+              onClick: () => updateBlock(block.id, { checked: !block.checked }),
+            }, h("span", { "aria-hidden": "true" }))
+          : h("span", { className: "mindfold-type-mark", "aria-hidden": "true" }, block.type === "bullet" ? "\u2022" : block.type === "quote" ? "\u201c" : ""),
+      h(
+        "div",
+        { className: `mindfold-block-editor ${isEditing ? "editing" : ""}` },
+        renderRichEditor(block),
+      ),
+    );
+    const columnBlocks = visibleChildren.filter((child) => Number.isInteger(child.column));
+    const nestedBlocks = visibleChildren.filter((child) => !Number.isInteger(child.column));
+    const renderColumnTrack = (column) => h(
+      "div",
+      {
+        className: `mindfold-column-track ${dropTarget?.id === block.id && dropTarget.placement === "column" && dropTarget.column === column ? "drop-target" : ""}`,
+        key: `column-track-${block.id}-${column}`,
+        "data-column-layout-id": block.id,
+        "data-column-index": column,
+      },
+      column === 0 ? blockRow : null,
+      column === 0 && nestedBlocks.length
+        ? h(
+            "div",
+            {
+              className: `mindfold-block-children ${dropTarget?.id === block.id && dropTarget.placement === "inside" ? "drop-target" : ""}`,
+              onDragOver: block.toggle && block.open ? setInsideDropTarget : undefined,
+              onDrop: block.toggle && block.open ? dropInsideToggle : undefined,
+            },
+            ...nestedBlocks.map((child) => renderBlock(child, depth + 1)),
+          )
+        : null,
+      ...columnBlocks
+        .filter((child) => child.column === column)
+        .map((child) => renderBlock(child, depth + 1)),
+    );
     return h(
       "article",
       {
-        className: `mindfold-notion-block type-${block.type} ${block.toggle ? "is-toggle" : ""} ${isMenuOpen ? "menu-open" : ""} ${dragBlockId === block.id ? "dragging" : ""} ${dropClass}`,
-        draggable: !isEditing && !isMenuOpen,
+        className: `mindfold-notion-block type-${block.type} ${block.toggle ? "is-toggle" : ""} ${block.columns > 1 ? `is-columns columns-${block.columns}` : ""} ${layoutColumn != null ? "is-column-item" : ""} ${block.checked ? "is-checked" : ""} ${isMenuOpen ? "menu-open" : ""} ${dragBlockId === block.id ? "dragging" : ""} ${dropClass}`,
+        draggable: false,
         key: block.id,
         "data-block-id": block.id,
-        style: { "--mindfold-depth": depth, "--mindfold-text-color": mindfoldTextColors[block.color] },
-        onDragStart: (event) => {
-          // Nested blocks must keep their own drag source instead of bubbling to their parent toggle.
-          event.stopPropagation();
-          if (event.target.closest?.("button, textarea")) {
-            event.preventDefault();
-            return;
-          }
-          setDragBlockId(block.id);
-          setMenuBlockId("");
-          event.dataTransfer.effectAllowed = "move";
-          event.dataTransfer.setData("text/mindfold-block", block.id);
+        style: {
+          "--mindfold-depth": depth,
+          "--mindfold-text-color": mindfoldTextColors[block.color],
+          "--mindfold-columns": block.columns,
+          "--mindfold-column": layoutColumn == null ? undefined : layoutColumn + 1,
         },
-        onDragOver: (event) => {
-          if (!dragBlockId || dragBlockId === block.id) return;
-          event.preventDefault();
-          event.stopPropagation();
-          const rect = event.currentTarget.getBoundingClientRect();
-          const canNest = block.toggle;
-          const placement = canNest && event.clientX > rect.left + Math.min(150, rect.width * 0.24)
-            ? "inside"
-            : event.clientY < rect.top + rect.height / 2
-              ? "before"
-              : "after";
-          setDropTarget({ id: block.id, placement });
-          event.dataTransfer.dropEffect = "move";
-        },
-        onDrop: (event) => {
-          event.preventDefault();
-          event.stopPropagation();
-          const fromId = event.dataTransfer.getData("text/mindfold-block") || dragBlockId;
-          const placement = dropTarget?.id === block.id ? dropTarget.placement : "after";
-          moveBlock(fromId, block.id, placement);
-          setDragBlockId("");
-          setDropTarget(null);
-        },
-        onDragEnd: (event) => {
-          event.stopPropagation();
-          setDragBlockId("");
-          setDropTarget(null);
+        onPointerDownCapture: (event) => {
+          const button = event.target.closest?.("button");
+          if (button) return;
+          if (event.target.closest?.(".mindfold-block-menu")) return;
+          beginPointerDrag(event, block.id);
         },
       },
-      h(
-        "div",
-        { className: "mindfold-block-row" },
-        h(
-          "div",
-          { className: "mindfold-block-menu-wrap" },
-          h("button", {
-            className: `mindfold-block-menu-trigger ${isMenuOpen ? "active" : ""}`,
-            type: "button",
-            title: "블록 메뉴",
-            "aria-label": "블록 메뉴",
-            "aria-expanded": isMenuOpen,
-            onMouseDown: (event) => {
-              const activeField = document.activeElement;
-              if (activeField?.classList?.contains("mindfold-block-input") && activeField.closest?.("[data-block-id]")?.getAttribute("data-block-id") === block.id) {
-                selectionRef.current[block.id] = { start: activeField.selectionStart, end: activeField.selectionEnd };
-              }
-              event.preventDefault();
+      ...(block.columns > 1
+        ? Array.from({ length: block.columns }, (_, column) => renderColumnTrack(column))
+        : [blockRow]),
+      block.columns === 1 && visibleChildren.length
+        ? h(
+            "div",
+            {
+              className: `mindfold-block-children ${dropTarget?.id === block.id && dropTarget.placement === "inside" ? "drop-target" : ""}`,
+              onDragOver: block.toggle && block.open ? setInsideDropTarget : undefined,
+              onDrop: block.toggle && block.open ? dropInsideToggle : undefined,
             },
-            onClick: (event) => {
-              event.stopPropagation();
-              setMenuBlockId((current) => (current === block.id ? "" : block.id));
-            },
-          }, h("span", { className: "mindfold-menu-glyph", "aria-hidden": "true" })),
-          isMenuOpen ? renderMenu(block, location) : null,
-        ),
-        block.toggle
-          ? h("button", {
-              className: `mindfold-notion-toggle ${block.open ? "open" : ""}`,
-              type: "button",
-              title: block.open ? "Collapse" : "Expand",
-              "aria-label": block.open ? "Collapse" : "Expand",
-              onClick: () => updateBlock(block.id, { open: !block.open }),
-            })
-          : h("span", { className: "mindfold-type-mark", "aria-hidden": "true" }, block.type === "bullet" ? "\u2022" : block.type === "quote" ? "\u201c" : ""),
-        h(
-          "div",
-          { className: `mindfold-block-editor ${isEditing ? "editing" : ""}` },
-          isEditing
-            ? h("textarea", {
-                className: "mindfold-block-input",
-                value: block.text,
-                rows: 1,
-                "aria-label": "Mindfold block text",
-                placeholder: block.toggle ? "토글 제목" : "내용 입력...",
-                onFocus: () => setActiveBlock(block.id),
-                onBlur: () => window.setTimeout(() => {
-                  if (menuBlockId !== block.id) setEditingBlockId((current) => (current === block.id ? "" : current));
-                }, 80),
-                onSelect: (event) => {
-                  selectionRef.current[block.id] = { start: event.currentTarget.selectionStart, end: event.currentTarget.selectionEnd };
-                },
-                onChange: (event) => {
-                  const value = event.target.value;
-                  if (value === "#### ") updateBlock(block.id, { type: "heading-4", text: "" });
-                  else if (value === "### ") updateBlock(block.id, { type: "heading-3", text: "" });
-                  else if (value === "## ") updateBlock(block.id, { type: "heading-2", text: "" });
-                  else if (value === "# ") updateBlock(block.id, { type: "heading-1", text: "" });
-                  else if (value === "- ") updateBlock(block.id, { type: "bullet", text: "" });
-                  else if (value === "> ") updateBlock(block.id, { type: "quote", text: "" });
-                  else updateBlock(block.id, { text: value });
-                  event.target.style.height = "0px";
-                  event.target.style.height = `${Math.max(36, event.target.scrollHeight)}px`;
-                },
-                onKeyDown: (event) => {
-                  if (event.key === "/" && !event.currentTarget.value) {
-                    event.preventDefault();
-                    setMenuBlockId(block.id);
-                    return;
-                  }
-                  if (event.key === "Enter") {
-                    event.preventDefault();
-                    const start = event.currentTarget.selectionStart;
-                    const end = event.currentTarget.selectionEnd;
-                    const left = event.currentTarget.value.slice(0, start);
-                    const right = event.currentTarget.value.slice(end);
-                    updateBlock(block.id, { text: left });
-                    addAndFocus({ afterId: block.id, text: right, caret: 0 });
-                    return;
-                  }
-                  if (event.key === "Tab") {
-                    event.preventDefault();
-                    if (event.shiftKey) outdentBlock(block.id);
-                    else indentBlock(block.id);
-                    return;
-                  }
-                  if (event.key === "Backspace" && !event.currentTarget.value) {
-                    const visibleBlocks = flattenBlocks(activeTab.blocks);
-                    const blockIndex = visibleBlocks.findIndex((item) => item.id === block.id);
-                    if (blockIndex > 0) {
-                      event.preventDefault();
-                      const previous = visibleBlocks[blockIndex - 1];
-                      removeBlock(block.id);
-                      window.requestAnimationFrame(() => focusBlock(previous.id, previous.text.length));
-                    }
-                    return;
-                  }
-                  if (event.key === "Escape") {
-                    event.currentTarget.blur();
-                    setMenuBlockId("");
-                  }
-                },
-              })
-            : renderMaskedPreview(block),
-        ),
-      ),
-      childrenVisible && block.children?.length
-        ? h("div", { className: "mindfold-block-children" }, ...block.children.map((child) => renderBlock(child, depth + 1)))
+            ...visibleChildren.map((child) => renderBlock(
+              child,
+              depth + 1,
+            )),
+          )
         : null,
-      block.toggle && block.open
+      block.toggle && block.open && block.columns === 1
         ? h("button", { className: "mindfold-add-child", type: "button", onClick: () => addAndFocus({ parentId: block.id }) }, "+ 안쪽에 블록 추가")
         : null,
     );
@@ -2833,7 +3503,11 @@ function MindfoldView({ addBlock, addTab, clearMasks, indentBlock, maskSelection
 
   return h(
     "section",
-    { className: `mindfold-view mindfold-document-view mindfold-notion-view ${menuBlockId ? "menu-open" : ""}`, "aria-label": "Mindfold workspace" },
+    {
+      className: `mindfold-view mindfold-document-view mindfold-notion-view ${menuBlockId ? "menu-open" : ""}`,
+      "aria-label": "Mindfold workspace",
+      onKeyDownCapture: handleMindfoldHistoryShortcut,
+    },
     h(
       "div",
       { className: `mindfold-workspace ${sidebarOpen ? "sidebar-open" : "sidebar-closed"}` },
@@ -2937,7 +3611,6 @@ function MindfoldView({ addBlock, addTab, clearMasks, indentBlock, maskSelection
         "article",
         { className: "mindfold-editor" },
         h("div", { className: "mindfold-document mindfold-block-tree" }, ...activeTab.blocks.map((block) => renderBlock(block))),
-        h("button", { className: "mindfold-root-ghost-add", type: "button", onClick: () => addAndFocus() }, "+ 새 블록"),
       ),
     ),
   );

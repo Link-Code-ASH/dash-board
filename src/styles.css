@@ -12459,12 +12459,24 @@ html body #root .app-shell .topbar .day-switcher {
   position: relative;
   min-width: 0;
   border-radius: 7px;
+  -webkit-user-drag: none;
   transition: opacity 130ms ease, transform 130ms ease;
+}
+
+.mindfold-rich-editor,
+.mindfold-rich-editor * {
+  -webkit-user-drag: none;
 }
 
 .mindfold-notion-block.dragging {
   opacity: 0.38;
   transform: scale(0.992);
+}
+
+body.mindfold-pointer-dragging,
+body.mindfold-pointer-dragging * {
+  cursor: grabbing !important;
+  user-select: none !important;
 }
 
 .mindfold-block-row {
@@ -12480,7 +12492,9 @@ html body #root .app-shell .topbar .day-switcher {
 }
 
 .mindfold-notion-block:hover > .mindfold-block-row,
-.mindfold-notion-block:focus-within > .mindfold-block-row {
+.mindfold-notion-block:focus-within > .mindfold-block-row,
+.mindfold-column-track:hover > .mindfold-block-row,
+.mindfold-column-track:focus-within > .mindfold-block-row {
   border-color: rgba(255, 255, 255, 0.52);
   background: rgba(247, 250, 254, 0.42);
   box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.48);
@@ -12510,6 +12524,7 @@ html body #root .app-shell .topbar .day-switcher {
   font-size: 1.08rem;
   font-weight: 700;
   line-height: 1;
+  cursor: grab;
   opacity: 0;
   transform: translateX(3px);
   box-shadow: 3px 3px 7px rgba(75, 91, 112, 0.12), inset 1px 1px 0 rgba(255, 255, 255, 0.76);
@@ -12518,6 +12533,8 @@ html body #root .app-shell .topbar .day-switcher {
 
 .mindfold-block-menu-wrap:hover .mindfold-block-menu-trigger,
 .mindfold-block-menu-wrap:focus-within .mindfold-block-menu-trigger,
+.mindfold-block-row:hover .mindfold-block-menu-trigger,
+.mindfold-block-row:focus-within .mindfold-block-menu-trigger,
 .mindfold-block-menu-trigger.active {
   opacity: 1;
   transform: translateX(0);
@@ -12563,6 +12580,34 @@ html body #root .app-shell .topbar .day-switcher {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 5px;
+}
+
+.mindfold-columns-label {
+  margin-bottom: 6px;
+}
+
+.mindfold-columns-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 5px;
+}
+
+.mindfold-block-menu button.mindfold-columns-option {
+  grid-template-columns: 20px minmax(0, 1fr);
+  min-height: 32px;
+  padding: 4px 6px;
+  border-color: rgba(87, 106, 132, 0.14);
+  background: rgba(255, 255, 255, 0.28);
+}
+
+.mindfold-block-menu button.mindfold-columns-option > span {
+  width: 18px;
+  color: #546f91;
+  font-size: 0.82rem;
+}
+
+.mindfold-block-menu button.mindfold-columns-reset {
+  margin-top: 5px;
 }
 
 .mindfold-block-menu button {
@@ -12653,8 +12698,32 @@ html body #root .app-shell .topbar .day-switcher {
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--mindfold-swatch) 30%, transparent);
 }
 
+.mindfold-format-label {
+  margin-bottom: 6px;
+}
+
+.mindfold-format-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 5px;
+}
+
+.mindfold-block-menu .mindfold-format-option > span {
+  font-family: Georgia, serif;
+  font-size: 1.02rem;
+}
+
+.mindfold-block-menu .mindfold-format-option:first-child > span {
+  font-weight: 700;
+}
+
+.mindfold-block-menu .mindfold-format-option:last-child > span {
+  font-style: italic;
+}
+
 .mindfold-notion-toggle,
-.mindfold-type-mark {
+.mindfold-type-mark,
+.mindfold-check-control {
   display: grid;
   place-items: center;
   width: 22px;
@@ -12685,12 +12754,50 @@ html body #root .app-shell .topbar .day-switcher {
   font-weight: 800;
 }
 
+.mindfold-check-control {
+  cursor: pointer;
+}
+
+.mindfold-check-control > span {
+  display: grid;
+  place-items: center;
+  width: 15px;
+  height: 15px;
+  border: 2px solid #7d91aa;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.38);
+  box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.72), 1px 1px 3px rgba(91, 111, 139, 0.14);
+  transition: background 140ms ease, border-color 140ms ease, box-shadow 140ms ease, transform 140ms ease;
+}
+
+.mindfold-check-control:hover > span {
+  border-color: #55779d;
+  background: rgba(226, 237, 248, 0.82);
+  transform: scale(1.06);
+}
+
+.mindfold-notion-block.is-checked .mindfold-check-control > span {
+  position: relative;
+  border-color: #648777;
+  background: #789a85;
+  box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.35), 1px 1px 3px rgba(76, 111, 89, 0.2);
+}
+
+.mindfold-notion-block.is-checked .mindfold-check-control > span::after {
+  content: "";
+  display: block;
+  width: 7px;
+  height: 4px;
+  border-bottom: 2px solid #fff;
+  border-left: 2px solid #fff;
+  transform: rotate(-45deg);
+}
+
 .mindfold-block-editor {
   min-width: 0;
 }
 
-.mindfold-block-input,
-.mindfold-block-preview {
+.mindfold-rich-editor {
   width: 100%;
   min-height: 36px;
   margin: 0;
@@ -12707,65 +12814,55 @@ html body #root .app-shell .topbar .day-switcher {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
   outline: 0;
-}
-
-.mindfold-block-input {
   display: block;
-  resize: none;
-  overflow: hidden;
   caret-color: #405f8a;
+  cursor: text;
 }
 
-.mindfold-block-input:focus {
-  background: rgba(255, 255, 255, 0.28) !important;
-  box-shadow: inset 0 0 0 1px rgba(114, 137, 169, 0.13) !important;
+.mindfold-rich-editor:focus {
+  background: transparent !important;
+  box-shadow: none !important;
 }
 
-.mindfold-block-preview {
-  cursor: grab;
-}
-
-.mindfold-block-preview:active {
-  cursor: grabbing;
-}
-
-.mindfold-empty-placeholder {
+.mindfold-rich-editor:empty::before {
+  content: attr(data-placeholder);
   color: #98a2b1;
+  pointer-events: none;
 }
 
-.mindfold-notion-block.type-heading-1 > .mindfold-block-row .mindfold-block-input,
-.mindfold-notion-block.type-heading-1 > .mindfold-block-row .mindfold-block-preview,
-.mindfold-notion-block.type-heading-2 > .mindfold-block-row .mindfold-block-input,
-.mindfold-notion-block.type-heading-2 > .mindfold-block-row .mindfold-block-preview,
-.mindfold-notion-block.type-heading-3 > .mindfold-block-row .mindfold-block-input,
-.mindfold-notion-block.type-heading-3 > .mindfold-block-row .mindfold-block-preview,
-.mindfold-notion-block.type-heading-4 > .mindfold-block-row .mindfold-block-input,
-.mindfold-notion-block.type-heading-4 > .mindfold-block-row .mindfold-block-preview {
+.app-shell .mindfold-inline-bold {
+  font-weight: 700 !important;
+}
+
+.app-shell .mindfold-inline-italic {
+  font-style: italic !important;
+}
+
+.mindfold-notion-block.type-heading-1 > .mindfold-block-row .mindfold-rich-editor,
+.mindfold-notion-block.type-heading-2 > .mindfold-block-row .mindfold-rich-editor,
+.mindfold-notion-block.type-heading-3 > .mindfold-block-row .mindfold-rich-editor,
+.mindfold-notion-block.type-heading-4 > .mindfold-block-row .mindfold-rich-editor {
   color: var(--mindfold-text-color, #24344b) !important;
   font-weight: 700;
   line-height: 1.3 !important;
 }
 
-.mindfold-notion-block.type-heading-1 > .mindfold-block-row .mindfold-block-input,
-.mindfold-notion-block.type-heading-1 > .mindfold-block-row .mindfold-block-preview {
+.mindfold-notion-block.type-heading-1 > .mindfold-block-row .mindfold-rich-editor {
   min-height: 54px;
   font-size: 2rem;
 }
 
-.mindfold-notion-block.type-heading-2 > .mindfold-block-row .mindfold-block-input,
-.mindfold-notion-block.type-heading-2 > .mindfold-block-row .mindfold-block-preview {
+.mindfold-notion-block.type-heading-2 > .mindfold-block-row .mindfold-rich-editor {
   min-height: 49px;
   font-size: 1.65rem;
 }
 
-.mindfold-notion-block.type-heading-3 > .mindfold-block-row .mindfold-block-input,
-.mindfold-notion-block.type-heading-3 > .mindfold-block-row .mindfold-block-preview {
+.mindfold-notion-block.type-heading-3 > .mindfold-block-row .mindfold-rich-editor {
   min-height: 44px;
   font-size: 1.35rem;
 }
 
-.mindfold-notion-block.type-heading-4 > .mindfold-block-row .mindfold-block-input,
-.mindfold-notion-block.type-heading-4 > .mindfold-block-row .mindfold-block-preview {
+.mindfold-notion-block.type-heading-4 > .mindfold-block-row .mindfold-rich-editor {
   min-height: 40px;
   font-size: 1.15rem;
 }
@@ -12777,12 +12874,14 @@ html body #root .app-shell .topbar .day-switcher {
   box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.58);
 }
 
-.mindfold-notion-block.type-callout > .mindfold-block-row .mindfold-type-mark::before {
-  content: "";
-  width: 9px;
-  height: 9px;
-  border: 2px solid #7790b1;
-  border-radius: 3px;
+.mindfold-notion-block.type-callout.is-checked > .mindfold-block-row {
+  background: linear-gradient(145deg, rgba(224, 237, 227, 0.72), rgba(206, 225, 211, 0.54));
+}
+
+.mindfold-notion-block.type-callout.is-checked .mindfold-rich-editor {
+  color: rgba(69, 93, 78, 0.72) !important;
+  text-decoration: line-through;
+  text-decoration-color: rgba(72, 105, 82, 0.46);
 }
 
 .mindfold-notion-block.type-quote > .mindfold-block-row {
@@ -12790,8 +12889,7 @@ html body #root .app-shell .topbar .day-switcher {
   border-radius: 2px 7px 7px 2px;
 }
 
-.mindfold-notion-block.type-quote > .mindfold-block-row .mindfold-block-input,
-.mindfold-notion-block.type-quote > .mindfold-block-row .mindfold-block-preview {
+.mindfold-notion-block.type-quote > .mindfold-block-row .mindfold-rich-editor {
   color: var(--mindfold-text-color, #526078) !important;
   font-style: italic;
 }
@@ -12802,10 +12900,61 @@ html body #root .app-shell .topbar .day-switcher {
   margin-left: 45px;
   padding-left: 12px;
   border-left: 1px solid rgba(102, 122, 150, 0.16);
+  min-height: 10px;
+  transition: background 120ms ease, border-color 120ms ease, box-shadow 120ms ease;
 }
 
-.mindfold-add-child,
-.mindfold-root-ghost-add {
+.mindfold-notion-block.is-columns {
+  display: grid;
+  grid-template-columns: repeat(var(--mindfold-columns), minmax(0, 1fr));
+  gap: 10px;
+  align-items: start;
+}
+
+.mindfold-column-track {
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+  min-height: 72px;
+  display: flex;
+  flex-direction: column;
+  align-self: start;
+  gap: 2px;
+  padding: 2px;
+  border: 1px dashed transparent;
+  border-radius: 8px;
+  transition: background 120ms ease, border-color 120ms ease;
+}
+
+.mindfold-notion-block.is-columns.menu-open > .mindfold-column-track:first-child,
+.mindfold-column-track:has(.mindfold-notion-block.menu-open) {
+  z-index: 120;
+}
+
+.mindfold-column-track.drop-target {
+  border-color: rgba(91, 124, 171, 0.48);
+  background: rgba(214, 226, 243, 0.28);
+}
+
+.mindfold-column-track > .mindfold-notion-block {
+  min-width: 0;
+  padding: 2px;
+  border: 1px solid rgba(255, 255, 255, 0.42);
+  border-radius: 7px;
+  background: rgba(247, 250, 254, 0.24);
+}
+
+.mindfold-column-track > .mindfold-block-children {
+  margin-left: 36px;
+}
+
+.mindfold-block-children.drop-target {
+  border-left-color: rgba(88, 123, 174, 0.76);
+  background: rgba(194, 211, 235, 0.3);
+  box-shadow: inset 2px 0 0 rgba(104, 137, 184, 0.44);
+}
+
+.mindfold-add-child {
   min-height: 32px;
   border: 0;
   border-radius: 6px;
@@ -12822,14 +12971,8 @@ html body #root .app-shell .topbar .day-switcher {
   padding-left: 12px;
 }
 
-.mindfold-root-ghost-add {
-  margin: 5px 0 0 54px;
-  padding: 0 10px;
-}
-
 .mindfold-notion-block:hover > .mindfold-add-child,
-.mindfold-add-child:hover,
-.mindfold-root-ghost-add:hover {
+.mindfold-add-child:hover {
   background: rgba(255, 255, 255, 0.28);
   color: #53657d;
   opacity: 1;
@@ -12852,6 +12995,7 @@ html body #root .app-shell .topbar .day-switcher {
   background: rgba(194, 208, 226, 0.62);
   color: #26364b;
   box-shadow: inset 0 -1px 0 rgba(85, 105, 132, 0.2);
+  cursor: none;
   outline: 0;
 }
 
@@ -12921,8 +13065,17 @@ html body #root .app-shell .topbar .day-switcher {
     padding-left: 5px;
   }
 
-  .mindfold-add-child,
-  .mindfold-root-ghost-add {
+  .mindfold-notion-block.is-columns {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+
+  .mindfold-column-track {
+    width: 100%;
+  }
+
+  .mindfold-add-child {
     margin-left: 38px;
   }
 }
