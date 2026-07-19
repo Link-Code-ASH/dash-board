@@ -352,7 +352,17 @@ body:has(.effective-display-mobile) #root {
   backdrop-filter: blur(18px);
 }
 
+html body #root .app-shell.effective-display-mobile .hub-bar {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+}
+
 .effective-display-mobile .hub-brand {
+  display: grid !important;
+  flex: 0 0 auto !important;
   min-width: 42px;
 }
 
@@ -370,11 +380,29 @@ body:has(.effective-display-mobile) #root {
   gap: 5px !important;
 }
 
+html body #root .app-shell.effective-display-mobile .hub-actions {
+  display: flex !important;
+  flex: 1 1 auto !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+}
+
+html body #root .app-shell.effective-display-mobile .hub-nav {
+  display: flex !important;
+  flex: 1 1 auto !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+}
+
 .effective-display-mobile .hub-nav-button {
+  flex: 1 1 0 !important;
   min-width: 0 !important;
   min-height: 36px !important;
-  padding: 0 12px !important;
+  padding: 0 8px !important;
   font-size: 0.76rem !important;
+  white-space: nowrap !important;
 }
 
 .effective-display-mobile .hub-vault-button {
@@ -1461,7 +1489,8 @@ html body #root .app-shell.effective-display-mobile .mobile-today-plan .weekly-p
   }
 
   .effective-display-mobile .hub-nav-button {
-    padding-inline: 8px !important;
+    padding-inline: 6px !important;
+    font-size: 0.7rem !important;
   }
 
   .mobile-score-main {
