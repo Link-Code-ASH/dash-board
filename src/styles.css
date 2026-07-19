@@ -13020,3 +13020,423 @@ body.mindfold-pointer-dragging * {
     margin-top: 40px;
   }
 }
+
+/* Persisted display preference controls the responsive layout chosen by App. */
+.display-mode-body {
+  display: grid;
+  gap: 10px;
+}
+
+.display-mode-options {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.display-mode-option {
+  display: grid;
+  min-height: 76px;
+  align-content: center;
+  gap: 5px;
+  padding: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: 7px;
+  color: #44556d;
+  background: rgba(248, 251, 255, 0.48);
+  box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.62);
+  text-align: left;
+  cursor: pointer;
+}
+
+.display-mode-option strong {
+  color: #2e4059;
+  font-size: 0.92rem;
+}
+
+.display-mode-option span {
+  color: #728096;
+  font-size: 0.72rem;
+  line-height: 1.3;
+}
+
+.display-mode-option:hover,
+.display-mode-option.active {
+  border-color: rgba(121, 145, 188, 0.58);
+  background: linear-gradient(145deg, rgba(246, 250, 255, 0.9), rgba(205, 218, 239, 0.7));
+  box-shadow: 3px 4px 10px rgba(77, 93, 119, 0.12), inset 1px 1px 0 rgba(255, 255, 255, 0.78);
+}
+
+.display-mode-option.active strong {
+  color: #274674;
+}
+
+.display-mode-status {
+  margin: 0;
+  color: #64748a;
+  font-size: 0.78rem;
+  text-align: right;
+}
+
+.vault-grid .display-panel {
+  margin-bottom: 0 !important;
+  width: 100% !important;
+}
+
+@media (max-width: 620px) {
+  .display-mode-options {
+    grid-template-columns: 1fr;
+  }
+
+  .display-mode-option {
+    min-height: 54px;
+  }
+}
+
+/* Mobile dashboard is a separate, button-driven composition of shared data. */
+.effective-display-mobile {
+  width: min(100% - 16px, 460px) !important;
+  min-height: 100dvh;
+  margin-inline: auto !important;
+  padding: 8px 8px 88px !important;
+}
+
+.effective-display-mobile .hub-bar {
+  margin-bottom: 8px;
+}
+
+.mobile-dashboard-view {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 10px;
+  height: calc(100dvh - 84px);
+  min-height: 0;
+  overflow: hidden;
+}
+
+.mobile-dashboard-header {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) 42px;
+  align-items: center;
+  min-height: 52px;
+  padding: 0 6px;
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  border-radius: 8px;
+  background: rgba(244, 248, 253, 0.64);
+  box-shadow: 5px 6px 14px rgba(76, 91, 111, 0.1), inset 1px 1px 0 rgba(255, 255, 255, 0.68);
+}
+
+.mobile-dashboard-header strong {
+  color: #30425d;
+  font-size: 1.05rem;
+  text-align: center;
+}
+
+.mobile-dashboard-header button {
+  width: 34px;
+  height: 34px;
+  justify-self: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  color: #51647d;
+  background: rgba(255, 255, 255, 0.52);
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.mobile-dashboard-screen {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 2px 2px 78px;
+  scrollbar-width: none;
+}
+
+.mobile-dashboard-screen::-webkit-scrollbar {
+  display: none;
+}
+
+.effective-display-mobile .mobile-dashboard-screen > .score-panel,
+.effective-display-mobile .mobile-dashboard-screen > .schedule-panel,
+.effective-display-mobile .mobile-dashboard-screen > .today-plan-panel,
+.effective-display-mobile .mobile-dashboard-screen > .calendar-panel,
+.effective-display-mobile .mobile-dashboard-screen > .memo-panel,
+.effective-display-mobile .mobile-dashboard-screen > .date-marker-panel,
+.effective-display-mobile .mobile-dashboard-screen > .history-panel {
+  width: 100% !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  box-sizing: border-box;
+}
+
+.effective-display-mobile .mobile-dashboard-screen .section-heading {
+  flex-direction: row;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.effective-display-mobile .mobile-dashboard-screen .section-heading h2 {
+  font-size: 1.05rem;
+}
+
+.effective-display-mobile .mobile-dashboard-screen .schedule-weeks {
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+.effective-display-mobile .mobile-dashboard-screen .schedule-week-grid,
+.effective-display-mobile .mobile-dashboard-screen .schedule-weekdays {
+  grid-template-columns: repeat(7, minmax(92px, 1fr));
+}
+
+.effective-display-mobile .mobile-dashboard-screen .schedule-week-scroll {
+  overflow-x: auto;
+  padding-bottom: 5px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.effective-display-mobile .mobile-dashboard-screen .schedule-day {
+  min-height: 94px;
+}
+
+.effective-display-mobile .mobile-dashboard-screen .today-plan-grid,
+.effective-display-mobile .mobile-dashboard-screen .today-plan-list {
+  grid-template-columns: 1fr;
+}
+
+.effective-display-mobile .mobile-dashboard-screen .calendar-weeks {
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch;
+}
+
+.effective-display-mobile .mobile-dashboard-screen .calendar-week-scroll {
+  width: max-content !important;
+  max-width: none !important;
+}
+
+.effective-display-mobile .mobile-dashboard-screen .calendar-weekdays,
+.effective-display-mobile .mobile-dashboard-screen .calendar-days {
+  grid-template-columns: repeat(7, 130px) !important;
+}
+
+.effective-display-mobile .mobile-dashboard-screen .memo-stack-layout,
+.effective-display-mobile .mobile-dashboard-screen .memo-stack {
+  min-height: 500px !important;
+  height: 62dvh !important;
+}
+
+.effective-display-mobile .mobile-dashboard-screen .memo-card {
+  width: 100% !important;
+}
+
+.effective-display-mobile .mobile-dashboard-screen .memo-card.active {
+  transform: translateX(var(--drag-x, 0)) !important;
+}
+
+.effective-display-mobile .mobile-dashboard-screen .memo-card-columns {
+  grid-template-columns: 1fr !important;
+  overflow-y: auto;
+}
+
+.effective-display-mobile .mobile-dashboard-screen .memo-index {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.mobile-dashboard-nav {
+  position: fixed;
+  z-index: 80;
+  left: 50%;
+  bottom: 10px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 4px;
+  width: min(calc(100% - 24px), 444px);
+  padding: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  border-radius: 9px;
+  background: rgba(231, 238, 247, 0.84);
+  box-shadow: 8px 10px 24px rgba(68, 84, 105, 0.18), inset 1px 1px 0 rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(14px);
+  transform: translateX(-50%);
+}
+
+.mobile-dashboard-nav button {
+  min-height: 38px;
+  padding: 4px;
+  border: 0;
+  border-radius: 6px;
+  color: #65758a;
+  background: transparent;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+
+.mobile-dashboard-nav button.active {
+  color: #284a77;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.88), rgba(193, 210, 236, 0.72));
+  box-shadow: 2px 3px 7px rgba(76, 93, 116, 0.12), inset 1px 1px 0 rgba(255, 255, 255, 0.82);
+}
+
+/* Galaxy S24 Ultra reference viewport: 412 x 915 CSS pixels. */
+@media (max-width: 430px) {
+  .effective-display-mobile {
+    width: 100% !important;
+    min-height: 100dvh;
+    padding: 6px 8px calc(78px + env(safe-area-inset-bottom)) !important;
+    box-sizing: border-box;
+  }
+
+  .effective-display-mobile .hub-bar {
+    min-height: 48px;
+    margin-bottom: 6px;
+  }
+
+  .effective-display-mobile .hub-brand small {
+    display: none;
+  }
+
+  .effective-display-mobile .hub-nav-button,
+  .effective-display-mobile .hub-vault-button {
+    min-height: 36px;
+  }
+
+  .mobile-dashboard-view {
+    height: calc(100dvh - 68px);
+    gap: 8px;
+  }
+
+  .mobile-dashboard-header {
+    min-height: 48px;
+  }
+
+  .mobile-dashboard-header strong {
+    font-size: 1rem;
+  }
+
+  .mobile-dashboard-screen {
+    gap: 8px;
+    padding-bottom: calc(76px + env(safe-area-inset-bottom));
+  }
+
+  .effective-display-mobile .mobile-dashboard-screen .score-panel {
+    min-height: 170px;
+  }
+
+  .effective-display-mobile .mobile-dashboard-screen .today-plan-panel {
+    min-height: 0;
+  }
+
+  .effective-display-mobile .mobile-dashboard-screen .schedule-day {
+    min-height: 84px;
+  }
+
+  .effective-display-mobile .mobile-dashboard-screen .memo-stack-layout,
+  .effective-display-mobile .mobile-dashboard-screen .memo-stack {
+    min-height: 560px !important;
+    height: calc(100dvh - 190px) !important;
+  }
+
+  .mobile-dashboard-nav {
+    bottom: calc(8px + env(safe-area-inset-bottom));
+    width: calc(100% - 16px);
+    min-height: 52px;
+    padding: 5px;
+  }
+
+  .mobile-dashboard-nav button {
+    min-height: 40px;
+    font-size: 0.8rem;
+  }
+
+  .effective-display-mobile .vault-view {
+    margin-top: 8px;
+  }
+
+  .effective-display-mobile .vault-heading {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 4px;
+    padding: 16px;
+  }
+
+  .effective-display-mobile .vault-heading h1 {
+    font-size: 1.65rem;
+    line-height: 1.05;
+  }
+
+  .effective-display-mobile .vault-heading > p {
+    font-size: 0.86rem;
+  }
+
+  .effective-display-mobile .display-mode-options {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .effective-display-mobile .display-mode-option {
+    min-height: 64px;
+    padding: 8px 6px;
+  }
+
+  .effective-display-mobile .display-mode-option strong {
+    font-size: 0.82rem;
+  }
+
+  .effective-display-mobile .display-mode-option span {
+    font-size: 0.68rem;
+  }
+}
+
+/* The vault uses one aligned settings column rather than loose independent cards. */
+.vault-view {
+  gap: 12px;
+}
+
+.vault-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 330px), 1fr));
+  align-items: start;
+  gap: 12px;
+}
+
+.vault-grid .display-panel,
+.vault-grid .sync-panel,
+.vault-grid .system-panel {
+  align-self: stretch;
+}
+
+.vault-grid .display-panel {
+  grid-column: 1 / -1;
+}
+
+.vault-grid .section-heading {
+  align-items: center;
+  min-height: 50px;
+  margin: 0;
+}
+
+.vault-grid .section-heading > div {
+  min-width: 0;
+}
+
+.vault-grid .section-heading h2 {
+  margin: 0;
+}
+
+.vault-grid .section-heading p {
+  margin: 3px 0 0;
+}
+
+.vault-grid .display-panel .section-heading {
+  min-height: 56px;
+}
+
+.vault-grid .sync-panel .section-heading,
+.vault-grid .system-panel .section-heading {
+  min-height: 52px;
+}

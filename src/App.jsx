@@ -292,6 +292,11 @@ const mindfoldBlockTypeOptions = [
 ];
 const mindfoldTrashRetentionDays = 30;
 const mindfoldTrashRetentionMs = mindfoldTrashRetentionDays * 24 * 60 * 60 * 1000;
+const displayModes = ["auto", "desktop", "mobile"];
+
+function normalizeDisplayMode(value) {
+  return displayModes.includes(value) ? value : "auto";
+}
 
 function normalizeMindfoldMasks(masks, textLength) {
   return (Array.isArray(masks) ? masks : [])
@@ -656,6 +661,7 @@ function createFallbackState() {
     life: normalizeSchool(),
     noteTabs: normalizeNoteTabs(),
     mindfold: normalizeMindfold(),
+    displayMode: "auto",
     updatedAt: new Date().toISOString(),
   };
 }
@@ -690,6 +696,7 @@ function normalizeState(source) {
     "life",
     "noteTabs",
     "mindfold",
+    "displayMode",
     BACKUP_IMAGES_KEY,
     "updatedAt",
   ]);
@@ -721,6 +728,7 @@ function normalizeState(source) {
     noteTabs,
     ...noteSections,
     mindfold: normalizeMindfold(source?.mindfold),
+    displayMode: normalizeDisplayMode(source?.displayMode),
     updatedAt: source?.updatedAt || new Date().toISOString(),
   };
 }
@@ -1010,11 +1018,15 @@ function CollapsiblePanel({ children, className, controls, description, isOpen, 
 function App() {
   const [data, setData] = useState(loadState);
   const [activeView, setActiveView] = useState("dashboard");
+  const [lastWorkspaceView, setLastWorkspaceView] = useState("dashboard");
   const [activeNoteView, setActiveNoteView] = useState("school");
+  const [mobileSection, setMobileSection] = useState("schedule");
   const [selectedDate, setSelectedDate] = useState(toDateKey(new Date()));
+  const [isNarrowViewport, setIsNarrowViewport] = useState(() => window.matchMedia("(max-width: 760px)").matches);
   const [openPanels, setOpenPanels] = useState({
-    sync: true,
-    system: true,
+    display: true,
+    sync: false,
+    system: false,
     schoolDaily: false,
     daily: false,
     weekly: false,
@@ -1046,6 +1058,18 @@ function App() {
   useEffect(() => {
     syncRef.current = sync;
   }, [sync]);
+
+  useEffect(() => {
+    const query = window.matchMedia("(max-width: 760px)");
+    const updateViewport = () => setIsNarrowViewport(query.matches);
+    updateViewport();
+    query.addEventListener("change", updateViewport);
+    return () => query.removeEventListener("change", updateViewport);
+  }, []);
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0 });
+  }, [activeView]);
 
   useEffect(() => {
     const tabs = normalizeNoteTabs(data.noteTabs);
@@ -1566,6 +1590,22 @@ function App() {
       if (findMindfoldBlock(activeTab.blocks, id)) activeTab.activeId = id;
       return draft;
     });
+  };
+
+  const updateDisplayMode = (mode) => {
+    saveData((draft) => {
+      draft.displayMode = normalizeDisplayMode(mode);
+      return draft;
+    });
+  };
+
+  const navigateView = (nextView) => {
+    if (nextView !== "vault") setLastWorkspaceView(nextView);
+    setActiveView(nextView);
+  };
+
+  const toggleVault = () => {
+    setActiveView((current) => current === "vault" ? lastWorkspaceView : "vault");
   };
 
   const restoreMindfoldHistory = (direction) => {
@@ -2181,6 +2221,8 @@ function App() {
     }
   };
 
+  const effectiveDisplayMode = data.displayMode === "auto" ? (isNarrowViewport ? "mobile" : "desktop") : data.displayMode;
+
   const dashboardView = h(
     React.Fragment,
     null,
@@ -2262,6 +2304,28 @@ function App() {
     h(HistoryPanel, { carryPenalties: data.carryPenalties, flaggedDate: data.flaggedDate, getDayTotal, onToggleFlag: toggleFlaggedDate, routineAttempts: data.routineAttempts, selectedDate }),
   );
 
+  const mobileDashboardView = h(MobileDashboardView, {
+    activeSection: mobileSection,
+    onChangeSection: setMobileSection,
+    selectedDate,
+    shiftDate,
+    views: {
+      schedule: [
+        h(MobileSevenDaySchedule, { key: "seven-day-schedule", calendar: data.calendar, calendarDuties: data.calendarDuties, selectedDate }),
+        h(MobileMemoPanel, { key: "memo", activeMemoId: data.memos.activeMemoId, addMemoCard, cards: data.memos.cards, removeMemoCard, setActiveMemo, updateMemoCard }),
+      ],
+      routine: [
+        h(MobileScorePanel, { key: "score", carryPenaltyMarked, entryCount: entries.length, onAdjustCarry: adjustCarry, onResetCarry: resetCarry, onToggleAttempt: toggleRoutineAttempt, onToggleCarryPenalty: toggleCarryPenalty, routineTried, scoreInfo }),
+        h(TodayPlanPanel, { key: "today-plan", categories: data.categories, entries, mobile: true, presets: data.presets, schoolPresets: data.schoolPresets, selectedDate, weekday, weeklyPlan: data.weeklyPlan, toggleChoice }),
+        h(HistoryPanel, { key: "history", carryPenalties: data.carryPenalties, flaggedDate: data.flaggedDate, getDayTotal, onToggleFlag: toggleFlaggedDate, routineAttempts: data.routineAttempts, selectedDate }),
+      ],
+      calendar: [
+        h(MobileCalendarPanel, { key: "calendar", calendar: data.calendar, calendarDuties: data.calendarDuties, selectedDate, setSelectedDate, toggleCalendarDuty, updateCalendarNote }),
+        h(DateMarkerPanel, { key: "markers", dateMarkers: data.dateMarkers, selectedDate, updateDateMarker }),
+      ],
+    },
+  });
+
   const noteTabs = normalizeNoteTabs(data.noteTabs);
   const activeNoteKey = noteTabs.some((tab) => tab.id === activeNoteView) ? activeNoteView : noteTabs[0].id;
   const memoView = {
@@ -2277,6 +2341,13 @@ function App() {
   const settingsPanels = h(
     React.Fragment,
     null,
+    h(DisplayModePanel, {
+      displayMode: data.displayMode,
+      effectiveMode: data.displayMode === "auto" ? (isNarrowViewport ? "mobile" : "desktop") : data.displayMode,
+      isOpen: openPanels.display,
+      onChange: updateDisplayMode,
+      onToggle: () => togglePanel("display"),
+    }),
     h(SyncPanel, {
       forgetThisDevice,
       isOpen: openPanels.sync,
@@ -2304,8 +2375,12 @@ function App() {
 
   return h(
     "main",
-    { className: `app-shell hub-shell hub-view-${activeView}` },
-    h(HubBar, { activeView, setActiveView }),
+    {
+      className: `app-shell hub-shell hub-view-${activeView} display-mode-${data.displayMode} effective-display-${effectiveDisplayMode}`,
+      "data-display-mode": data.displayMode,
+      "data-effective-display-mode": effectiveDisplayMode,
+    },
+    h(HubBar, { activeView, onToggleVault: toggleVault, setActiveView: navigateView }),
     activeView === "mindfold"
       ? h(MindfoldView, {
           addBlock: addMindfoldBlock,
@@ -2332,10 +2407,12 @@ function App() {
         })
       : activeView === "vault"
         ? h(VaultView, { settingsPanels })
-        : h(
+        : effectiveDisplayMode === "mobile" && activeView === "dashboard"
+          ? mobileDashboardView
+          : h(
             React.Fragment,
             null,
-            h(Topbar, { activeView, selectedDate, setActiveView, setSelectedDate, shiftDate }),
+            h(Topbar, { activeView, selectedDate, setActiveView: navigateView, setSelectedDate, shiftDate }),
             activeView === "note"
               ? h(NoteView, { activeNoteView: activeNoteKey, addNoteTab, memoView, moveNoteTab, noteTabs, removeNoteTab, setActiveNoteView, updateNoteTab })
               : dashboardView,
@@ -2343,7 +2420,283 @@ function App() {
   );
 }
 
-function HubBar({ activeView, setActiveView }) {
+function MobileDashboardView({ activeSection, onChangeSection, selectedDate, shiftDate, views }) {
+  const screenRef = useRef(null);
+  const tabSwipeRef = useRef(null);
+  const sections = [
+    { id: "schedule", label: "Schedule" },
+    { id: "routine", label: "Routine" },
+    { id: "calendar", label: "Calendar" },
+  ];
+  useEffect(() => {
+    if (screenRef.current) screenRef.current.scrollTop = 0;
+    window.scrollTo({ top: 0, left: 0 });
+  }, [activeSection]);
+  const finishTabSwipe = (clientX, clientY) => {
+    const start = tabSwipeRef.current;
+    tabSwipeRef.current = null;
+    if (!start) return;
+    const deltaX = clientX - start.x;
+    const deltaY = clientY - start.y;
+    if (Math.abs(deltaX) < 58 || Math.abs(deltaX) < Math.abs(deltaY) * 1.25) return;
+    const currentIndex = Math.max(0, sections.findIndex((section) => section.id === activeSection));
+    const nextIndex = Math.max(0, Math.min(sections.length - 1, currentIndex + (deltaX < 0 ? 1 : -1)));
+    if (nextIndex !== currentIndex) onChangeSection(sections[nextIndex].id);
+  };
+  return h(
+    "section",
+    { className: "mobile-dashboard-view", "aria-label": "모바일 대시보드" },
+    h(
+      "header",
+      { className: "mobile-dashboard-header" },
+      h("button", { type: "button", "aria-label": "이전 날짜", onClick: () => shiftDate(-1) }, "‹"),
+      h("strong", null, formatDayLabel(selectedDate)),
+      h("button", { type: "button", "aria-label": "다음 날짜", onClick: () => shiftDate(1) }, "›"),
+    ),
+    h(
+      "div",
+      {
+        className: `mobile-dashboard-screen section-${activeSection}`,
+        ref: screenRef,
+        onPointerCancel: () => { tabSwipeRef.current = null; },
+        onPointerDown: (event) => {
+          if (event.target.closest("input, textarea, button")) return;
+          if (event.pointerType === "mouse" && event.button !== 0) return;
+          tabSwipeRef.current = { x: event.clientX, y: event.clientY };
+        },
+        onPointerUp: (event) => finishTabSwipe(event.clientX, event.clientY),
+      },
+      ...(views[activeSection] || views.schedule),
+    ),
+    h(
+      "nav",
+      { className: "mobile-dashboard-nav", "aria-label": "모바일 대시보드 메뉴" },
+      sections.map((section) => h(
+        "button",
+        {
+          className: activeSection === section.id ? "active" : "",
+          type: "button",
+          key: section.id,
+          "aria-current": activeSection === section.id ? "page" : undefined,
+          onClick: () => onChangeSection(section.id),
+        },
+        section.label,
+      )),
+    ),
+  );
+}
+
+function MobileSevenDaySchedule({ calendar, calendarDuties, selectedDate }) {
+  const dates = Array.from({ length: 7 }, (_, index) => addDays(selectedDate, index));
+  return h(
+    "section",
+    { className: "mobile-glass-card mobile-seven-day-schedule", "aria-label": "Seven day schedule" },
+    h(
+      "header",
+      { className: "mobile-card-heading" },
+      h("div", null, h("span", null, "NEXT 7 DAYS"), h("strong", null, "주간 일정")),
+      h("small", null, `${formatCompactDate(dates[0]).month}.${formatCompactDate(dates[0]).day} - ${formatCompactDate(dates[6]).month}.${formatCompactDate(dates[6]).day}`),
+    ),
+    h(
+      "div",
+      { className: "mobile-seven-day-list" },
+      dates.map((dateKey, index) => {
+        const date = new Date(`${dateKey}T00:00:00`);
+        const compact = formatCompactDate(dateKey);
+        const duties = calendarDutyOptions.filter((option) => calendarDuties?.[dateKey]?.[option.key]);
+        const lines = String(calendar[dateKey] || "").split(/\n+/).map((line) => line.trim()).filter(Boolean);
+        return h(
+          "article",
+          { className: index === 0 ? "today" : "", key: dateKey },
+          h(
+            "div",
+            { className: "mobile-seven-day-date" },
+            h("strong", null, index === 0 ? "TODAY" : weekDays[(date.getDay() + 6) % 7].label),
+            h("span", null, `${compact.month}.${compact.day}`),
+          ),
+          h(
+            "div",
+            { className: `mobile-seven-day-items ${duties.length || lines.length ? "" : "empty"}` },
+            duties.map((option) => h("b", { key: option.key }, option.label)),
+            lines.length ? lines.map((line, lineIndex) => h("span", { key: `${dateKey}-${lineIndex}` }, line)) : duties.length ? null : h("i", null, "No schedule"),
+          ),
+        );
+      }),
+    ),
+  );
+}
+
+function MobileScorePanel({ carryPenaltyMarked, entryCount, onAdjustCarry, onResetCarry, onToggleAttempt, onToggleCarryPenalty, routineTried, scoreInfo }) {
+  const totalClass = scoreInfo.total < 0 ? "negative" : scoreInfo.total > 0 ? "positive" : "neutral";
+  return h(
+    "section",
+    { className: "mobile-glass-card mobile-score-card", "aria-label": "Score summary" },
+    h(
+      "header",
+      { className: "mobile-card-heading" },
+      h("div", null, h("span", null, "TOTAL SCORE"), h("strong", null, "오늘의 점수")),
+      h(
+        "div",
+        { className: "mobile-carry-controls", "aria-label": "Carry controls" },
+        h("button", { type: "button", "aria-label": "Decrease Carry", onClick: () => onAdjustCarry(-1) }, "−"),
+        h("button", { type: "button", "aria-label": "Reset Carry", onClick: onResetCarry }, "R"),
+        h("button", { type: "button", "aria-label": "Increase Carry", onClick: () => onAdjustCarry(1) }, "+"),
+      ),
+    ),
+    h(
+      "div",
+      { className: "mobile-score-main" },
+      h("strong", { className: `mobile-score-total ${totalClass}` }, formatScore(scoreInfo.total)),
+      h(
+        "div",
+        { className: "mobile-score-checks icon-only" },
+        h(
+          "button",
+          { className: `mobile-score-check good ${routineTried ? "active" : ""}`, type: "button", "aria-label": "Tried today", "aria-pressed": String(routineTried), onClick: onToggleAttempt },
+          h("span", { "aria-hidden": "true" }, routineTried ? "✓" : ""),
+        ),
+        h(
+          "button",
+          { className: `mobile-score-check bad ${carryPenaltyMarked ? "active" : ""}`, type: "button", "aria-label": "Add -2 Carry", "aria-pressed": String(carryPenaltyMarked), onClick: onToggleCarryPenalty },
+          h("span", { "aria-hidden": "true" }, carryPenaltyMarked ? "✓" : ""),
+        ),
+      ),
+    ),
+    h(
+      "div",
+      { className: "mobile-score-metrics" },
+      [["Carry", scoreInfo.carry], ["Plus", scoreInfo.plus], ["Minus", scoreInfo.minus], ["Records", entryCount]].map(([label, value]) =>
+        h("div", { key: label }, h("span", null, label), h("strong", null, label === "Records" ? value : formatScore(value))),
+      ),
+    ),
+  );
+}
+
+function MobileCalendarPanel({ calendar, calendarDuties, selectedDate, setSelectedDate, toggleCalendarDuty, updateCalendarNote }) {
+  const selected = new Date(`${selectedDate}T00:00:00`);
+  const year = selected.getFullYear();
+  const monthIndex = selected.getMonth();
+  const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
+  const firstDayIndex = (new Date(year, monthIndex, 1).getDay() + 6) % 7;
+  const cells = [
+    ...Array.from({ length: firstDayIndex }, (_, index) => ({ key: `blank-${index}`, blank: true })),
+    ...Array.from({ length: daysInMonth }, (_, index) => ({ key: `${year}-${String(monthIndex + 1).padStart(2, "0")}-${String(index + 1).padStart(2, "0")}`, day: index + 1 })),
+  ];
+  while (cells.length % 7) cells.push({ key: `blank-end-${cells.length}`, blank: true });
+  const changeMonth = (offset) => {
+    const next = new Date(year, monthIndex + offset, 1);
+    setSelectedDate(toDateKey(next));
+  };
+  const selectedDuties = calendarDuties?.[selectedDate] || {};
+  return h(
+    "section",
+    { className: "mobile-glass-card mobile-calendar-card", "aria-label": "Mobile calendar" },
+    h(
+      "header",
+      { className: "mobile-calendar-heading" },
+      h("button", { type: "button", "aria-label": "Previous month", onClick: () => changeMonth(-1) }, "‹"),
+      h("div", null, h("strong", null, `${year}. ${String(monthIndex + 1).padStart(2, "0")}`), h("span", null, monthNames[monthIndex])),
+      h("button", { type: "button", "aria-label": "Next month", onClick: () => changeMonth(1) }, "›"),
+    ),
+    h("div", { className: "mobile-calendar-weekdays" }, weekDays.map((day) => h("span", { key: day.key }, day.label.slice(0, 1)))),
+    h(
+      "div",
+      { className: "mobile-calendar-grid" },
+      cells.map((cell) => {
+        if (cell.blank) return h("span", { className: "blank", key: cell.key, "aria-hidden": "true" });
+        const hasNote = Boolean(calendar[cell.key]?.trim());
+        const hasDuty = Object.values(calendarDuties?.[cell.key] || {}).some(Boolean);
+        return h(
+          "button",
+          { className: `${cell.key === selectedDate ? "selected" : ""} ${hasNote || hasDuty ? "has-entry" : ""}`, type: "button", key: cell.key, onClick: () => setSelectedDate(cell.key) },
+          h("b", null, cell.day),
+          h("i", { "aria-hidden": "true" }),
+        );
+      }),
+    ),
+    h(
+      "div",
+      { className: "mobile-calendar-editor" },
+      h("div", { className: "mobile-calendar-editor-heading" }, h("strong", null, formatDayLabel(selectedDate)), h("span", null, "일정 편집")),
+      h(
+        "div",
+        { className: "mobile-duty-buttons" },
+        calendarDutyOptions.map((option) => h(
+          "button",
+          { className: selectedDuties[option.key] ? "active" : "", type: "button", key: option.key, "aria-pressed": String(Boolean(selectedDuties[option.key])), onClick: () => toggleCalendarDuty(selectedDate, option.key) },
+          h("span", { "aria-hidden": "true" }, selectedDuties[option.key] ? "✓" : ""),
+          option.label,
+        )),
+      ),
+      h("textarea", { maxLength: 600, placeholder: "이 날짜의 일정을 입력하세요", value: calendar[selectedDate] || "", onChange: (event) => updateCalendarNote(selectedDate, event.target.value) }),
+    ),
+  );
+}
+
+function MobileMemoPanel({ activeMemoId, addMemoCard, cards, removeMemoCard, setActiveMemo, updateMemoCard }) {
+  const activeIndex = Math.max(0, cards.findIndex((card) => card.id === activeMemoId));
+  const activeCard = cards[activeIndex] || cards[0];
+  const touchStartRef = useRef(null);
+  if (!activeCard) return null;
+  const memoAreas = [
+    ["left", "leftTitle", "leftText"],
+    ["center", "centerTitle", "centerText"],
+    ["right", "rightTitle", "rightText"],
+    ["left-extra", "leftExtraTitle", "leftTextExtra"],
+    ["center-extra", "centerExtraTitle", "centerTextExtra"],
+    ["right-extra", "rightExtraTitle", "rightTextExtra"],
+  ];
+  const goTo = (offset) => {
+    const nextIndex = (activeIndex + offset + cards.length) % cards.length;
+    setActiveMemo(cards[nextIndex].id);
+  };
+  return h(
+    "section",
+    { className: "mobile-glass-card mobile-memo-card", "aria-label": "Memo" },
+    h(
+      "header",
+      {
+        className: "mobile-memo-heading",
+        onPointerDown: (event) => event.stopPropagation(),
+        onPointerUp: (event) => event.stopPropagation(),
+        onTouchStart: (event) => {
+          event.stopPropagation();
+          touchStartRef.current = event.touches?.[0]?.clientX ?? null;
+        },
+        onTouchEnd: (event) => {
+          event.stopPropagation();
+          if (touchStartRef.current == null) return;
+          const endX = event.changedTouches?.[0]?.clientX ?? touchStartRef.current;
+          const delta = endX - touchStartRef.current;
+          if (Math.abs(delta) > 48) goTo(delta > 0 ? -1 : 1);
+          touchStartRef.current = null;
+        },
+      },
+      h("button", { type: "button", "aria-label": "Previous memo", onClick: () => goTo(-1) }, "‹"),
+      h("div", null, h("span", null, `${activeIndex + 1} / ${cards.length}`), h("input", { type: "text", maxLength: 32, "aria-label": "Memo title", value: activeCard.title, onChange: (event) => updateMemoCard(activeCard.id, "title", event.target.value) })),
+      h("button", { type: "button", "aria-label": "Next memo", onClick: () => goTo(1) }, "›"),
+    ),
+    h(
+      "div",
+      { className: "mobile-memo-toolbar" },
+      h("button", { type: "button", onClick: addMemoCard }, "+ Memo"),
+      h("button", { className: "danger", type: "button", disabled: cards.length <= 1, onClick: () => removeMemoCard(activeCard.id) }, "삭제"),
+    ),
+    h(
+      "div",
+      { className: "mobile-memo-areas" },
+      memoAreas.map(([key, titleField, field], index) => h(
+        "div",
+        { className: "mobile-memo-area", key },
+        h("span", { className: "mobile-memo-number" }, String(index + 1).padStart(2, "0")),
+        h(MemoArea, { cardId: activeCard.id, field, titleField, titleValue: activeCard[titleField] || "", updateMemoCard, value: activeCard[field] || "" }),
+      )),
+    ),
+    h("div", { className: "mobile-memo-dots", "aria-label": "Memo cards" }, cards.map((card, index) => h("button", { className: index === activeIndex ? "active" : "", type: "button", key: card.id, "aria-label": `Memo ${index + 1}`, onClick: () => setActiveMemo(card.id) }))),
+  );
+}
+
+function HubBar({ activeView, onToggleVault, setActiveView }) {
   const hubItems = [
     { key: "studio", label: "Studio", target: "dashboard", active: activeView === "dashboard" || activeView === "note" },
     { key: "mindfold", label: "Mindfold", target: "mindfold", active: activeView === "mindfold" },
@@ -2380,7 +2733,7 @@ function HubBar({ activeView, setActiveView }) {
           title: "Vault",
           "aria-label": "Vault",
           "aria-current": activeView === "vault" ? "page" : undefined,
-          onClick: () => setActiveView("vault"),
+          onClick: onToggleVault,
         },
         "\u2699",
       ),
@@ -3703,6 +4056,7 @@ function MindfoldView({ addBlock, addTab, clearMasks, indentBlock, maskSelection
       ),
     ),
   );
+
 }
 
 function Topbar({ activeView, selectedDate, settingsPanels, setActiveView, setSelectedDate, shiftDate }) {
@@ -3774,22 +4128,64 @@ function VaultView({ settingsPanels }) {
     h(
       "div",
       { className: "vault-heading" },
-      h("div", null, h("p", { className: "eyebrow" }, "HUB VAULT"), h("h1", null, "Storage & Security")),
-      h("p", null, "Sync, backup, import, and device security for Dash Board, Note, and Mindfold."),
+      h("div", null, h("p", { className: "eyebrow" }, "SETTINGS"), h("h1", null, "설정")),
+      h("p", null, "화면 보기, 기기 동기화, 백업과 복원을 한곳에서 관리합니다."),
     ),
     h("div", { className: "vault-grid" }, settingsPanels),
   );
+}
+
+function DisplayModePanel({ displayMode, effectiveMode, isOpen, onChange, onToggle }) {
+  const options = [
+    { id: "auto", label: "자동", description: "기기 화면 크기에 맞춤" },
+    { id: "desktop", label: "데스크탑 보기", description: "넓은 화면 구성 사용" },
+    { id: "mobile", label: "모바일 보기", description: "휴대폰 화면 구성 사용" },
+  ];
+  const effectiveLabel = effectiveMode === "mobile" ? "모바일" : "데스크탑";
+  return h(CollapsiblePanel, {
+    className: "display-panel",
+    controls: "displayBody",
+    description: "기기에 맞는 화면 구성을 선택합니다.",
+    isOpen,
+    onToggle,
+    title: "화면 보기",
+    children: {
+      actions: h("span", { className: "vault-panel-toggle", "aria-hidden": "true" }, isOpen ? "−" : "+"),
+      body: h(
+        "div",
+        { className: "display-mode-body", id: "displayBody" },
+        h(
+          "div",
+          { className: "display-mode-options", role: "group", "aria-label": "화면 표시 방식" },
+          ...options.map((option) => h(
+            "button",
+            {
+              className: `display-mode-option ${displayMode === option.id ? "active" : ""}`,
+              type: "button",
+              key: option.id,
+              "aria-pressed": displayMode === option.id,
+              onClick: () => onChange(option.id),
+            },
+            h("strong", null, option.label),
+            h("span", null, option.description),
+          )),
+        ),
+        h("p", { className: "display-mode-status" }, `현재 적용: ${effectiveLabel} 보기`),
+      ),
+    },
+  });
 }
 
 function SyncPanel({ forgetThisDevice, isOpen, onConnect, onGenerate, onPull, onPush, onToggle, setSync, sync, syncReady }) {
   return h(CollapsiblePanel, {
     className: "sync-panel",
     controls: "syncBody",
-    description: "Connect devices with Sync ID + PIN.",
+    description: "Sync ID와 PIN으로 여러 기기의 데이터를 연결합니다.",
     isOpen,
     onToggle,
-    title: "Sync",
+    title: "기기 동기화",
     children: {
+      actions: h("span", { className: "vault-panel-toggle", "aria-hidden": "true" }, isOpen ? "−" : "+"),
       body: h(
         "div",
         { className: "sync-body", id: "syncBody" },
@@ -3815,16 +4211,16 @@ function SyncPanel({ forgetThisDevice, isOpen, onConnect, onGenerate, onPull, on
                   return { ...current, rememberDevice: event.target.checked };
                 }),
             }),
-            h("span", null, "Remember this device"),
+            h("span", null, "이 기기 기억하기"),
           ),
           h(
             "div",
             { className: "sync-actions" },
-            h("button", { className: "text-button", type: "button", onClick: onGenerate }, "Generate"),
-            h("button", { className: "text-button", type: "button", disabled: sync.busy, onClick: onConnect }, "Connect"),
-            h("button", { className: "text-button", type: "button", disabled: sync.busy || !syncReady, onClick: onPull }, "Pull"),
-            h("button", { className: "text-button", type: "button", disabled: sync.busy || !syncReady, onClick: onPush }, "Push"),
-            h("button", { className: "text-button danger", type: "button", onClick: forgetThisDevice }, "Forget This Device"),
+            h("button", { className: "text-button", type: "button", onClick: onGenerate }, "ID 생성"),
+            h("button", { className: "text-button", type: "button", disabled: sync.busy, onClick: onConnect }, "연결"),
+            h("button", { className: "text-button", type: "button", disabled: sync.busy || !syncReady, onClick: onPull }, "불러오기"),
+            h("button", { className: "text-button", type: "button", disabled: sync.busy || !syncReady, onClick: onPush }, "올리기"),
+            h("button", { className: "text-button danger", type: "button", onClick: forgetThisDevice }, "기기 연결 해제"),
           ),
         ),
         h("p", { className: "sync-status" }, sync.status),
@@ -3838,25 +4234,26 @@ function SystemPanel({ copyBackup, exportBackup, importBackup, isOpen, onToggle 
   return h(CollapsiblePanel, {
     className: "system-panel",
     controls: "systemBody",
-    description: "Export or restore dashboard data.",
+    description: "대시보드 전체 데이터를 백업하거나 복원합니다.",
     isOpen,
     onToggle,
-    title: "System",
+    title: "백업 및 복원",
     children: {
+      actions: h("span", { className: "vault-panel-toggle", "aria-hidden": "true" }, isOpen ? "−" : "+"),
       body: h(
         "div",
         { className: "system-body", id: "systemBody" },
         h(
           "button",
           { className: "system-action export-action", type: "button", onClick: exportBackup },
-          h("span", null, "Download Data"),
-          h("strong", null, "Save data and memo images"),
+          h("span", null, "파일로 저장"),
+          h("strong", null, "데이터와 메모 이미지를 내려받습니다"),
         ),
         h(
           "button",
           { className: "system-action copy-action", type: "button", onClick: copyBackup },
-          h("span", null, "Copy Data"),
-          h("strong", null, "Copy data and memo images"),
+          h("span", null, "클립보드에 복사"),
+          h("strong", null, "백업 데이터를 바로 복사합니다"),
         ),
         h(
           "button",
@@ -3865,8 +4262,8 @@ function SystemPanel({ copyBackup, exportBackup, importBackup, isOpen, onToggle 
             type: "button",
             onClick: () => fileInputRef.current?.click(),
           },
-          h("span", null, "Upload Data"),
-          h("strong", null, "Restore from a JSON backup"),
+          h("span", null, "백업 불러오기"),
+          h("strong", null, "JSON 파일에서 데이터를 복원합니다"),
         ),
         h("input", {
           ref: fileInputRef,
@@ -4262,10 +4659,10 @@ function getPresetScoreRange(preset) {
   return range.length > 1 ? range : null;
 }
 
-function TodayPlanPanel({ categories, entries, presets, schoolPresets, selectedDate, toggleChoice, weekday, weeklyPlan }) {
+function TodayPlanPanel({ categories, entries, mobile = false, presets, schoolPresets, selectedDate, toggleChoice, weekday, weeklyPlan }) {
   return h(
     "section",
-    { className: "today-plan-panel", "aria-label": "Today plan" },
+    { className: `today-plan-panel ${mobile ? "mobile-today-plan" : ""}`, "aria-label": "Today plan" },
     h("div", { className: "section-heading" }, h("h2", null, "Today"), h("span", null, weekday.full)),
     h(
       "div",
