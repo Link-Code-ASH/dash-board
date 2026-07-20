@@ -1600,8 +1600,9 @@ function App() {
   };
 
   const navigateView = (nextView) => {
-    if (nextView !== "vault") setLastWorkspaceView(nextView);
-    setActiveView(nextView);
+    const resolvedView = nextView === "note" ? "mindfold" : nextView;
+    if (resolvedView !== "vault") setLastWorkspaceView(resolvedView);
+    setActiveView(resolvedView);
   };
 
   const toggleVault = () => {
@@ -2326,18 +2327,6 @@ function App() {
     },
   });
 
-  const noteTabs = normalizeNoteTabs(data.noteTabs);
-  const activeNoteKey = noteTabs.some((tab) => tab.id === activeNoteView) ? activeNoteView : noteTabs[0].id;
-  const memoView = {
-    addSchoolNote: () => addMemoNote(activeNoteKey, `${activeNoteKey}-note`),
-    attachMemoImage: (id, file) => attachMemoImage(activeNoteKey, id, file),
-    moveSchoolNote: (fromId, toId) => moveMemoNote(activeNoteKey, fromId, toId),
-    notes: normalizeSchool(data[activeNoteKey]).notes,
-    removeMemoImage: (id, imageId) => removeMemoImage(activeNoteKey, id, imageId),
-    removeSchoolNote: (id) => removeMemoNote(activeNoteKey, id, activeNoteKey),
-    toggleSchoolNote: (id) => toggleMemoNote(activeNoteKey, id),
-    updateSchoolNote: (id, field, value) => updateMemoNote(activeNoteKey, id, field, value),
-  };
   const settingsPanels = h(
     React.Fragment,
     null,
@@ -2410,12 +2399,10 @@ function App() {
         : effectiveDisplayMode === "mobile" && activeView === "dashboard"
           ? mobileDashboardView
           : h(
-            React.Fragment,
-            null,
-            h(Topbar, { activeView, selectedDate, setActiveView: navigateView, setSelectedDate, shiftDate }),
-            activeView === "note"
-              ? h(NoteView, { activeNoteView: activeNoteKey, addNoteTab, memoView, moveNoteTab, noteTabs, removeNoteTab, setActiveNoteView, updateNoteTab })
-              : dashboardView,
+            "div",
+            { className: "dashboard-content" },
+            h(Topbar, { selectedDate, setSelectedDate, shiftDate }),
+            dashboardView,
           ),
   );
 }
@@ -2698,73 +2685,49 @@ function MobileMemoPanel({ activeMemoId, addMemoCard, cards, removeMemoCard, set
 
 function HubBar({ activeView, onToggleVault, setActiveView }) {
   const hubItems = [
-    { key: "studio", label: "Studio", target: "dashboard", active: activeView === "dashboard" || activeView === "note" },
+    { key: "dashboard", label: "Dashboard", target: "dashboard", active: activeView === "dashboard" },
     { key: "mindfold", label: "Mindfold", target: "mindfold", active: activeView === "mindfold" },
   ];
   return h(
-    "header",
-    { className: "hub-bar", "aria-label": "Hub navigation" },
-    h("div", { className: "hub-brand" }, h("span", null, "Hub"), h("small", null, "Studio / Mindfold")),
+    "div",
+    { className: "hub-dock" },
     h(
-      "div",
-      { className: "hub-actions" },
+      "header",
+      { className: "hub-bar", "aria-label": "Hub navigation" },
+      h("div", { className: "hub-brand" }, h("span", null, "Hub")),
       h(
-        "nav",
-        { className: "hub-nav", "aria-label": "Hub sections" },
-        hubItems.map((item) =>
-          h(
-            "button",
-            {
-              className: `hub-nav-button ${item.active ? "active" : ""}`,
-              key: item.key,
-              type: "button",
-              "aria-current": item.active ? "page" : undefined,
-              onClick: () => setActiveView(item.target),
-            },
-            item.label,
+        "div",
+        { className: "hub-actions" },
+        h(
+          "nav",
+          { className: "hub-nav", "aria-label": "Hub sections" },
+          hubItems.map((item) =>
+            h(
+              "button",
+              {
+                className: `hub-nav-button ${item.active ? "active" : ""}`,
+                key: item.key,
+                type: "button",
+                "aria-current": item.active ? "page" : undefined,
+                onClick: () => setActiveView(item.target),
+              },
+              item.label,
+            ),
           ),
         ),
       ),
-      h(
-        "button",
-        {
-          className: `hub-vault-button ${activeView === "vault" ? "active" : ""}`,
-          type: "button",
-          title: "Vault",
-          "aria-label": "Vault",
-          "aria-current": activeView === "vault" ? "page" : undefined,
-          onClick: onToggleVault,
-        },
-        "\u2699",
-      ),
     ),
-  );
-}
-
-function AppNavigation({ activeView, setActiveView }) {
-  const items = [
-    { key: "dashboard", label: "Dash Board" },
-    { key: "note", label: "Note" },
-  ];
-  const renderNavButton = (item) =>
     h(
       "button",
       {
-        className: `nav-button ${activeView === item.key ? "active" : ""}`,
-        key: item.key,
+        className: `hub-vault-button hub-vault-corner ${activeView === "vault" ? "active" : ""}`,
         type: "button",
-        "aria-current": activeView === item.key ? "page" : undefined,
-        onClick: () => setActiveView(item.key),
+        title: "Vault",
+        "aria-label": "Vault",
+        "aria-current": activeView === "vault" ? "page" : undefined,
+        onClick: onToggleVault,
       },
-      item.label,
-    );
-  return h(
-    "nav",
-    { className: "app-navigation", "aria-label": "Main menu" },
-    h(
-      "div",
-      { className: "nav-buttons" },
-      h("div", { className: "nav-row" }, items.map(renderNavButton)),
+      "\u2699",
     ),
   );
 }
@@ -3173,6 +3136,7 @@ function MindfoldView({ addBlock, addTab, clearMasks, indentBlock, maskSelection
   const activeTab = getActiveMindfoldTab(normalized);
   const [dragBlockId, setDragBlockId] = useState("");
   const [dropTarget, setDropTarget] = useState(null);
+  const [selectedBlockIds, setSelectedBlockIds] = useState([]);
   const [menuBlockId, setMenuBlockId] = useState("");
   const [editingBlockId, setEditingBlockId] = useState("");
   const [editingTabId, setEditingTabId] = useState("");
@@ -3183,6 +3147,8 @@ function MindfoldView({ addBlock, addTab, clearMasks, indentBlock, maskSelection
   const selectionRef = useRef({});
   const pendingFocusRef = useRef(null);
   const pointerDragRef = useRef(null);
+  const blockSelectionRef = useRef(null);
+  const selectionBoxRef = useRef(null);
   const suppressMenuClickRef = useRef(false);
   const composingBlockIdsRef = useRef(new Set());
 
@@ -3211,12 +3177,46 @@ function MindfoldView({ addBlock, addTab, clearMasks, indentBlock, maskSelection
   useEffect(() => {
     const handlePointerMove = (event) => {
       const dragState = pointerDragRef.current;
+      const selectionState = blockSelectionRef.current;
+      if (!dragState && selectionState) {
+        const distance = Math.hypot(event.clientX - selectionState.startX, event.clientY - selectionState.startY);
+        if (!selectionState.selecting && distance < 4) return;
+        selectionState.selecting = true;
+        event.preventDefault();
+        const left = Math.min(selectionState.startX, event.clientX);
+        const top = Math.min(selectionState.startY, event.clientY);
+        const right = Math.max(selectionState.startX, event.clientX);
+        const bottom = Math.max(selectionState.startY, event.clientY);
+        const selectionElement = selectionBoxRef.current;
+        if (selectionElement) {
+          selectionElement.style.display = "block";
+          selectionElement.style.left = `${left}px`;
+          selectionElement.style.top = `${top}px`;
+          selectionElement.style.width = `${right - left}px`;
+          selectionElement.style.height = `${bottom - top}px`;
+        }
+        const intersectedIds = [...document.querySelectorAll(".mindfold-block-row")]
+          .filter((row) => {
+            const rect = row.getBoundingClientRect();
+            return rect.right >= left && rect.left <= right && rect.bottom >= top && rect.top <= bottom;
+          })
+          .map((row) => row.closest("[data-block-id]")?.getAttribute("data-block-id"))
+          .filter(Boolean);
+        const nextIds = [...new Set([...selectionState.baseIds, ...intersectedIds])];
+        const nextKey = nextIds.join("|");
+        if (nextKey !== selectionState.lastSelectionKey) {
+          selectionState.lastSelectionKey = nextKey;
+          setSelectedBlockIds(nextIds);
+        }
+        return;
+      }
       if (!dragState) return;
       const distance = Math.hypot(event.clientX - dragState.startX, event.clientY - dragState.startY);
-      if (!dragState.dragging && distance < 6) return;
+      if (!dragState.dragging && distance < 4) return;
       if (!dragState.dragging) {
         dragState.dragging = true;
         suppressMenuClickRef.current = true;
+        setActiveBlock(dragState.id);
         setDragBlockId(dragState.id);
         setMenuBlockId("");
         document.getSelection()?.removeAllRanges();
@@ -3255,6 +3255,12 @@ function MindfoldView({ addBlock, addTab, clearMasks, indentBlock, maskSelection
     };
     const handlePointerUp = () => {
       const dragState = pointerDragRef.current;
+      const selectionState = blockSelectionRef.current;
+      if (selectionState?.sourceElement?.hasPointerCapture?.(selectionState.pointerId)) {
+        selectionState.sourceElement.releasePointerCapture(selectionState.pointerId);
+      }
+      blockSelectionRef.current = null;
+      if (selectionBoxRef.current) selectionBoxRef.current.style.display = "none";
       if (!dragState) return;
       if (dragState.dragging && dragState.target) {
         moveBlock(dragState.id, dragState.target.id, dragState.target.placement, dragState.target.column);
@@ -3279,7 +3285,7 @@ function MindfoldView({ addBlock, addTab, clearMasks, indentBlock, maskSelection
       window.removeEventListener("pointercancel", handlePointerUp);
       document.body.classList.remove("mindfold-pointer-dragging");
     };
-  }, [activeTab.blocks, moveBlock]);
+  }, [activeTab.blocks, moveBlock, setActiveBlock]);
 
   const beginPointerDrag = (event, id) => {
     if (event.button !== 0 || menuBlockId) return;
@@ -3292,6 +3298,32 @@ function MindfoldView({ addBlock, addTab, clearMasks, indentBlock, maskSelection
       startY: event.clientY,
       dragging: false,
       target: null,
+    };
+  };
+
+  const beginCanvasSelection = (event) => {
+    if (event.button !== 0 || menuBlockId) return;
+    if (event.target.closest?.("[data-block-id], button, input, textarea")) return;
+    const additive = event.ctrlKey || event.metaKey;
+    const baseIds = additive ? selectedBlockIds : [];
+    if (!additive) setSelectedBlockIds([]);
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+    const selectionElement = selectionBoxRef.current;
+    if (selectionElement) {
+      selectionElement.style.display = "block";
+      selectionElement.style.left = `${event.clientX}px`;
+      selectionElement.style.top = `${event.clientY}px`;
+      selectionElement.style.width = "0px";
+      selectionElement.style.height = "0px";
+    }
+    blockSelectionRef.current = {
+      baseIds,
+      lastSelectionKey: baseIds.join("|"),
+      pointerId: event.pointerId,
+      sourceElement: event.currentTarget,
+      startX: event.clientX,
+      startY: event.clientY,
+      selecting: false,
     };
   };
 
@@ -3398,6 +3430,7 @@ function MindfoldView({ addBlock, addTab, clearMasks, indentBlock, maskSelection
         onFocus: () => {
           setEditingBlockId(block.id);
           setActiveBlock(block.id);
+          setSelectedBlockIds([block.id]);
         },
         onBlur: () => window.setTimeout(() => {
           if (menuBlockId !== block.id) setEditingBlockId((current) => (current === block.id ? "" : current));
@@ -3851,8 +3884,9 @@ function MindfoldView({ addBlock, addTab, clearMasks, indentBlock, maskSelection
     return h(
       "article",
       {
-        className: `mindfold-notion-block type-${block.type} ${block.toggle ? "is-toggle" : ""} ${block.columns > 1 ? `is-columns columns-${block.columns}` : ""} ${layoutColumn != null ? "is-column-item" : ""} ${block.checked ? "is-checked" : ""} ${isMenuOpen ? "menu-open" : ""} ${dragBlockId === block.id ? "dragging" : ""} ${dropClass}`,
+        className: `mindfold-notion-block type-${block.type} ${block.toggle ? "is-toggle" : ""} ${block.columns > 1 ? `is-columns columns-${block.columns}` : ""} ${layoutColumn != null ? "is-column-item" : ""} ${block.checked ? "is-checked" : ""} ${isMenuOpen ? "menu-open" : ""} ${selectedBlockIds.includes(block.id) ? "block-selected" : ""} ${dragBlockId === block.id ? "dragging" : ""} ${dropClass}`,
         draggable: false,
+        "aria-grabbed": dragBlockId === block.id,
         key: block.id,
         "data-block-id": block.id,
         style: {
@@ -3862,9 +3896,7 @@ function MindfoldView({ addBlock, addTab, clearMasks, indentBlock, maskSelection
           "--mindfold-column": layoutColumn == null ? undefined : layoutColumn + 1,
         },
         onPointerDownCapture: (event) => {
-          const button = event.target.closest?.("button");
-          if (button) return;
-          if (event.target.closest?.(".mindfold-block-menu")) return;
+          if (event.target.closest?.("button, .mindfold-block-menu, .mindfold-rich-editor")) return;
           beginPointerDrag(event, block.id);
         },
       },
@@ -4051,22 +4083,19 @@ function MindfoldView({ addBlock, addTab, clearMasks, indentBlock, maskSelection
           }, h("span", { className: "mindfold-sidebar-glyph", "aria-hidden": "true" })),
       h(
         "article",
-        { className: "mindfold-editor" },
+        { className: "mindfold-editor", onPointerDown: beginCanvasSelection },
         h("div", { className: "mindfold-document mindfold-block-tree" }, ...activeTab.blocks.map((block) => renderBlock(block))),
       ),
     ),
+    h("div", { className: "mindfold-selection-box", ref: selectionBoxRef, "aria-hidden": "true" }),
   );
 
 }
 
-function Topbar({ activeView, selectedDate, settingsPanels, setActiveView, setSelectedDate, shiftDate }) {
+function Topbar({ selectedDate, settingsPanels, setSelectedDate, shiftDate }) {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const settingsRef = useRef(null);
-  const viewLabels = {
-    dashboard: "DASH BOARD",
-    note: "NOTE",
-  };
-  const viewLabel = viewLabels[activeView] || "DASH BOARD";
+  const viewLabel = "DASH BOARD";
   useEffect(() => {
     if (!settingsOpen) return undefined;
     const closeSettings = (event) => {
@@ -4116,7 +4145,6 @@ function Topbar({ activeView, selectedDate, settingsPanels, setActiveView, setSe
         h("input", { type: "date", value: selectedDate, "aria-label": "Record date", onChange: (event) => setSelectedDate(event.target.value || toDateKey(new Date())) }),
         h("button", { className: "icon-button", type: "button", title: "Next day", "aria-label": "Next day", onClick: () => shiftDate(1) }, "\u203a"),
       ),
-      h(AppNavigation, { activeView, setActiveView }),
     ),
   );
 }
