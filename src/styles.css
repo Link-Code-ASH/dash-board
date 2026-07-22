@@ -11283,6 +11283,28 @@ html body #root .app-shell .schedule-day-items span {
   padding-bottom: 4px !important;
 }
 
+/* Reorder directly from the item surface; text fields and controls stay editable. */
+html body #root .app-shell .quick-panel .preset-card,
+html body #root .app-shell .weekly-panel .weekly-category {
+  cursor: grab !important;
+}
+
+html body #root .app-shell .quick-panel .preset-card.dragging,
+html body #root .app-shell .weekly-panel .weekly-category.dragging {
+  cursor: grabbing !important;
+}
+
+html body #root .app-shell .quick-panel .preset-card input,
+html body #root .app-shell .weekly-panel .weekly-category input,
+html body #root .app-shell .weekly-panel .weekly-category button {
+  cursor: text !important;
+}
+
+html body #root .app-shell .quick-panel .preset-card button,
+html body #root .app-shell .weekly-panel .weekly-category button {
+  cursor: pointer !important;
+}
+
 /* Today > Weekly keeps its cards inside the panel at every breakpoint. */
 html body #root .app-shell .weekly-plan-row .plan-card-grid {
   grid-template-columns: repeat(6, minmax(0, 1fr)) !important;

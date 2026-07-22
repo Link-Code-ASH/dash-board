@@ -126,12 +126,12 @@ function normalizeCategories(savedCategories, fallbackCategories = cloneCategori
 }
 
 function normalizePresets(savedPresets) {
-  const source = Array.isArray(savedPresets) && savedPresets.length ? savedPresets : clonePresets();
+  const source = Array.isArray(savedPresets) ? savedPresets : clonePresets();
   return source
-    .filter((preset) => preset && preset.key && preset.name)
+    .filter((preset) => preset && preset.key)
     .map((preset) => ({
       key: preset.key,
-      name: preset.name,
+      name: String(preset.name ?? ""),
       yScore: parseScore(preset.yScore, 5),
       nScore: parseScore(preset.nScore, -2),
     }));
@@ -4866,9 +4866,8 @@ function DailyPanel({ addPreset, controlsId = "presetGrid", isOpen, movePreset, 
               },
               onDragEnd: () => setDragPresetKey(""),
             },
-            h("span", { className: "drag-handle", title: "Drag to reorder", "aria-hidden": "true" }, "\u22ee\u22ee"),
             h("input", { className: "preset-name-input", type: "text", maxLength: 32, "aria-label": `${title} name`, value: preset.name, onChange: (event) => updatePreset(index, "name", event.target.value) }),
-            h("label", { className: "score-field positive-score", title: "Y score" }, h("input", { className: "preset-score-input y-score", type: "text", inputMode: "numeric", value: preset.yScore, onChange: (event) => updatePreset(index, "yScore", event.target.value) })),
+            h("label", { className: `score-field ${getPresetScoreRange(preset) ? "range-score" : "positive-score"}`, title: getPresetScoreRange(preset) ? "Y range" : "Y score" }, h("input", { className: "preset-score-input y-score", type: "text", inputMode: getPresetScoreRange(preset) ? "text" : "numeric", placeholder: "5 or 1~5", value: preset.yScore, onChange: (event) => updatePreset(index, "yScore", event.target.value) })),
             h("label", { className: "score-field negative-score", title: "N score" }, h("input", { className: "preset-score-input n-score", type: "text", inputMode: "numeric", value: preset.nScore, onChange: (event) => updatePreset(index, "nScore", event.target.value) })),
             h("button", { className: "mini-button danger", type: "button", onClick: () => removePreset(index) }, "\u00d7"),
           ),
@@ -4923,7 +4922,6 @@ function WeeklyPanel({ addCategory, categories, isOpen, moveCategory, onToggle, 
               },
               onDragEnd: () => setDragCategoryKey(""),
             },
-            h("span", { className: "drag-handle", title: "Drag to reorder", "aria-hidden": "true" }, "\u22ee\u22ee"),
             h("input", {
               className: "category-name-input",
               type: "text",
