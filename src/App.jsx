@@ -859,6 +859,12 @@ function formatDayLabel(dateKey) {
   return `${month} ${date.getDate()} (${weekday})`;
 }
 
+function formatDateControlLabel(dateKey) {
+  const date = new Date(`${dateKey}T00:00:00`);
+  const weekday = new Intl.DateTimeFormat("en-US", { weekday: "short" }).format(date);
+  return `${dateKey} (${weekday})`;
+}
+
 function formatScore(score) {
   if (score === "" || score === "-") return String(score);
   const numericScore = scoreNumber(score);
@@ -4142,7 +4148,12 @@ function Topbar({ selectedDate, settingsPanels, setSelectedDate, shiftDate }) {
         "div",
         { className: "day-switcher" },
         h("button", { className: "icon-button", type: "button", title: "Previous day", "aria-label": "Previous day", onClick: () => shiftDate(-1) }, "\u2039"),
-        h("input", { type: "date", value: selectedDate, "aria-label": "Record date", onChange: (event) => setSelectedDate(event.target.value || toDateKey(new Date())) }),
+        h(
+          "div",
+          { className: "date-control" },
+          h("span", { className: "date-control-label", "aria-hidden": "true" }, formatDateControlLabel(selectedDate)),
+          h("input", { type: "date", value: selectedDate, "aria-label": "Record date", onChange: (event) => setSelectedDate(event.target.value || toDateKey(new Date())) }),
+        ),
         h("button", { className: "icon-button", type: "button", title: "Next day", "aria-label": "Next day", onClick: () => shiftDate(1) }, "\u203a"),
       ),
     ),
@@ -4696,6 +4707,22 @@ function TodayPlanPanel({ categories, entries, mobile = false, presets, schoolPr
       "div",
       { className: "today-plan-grid" },
       h(PlanRow, {
+        className: "daily-plan-row",
+        title: "Daily",
+        cards: presets.map((preset) => {
+          const planKey = `daily:${selectedDate}:${preset.key}`;
+          return {
+            key: preset.key,
+            label: "",
+            value: preset.name,
+            yScore: preset.yScore,
+            nScore: preset.nScore,
+            selectedChoice: entries.find((entry) => entry.planKey === planKey)?.choice || "",
+            onToggle: (choice) => toggleChoice({ planKey, choice, name: `Daily: ${preset.name} (${choice})`, score: scoreNumber(choice === "Y" ? preset.yScore : preset.nScore) }),
+          };
+        }),
+      }),
+      h(PlanRow, {
         className: "school-plan-row",
         title: "School",
         cards: schoolPresets.map((preset) => {
@@ -4727,22 +4754,6 @@ function TodayPlanPanel({ categories, entries, mobile = false, presets, schoolPr
             nScore: preset.nScore,
             selectedChoice: selectedEntry?.choice || "",
             onToggle: (choice) => toggleChoice({ planKey, choice, name: `School: ${preset.name} (${choice})`, score: scoreNumber(choice === "Y" ? preset.yScore : preset.nScore) }),
-          };
-        }),
-      }),
-      h(PlanRow, {
-        className: "daily-plan-row",
-        title: "Daily",
-        cards: presets.map((preset) => {
-          const planKey = `daily:${selectedDate}:${preset.key}`;
-          return {
-            key: preset.key,
-            label: "",
-            value: preset.name,
-            yScore: preset.yScore,
-            nScore: preset.nScore,
-            selectedChoice: entries.find((entry) => entry.planKey === planKey)?.choice || "",
-            onToggle: (choice) => toggleChoice({ planKey, choice, name: `Daily: ${preset.name} (${choice})`, score: scoreNumber(choice === "Y" ? preset.yScore : preset.nScore) }),
           };
         }),
       }),

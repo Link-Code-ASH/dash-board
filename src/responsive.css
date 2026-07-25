@@ -657,6 +657,121 @@ html body #root .app-shell .schedule-day-items > span + span::before {
   box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.52) inset;
 }
 
+/* Today keeps routine work first and school work at the end on every layout. */
+.today-plan-grid > .daily-plan-row {
+  order: 1;
+}
+
+.today-plan-grid > .weekly-plan-row {
+  order: 2;
+}
+
+.today-plan-grid > .school-plan-row {
+  order: 3;
+}
+
+/* Keep the date label truly centered; native date controls reserve picker space internally. */
+html body #root .app-shell .topbar .day-switcher {
+  display: grid !important;
+  grid-template-columns: 36px minmax(174px, 1fr) 36px;
+  align-items: center;
+}
+
+html body #root .app-shell .topbar .date-control {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  min-height: 38px;
+  display: grid;
+  place-items: center;
+}
+
+html body #root .app-shell .topbar .date-control-label {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  display: block;
+  padding: 0 10px;
+  color: #202936;
+  font: inherit;
+  font-weight: 700;
+  line-height: 1;
+  text-align: center;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+html body #root .app-shell .topbar .date-control input[type="date"] {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 0 !important;
+  opacity: 0;
+  cursor: pointer;
+}
+
+/* Bright neutral glass for schedules and date markers. */
+html body #root .app-shell .schedule-panel,
+html body #root .app-shell .date-marker-panel {
+  border-color: rgba(255, 255, 255, 0.82) !important;
+  background:
+    linear-gradient(145deg, rgba(252, 253, 255, 0.86), rgba(222, 228, 236, 0.7)),
+    rgba(232, 237, 243, 0.68) !important;
+  box-shadow:
+    12px 12px 26px rgba(63, 72, 86, 0.12),
+    -9px -9px 20px rgba(255, 255, 255, 0.72),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.9),
+    inset -1px -1px 0 rgba(83, 96, 111, 0.06) !important;
+  backdrop-filter: blur(18px) saturate(0.96) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(0.96) !important;
+}
+
+html body #root .app-shell .schedule-panel .schedule-day {
+  border-color: rgba(112, 123, 137, 0.18) !important;
+  background: rgba(255, 255, 255, 0.48) !important;
+  box-shadow:
+    inset 1px 1px 0 rgba(255, 255, 255, 0.72),
+    inset -1px -1px 0 rgba(87, 99, 113, 0.04) !important;
+}
+
+html body #root .app-shell .schedule-panel .schedule-day.today,
+html body #root .app-shell .schedule-panel .schedule-day.selected {
+  border-color: rgba(109, 128, 151, 0.28) !important;
+  background: linear-gradient(145deg, rgba(241, 246, 251, 0.84), rgba(214, 224, 235, 0.66)) !important;
+  box-shadow:
+    5px 5px 12px rgba(70, 82, 98, 0.09),
+    -4px -4px 10px rgba(255, 255, 255, 0.68),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.82) !important;
+}
+
+html body #root .app-shell .date-marker-panel .date-marker {
+  border-color: rgba(255, 255, 255, 0.82) !important;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.7), rgba(221, 228, 236, 0.56)) !important;
+  box-shadow:
+    6px 6px 14px rgba(65, 76, 91, 0.09),
+    -5px -5px 12px rgba(255, 255, 255, 0.68),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.82) !important;
+}
+
+html body #root .app-shell .date-marker-panel .date-marker input,
+html body #root .app-shell .date-marker-panel .date-marker-dday {
+  border-color: rgba(255, 255, 255, 0.7) !important;
+  background: rgba(250, 252, 254, 0.7) !important;
+  color: #27313d !important;
+  box-shadow:
+    inset 2px 2px 5px rgba(75, 87, 102, 0.06),
+    inset -2px -2px 5px rgba(255, 255, 255, 0.7) !important;
+}
+
+html body #root .app-shell .date-marker-panel .date-marker-dday:not(.empty) {
+  border-color: rgba(182, 145, 84, 0.28) !important;
+  background: rgba(247, 237, 213, 0.58) !important;
+  color: #6c5530 !important;
+}
+
 .effective-display-mobile .hub-vault-button {
   position: absolute !important;
   top: 5px;
@@ -1773,4 +1888,184 @@ html body #root .app-shell.effective-display-mobile .mobile-today-plan .weekly-p
   .effective-display-mobile .section-calendar .date-marker {
     grid-template-columns: minmax(0, 1fr) 112px 52px !important;
   }
+}
+
+/* Restrained pastel accents over the neutral glass system. */
+html body #root .app-shell {
+  --accent-butter: rgba(247, 229, 174, 0.62);
+  --accent-peach: rgba(244, 213, 204, 0.54);
+  --accent-sage: rgba(207, 229, 214, 0.56);
+  --accent-sky: rgba(205, 224, 241, 0.58);
+  --accent-lilac: rgba(222, 211, 239, 0.56);
+  --accent-rose: rgba(241, 211, 220, 0.52);
+  --accent-ink-gold: #755f32;
+  --accent-ink-sage: #3f6655;
+  --accent-ink-sky: #405e78;
+  --accent-ink-lilac: #5f5275;
+  --accent-ink-rose: #79505d;
+}
+
+html body #root .app-shell .schedule-week:first-child .schedule-week-title {
+  border-color: rgba(183, 132, 109, 0.22) !important;
+  background: linear-gradient(145deg, rgba(255, 250, 248, 0.8), var(--accent-peach)) !important;
+  color: #6e5046 !important;
+}
+
+html body #root .app-shell .schedule-week:nth-child(2) .schedule-week-title {
+  border-color: rgba(99, 137, 170, 0.2) !important;
+  background: linear-gradient(145deg, rgba(249, 252, 255, 0.82), var(--accent-sky)) !important;
+  color: var(--accent-ink-sky) !important;
+}
+
+html body #root .app-shell .schedule-weekdays span {
+  border-color: rgba(104, 125, 145, 0.15) !important;
+  background: linear-gradient(145deg, rgba(247, 250, 253, 0.8), rgba(210, 222, 232, 0.52)) !important;
+}
+
+html body #root .app-shell .schedule-panel .schedule-day.today,
+html body #root .app-shell .schedule-panel .schedule-day.selected,
+html body #root .app-shell .mobile-seven-day-list article.today {
+  border-color: rgba(188, 153, 79, 0.3) !important;
+  background: linear-gradient(145deg, rgba(255, 253, 244, 0.88), var(--accent-butter)) !important;
+  box-shadow:
+    5px 5px 12px rgba(97, 82, 48, 0.08),
+    -4px -4px 10px rgba(255, 255, 255, 0.7),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.84) !important;
+}
+
+html body #root .app-shell .memo-six-grid > .memo-area {
+  border-top: 2px solid transparent !important;
+}
+
+html body #root .app-shell .memo-six-grid > .memo-area:nth-child(1) {
+  border-top-color: rgba(189, 116, 139, 0.32) !important;
+}
+
+html body #root .app-shell .memo-six-grid > .memo-area:nth-child(2) {
+  border-top-color: rgba(91, 143, 181, 0.32) !important;
+}
+
+html body #root .app-shell .memo-six-grid > .memo-area:nth-child(3) {
+  border-top-color: rgba(91, 151, 116, 0.32) !important;
+}
+
+html body #root .app-shell .memo-six-grid > .memo-area:nth-child(4) {
+  border-top-color: rgba(135, 106, 172, 0.3) !important;
+}
+
+html body #root .app-shell .memo-six-grid > .memo-area:nth-child(5) {
+  border-top-color: rgba(190, 126, 100, 0.3) !important;
+}
+
+html body #root .app-shell .memo-six-grid > .memo-area:nth-child(6) {
+  border-top-color: rgba(107, 119, 176, 0.3) !important;
+}
+
+html body #root .app-shell .memo-six-grid > .memo-area:nth-child(1) .memo-title-input {
+  background: linear-gradient(145deg, rgba(255, 250, 252, 0.78), var(--accent-rose)) !important;
+  color: var(--accent-ink-rose) !important;
+}
+
+html body #root .app-shell .memo-six-grid > .memo-area:nth-child(2) .memo-title-input {
+  background: linear-gradient(145deg, rgba(250, 253, 255, 0.8), var(--accent-sky)) !important;
+  color: var(--accent-ink-sky) !important;
+}
+
+html body #root .app-shell .memo-six-grid > .memo-area:nth-child(3) .memo-title-input {
+  background: linear-gradient(145deg, rgba(250, 255, 252, 0.8), var(--accent-sage)) !important;
+  color: var(--accent-ink-sage) !important;
+}
+
+html body #root .app-shell .memo-six-grid > .memo-area:nth-child(4) .memo-title-input {
+  background: linear-gradient(145deg, rgba(253, 251, 255, 0.8), var(--accent-lilac)) !important;
+  color: var(--accent-ink-lilac) !important;
+}
+
+html body #root .app-shell .memo-six-grid > .memo-area:nth-child(5) .memo-title-input {
+  background: linear-gradient(145deg, rgba(255, 252, 249, 0.8), var(--accent-peach)) !important;
+  color: #75564a !important;
+}
+
+html body #root .app-shell .memo-six-grid > .memo-area:nth-child(6) .memo-title-input {
+  background: linear-gradient(145deg, rgba(251, 252, 255, 0.8), rgba(213, 218, 242, 0.56)) !important;
+  color: #505b7b !important;
+}
+
+html body #root .app-shell .daily-plan-row > h3 {
+  border-color: rgba(91, 151, 116, 0.22) !important;
+  background: linear-gradient(145deg, rgba(251, 255, 252, 0.78), var(--accent-sage)) !important;
+  color: var(--accent-ink-sage) !important;
+}
+
+html body #root .app-shell .school-plan-row > h3 {
+  border-color: rgba(190, 126, 100, 0.2) !important;
+  background: linear-gradient(145deg, rgba(255, 252, 250, 0.78), var(--accent-peach)) !important;
+  color: #75564a !important;
+}
+
+html body #root .app-shell .weekly-plan-row > h3 {
+  border-color: rgba(135, 106, 172, 0.2) !important;
+  background: linear-gradient(145deg, rgba(253, 251, 255, 0.78), var(--accent-lilac)) !important;
+  color: var(--accent-ink-lilac) !important;
+}
+
+html body #root .app-shell .score-details > div:nth-child(1) {
+  border-top-color: rgba(135, 106, 172, 0.28) !important;
+}
+
+html body #root .app-shell .score-details > div:nth-child(2) {
+  border-top-color: rgba(91, 151, 116, 0.3) !important;
+}
+
+html body #root .app-shell .score-details > div:nth-child(3) {
+  border-top-color: rgba(189, 116, 139, 0.3) !important;
+}
+
+html body #root .app-shell .score-details > div:nth-child(4) {
+  border-top-color: rgba(91, 143, 181, 0.3) !important;
+}
+
+html body #root .app-shell .score-details > div {
+  border-top-width: 2px !important;
+}
+
+html body #root .app-shell .date-marker-panel .date-marker:nth-child(4n + 1) {
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.72), rgba(226, 219, 239, 0.42)) !important;
+}
+
+html body #root .app-shell .date-marker-panel .date-marker:nth-child(4n + 2) {
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.72), rgba(213, 230, 218, 0.42)) !important;
+}
+
+html body #root .app-shell .date-marker-panel .date-marker:nth-child(4n + 3) {
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.72), rgba(214, 228, 241, 0.42)) !important;
+}
+
+html body #root .app-shell .date-marker-panel .date-marker:nth-child(4n) {
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.72), rgba(242, 219, 211, 0.4)) !important;
+}
+
+html body #root .app-shell .mobile-dashboard-nav button.active,
+html body #root .app-shell .mobile-dashboard-nav button[aria-current="page"] {
+  border-color: rgba(132, 108, 166, 0.22) !important;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.82), var(--accent-lilac)) !important;
+  color: var(--accent-ink-lilac) !important;
+}
+
+html body #root .app-shell .mindfold-page-sidebar .mindfold-tab-item.active {
+  border-color: rgba(132, 108, 166, 0.22) !important;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.78), var(--accent-lilac)) !important;
+  box-shadow:
+    3px 4px 9px rgba(72, 88, 110, 0.09),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.76) !important;
+}
+
+html body #root .app-shell .mindfold-sidebar-head {
+  border-bottom-color: rgba(190, 154, 76, 0.22) !important;
+}
+
+html body #root .app-shell .mindfold-notion-block:hover > .mindfold-block-row,
+html body #root .app-shell .mindfold-notion-block:focus-within > .mindfold-block-row {
+  background: rgba(210, 226, 241, 0.28) !important;
+  border-color: rgba(105, 139, 168, 0.14) !important;
 }
