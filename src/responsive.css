@@ -1272,6 +1272,23 @@ html body #root .app-shell .date-marker-panel .date-marker-dday:not(.empty) {
   grid-template-columns: 1fr !important;
 }
 
+html body #root .app-shell.effective-display-mobile .mobile-today-plan .daily-plan-row .today-plan-card.range-card,
+html body #root .app-shell.effective-display-mobile .mobile-today-plan .school-plan-row .today-plan-card.range-card {
+  grid-template-rows: auto auto !important;
+}
+
+html body #root .app-shell.effective-display-mobile .mobile-today-plan .daily-plan-row .range-card .plan-title,
+html body #root .app-shell.effective-display-mobile .mobile-today-plan .school-plan-row .range-card .plan-title {
+  grid-column: 1 !important;
+  grid-row: 1 !important;
+}
+
+html body #root .app-shell.effective-display-mobile .mobile-today-plan .daily-plan-row .range-card .range-score-buttons,
+html body #root .app-shell.effective-display-mobile .mobile-today-plan .school-plan-row .range-card .range-score-buttons {
+  grid-column: 1 !important;
+  grid-row: 2 !important;
+}
+
 html body #root .app-shell.effective-display-mobile .mobile-today-plan .weekly-plan-row .plan-card-grid {
   grid-template-columns: 1fr !important;
   gap: 7px !important;
@@ -2007,6 +2024,36 @@ html body #root .app-shell .weekly-plan-row > h3 {
   border-color: rgba(135, 106, 172, 0.2) !important;
   background: linear-gradient(145deg, rgba(253, 251, 255, 0.78), var(--accent-lilac)) !important;
   color: var(--accent-ink-lilac) !important;
+}
+
+html body #root .app-shell .daily-plan-row .today-plan-card:not(.selected-positive):not(.selected-negative) {
+  border-color: rgba(91, 151, 116, 0.2) !important;
+  background: linear-gradient(145deg, rgba(250, 253, 252, 0.84), rgba(207, 229, 214, 0.34)) !important;
+}
+
+html body #root .app-shell .weekly-plan-row .today-plan-card:not(.selected-positive):not(.selected-negative) {
+  border-color: rgba(135, 106, 172, 0.18) !important;
+  background: linear-gradient(145deg, rgba(252, 251, 254, 0.84), rgba(222, 211, 239, 0.34)) !important;
+}
+
+html body #root .app-shell .school-plan-row .today-plan-card:not(.selected-positive):not(.selected-negative) {
+  border-color: rgba(190, 126, 100, 0.18) !important;
+  background: linear-gradient(145deg, rgba(254, 252, 251, 0.84), rgba(244, 213, 204, 0.32)) !important;
+}
+
+html body #root .app-shell .daily-plan-row .today-plan-card:not(.selected-positive):not(.selected-negative):hover {
+  border-color: rgba(91, 151, 116, 0.3) !important;
+  background: linear-gradient(145deg, rgba(251, 254, 252, 0.9), rgba(207, 229, 214, 0.46)) !important;
+}
+
+html body #root .app-shell .weekly-plan-row .today-plan-card:not(.selected-positive):not(.selected-negative):hover {
+  border-color: rgba(135, 106, 172, 0.28) !important;
+  background: linear-gradient(145deg, rgba(253, 252, 255, 0.9), rgba(222, 211, 239, 0.46)) !important;
+}
+
+html body #root .app-shell .school-plan-row .today-plan-card:not(.selected-positive):not(.selected-negative):hover {
+  border-color: rgba(190, 126, 100, 0.28) !important;
+  background: linear-gradient(145deg, rgba(255, 253, 252, 0.9), rgba(244, 213, 204, 0.44)) !important;
 }
 
 html body #root .app-shell .score-details > div:nth-child(1) {

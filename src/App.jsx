@@ -2275,17 +2275,6 @@ function App() {
       updateCalendarNote,
     }),
     h(DailyPanel, {
-      addPreset: addSchoolPreset,
-      controlsId: "schoolPresetGrid",
-      isOpen: openPanels.schoolDaily,
-      movePreset: moveSchoolPreset,
-      onToggle: () => togglePanel("schoolDaily"),
-      presets: data.schoolPresets,
-      removePreset: removeSchoolPreset,
-      title: "School",
-      updatePreset: updateSchoolPreset,
-    }),
-    h(DailyPanel, {
       addPreset,
       controlsId: "presetGrid",
       isOpen: openPanels.daily,
@@ -2307,6 +2296,17 @@ function App() {
       updateCategory,
       updateWeeklyPlan,
       weeklyPlan: data.weeklyPlan,
+    }),
+    h(DailyPanel, {
+      addPreset: addSchoolPreset,
+      controlsId: "schoolPresetGrid",
+      isOpen: openPanels.schoolDaily,
+      movePreset: moveSchoolPreset,
+      onToggle: () => togglePanel("schoolDaily"),
+      presets: data.schoolPresets,
+      removePreset: removeSchoolPreset,
+      title: "School",
+      updatePreset: updateSchoolPreset,
     }),
     h(HistoryPanel, { carryPenalties: data.carryPenalties, flaggedDate: data.flaggedDate, getDayTotal, onToggleFlag: toggleFlaggedDate, routineAttempts: data.routineAttempts, selectedDate }),
   );
@@ -4698,6 +4698,45 @@ function getPresetScoreRange(preset) {
   return range.length > 1 ? range : null;
 }
 
+function createPresetPlanCard({ entries, planKey, preset, section, toggleChoice }) {
+  const selectedEntry = entries.find((entry) => entry.planKey === planKey);
+  const scoreRange = getPresetScoreRange(preset);
+
+  if (scoreRange) {
+    return {
+      key: preset.key,
+      label: "",
+      scoreRange,
+      selectedChoice: selectedEntry?.choice || "",
+      value: preset.name,
+      nScore: preset.nScore,
+      onToggle: (choice) =>
+        toggleChoice({
+          planKey,
+          choice: choice === "N" ? "N" : String(choice),
+          name: `${section}: ${preset.name} (${choice === "N" ? "N" : formatScore(choice)})`,
+          score: choice === "N" ? scoreNumber(preset.nScore) : scoreNumber(choice),
+        }),
+    };
+  }
+
+  return {
+    key: preset.key,
+    label: "",
+    value: preset.name,
+    yScore: preset.yScore,
+    nScore: preset.nScore,
+    selectedChoice: selectedEntry?.choice || "",
+    onToggle: (choice) =>
+      toggleChoice({
+        planKey,
+        choice,
+        name: `${section}: ${preset.name} (${choice})`,
+        score: scoreNumber(choice === "Y" ? preset.yScore : preset.nScore),
+      }),
+  };
+}
+
 function TodayPlanPanel({ categories, entries, mobile = false, presets, schoolPresets, selectedDate, toggleChoice, weekday, weeklyPlan }) {
   return h(
     "section",
@@ -4711,15 +4750,7 @@ function TodayPlanPanel({ categories, entries, mobile = false, presets, schoolPr
         title: "Daily",
         cards: presets.map((preset) => {
           const planKey = `daily:${selectedDate}:${preset.key}`;
-          return {
-            key: preset.key,
-            label: "",
-            value: preset.name,
-            yScore: preset.yScore,
-            nScore: preset.nScore,
-            selectedChoice: entries.find((entry) => entry.planKey === planKey)?.choice || "",
-            onToggle: (choice) => toggleChoice({ planKey, choice, name: `Daily: ${preset.name} (${choice})`, score: scoreNumber(choice === "Y" ? preset.yScore : preset.nScore) }),
-          };
+          return createPresetPlanCard({ entries, planKey, preset, section: "Daily", toggleChoice });
         }),
       }),
       h(PlanRow, {
@@ -4727,34 +4758,7 @@ function TodayPlanPanel({ categories, entries, mobile = false, presets, schoolPr
         title: "School",
         cards: schoolPresets.map((preset) => {
           const planKey = `school:${selectedDate}:${preset.key}`;
-          const selectedEntry = entries.find((entry) => entry.planKey === planKey);
-          const scoreRange = getPresetScoreRange(preset);
-          if (scoreRange) {
-            return {
-              key: preset.key,
-              label: "",
-              scoreRange,
-              selectedChoice: selectedEntry?.choice || "",
-              value: preset.name,
-              nScore: preset.nScore,
-              onToggle: (choice) =>
-                toggleChoice({
-                  planKey,
-                  choice: choice === "N" ? "N" : String(choice),
-                  name: `School: ${preset.name} (${choice === "N" ? "N" : formatScore(choice)})`,
-                  score: choice === "N" ? scoreNumber(preset.nScore) : scoreNumber(choice),
-                }),
-            };
-          }
-          return {
-            key: preset.key,
-            label: "",
-            value: preset.name,
-            yScore: preset.yScore,
-            nScore: preset.nScore,
-            selectedChoice: selectedEntry?.choice || "",
-            onToggle: (choice) => toggleChoice({ planKey, choice, name: `School: ${preset.name} (${choice})`, score: scoreNumber(choice === "Y" ? preset.yScore : preset.nScore) }),
-          };
+          return createPresetPlanCard({ entries, planKey, preset, section: "School", toggleChoice });
         }),
       }),
       h(PlanRow, {
