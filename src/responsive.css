@@ -2116,3 +2116,15 @@ html body #root .app-shell .mindfold-notion-block:focus-within > .mindfold-block
   background: rgba(210, 226, 241, 0.28) !important;
   border-color: rgba(105, 139, 168, 0.14) !important;
 }
+
+@media (min-width: 941px) {
+  html body #root .app-shell:not(.effective-display-mobile) .weekly-panel .weekly-grid {
+    grid-template-columns: 290px repeat(7, minmax(184px, 1fr)) !important;
+    overflow-x: hidden;
+  }
+
+  html body #root .app-shell:not(.effective-display-mobile) .weekly-panel .category-name-input {
+    min-width: 0 !important;
+    width: 100% !important;
+  }
+}
