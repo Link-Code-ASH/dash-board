@@ -650,6 +650,7 @@ function createFallbackState() {
     carryResetDate: "",
     carryAdjustment: 0,
     schoolPresets: clonePresets(),
+    schoolWeeklyPlan: createEmptyWeeklyPlan(clonePresets()),
     presets: clonePresets(),
     categories,
     weeklyPlan: createEmptyWeeklyPlan(categories),
@@ -669,6 +670,7 @@ function createFallbackState() {
 function normalizeState(source) {
   const fallback = createFallbackState();
   const categories = normalizeCategories(source?.categories, fallback.categories);
+  const schoolPresets = normalizePresets(source?.schoolPresets);
   const noteTabs = normalizeNoteTabs(source?.noteTabs);
   const noteSections = noteTabs.reduce((sections, tab) => {
     sections[tab.id] = normalizeSchool(source?.[tab.id]);
@@ -685,6 +687,7 @@ function normalizeState(source) {
     "carryResetDate",
     "carryAdjustment",
     "schoolPresets",
+    "schoolWeeklyPlan",
     "presets",
     "categories",
     "weeklyPlan",
@@ -715,7 +718,8 @@ function normalizeState(source) {
     flaggedDate: source?.flaggedDate || "",
     carryResetDate: source?.carryResetDate || "",
     carryAdjustment: scoreNumber(source?.carryAdjustment, 0),
-    schoolPresets: normalizePresets(source?.schoolPresets),
+    schoolPresets,
+    schoolWeeklyPlan: normalizeWeeklyPlan(source?.schoolWeeklyPlan, schoolPresets),
     presets: normalizePresets(source?.presets),
     categories,
     weeklyPlan: normalizeWeeklyPlan(source?.weeklyPlan, categories),
@@ -1505,10 +1509,45 @@ function App() {
   const updatePreset = (index, field, value) => updatePresetIn("presets", index, field, value);
   const movePreset = (fromKey, toKey) => movePresetIn("presets", fromKey, toKey);
   const removePreset = (index) => removePresetFrom("presets", index);
-  const addSchoolPreset = () => addPresetTo("schoolPresets", "school");
-  const updateSchoolPreset = (index, field, value) => updatePresetIn("schoolPresets", index, field, value);
+  const addSchoolPreset = () => {
+    saveData((draft) => {
+      const presets = Array.isArray(draft.schoolPresets) ? draft.schoolPresets : [];
+      const preset = { key: createKey("school"), name: `New Record ${presets.length + 1}`, yScore: 5, nScore: -2 };
+      presets.push(preset);
+      draft.schoolPresets = presets;
+      if (!draft.schoolWeeklyPlan) draft.schoolWeeklyPlan = {};
+      draft.schoolWeeklyPlan[preset.key] = createEmptyWeeklyPlan([preset])[preset.key];
+      return draft;
+    });
+  };
+  const updateSchoolPreset = (key, field, value) => {
+    saveData((draft) => {
+      const preset = draft.schoolPresets.find((item) => item.key === key);
+      if (!preset) return draft;
+      if (field === "name") preset.name = value;
+      if (field === "yScore") preset.yScore = value;
+      if (field === "nScore") preset.nScore = value;
+      return draft;
+    });
+  };
   const moveSchoolPreset = (fromKey, toKey) => movePresetIn("schoolPresets", fromKey, toKey);
-  const removeSchoolPreset = (index) => removePresetFrom("schoolPresets", index);
+  const removeSchoolPreset = (key) => {
+    saveData((draft) => {
+      if (draft.schoolPresets.length <= 1) return draft;
+      draft.schoolPresets = draft.schoolPresets.filter((preset) => preset.key !== key);
+      if (draft.schoolWeeklyPlan) delete draft.schoolWeeklyPlan[key];
+      return draft;
+    });
+  };
+
+  const updateSchoolWeeklyPlan = (presetKey, dayKey, value) => {
+    saveData((draft) => {
+      if (!draft.schoolWeeklyPlan) draft.schoolWeeklyPlan = {};
+      if (!draft.schoolWeeklyPlan[presetKey]) draft.schoolWeeklyPlan[presetKey] = createEmptyWeeklyPlan([{ key: presetKey }])[presetKey];
+      draft.schoolWeeklyPlan[presetKey][dayKey] = value;
+      return draft;
+    });
+  };
 
   const addCategory = () => {
     saveData((draft) => {
@@ -2258,6 +2297,7 @@ function App() {
       entries,
       presets: data.presets,
       schoolPresets: data.schoolPresets,
+      schoolWeeklyPlan: data.schoolWeeklyPlan,
       selectedDate,
       weekday,
       weeklyPlan: data.weeklyPlan,
@@ -2297,16 +2337,17 @@ function App() {
       updateWeeklyPlan,
       weeklyPlan: data.weeklyPlan,
     }),
-    h(DailyPanel, {
+    h(SchoolWeeklyPanel, {
       addPreset: addSchoolPreset,
-      controlsId: "schoolPresetGrid",
       isOpen: openPanels.schoolDaily,
       movePreset: moveSchoolPreset,
       onToggle: () => togglePanel("schoolDaily"),
       presets: data.schoolPresets,
       removePreset: removeSchoolPreset,
-      title: "School",
+      selectedDate,
+      schoolWeeklyPlan: data.schoolWeeklyPlan,
       updatePreset: updateSchoolPreset,
+      updateSchoolWeeklyPlan,
     }),
     h(HistoryPanel, { carryPenalties: data.carryPenalties, flaggedDate: data.flaggedDate, getDayTotal, onToggleFlag: toggleFlaggedDate, routineAttempts: data.routineAttempts, selectedDate }),
   );
@@ -2323,7 +2364,7 @@ function App() {
       ],
       routine: [
         h(MobileScorePanel, { key: "score", carryPenaltyMarked, entryCount: entries.length, onAdjustCarry: adjustCarry, onResetCarry: resetCarry, onToggleAttempt: toggleRoutineAttempt, onToggleCarryPenalty: toggleCarryPenalty, routineTried, scoreInfo }),
-        h(TodayPlanPanel, { key: "today-plan", categories: data.categories, entries, mobile: true, presets: data.presets, schoolPresets: data.schoolPresets, selectedDate, weekday, weeklyPlan: data.weeklyPlan, toggleChoice }),
+        h(TodayPlanPanel, { key: "today-plan", categories: data.categories, entries, mobile: true, presets: data.presets, schoolPresets: data.schoolPresets, schoolWeeklyPlan: data.schoolWeeklyPlan, selectedDate, weekday, weeklyPlan: data.weeklyPlan, toggleChoice }),
         h(HistoryPanel, { key: "history", carryPenalties: data.carryPenalties, flaggedDate: data.flaggedDate, getDayTotal, onToggleFlag: toggleFlaggedDate, routineAttempts: data.routineAttempts, selectedDate }),
       ],
       calendar: [
@@ -4703,23 +4744,24 @@ function getPresetScoreRange(preset) {
   return range.length > 1 ? range : null;
 }
 
-function createPresetPlanCard({ entries, planKey, preset, section, toggleChoice }) {
+function createPresetPlanCard({ entries, label = "", planKey, preset, section, toggleChoice, value = preset.name }) {
   const selectedEntry = entries.find((entry) => entry.planKey === planKey);
   const scoreRange = getPresetScoreRange(preset);
+  const recordName = value ? `${preset.name}: ${value}` : preset.name;
 
   if (scoreRange) {
     return {
       key: preset.key,
-      label: "",
+      label,
       scoreRange,
       selectedChoice: selectedEntry?.choice || "",
-      value: preset.name,
+      value,
       nScore: preset.nScore,
       onToggle: (choice) =>
         toggleChoice({
           planKey,
           choice: choice === "N" ? "N" : String(choice),
-          name: `${section}: ${preset.name} (${choice === "N" ? "N" : formatScore(choice)})`,
+          name: `${section}: ${recordName} (${choice === "N" ? "N" : formatScore(choice)})`,
           score: choice === "N" ? scoreNumber(preset.nScore) : scoreNumber(choice),
         }),
     };
@@ -4727,8 +4769,8 @@ function createPresetPlanCard({ entries, planKey, preset, section, toggleChoice 
 
   return {
     key: preset.key,
-    label: "",
-    value: preset.name,
+    label,
+    value,
     yScore: preset.yScore,
     nScore: preset.nScore,
     selectedChoice: selectedEntry?.choice || "",
@@ -4736,13 +4778,13 @@ function createPresetPlanCard({ entries, planKey, preset, section, toggleChoice 
       toggleChoice({
         planKey,
         choice,
-        name: `${section}: ${preset.name} (${choice})`,
+        name: `${section}: ${recordName} (${choice})`,
         score: scoreNumber(choice === "Y" ? preset.yScore : preset.nScore),
       }),
   };
 }
 
-function TodayPlanPanel({ categories, entries, mobile = false, presets, schoolPresets, selectedDate, toggleChoice, weekday, weeklyPlan }) {
+function TodayPlanPanel({ categories, entries, mobile = false, presets, schoolPresets, schoolWeeklyPlan, selectedDate, toggleChoice, weekday, weeklyPlan }) {
   return h(
     "section",
     { className: `today-plan-panel ${mobile ? "mobile-today-plan" : ""}`, "aria-label": "Today plan" },
@@ -4763,7 +4805,8 @@ function TodayPlanPanel({ categories, entries, mobile = false, presets, schoolPr
         title: "School",
         cards: schoolPresets.map((preset) => {
           const planKey = `school:${selectedDate}:${preset.key}`;
-          return createPresetPlanCard({ entries, planKey, preset, section: "School", toggleChoice });
+          const value = getWeeklyPlanEntry(schoolWeeklyPlan?.[preset.key]?.[weekday.key], selectedDate).value;
+          return createPresetPlanCard({ entries, label: preset.name, planKey, preset, section: "School", toggleChoice, value });
         }),
       }),
       h(PlanRow, {
@@ -4892,6 +4935,80 @@ function DailyPanel({ addPreset, controlsId = "presetGrid", isOpen, movePreset, 
             h("button", { className: "mini-button danger", type: "button", onClick: () => removePreset(index) }, "\u00d7"),
           ),
         ),
+      ),
+    },
+  });
+}
+
+function SchoolWeeklyPanel({ addPreset, isOpen, movePreset, onToggle, presets, removePreset, schoolWeeklyPlan, selectedDate, updatePreset, updateSchoolWeeklyPlan }) {
+  const [dragPresetKey, setDragPresetKey] = useState("");
+  const selectedWeekday = getWeekdayKey(selectedDate);
+  return h(CollapsiblePanel, {
+    className: "weekly-panel school-weekly-panel",
+    controls: "schoolWeeklyGrid",
+    description: "Assign recurring school plans for each weekday.",
+    isOpen,
+    onToggle,
+    title: "School",
+    children: {
+      actions: h("button", { className: "text-button weekly-tool", type: "button", onClick: addPreset }, "+"),
+      body: h(
+        "div",
+        { className: "weekly-grid school-weekly-grid", id: "schoolWeeklyGrid" },
+        h("div", { className: "weekly-corner" }, "Category"),
+        ...weekDays.map((day) => h("div", { className: `weekly-day ${day.key === selectedWeekday ? "active" : ""}`, key: day.key }, day.label)),
+        ...presets.flatMap((preset) => [
+          h(
+            "div",
+            {
+              className: `weekly-category ${dragPresetKey === preset.key ? "dragging" : ""}`,
+              draggable: true,
+              key: `${preset.key}-label`,
+              onDragStart: (event) => {
+                if (panelClickIsInteractive(event.target)) {
+                  event.preventDefault();
+                  return;
+                }
+                setDragPresetKey(preset.key);
+                event.dataTransfer.effectAllowed = "move";
+                event.dataTransfer.setData("text/school-weekly-preset", preset.key);
+              },
+              onDragOver: (event) => {
+                event.preventDefault();
+                event.dataTransfer.dropEffect = "move";
+              },
+              onDrop: (event) => {
+                event.preventDefault();
+                const fromKey = event.dataTransfer.getData("text/school-weekly-preset") || dragPresetKey;
+                movePreset(fromKey, preset.key);
+                setDragPresetKey("");
+              },
+              onDragEnd: () => setDragPresetKey(""),
+            },
+            h("input", {
+              className: "category-name-input",
+              type: "text",
+              maxLength: 32,
+              value: preset.name,
+              onChange: (event) => updatePreset(preset.key, "name", event.target.value),
+              onKeyDown: (event) => event.stopPropagation(),
+            }),
+            h("label", { className: `score-field y-field ${getPresetScoreRange(preset) ? "range-score" : "positive-score"}`, title: getPresetScoreRange(preset) ? "Y range" : "Y score" }, h("input", { className: "category-score-input y-score", type: "text", inputMode: getPresetScoreRange(preset) ? "text" : "numeric", value: preset.yScore, onChange: (event) => updatePreset(preset.key, "yScore", event.target.value), onKeyDown: (event) => event.stopPropagation() })),
+            h("label", { className: "score-field n-field negative-score", title: "N score" }, h("input", { className: "category-score-input n-score", type: "text", inputMode: "numeric", value: preset.nScore, onChange: (event) => updatePreset(preset.key, "nScore", event.target.value), onKeyDown: (event) => event.stopPropagation() })),
+            h("div", { className: "category-actions" }, h("button", { className: "mini-button danger", type: "button", disabled: presets.length <= 1, onClick: () => removePreset(preset.key) }, "\u00d7")),
+          ),
+          ...weekDays.map((day) =>
+            h("textarea", {
+              className: `weekly-input ${day.key === selectedWeekday ? "active" : ""}`,
+              key: `${preset.key}-${day.key}`,
+              maxLength: 180,
+              placeholder: "Plan",
+              value: schoolWeeklyPlan?.[preset.key]?.[day.key] || "",
+              onChange: (event) => updateSchoolWeeklyPlan(preset.key, day.key, event.target.value),
+              onKeyDown: (event) => event.stopPropagation(),
+            }),
+          ),
+        ]),
       ),
     },
   });
