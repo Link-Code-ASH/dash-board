@@ -2128,3 +2128,383 @@ html body #root .app-shell .mindfold-notion-block:focus-within > .mindfold-block
     width: 100% !important;
   }
 }
+
+/* Calendar follows the shared bright glass system; emphasis stays neutral. */
+html body #root .app-shell .calendar-panel {
+  border-color: rgba(255, 255, 255, 0.74) !important;
+  background:
+    linear-gradient(145deg, rgba(250, 253, 255, 0.84), rgba(214, 225, 238, 0.7)),
+    rgba(225, 234, 244, 0.62) !important;
+  box-shadow:
+    15px 15px 32px rgba(73, 88, 108, 0.16),
+    -11px -11px 24px rgba(255, 255, 255, 0.78),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.88),
+    inset -1px -1px 0 rgba(110, 127, 148, 0.08) !important;
+}
+
+html body #root .app-shell .calendar-month,
+html body #root .app-shell .calendar-month:hover,
+html body #root .app-shell .calendar-month.open {
+  border-color: rgba(255, 255, 255, 0.7) !important;
+  background: linear-gradient(145deg, rgba(247, 250, 253, 0.84), rgba(213, 224, 236, 0.7)) !important;
+  box-shadow:
+    7px 7px 16px rgba(73, 88, 108, 0.12),
+    -5px -5px 13px rgba(255, 255, 255, 0.7),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.84) !important;
+}
+
+html body #root .app-shell .calendar-month-toggle,
+html body #root .app-shell .calendar-month.open .calendar-month-toggle {
+  border-color: rgba(113, 127, 144, 0.2) !important;
+  background: linear-gradient(145deg, rgba(231, 237, 244, 0.88), rgba(196, 207, 220, 0.76)) !important;
+  color: #3e4b5b !important;
+  box-shadow:
+    inset 1px 1px 0 rgba(255, 255, 255, 0.7),
+    inset -2px -2px 6px rgba(73, 88, 108, 0.09) !important;
+}
+
+html body #root .app-shell .calendar-month-toggle span,
+html body #root .app-shell .calendar-month.open .calendar-month-toggle span {
+  color: #3e4b5b !important;
+}
+
+html body #root .app-shell .calendar-month-toggle strong {
+  border-color: rgba(91, 104, 120, 0.22) !important;
+  background: rgba(203, 213, 225, 0.72) !important;
+  color: #465363 !important;
+  box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.56) !important;
+}
+
+html body #root .app-shell .calendar-month.open {
+  border-color: rgba(102, 116, 133, 0.28) !important;
+  background: linear-gradient(145deg, rgba(242, 246, 250, 0.86), rgba(204, 215, 228, 0.74)) !important;
+}
+
+html body #root .app-shell .calendar-weekdays span {
+  border-color: rgba(101, 115, 132, 0.2) !important;
+  background: linear-gradient(145deg, rgba(219, 226, 234, 0.9), rgba(188, 199, 212, 0.76)) !important;
+  color: #4b5868 !important;
+  box-shadow:
+    inset 1px 1px 0 rgba(255, 255, 255, 0.64),
+    inset -1px -1px 0 rgba(73, 88, 108, 0.08) !important;
+}
+
+html body #root .app-shell .calendar-weekdays span:nth-child(1) {
+  border-color: rgba(255, 255, 255, 0.72) !important;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.62), rgba(154, 145, 199, 0.18)) !important;
+  color: #526071 !important;
+}
+
+html body #root .app-shell .calendar-weekdays span:nth-child(2) {
+  border-color: rgba(255, 255, 255, 0.72) !important;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.62), rgba(121, 164, 201, 0.18)) !important;
+  color: #526071 !important;
+}
+
+html body #root .app-shell .calendar-weekdays span:nth-child(3) {
+  border-color: rgba(255, 255, 255, 0.72) !important;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.62), rgba(112, 170, 157, 0.18)) !important;
+  color: #526071 !important;
+}
+
+html body #root .app-shell .calendar-weekdays span:nth-child(4) {
+  border-color: rgba(255, 255, 255, 0.72) !important;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.62), rgba(190, 171, 112, 0.18)) !important;
+  color: #526071 !important;
+}
+
+html body #root .app-shell .calendar-weekdays span:nth-child(5) {
+  border-color: rgba(255, 255, 255, 0.72) !important;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.62), rgba(193, 143, 119, 0.18)) !important;
+  color: #526071 !important;
+}
+
+html body #root .app-shell .calendar-weekdays span:nth-child(6) {
+  border-color: rgba(255, 255, 255, 0.72) !important;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.62), rgba(184, 130, 160, 0.18)) !important;
+  color: #526071 !important;
+}
+
+html body #root .app-shell .calendar-weekdays span:nth-child(7) {
+  border-color: rgba(255, 255, 255, 0.72) !important;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.62), rgba(191, 126, 132, 0.18)) !important;
+  color: #526071 !important;
+}
+
+html body #root .app-shell .calendar-date > b {
+  color: #344254 !important;
+  text-shadow: none !important;
+}
+
+html body #root .app-shell .calendar-days > .calendar-day:nth-child(7n + 1):not(.today):not(.selected) { background: linear-gradient(145deg, rgba(250, 252, 255, 0.84), rgba(154, 145, 199, 0.08)), rgba(226, 235, 244, 0.64) !important; }
+html body #root .app-shell .calendar-days > .calendar-day:nth-child(7n + 2):not(.today):not(.selected) { background: linear-gradient(145deg, rgba(250, 252, 255, 0.84), rgba(121, 164, 201, 0.08)), rgba(226, 235, 244, 0.64) !important; }
+html body #root .app-shell .calendar-days > .calendar-day:nth-child(7n + 3):not(.today):not(.selected) { background: linear-gradient(145deg, rgba(250, 252, 255, 0.84), rgba(112, 170, 157, 0.08)), rgba(226, 235, 244, 0.64) !important; }
+html body #root .app-shell .calendar-days > .calendar-day:nth-child(7n + 4):not(.today):not(.selected) { background: linear-gradient(145deg, rgba(250, 252, 255, 0.84), rgba(190, 171, 112, 0.08)), rgba(226, 235, 244, 0.64) !important; }
+html body #root .app-shell .calendar-days > .calendar-day:nth-child(7n + 5):not(.today):not(.selected) { background: linear-gradient(145deg, rgba(250, 252, 255, 0.84), rgba(193, 143, 119, 0.08)), rgba(226, 235, 244, 0.64) !important; }
+html body #root .app-shell .calendar-days > .calendar-day:nth-child(7n + 6):not(.today):not(.selected) { background: linear-gradient(145deg, rgba(250, 252, 255, 0.84), rgba(184, 130, 160, 0.08)), rgba(226, 235, 244, 0.64) !important; }
+html body #root .app-shell .calendar-days > .calendar-day:nth-child(7n + 7):not(.today):not(.selected) { background: linear-gradient(145deg, rgba(250, 252, 255, 0.84), rgba(191, 126, 132, 0.08)), rgba(226, 235, 244, 0.64) !important; }
+
+html body #root .app-shell .mobile-calendar-weekdays span {
+  border: 1px solid rgba(255, 255, 255, 0.58);
+  border-radius: 5px;
+  color: #5d6978 !important;
+  box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.58);
+}
+
+html body #root .app-shell .mobile-calendar-weekdays span:nth-child(1) { background: rgba(154, 145, 199, 0.1); }
+html body #root .app-shell .mobile-calendar-weekdays span:nth-child(2) { background: rgba(121, 164, 201, 0.1); }
+html body #root .app-shell .mobile-calendar-weekdays span:nth-child(3) { background: rgba(112, 170, 157, 0.1); }
+html body #root .app-shell .mobile-calendar-weekdays span:nth-child(4) { background: rgba(190, 171, 112, 0.1); }
+html body #root .app-shell .mobile-calendar-weekdays span:nth-child(5) { background: rgba(193, 143, 119, 0.1); }
+html body #root .app-shell .mobile-calendar-weekdays span:nth-child(6) { background: rgba(184, 130, 160, 0.1); }
+html body #root .app-shell .mobile-calendar-weekdays span:nth-child(7) { background: rgba(191, 126, 132, 0.1); }
+
+html body #root .app-shell .calendar-day {
+  border-color: rgba(255, 255, 255, 0.72) !important;
+  background:
+    linear-gradient(145deg, rgba(250, 252, 255, 0.86), rgba(216, 226, 238, 0.72)),
+    rgba(226, 235, 244, 0.66) !important;
+  box-shadow:
+    7px 7px 16px rgba(73, 88, 108, 0.12),
+    -5px -5px 13px rgba(255, 255, 255, 0.68),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.86) !important;
+}
+
+html body #root .app-shell .calendar-day-spacer {
+  border-color: rgba(107, 121, 138, 0.13) !important;
+  background: rgba(213, 223, 234, 0.38) !important;
+}
+
+html body #root .app-shell .calendar-day textarea {
+  border-color: rgba(100, 114, 132, 0.18) !important;
+  background:
+    linear-gradient(145deg, rgba(229, 235, 242, 0.82), rgba(202, 213, 225, 0.68)),
+    rgba(213, 223, 234, 0.68) !important;
+  color: #314052 !important;
+  box-shadow:
+    inset 3px 3px 8px rgba(73, 88, 108, 0.11),
+    inset -3px -3px 8px rgba(255, 255, 255, 0.42) !important;
+  overflow: hidden !important;
+  scrollbar-width: none;
+}
+
+html body #root .app-shell .calendar-day textarea::-webkit-scrollbar {
+  display: none;
+}
+
+html body #root .app-shell .calendar-duty {
+  border-color: rgba(92, 106, 123, 0.2) !important;
+  background: rgba(215, 224, 234, 0.72) !important;
+  color: #4d5b6b !important;
+  box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.58) !important;
+}
+
+html body #root .app-shell .calendar-day.today,
+html body #root .app-shell .calendar-day.selected {
+  border-color: rgba(72, 84, 99, 0.42) !important;
+  background: linear-gradient(145deg, rgba(221, 227, 234, 0.92), rgba(178, 190, 204, 0.78)) !important;
+  box-shadow:
+    7px 7px 16px rgba(64, 77, 94, 0.16),
+    -5px -5px 13px rgba(255, 255, 255, 0.62),
+    inset 3px 0 0 rgba(78, 89, 103, 0.68),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.68) !important;
+}
+
+html body #root .app-shell .calendar-duty.checked {
+  border-color: rgba(70, 81, 94, 0.36) !important;
+  background: linear-gradient(145deg, rgba(191, 201, 212, 0.9), rgba(157, 169, 183, 0.78)) !important;
+  color: #33404e !important;
+}
+
+@media (min-width: 821px) and (max-width: 1180px) {
+  html body #root .app-shell:not(.effective-display-mobile) .calendar-week-scroll {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    overflow-x: hidden !important;
+    padding-bottom: 0 !important;
+  }
+
+  html body #root .app-shell:not(.effective-display-mobile) .calendar-weekdays,
+  html body #root .app-shell:not(.effective-display-mobile) .calendar-days {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
+    gap: 5px !important;
+    padding: 0 !important;
+  }
+
+  html body #root .app-shell:not(.effective-display-mobile) .calendar-weekdays span,
+  html body #root .app-shell:not(.effective-display-mobile) .calendar-day,
+  html body #root .app-shell:not(.effective-display-mobile) .calendar-day-spacer {
+    width: auto !important;
+    min-width: 0 !important;
+  }
+
+  html body #root .app-shell:not(.effective-display-mobile) .calendar-day {
+    min-height: 172px !important;
+    padding: 6px !important;
+  }
+
+  html body #root .app-shell:not(.effective-display-mobile) .calendar-date {
+    display: grid !important;
+    grid-template-columns: auto minmax(0, 1fr) !important;
+    grid-template-areas: "day checks" !important;
+    align-items: center !important;
+    gap: 4px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  html body #root .app-shell:not(.effective-display-mobile) .calendar-date > b {
+    grid-area: day !important;
+  }
+
+  html body #root .app-shell:not(.effective-display-mobile) .calendar-duty-checks {
+    grid-area: checks !important;
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    gap: 1px !important;
+  }
+
+  html body #root .app-shell:not(.effective-display-mobile) .calendar-duty {
+    width: 100% !important;
+    min-width: 0 !important;
+    justify-content: center !important;
+    gap: 1px !important;
+    padding-inline: 1px !important;
+  }
+
+  html body #root .app-shell:not(.effective-display-mobile) .calendar-day textarea {
+    min-height: 112px !important;
+    padding: 7px !important;
+  }
+}
+
+/* Hub identity and stable Weekly Overview status markers. */
+html body #root .app-shell .hub-brand-logo {
+  display: block;
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  object-fit: contain;
+  filter: drop-shadow(0 3px 5px rgba(35, 44, 58, 0.18));
+}
+
+html body #root .app-shell .hub-brand {
+  gap: 7px;
+}
+
+html body #root .app-shell .hub-brand::before,
+html body #root .app-shell .hub-brand::after {
+  display: none !important;
+  content: none !important;
+}
+
+@media (min-width: 761px) {
+  html body #root .app-shell.hub-shell:not(.effective-display-mobile) > .hub-dock > .hub-bar {
+    width: 330px !important;
+  }
+
+  html body #root .app-shell.hub-shell:not(.effective-display-mobile) .hub-brand {
+    flex-basis: 94px !important;
+    padding-inline: 5px !important;
+  }
+}
+
+html body #root .app-shell .flag-glyph {
+  position: relative;
+  display: block;
+  width: 18px;
+  height: 18px;
+}
+
+html body #root .app-shell .flag-glyph::before {
+  position: absolute;
+  top: 2px;
+  bottom: 1px;
+  left: 3px;
+  width: 2px;
+  border-radius: 2px;
+  background: currentColor;
+  content: "";
+}
+
+html body #root .app-shell .flag-glyph::after {
+  position: absolute;
+  top: 2px;
+  left: 5px;
+  width: 10px;
+  height: 8px;
+  border-radius: 1px 3px 3px 1px;
+  background: currentColor;
+  clip-path: polygon(0 0, 100% 0, 78% 50%, 100% 100%, 0 100%);
+  content: "";
+}
+
+html body #root .app-shell .history-panel .flag-button,
+html body #root .app-shell .history-panel .history-flag,
+html body #root .app-shell .history-panel .history-flag.active {
+  font-family: inherit !important;
+  transform: none !important;
+}
+
+html body #root .app-shell .history-panel .flag-button .flag-glyph {
+  width: 18px;
+  height: 18px;
+}
+
+html body #root .app-shell .history-panel .history-flag .flag-glyph {
+  width: 24px;
+  height: 24px;
+}
+
+@media (max-width: 600px) {
+  html body #root .app-shell.effective-display-mobile .hub-brand {
+    display: flex !important;
+    align-items: center !important;
+    flex: 0 0 72px !important;
+    min-width: 72px !important;
+    gap: 5px !important;
+  }
+
+  html body #root .app-shell.effective-display-mobile .hub-brand-logo {
+    width: 24px;
+    height: 24px;
+    border-radius: 7px;
+  }
+
+  html body #root .app-shell.effective-display-mobile .history-panel .history-attempt {
+    top: 8px !important;
+    left: 4px !important;
+    right: auto !important;
+    width: 18px !important;
+    min-width: 18px !important;
+    height: 18px !important;
+    font-size: 0.68rem !important;
+  }
+
+  html body #root .app-shell.effective-display-mobile .history-panel .history-flag,
+  html body #root .app-shell.effective-display-mobile .history-panel .history-flag.active {
+    top: 7px !important;
+    right: 3px !important;
+    left: auto !important;
+    width: 18px !important;
+    min-width: 18px !important;
+    height: 18px !important;
+  }
+
+  html body #root .app-shell.effective-display-mobile .history-panel .history-flag .flag-glyph {
+    width: 18px;
+    height: 18px;
+  }
+
+  html body #root .app-shell.effective-display-mobile .history-panel .history-day {
+    padding-inline: 3px !important;
+    overflow: hidden !important;
+  }
+}

@@ -2700,7 +2700,12 @@ function HubBar({ activeView, onToggleVault, setActiveView }) {
     h(
       "header",
       { className: "hub-bar", "aria-label": "Hub navigation" },
-      h("div", { className: "hub-brand" }, h("span", null, "Hub")),
+      h(
+        "div",
+        { className: "hub-brand" },
+        h("img", { className: "hub-brand-logo", src: "./app-logo-transparent.png", alt: "" }),
+        h("span", null, "Hub"),
+      ),
       h(
         "div",
         { className: "hub-actions" },
@@ -5007,10 +5012,11 @@ function HistoryPanel({ carryPenalties, flaggedDate, getDayTotal, onToggleFlag, 
             className: `flag-button ${flaggedDate === selectedDate ? "active" : ""}`,
             type: "button",
             title: flaggedDate === selectedDate ? "Remove flag from selected date" : "Flag selected date",
+            "aria-label": flaggedDate === selectedDate ? "Remove flag from selected date" : "Flag selected date",
             "aria-pressed": String(flaggedDate === selectedDate),
             onClick: onToggleFlag,
           },
-          "\u2691",
+          h("span", { className: "flag-glyph", "aria-hidden": "true" }),
         ),
       ),
     ),
@@ -5024,7 +5030,11 @@ function HistoryPanel({ carryPenalties, flaggedDate, getDayTotal, onToggleFlag, 
           h(
             "div",
             { className: `history-fill ${day.total > 0 ? "plus" : day.total < 0 ? "minus" : ""}`, style: { height: `${Math.max(16, (Math.min(scoreScaleMax, Math.abs(day.total)) / scoreScaleMax) * 112)}px` } },
-            h("span", { className: `history-flag ${day.flagged ? "active" : ""}`, title: day.flagged ? "Flagged date" : "" }, day.flagged ? "\u2691" : ""),
+            h(
+              "span",
+              { className: `history-flag ${day.flagged ? "active" : ""}`, title: day.flagged ? "Flagged date" : "" },
+              day.flagged ? h("span", { className: "flag-glyph", "aria-hidden": "true" }) : null,
+            ),
             h("span", { className: `history-attempt ${day.penalized ? "history-penalty checked" : day.tried ? "checked" : ""}`, title: day.penalized ? "Carry -2 marked" : day.tried ? "Routine tried" : "Not checked" }, day.penalized || day.tried ? "\u2713" : ""),
           ),
           h("span", { className: "history-date" }, day.key.slice(5).replace("-", ".")),
@@ -5138,8 +5148,6 @@ function MonthDays({ calendar, calendarDuties, monthIndex, selectedDate, toggleC
           if (cell.type === "blank") return h("div", { className: "calendar-day-spacer", key: cell.key, "aria-hidden": "true" });
           const day = cell.day;
           const dateKey = `${year}-${String(monthIndex + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-          const date = new Date(`${dateKey}T00:00:00`);
-          const weekday = weekDays[(date.getDay() + 6) % 7].label;
           const duties = calendarDuties?.[dateKey] || {};
           return h(
             "article",
@@ -5166,7 +5174,6 @@ function MonthDays({ calendar, calendarDuties, monthIndex, selectedDate, toggleC
                   ),
                 ),
               ),
-              h("i", null, weekday),
             ),
             h("textarea", {
               maxLength: 600,
