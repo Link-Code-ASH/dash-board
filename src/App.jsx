@@ -1,4 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import MindfoldV2View from "./mindfold/MindfoldView.jsx";
+import { normalizeMindfold as normalizeMindfoldV2 } from "./mindfold/model.js";
 
 const STORAGE_KEY = "routine-scoreboard-clean-v1";
 const SYNC_BACKEND_KEY = "dashboard-sync-backend-v1";
@@ -432,7 +434,7 @@ function collectMindfoldBlockIds(blocks, ids = []) {
   return ids;
 }
 
-function normalizeMindfold(mindfold) {
+function normalizeMindfoldLegacy(mindfold) {
   const normalizeTab = (tab, index) => {
     const blocks = Array.isArray(tab?.blocks) && tab.blocks.length
       ? tab.blocks.filter(Boolean).map(normalizeMindfoldBlock)
@@ -464,6 +466,10 @@ function normalizeMindfold(mindfold) {
     activeTabId,
     trash,
   };
+}
+
+function normalizeMindfold(mindfold) {
+  return normalizeMindfoldV2(mindfold);
 }
 
 function getActiveMindfoldTab(mindfold) {
@@ -1675,6 +1681,16 @@ function App() {
     return true;
   };
 
+  const commitMindfold = (nextMindfold, options = {}) => {
+    saveData((draft) => {
+      draft.mindfold = normalizeMindfold(nextMindfold);
+      return draft;
+    }, {
+      captureMindfold: options.captureHistory !== false,
+      historyGroup: options.historyGroup || "",
+    });
+  };
+
   const updateMindfoldBlock = (id, patch) => {
     const patchObject = typeof patch === "string" ? { text: patch } : patch || {};
     const isTextOnlyChange = Object.prototype.hasOwnProperty.call(patchObject, "text")
@@ -2418,28 +2434,11 @@ function App() {
     },
     h(HubBar, { activeView, onToggleVault: toggleVault, setActiveView: navigateView }),
     activeView === "mindfold"
-      ? h(MindfoldView, {
-          addBlock: addMindfoldBlock,
-          addTab: addMindfoldTab,
-          clearMasks: clearMindfoldMasks,
-          indentBlock: indentMindfoldBlock,
-          maskSelection: maskMindfoldSelection,
+      ? h(MindfoldV2View, {
           mindfold: data.mindfold,
-          moveBlock: moveMindfoldBlock,
-          moveTab: moveMindfoldTab,
-          outdentBlock: outdentMindfoldBlock,
-          removeBlock: removeMindfoldBlock,
-          removeTab: removeMindfoldTab,
-          permanentlyRemoveTab: permanentlyRemoveMindfoldTab,
-          renameTab: renameMindfoldTab,
-          restoreTab: restoreMindfoldTab,
-          setActiveBlock: setActiveMindfoldBlock,
-          setActiveTab: setActiveMindfoldTab,
-          setColumns: setMindfoldColumns,
-          toggleMark: toggleMindfoldMark,
-          redo: () => restoreMindfoldHistory("redo"),
-          undo: () => restoreMindfoldHistory("undo"),
-          updateBlock: updateMindfoldBlock,
+          onCommit: commitMindfold,
+          onRedo: () => restoreMindfoldHistory("redo"),
+          onUndo: () => restoreMindfoldHistory("undo"),
         })
       : activeView === "vault"
         ? h(VaultView, { settingsPanels })
