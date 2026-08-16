@@ -922,14 +922,31 @@ function formatCompactDate(dateKey) {
   return { day: date.getDate(), month, weekday };
 }
 
+const WEEKLY_PLAN_V2_PREFIX = "__WEEKLY_ITEMS_V2__:";
+
+function getWeeklyPlanItems(rawValue) {
+  const value = String(rawValue || "");
+  if (value.startsWith(WEEKLY_PLAN_V2_PREFIX)) {
+    try {
+      const parsed = JSON.parse(value.slice(WEEKLY_PLAN_V2_PREFIX.length));
+      if (Array.isArray(parsed)) return parsed.length ? parsed.map((item) => String(item ?? "")) : [""];
+    } catch {
+      // Fall through to the legacy newline format when saved data is incomplete.
+    }
+  }
+  const legacyItems = value.split(/\n+/).map((item) => item.trim()).filter(Boolean);
+  return legacyItems.length ? legacyItems : [""];
+}
+
+function encodeWeeklyPlanItems(items) {
+  return `${WEEKLY_PLAN_V2_PREFIX}${JSON.stringify(items.map((item) => String(item ?? "")))}`;
+}
+
 function getWeeklyPlanEntry(rawValue, dateKey) {
-  const lines = String(rawValue || "")
-    .split(/\n+/)
-    .map((line) => line.trim())
-    .filter(Boolean);
-  if (!lines.length) return { cycleNumber: "", value: "Not Set" };
-  const lineIndex = ((getWeekSerial(dateKey) % lines.length) + lines.length) % lines.length;
-  return { cycleNumber: lines.length > 1 ? lineIndex + 1 : "", value: lines[lineIndex] };
+  const items = getWeeklyPlanItems(rawValue).map((item) => item.trim()).filter(Boolean);
+  if (!items.length) return { cycleNumber: "", value: "Not Set" };
+  const itemIndex = ((getWeekSerial(dateKey) % items.length) + items.length) % items.length;
+  return { cycleNumber: items.length > 1 ? itemIndex + 1 : "", value: items[itemIndex] };
 }
 
 function getWeekdayKey(dateKey) {
@@ -4801,11 +4818,11 @@ function TodayPlanPanel({ categories, entries, mobile = false, presets, schoolPr
       }),
       h(PlanRow, {
         className: "school-plan-row",
-        title: "School",
+        title: "Edu",
         cards: schoolPresets.map((preset) => {
           const planKey = `school:${selectedDate}:${preset.key}`;
           const value = getWeeklyPlanEntry(schoolWeeklyPlan?.[preset.key]?.[weekday.key], selectedDate).value;
-          return createPresetPlanCard({ entries, label: preset.name, planKey, preset, section: "School", toggleChoice, value });
+          return createPresetPlanCard({ entries, label: preset.name, planKey, preset, section: "Edu", toggleChoice, value });
         }),
       }),
       h(PlanRow, {
@@ -4945,10 +4962,10 @@ function SchoolWeeklyPanel({ addPreset, isOpen, movePreset, onToggle, presets, r
   return h(CollapsiblePanel, {
     className: "weekly-panel school-weekly-panel",
     controls: "schoolWeeklyGrid",
-    description: "Assign recurring school plans for each weekday.",
+    description: "Assign recurring education plans for each weekday.",
     isOpen,
     onToggle,
-    title: "School",
+    title: "Edu",
     children: {
       actions: h("button", { className: "text-button weekly-tool", type: "button", onClick: addPreset }, "+"),
       body: h(
@@ -5013,6 +5030,56 @@ function SchoolWeeklyPanel({ addPreset, isOpen, movePreset, onToggle, presets, r
   });
 }
 
+function WeeklyScheduleCell({ active, onChange, placeholder, value }) {
+  const itemRefs = useRef([]);
+  const items = getWeeklyPlanItems(value);
+  const saveItems = (nextItems, focusIndex = -1) => {
+    onChange(encodeWeeklyPlanItems(nextItems));
+    if (focusIndex >= 0) requestAnimationFrame(() => itemRefs.current[focusIndex]?.focus());
+  };
+  const updateItem = (index, nextValue) => {
+    const nextItems = [...items];
+    nextItems[index] = nextValue;
+    saveItems(nextItems);
+  };
+  const addItem = () => saveItems([...items, ""], items.length);
+  const removeDivider = (index) => {
+    const nextItems = [...items];
+    const [removed] = nextItems.splice(index, 1);
+    nextItems[index - 1] = [nextItems[index - 1], removed].filter(Boolean).join("\n");
+    saveItems(nextItems, index - 1);
+  };
+
+  return h(
+    "div",
+    { className: `weekly-schedule-cell ${active ? "active" : ""}` },
+    ...items.flatMap((item, index) => [
+      index > 0
+        ? h(
+            "div",
+            { className: "weekly-item-divider", key: `divider-${index}` },
+            h("button", { type: "button", title: "구분선 제거", "aria-label": "구분선 제거", onClick: () => removeDivider(index) }, "×"),
+          )
+        : null,
+      h("textarea", {
+        className: "weekly-input",
+        key: `item-${index}`,
+        maxLength: 180,
+        placeholder,
+        ref: (node) => { itemRefs.current[index] = node; },
+        value: item,
+        onChange: (event) => updateItem(index, event.target.value),
+        onKeyDown: (event) => event.stopPropagation(),
+      }),
+    ]),
+    h(
+      "button",
+      { className: "weekly-add-divider", type: "button", title: "새 일정 구분선 추가", "aria-label": "새 일정 구분선 추가", onClick: addItem },
+      h("span", { "aria-hidden": "true" }, "+"),
+    ),
+  );
+}
+
 function WeeklyPanel({ addCategory, categories, isOpen, moveCategory, onToggle, removeCategory, selectedDate, updateCategory, updateWeeklyPlan, weeklyPlan }) {
   const [dragCategoryKey, setDragCategoryKey] = useState("");
   const selectedWeekday = getWeekdayKey(selectedDate);
@@ -5075,14 +5142,12 @@ function WeeklyPanel({ addCategory, categories, isOpen, moveCategory, onToggle, 
             ),
           ),
           ...weekDays.map((day) =>
-            h("textarea", {
-              className: `weekly-input ${day.key === selectedWeekday ? "active" : ""}`,
+            h(WeeklyScheduleCell, {
+              active: day.key === selectedWeekday,
               key: `${category.key}-${day.key}`,
-              maxLength: 180,
+              onChange: (value) => updateWeeklyPlan(category.key, day.key, value),
               placeholder: `${day.label} ${category.label}`,
               value: weeklyPlan[category.key]?.[day.key] || "",
-              onChange: (event) => updateWeeklyPlan(category.key, day.key, event.target.value),
-              onKeyDown: (event) => event.stopPropagation(),
             }),
           ),
         ]),
