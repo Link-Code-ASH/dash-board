@@ -227,6 +227,40 @@ export default function MindfoldView({ mindfold, onCommit, onRedo, onUndo }) {
     focusBlock(nextId, 0);
   }, [commit, focusBlock]);
 
+  const splitIntoToggleChild = useCallback((id, offset) => {
+    let nextId = "";
+    let parentBlock = null;
+    let splitAt = offset;
+    commit((next, page) => {
+      const location = findBlockLocation(page.blocks, id);
+      if (!location?.block.toggle) return;
+      const block = location.block;
+      splitAt = clamp(offset, 0, block.text.length);
+      const nextText = block.text.slice(splitAt);
+      const markParts = splitRanges(block.marks, splitAt);
+      const maskParts = splitRanges(block.masks, splitAt);
+      block.text = block.text.slice(0, splitAt);
+      block.marks = markParts.left;
+      block.masks = maskParts.left;
+      block.open = true;
+      parentBlock = block;
+
+      const child = createBlock({
+        type: "text",
+        text: nextText,
+        color: block.color,
+        column: null,
+      });
+      child.marks = markParts.right;
+      child.masks = maskParts.right;
+      nextId = child.id;
+      block.children.unshift(child);
+      page.activeId = nextId;
+    });
+    if (parentBlock) editorRefs.current.get(id)?.repaint(parentBlock, { start: splitAt, end: splitAt });
+    if (nextId) focusBlock(nextId, 0);
+  }, [commit, focusBlock]);
+
   const deleteBlocksById = useCallback((idsToDelete) => {
     if (!idsToDelete.length) return;
     const currentVisible = flattenBlocks(activePage.blocks).map(({ block }) => block.id);
@@ -279,21 +313,26 @@ export default function MindfoldView({ mindfold, onCommit, onRedo, onUndo }) {
       "-": "bullet",
       "[]": "check",
       "[ ]": "check",
-      ">": "quote",
     };
     const type = mapping[marker];
-    if (!type) return false;
+    const createsToggle = marker === ">";
+    if (!type && !createsToggle) return false;
     let nextBlock = null;
     commit((next, page) => {
       const block = findBlock(page.blocks, id);
       if (!block) return;
       const previousText = liveText == null ? block.text : liveText;
-      const removeLength = marker.length;
+      const removeLength = marker.length + (previousText[marker.length] === " " ? 1 : 0);
       block.text = previousText.slice(removeLength);
       block.marks = adjustRanges(block.marks, previousText, block.text);
       block.masks = adjustRanges(block.masks, previousText, block.text);
-      block.type = type;
-      block.checked = false;
+      if (createsToggle) {
+        block.toggle = true;
+        block.open = true;
+      } else {
+        block.type = type;
+        block.checked = false;
+      }
       nextBlock = block;
       page.activeId = id;
     });
@@ -393,6 +432,11 @@ export default function MindfoldView({ mindfold, onCommit, onRedo, onUndo }) {
   const handleEditorKeyDown = useCallback((event, selection, block) => {
     if (event.nativeEvent?.isComposing || event.keyCode === 229 || composingRef.current.has(block.id)) return;
     const commandKey = event.ctrlKey || event.metaKey;
+    if (commandKey && event.key === "Enter" && block.toggle) {
+      event.preventDefault();
+      changeBlock(block.id, { open: !block.open });
+      return;
+    }
     if (event.key === "Enter") {
       const liveText = editorRefs.current.get(block.id)?.getText() || block.text;
       if (liveText.startsWith("/") && !liveText.includes("\n")) {
@@ -477,10 +521,17 @@ export default function MindfoldView({ mindfold, onCommit, onRedo, onUndo }) {
     }
     if (event.key === "Enter") {
       event.preventDefault();
-      if (event.shiftKey) {
+      const location = findBlockLocation(activePage.blocks, block.id);
+      if (event.shiftKey && location?.parent && location.parent.type !== "columns") {
+        let changed = false;
+        commit((next, page) => { changed = outdentBlock(page, block.id); });
+        if (changed) focusBlock(block.id, selection.start, selection.end);
+      } else if (event.shiftKey) {
         const text = `${block.text.slice(0, selection.start)}\n${block.text.slice(selection.end)}`;
         editorRefs.current.get(block.id)?.replaceText(text, selection.start + 1);
         updateText(block.id, text, { start: selection.start + 1, end: selection.start + 1 });
+      } else if (block.toggle) {
+        splitIntoToggleChild(block.id, selection.start);
       } else if (!block.text && (["bullet", "check", "quote"].includes(block.type) || block.type.startsWith("heading-"))) {
         changeBlock(block.id, { type: "text", checked: false });
       } else {
@@ -518,9 +569,11 @@ export default function MindfoldView({ mindfold, onCommit, onRedo, onUndo }) {
         applyMarkdownShortcut(block.id, marker, selection, liveText);
       }
     }
-  }, [applyInlineFormat, applyMarkdownShortcut, changeBlock, commit, executeSlashCommand, filteredSlashCommands, focusBlock, mergeBackward, moveFocus, restoreHistory, runSlashCommand, slashIndex, slashMenu, splitBlock, updateText, visibleBlocks]);
+  }, [activePage.blocks, applyInlineFormat, applyMarkdownShortcut, changeBlock, commit, executeSlashCommand, filteredSlashCommands, focusBlock, mergeBackward, moveFocus, restoreHistory, runSlashCommand, slashIndex, slashMenu, splitBlock, splitIntoToggleChild, updateText, visibleBlocks]);
 
   const handleBlockInput = useCallback((block, text, selection) => {
+    const shortcut = text.slice(0, selection.start).match(/^(#{1,4}|\*|-|\[\]|\[ \]|>) $/);
+    if (shortcut && applyMarkdownShortcut(block.id, shortcut[1], selection, text)) return;
     updateText(block.id, text, selection);
     savedSelectionsRef.current.set(block.id, selection);
     const prefix = text.slice(0, selection.start);
@@ -536,7 +589,7 @@ export default function MindfoldView({ mindfold, onCommit, onRedo, onUndo }) {
     } else if (slashMenu?.id === block.id) {
       setSlashMenu(null);
     }
-  }, [slashMenu?.id, updateText]);
+  }, [applyMarkdownShortcut, slashMenu?.id, updateText]);
 
   const selectBlock = useCallback((id, event) => {
     const ids = visibleBlocks.map((block) => block.id);
@@ -560,7 +613,7 @@ export default function MindfoldView({ mindfold, onCommit, onRedo, onUndo }) {
     if (event.button !== 0 || (event.target.closest("button") && !fromHandle)) return;
     if (fromEditor && event.pointerType === "touch") return;
     if (!fromEditor) event.preventDefault();
-    const movingIds = fromEditor || fromHandle ? [id] : selectedBlockIds.includes(id) ? selectedBlockIds : [id];
+    const movingIds = selectedBlockIds.includes(id) ? selectedBlockIds : [id];
     const sourceRect = event.currentTarget.closest("[data-mf2-id]")?.getBoundingClientRect();
     const previewWidth = Math.min(Math.max(sourceRect?.width || 280, 180), 460, window.innerWidth - 24);
     const captureTarget = event.currentTarget;
@@ -615,11 +668,12 @@ export default function MindfoldView({ mindfold, onCommit, onRedo, onUndo }) {
         setDragState({ movingIds: state.movingIds, previewWidth: state.previewWidth, target: null, x: pointerEvent.clientX, y: pointerEvent.clientY });
         return;
       }
-      const rect = targetElement.getBoundingClientRect();
-      const targetBlock = findBlock(activePage.blocks, targetId);
-      const placement = targetBlock?.toggle && pointerEvent.clientX > rect.left + Math.min(120, rect.width * 0.3)
-        ? "inside"
-        : pointerEvent.clientY < rect.top + rect.height / 2 ? "before" : "after";
+      const rowElement = targetElement.querySelector(":scope > .mf2-block-row") || targetElement;
+      const rect = rowElement.getBoundingClientRect();
+      const verticalPosition = clamp((pointerEvent.clientY - rect.top) / Math.max(1, rect.height), 0, 1);
+      const placement = verticalPosition < 0.25
+        ? "before"
+        : verticalPosition > 0.75 ? "after" : "inside";
       state.target = { id: targetId, placement };
       setDragState({ movingIds: state.movingIds, previewWidth: state.previewWidth, target: state.target, x: pointerEvent.clientX, y: pointerEvent.clientY });
     };
@@ -684,11 +738,13 @@ export default function MindfoldView({ mindfold, onCommit, onRedo, onUndo }) {
       if (!state?.active && !state?.additive) {
         selectedBlockIdsRef.current = [];
         setSelectedBlockIds([]);
+        const lastBlock = visibleBlocks.at(-1);
+        if (lastBlock) focusBlock(lastBlock.id, lastBlock.text.length);
       }
     };
     window.addEventListener("pointermove", move);
     window.addEventListener("pointerup", end, { once: true });
-  }, [selectedBlockIds]);
+  }, [focusBlock, selectedBlockIds, visibleBlocks]);
 
   useEffect(() => {
     const handleNativeSelection = () => {
@@ -714,6 +770,10 @@ export default function MindfoldView({ mindfold, onCommit, onRedo, onUndo }) {
     const handleGlobalKeys = (event) => {
       const selectedIds = selectedBlockIdsRef.current;
       if (!selectedIds.length) return;
+      const eventTarget = event.target instanceof Element ? event.target : null;
+      const editableTarget = eventTarget?.closest("input, textarea, select, button, [contenteditable='true']");
+      const blockControl = eventTarget?.closest(".mf2-block-shell");
+      if (editableTarget && !eventTarget.closest(".mf2-rich-editor") && !blockControl) return;
       const commandKey = event.ctrlKey || event.metaKey;
       if (commandKey && event.key.toLowerCase() === "z") {
         event.preventDefault();
@@ -724,6 +784,7 @@ export default function MindfoldView({ mindfold, onCommit, onRedo, onUndo }) {
         restoreHistory("redo");
       } else if (event.key === "Backspace" || event.key === "Delete") {
         event.preventDefault();
+        event.stopPropagation();
         deleteSelected();
       } else if (event.key === "Escape") {
         event.preventDefault();
@@ -756,8 +817,8 @@ export default function MindfoldView({ mindfold, onCommit, onRedo, onUndo }) {
         if (targetId) commit((next, page) => moveBlocks(page, selectedIds, targetId, event.key === "ArrowUp" ? "before" : "after"));
       }
     };
-    document.addEventListener("keydown", handleGlobalKeys);
-    return () => document.removeEventListener("keydown", handleGlobalKeys);
+    document.addEventListener("keydown", handleGlobalKeys, true);
+    return () => document.removeEventListener("keydown", handleGlobalKeys, true);
   }, [activePage.blocks, commit, deleteSelected, restoreHistory, visibleBlocks]);
 
   const openBlockMenu = useCallback((event, id) => {
@@ -889,7 +950,7 @@ export default function MindfoldView({ mindfold, onCommit, onRedo, onUndo }) {
           </div>
           {block.toggle ? (
             <button className={`mf2-toggle-button ${block.open ? "open" : ""}`} onClick={() => changeBlock(block.id, { open: !block.open })} title={block.open ? "접기" : "펼치기"} type="button" aria-label={block.open ? "접기" : "펼치기"}>
-              <span aria-hidden="true">›</span>
+              <span aria-hidden="true" />
             </button>
           ) : block.type === "check" ? (
             <button className={`mf2-check-button ${block.checked ? "checked" : ""}`} onClick={() => changeBlock(block.id, { checked: !block.checked })} title={block.checked ? "체크 해제" : "완료"} type="button" aria-label={block.checked ? "체크 해제" : "완료"}>
@@ -911,7 +972,7 @@ export default function MindfoldView({ mindfold, onCommit, onRedo, onUndo }) {
             onKeyDown={(event, selection) => handleEditorKeyDown(event, selection, block)}
             onPointerDown={(event) => beginBlockDrag(event, block.id, true)}
             onSelectionChange={(selection) => savedSelectionsRef.current.set(block.id, selection)}
-            placeholder="내용을 입력하세요"
+            ariaLabel="블록 내용"
             ref={(api) => {
               if (api) editorRefs.current.set(block.id, api);
               else editorRefs.current.delete(block.id);

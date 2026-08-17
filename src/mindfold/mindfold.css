@@ -39,7 +39,7 @@
   position: relative;
   width: 100%;
   min-width: 0;
-  margin-left: calc(var(--mf2-depth, 0) * 24px);
+  margin-left: 0;
   color: var(--mf2-color, #20252c);
 }
 
@@ -56,8 +56,8 @@
 }
 
 .mf2-block-shell.is-selected > .mf2-block-row {
-  background: rgba(111, 145, 181, 0.09);
-  box-shadow: inset 3px 0 0 rgba(73, 111, 151, 0.56);
+  background: rgba(104, 142, 181, 0.11);
+  box-shadow: inset 0 0 0 1px rgba(80, 118, 158, 0.18);
 }
 
 .mf2-block-shell.is-checked > .mf2-block-row .mf2-rich-editor {
@@ -101,20 +101,20 @@
 .mf2-menu-button span {
   position: relative;
   display: block;
-  width: 4px;
-  height: 12px;
+  width: 10px;
+  height: 10px;
 }
 
 .mf2-menu-button span::before,
 .mf2-menu-button span::after {
   content: "";
   position: absolute;
-  left: 50%;
-  width: 3px;
-  height: 3px;
-  border-radius: 50%;
+  left: 0;
+  width: 10px;
+  height: 1.5px;
+  border-radius: 2px;
   background: currentColor;
-  transform: translate(-50%, -50%);
+  transform: translateY(-50%);
 }
 
 .mf2-menu-button span::before {
@@ -122,12 +122,10 @@
 }
 
 .mf2-menu-button span::after {
-  top: 9px;
+  top: 7px;
 }
 
-.mf2-block-row:hover .mf2-menu-button,
-.mf2-block-shell.is-selected > .mf2-block-row .mf2-menu-button,
-.mf2-block-shell.is-focused > .mf2-block-row .mf2-menu-button,
+.mf2-menu-button:hover,
 .mf2-menu-button:focus-visible {
   opacity: 1;
 }
@@ -137,6 +135,10 @@
   background: rgba(255, 255, 255, 0.58);
   color: #34465a;
   outline: none;
+}
+
+.mf2-menu-button:hover {
+  cursor: none;
 }
 
 .mf2-menu-button:active {
@@ -162,12 +164,6 @@
   caret-color: #294d71;
   cursor: text;
   outline: none;
-}
-
-.mf2-rich-editor[data-empty="true"]::before {
-  content: attr(data-placeholder);
-  color: rgba(73, 84, 98, 0.34);
-  pointer-events: none;
 }
 
 .mf2-inline-bold {
@@ -210,10 +206,13 @@
 
 .mf2-toggle-button span {
   display: block;
-  font-family: Arial, sans-serif;
-  font-size: 22px;
-  line-height: 1;
+  width: 0;
+  height: 0;
+  border-top: 4px solid transparent;
+  border-bottom: 4px solid transparent;
+  border-left: 6px solid currentColor;
   transform: rotate(0deg);
+  transform-origin: 3px 4px;
   transition: transform 110ms ease;
 }
 
@@ -310,8 +309,8 @@
 
 .mf2-children {
   position: relative;
-  width: calc(100% - 26px);
-  margin-left: 26px;
+  width: calc(100% - 16px);
+  margin-left: 16px;
 }
 
 .mf2-children::before {
@@ -319,7 +318,7 @@
   position: absolute;
   top: 2px;
   bottom: 2px;
-  left: 13px;
+  left: 7px;
   width: 1px;
   background: rgba(76, 91, 108, 0.12);
 }
@@ -931,10 +930,6 @@ body.mf2-dragging .mf2-block-shell.is-selected > .mf2-block-row {
     width: 100%;
     min-height: calc(100dvh - 72px);
     padding: 58px 8px 38vh 4px;
-  }
-
-  .mf2-block-shell {
-    margin-left: calc(var(--mf2-depth, 0) * 16px);
   }
 
   .mf2-gutter {

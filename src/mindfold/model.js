@@ -271,8 +271,6 @@ export function moveBlocks(page, movingIds, targetId, placement = "after") {
   if (!target) return false;
   if (placement === "inside") {
     ordered.forEach((block) => { block.column = null; });
-    target.block.toggle = true;
-    target.block.open = true;
     target.block.children.push(...ordered);
   } else {
     ordered.forEach((block) => { block.column = target.parent?.type === "columns" ? target.block.column : null; });
@@ -328,8 +326,6 @@ export function indentBlock(page, id) {
     : location.siblings[location.index - 1];
   if (!previous) return false;
   const [moving] = location.siblings.splice(location.index, 1);
-  previous.toggle = true;
-  previous.open = true;
   previous.children.push(moving);
   page.activeId = id;
   return true;
@@ -341,6 +337,7 @@ export function outdentBlock(page, id) {
   const parentLocation = findBlockLocation(page.blocks, location.parent.id);
   if (!parentLocation) return false;
   const [moving] = location.siblings.splice(location.index, 1);
+  moving.column = parentLocation.parent?.type === "columns" ? location.parent.column : null;
   parentLocation.siblings.splice(parentLocation.index + 1, 0, moving);
   page.activeId = id;
   return true;
