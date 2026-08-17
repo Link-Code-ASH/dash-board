@@ -422,6 +422,23 @@ html body #root .app-shell .schedule-day-items > span + span::before {
   content: "";
 }
 
+html body #root .app-shell .schedule-day-items > .schedule-duty-group {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 9px;
+}
+
+html body #root .app-shell .schedule-duty-group > label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  color: #4f6f66;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
 .effective-display-mobile .mobile-seven-day-items {
   display: grid;
   align-content: center;
@@ -433,6 +450,14 @@ html body #root .app-shell .schedule-day-items > span + span::before {
   display: flex;
   align-items: center;
   min-height: 24px;
+}
+
+.effective-display-mobile .mobile-duty-group {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 6px;
+  min-width: 0;
 }
 
 .effective-display-mobile .mobile-seven-day-items > * + * {
@@ -1118,6 +1143,8 @@ html body #root .app-shell .date-marker-panel .date-marker-dday:not(.empty) {
 
 .mobile-score-checks.icon-only .mobile-score-check {
   display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr;
   place-items: center;
   min-width: 44px;
   width: 44px;
@@ -1138,6 +1165,10 @@ html body #root .app-shell .date-marker-panel .date-marker-dday:not(.empty) {
 }
 
 .mobile-score-checks.icon-only .mobile-score-check span {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  place-items: center;
   width: 28px;
   height: 28px;
   border: 0;
@@ -2519,17 +2550,17 @@ html body #root .app-shell .history-panel .history-flag .flag-glyph {
 }
 
 /* Weekly schedule rows use visible dividers; Enter remains a normal line break. */
-#weeklyGrid {
+:is(#weeklyGrid, #schoolWeeklyGrid) {
   align-items: stretch;
   grid-auto-rows: auto;
 }
 
-#weeklyGrid .weekly-category,
-#weeklyGrid .weekly-schedule-cell {
+:is(#weeklyGrid, #schoolWeeklyGrid) .weekly-category,
+:is(#weeklyGrid, #schoolWeeklyGrid) .weekly-schedule-cell {
   align-self: stretch !important;
 }
 
-#weeklyGrid .weekly-schedule-cell {
+:is(#weeklyGrid, #schoolWeeklyGrid) .weekly-schedule-cell {
   display: flex;
   min-width: 0;
   min-height: 64px;
@@ -2541,13 +2572,13 @@ html body #root .app-shell .history-panel .history-flag .flag-glyph {
   box-shadow: inset 4px 4px 10px rgba(62, 75, 94, 0.13), inset -4px -4px 10px rgba(224, 231, 239, 0.48);
 }
 
-#weeklyGrid .weekly-schedule-cell.active {
+:is(#weeklyGrid, #schoolWeeklyGrid) .weekly-schedule-cell.active {
   border-color: rgba(91, 111, 178, 0.42);
   background: linear-gradient(145deg, rgba(185, 198, 218, 0.98), rgba(148, 166, 190, 0.92)), #aebccc;
   box-shadow: inset 4px 4px 10px rgba(62, 75, 94, 0.16), inset -4px -4px 10px rgba(224, 231, 239, 0.36), 0 0 13px rgba(91, 111, 178, 0.13);
 }
 
-#weeklyGrid .weekly-input {
+:is(#weeklyGrid, #schoolWeeklyGrid) .weekly-input {
   field-sizing: content;
   width: 100% !important;
   min-width: 0 !important;
@@ -2565,13 +2596,13 @@ html body #root .app-shell .history-panel .history-flag .flag-glyph {
   scrollbar-width: none;
 }
 
-#weeklyGrid .weekly-input::-webkit-scrollbar {
+:is(#weeklyGrid, #schoolWeeklyGrid) .weekly-input::-webkit-scrollbar {
   display: none;
   width: 0;
   height: 0;
 }
 
-#weeklyGrid .weekly-item-divider {
+:is(#weeklyGrid, #schoolWeeklyGrid) .weekly-item-divider {
   position: relative;
   display: grid;
   height: 20px;
@@ -2579,7 +2610,7 @@ html body #root .app-shell .history-panel .history-flag .flag-glyph {
   place-items: center end;
 }
 
-#weeklyGrid .weekly-item-divider::before {
+:is(#weeklyGrid, #schoolWeeklyGrid) .weekly-item-divider::before {
   content: "";
   position: absolute;
   right: 25px;
@@ -2588,7 +2619,7 @@ html body #root .app-shell .history-panel .history-flag .flag-glyph {
   background: linear-gradient(90deg, transparent, rgba(62, 78, 98, 0.38) 12%, rgba(62, 78, 98, 0.38) 88%, transparent);
 }
 
-#weeklyGrid .weekly-item-divider button {
+:is(#weeklyGrid, #schoolWeeklyGrid) .weekly-item-divider button {
   position: relative;
   z-index: 1;
   display: grid;
@@ -2605,14 +2636,14 @@ html body #root .app-shell .history-panel .history-flag .flag-glyph {
   cursor: pointer;
 }
 
-#weeklyGrid .weekly-item-divider button:hover,
-#weeklyGrid .weekly-item-divider button:focus-visible {
+:is(#weeklyGrid, #schoolWeeklyGrid) .weekly-item-divider button:hover,
+:is(#weeklyGrid, #schoolWeeklyGrid) .weekly-item-divider button:focus-visible {
   background: rgba(238, 242, 247, 0.92);
   color: #34445a;
   outline: none;
 }
 
-#weeklyGrid .weekly-add-divider {
+:is(#weeklyGrid, #schoolWeeklyGrid) .weekly-add-divider {
   position: relative;
   display: grid;
   width: 100%;
@@ -2627,7 +2658,7 @@ html body #root .app-shell .history-panel .history-flag .flag-glyph {
   opacity: 0.62;
 }
 
-#weeklyGrid .weekly-add-divider::before {
+:is(#weeklyGrid, #schoolWeeklyGrid) .weekly-add-divider::before {
   content: "";
   position: absolute;
   right: 4px;
@@ -2636,7 +2667,7 @@ html body #root .app-shell .history-panel .history-flag .flag-glyph {
   background: rgba(65, 81, 101, 0.2);
 }
 
-#weeklyGrid .weekly-add-divider span {
+:is(#weeklyGrid, #schoolWeeklyGrid) .weekly-add-divider span {
   position: relative;
   z-index: 1;
   display: grid;
@@ -2649,8 +2680,8 @@ html body #root .app-shell .history-panel .history-flag .flag-glyph {
   line-height: 1;
 }
 
-#weeklyGrid .weekly-add-divider:hover,
-#weeklyGrid .weekly-add-divider:focus-visible {
+:is(#weeklyGrid, #schoolWeeklyGrid) .weekly-add-divider:hover,
+:is(#weeklyGrid, #schoolWeeklyGrid) .weekly-add-divider:focus-visible {
   color: #304b70;
   opacity: 1;
   outline: none;

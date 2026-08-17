@@ -2567,7 +2567,9 @@ function MobileSevenDaySchedule({ calendar, calendarDuties, selectedDate }) {
           h(
             "div",
             { className: `mobile-seven-day-items ${duties.length || lines.length ? "" : "empty"}` },
-            duties.map((option) => h("b", { key: option.key }, option.label)),
+            duties.length
+              ? h("div", { className: "mobile-duty-group" }, duties.map((option) => h("b", { key: option.key }, option.label)))
+              : null,
             lines.length ? lines.map((line, lineIndex) => h("span", { key: `${dateKey}-${lineIndex}` }, line)) : duties.length ? null : h("i", null, "No schedule"),
           ),
         );
@@ -4405,11 +4407,9 @@ function SchedulePanel({ calendar, calendarDuties, selectedDate }) {
               { className: "schedule-week-grid" },
           week.map((dateKey) => {
             const schedule = calendar[dateKey]?.trim() || "";
-            const dutyItems = calendarDutyOptions
-              .filter((option) => calendarDuties?.[dateKey]?.[option.key])
-              .map((option) => ({ type: "duty", label: option.label }));
+            const activeDuties = calendarDutyOptions.filter((option) => calendarDuties?.[dateKey]?.[option.key]);
             const lines = schedule.split(/\n+/).filter(Boolean).map((line) => ({ type: "note", label: line }));
-            const items = [...dutyItems, ...lines];
+            const items = [...(activeDuties.length ? [{ type: "duties", options: activeDuties }] : []), ...lines];
             const dateLabel = formatCompactDate(dateKey);
             const isSelected = dateKey === selectedDate;
             return h(
@@ -4423,9 +4423,10 @@ function SchedulePanel({ calendar, calendarDuties, selectedDate }) {
                   ? items.map((item, index) =>
                       h(
                         "span",
-                        { className: item.type === "duty" ? "schedule-duty-item" : "", key: `${dateKey}-${index}` },
-                        item.type === "duty" ? h("input", { type: "checkbox", checked: true, readOnly: true, tabIndex: -1 }) : null,
-                        item.label,
+                        { className: item.type === "duties" ? "schedule-duty-group" : "", key: `${dateKey}-${index}` },
+                        item.type === "duties"
+                          ? item.options.map((option) => h("label", { key: option.key }, h("input", { type: "checkbox", checked: true, readOnly: true, tabIndex: -1 }), option.label))
+                          : item.label,
                       ),
                     )
                   : h("i", null, "No schedule"),
@@ -5014,14 +5015,12 @@ function SchoolWeeklyPanel({ addPreset, isOpen, movePreset, onToggle, presets, r
             h("div", { className: "category-actions" }, h("button", { className: "mini-button danger", type: "button", disabled: presets.length <= 1, onClick: () => removePreset(preset.key) }, "\u00d7")),
           ),
           ...weekDays.map((day) =>
-            h("textarea", {
-              className: `weekly-input ${day.key === selectedWeekday ? "active" : ""}`,
+            h(WeeklyScheduleCell, {
+              active: day.key === selectedWeekday,
               key: `${preset.key}-${day.key}`,
-              maxLength: 180,
+              onChange: (value) => updateSchoolWeeklyPlan(preset.key, day.key, value),
               placeholder: "Plan",
               value: schoolWeeklyPlan?.[preset.key]?.[day.key] || "",
-              onChange: (event) => updateSchoolWeeklyPlan(preset.key, day.key, event.target.value),
-              onKeyDown: (event) => event.stopPropagation(),
             }),
           ),
         ]),
