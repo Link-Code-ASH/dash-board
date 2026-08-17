@@ -221,7 +221,36 @@ export function normalizePageAfterMutation(page) {
   return page;
 }
 
-export function removeBlocks(page, ids) {
+function isMeaningfulColumnBlock(block) {
+  return Boolean(
+    block.text
+    || block.type !== "text"
+    || block.toggle
+    || block.checked
+    || block.marks.length
+    || block.masks.length
+    || block.children.length,
+  );
+}
+
+function collapseIncompleteColumns(blocks, parent = null) {
+  for (let index = blocks.length - 1; index >= 0; index -= 1) {
+    const block = blocks[index];
+    collapseIncompleteColumns(block.children, block);
+    if (block.type !== "columns") continue;
+
+    const meaningfulChildren = block.children.filter(isMeaningfulColumnBlock);
+    const populatedColumns = new Set(meaningfulChildren.map((child) => child.column));
+    if (populatedColumns.size >= block.columns) continue;
+
+    const parentColumn = parent?.type === "columns" ? block.column : null;
+    const promoted = meaningfulChildren.length ? meaningfulChildren : [createBlock()];
+    promoted.forEach((child) => { child.column = parentColumn; });
+    blocks.splice(index, 1, ...promoted);
+  }
+}
+
+export function removeBlocks(page, ids, options = {}) {
   const idSet = new Set(ids);
   const removeFrom = (blocks) => {
     for (let index = blocks.length - 1; index >= 0; index -= 1) {
@@ -231,6 +260,7 @@ export function removeBlocks(page, ids) {
     }
   };
   removeFrom(page.blocks);
+  if (options.collapseColumns) collapseIncompleteColumns(page.blocks);
   return normalizePageAfterMutation(page);
 }
 

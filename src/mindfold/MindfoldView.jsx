@@ -267,7 +267,7 @@ export default function MindfoldView({ mindfold, onCommit, onRedo, onUndo }) {
     const firstIndex = Math.min(...idsToDelete.map((id) => currentVisible.indexOf(id)).filter((index) => index >= 0));
     let focusId = "";
     commit((next, page) => {
-      removeBlocks(page, idsToDelete);
+      removeBlocks(page, idsToDelete, { collapseColumns: true });
       const remaining = flattenBlocks(page.blocks).map(({ block }) => block.id);
       focusId = remaining[Math.min(firstIndex, remaining.length - 1)] || remaining[0];
       page.activeId = focusId;
@@ -297,7 +297,7 @@ export default function MindfoldView({ mindfold, onCommit, onRedo, onUndo }) {
       previousBlock.marks.push(...currentLocation.block.marks.map((mark) => ({ ...mark, start: mark.start + previousLength, end: mark.end + previousLength })));
       previousBlock.masks.push(...currentLocation.block.masks.map((mask) => ({ ...mask, start: mask.start + previousLength, end: mask.end + previousLength })));
       previousBlock.children.push(...currentLocation.block.children);
-      currentLocation.siblings.splice(currentLocation.index, 1);
+      removeBlocks(page, [current.id], { collapseColumns: true });
       page.activeId = previousBlock.id;
     });
     focusBlock(previous.id, previousLength);
@@ -541,7 +541,9 @@ export default function MindfoldView({ mindfold, onCommit, onRedo, onUndo }) {
     }
     if (event.key === "Backspace" && selection.start === 0 && selection.end === 0) {
       event.preventDefault();
-      if (!block.text && (block.type !== "text" || block.toggle)) changeBlock(block.id, { type: "text", toggle: false, checked: false });
+      const location = findBlockLocation(activePage.blocks, block.id);
+      if (!block.text && !block.children.length && location?.parent?.type === "columns") deleteBlocksById([block.id]);
+      else if (!block.text && (block.type !== "text" || block.toggle)) changeBlock(block.id, { type: "text", toggle: false, checked: false });
       else if (block.text || visibleBlocks.length > 1) mergeBackward(block.id);
       return;
     }
@@ -569,7 +571,7 @@ export default function MindfoldView({ mindfold, onCommit, onRedo, onUndo }) {
         applyMarkdownShortcut(block.id, marker, selection, liveText);
       }
     }
-  }, [activePage.blocks, applyInlineFormat, applyMarkdownShortcut, changeBlock, commit, executeSlashCommand, filteredSlashCommands, focusBlock, mergeBackward, moveFocus, restoreHistory, runSlashCommand, slashIndex, slashMenu, splitBlock, splitIntoToggleChild, updateText, visibleBlocks]);
+  }, [activePage.blocks, applyInlineFormat, applyMarkdownShortcut, changeBlock, commit, deleteBlocksById, executeSlashCommand, filteredSlashCommands, focusBlock, mergeBackward, moveFocus, restoreHistory, runSlashCommand, slashIndex, slashMenu, splitBlock, splitIntoToggleChild, updateText, visibleBlocks]);
 
   const handleBlockInput = useCallback((block, text, selection) => {
     const shortcut = text.slice(0, selection.start).match(/^(#{1,4}|\*|-|\[\]|\[ \]|>) $/);
