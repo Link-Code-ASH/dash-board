@@ -4733,8 +4733,7 @@ function DateMarkerPanel({ dateMarkers, selectedDate, updateDateMarker }) {
 }
 
 function isRangeCategory(category) {
-  const label = String(category?.label || "").toUpperCase().replace(/\s+/g, "");
-  return label === "R.ORG" || label === "D.ORG";
+  return getCategoryScoreRange(category).length > 1;
 }
 
 function parseScoreRange(value) {
@@ -5132,7 +5131,7 @@ function WeeklyPanel({ addCategory, categories, isOpen, moveCategory, onToggle, 
               onChange: (event) => updateCategory(category.key, "label", event.target.value),
               onKeyDown: (event) => event.stopPropagation(),
             }),
-            h("label", { className: `score-field y-field ${isRangeCategory(category) ? "range-score" : "positive-score"}`, title: isRangeCategory(category) ? "Y range" : "Y score" }, h("input", { className: "category-score-input y-score", type: "text", inputMode: isRangeCategory(category) ? "text" : "numeric", value: category.yScore, onChange: (event) => updateCategory(category.key, "yScore", event.target.value), onKeyDown: (event) => event.stopPropagation() })),
+            h("label", { className: `score-field y-field ${isRangeCategory(category) ? "range-score" : "positive-score"}`, title: isRangeCategory(category) ? "Y range" : "Y score" }, h("input", { className: "category-score-input y-score", type: "text", inputMode: "text", placeholder: "5 or 1~5", value: category.yScore, onChange: (event) => updateCategory(category.key, "yScore", event.target.value), onKeyDown: (event) => event.stopPropagation() })),
             h("label", { className: "score-field n-field negative-score", title: "N score" }, h("input", { className: "category-score-input n-score", type: "text", inputMode: "numeric", value: category.nScore, onChange: (event) => updateCategory(category.key, "nScore", event.target.value), onKeyDown: (event) => event.stopPropagation() })),
             h(
               "div",
