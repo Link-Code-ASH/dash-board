@@ -12456,7 +12456,7 @@ body.mindfold-pointer-dragging * {
   background: rgba(194, 208, 226, 0.62);
   color: #26364b;
   box-shadow: inset 0 -1px 0 rgba(85, 105, 132, 0.2);
-  cursor: none;
+  cursor: text;
   outline: 0;
 }
 
@@ -13615,4 +13615,101 @@ body.mindfold-pointer-dragging * {
 .app-shell:not(.effective-display-mobile) .score-toggle-bad.active .score-toggle-mark {
   border-right-color: #8b3449 !important;
   border-bottom-color: #8b3449 !important;
+}
+
+/* Final score palette: preserve calm green/rose distinction after shared glass rules. */
+.app-shell:not(.effective-display-mobile) .score-panel .score-toggle-button.score-toggle-good {
+  border-color: rgba(91, 157, 130, 0.34) !important;
+  background:
+    linear-gradient(145deg, rgba(237, 249, 243, 0.96), rgba(199, 228, 215, 0.82)),
+    #dcece5 !important;
+  background-image: linear-gradient(145deg, rgba(237, 249, 243, 0.96), rgba(199, 228, 215, 0.82)) !important;
+  box-shadow:
+    4px 5px 11px rgba(67, 105, 90, 0.12),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.84) !important;
+}
+
+.app-shell:not(.effective-display-mobile) .score-panel .score-toggle-button.score-toggle-bad {
+  border-color: rgba(178, 112, 127, 0.32) !important;
+  background:
+    linear-gradient(145deg, rgba(252, 241, 244, 0.96), rgba(233, 205, 212, 0.82)),
+    #eee0e4 !important;
+  background-image: linear-gradient(145deg, rgba(252, 241, 244, 0.96), rgba(233, 205, 212, 0.82)) !important;
+  box-shadow:
+    4px 5px 11px rgba(112, 72, 83, 0.11),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.84) !important;
+}
+
+.app-shell:not(.effective-display-mobile) .score-panel .score-toggle-button.score-toggle-good.active {
+  border-color: rgba(72, 151, 118, 0.52) !important;
+  background:
+    linear-gradient(145deg, rgba(224, 246, 236, 0.98), rgba(156, 213, 188, 0.86)),
+    #c4e3d4 !important;
+  background-image: linear-gradient(145deg, rgba(224, 246, 236, 0.98), rgba(156, 213, 188, 0.86)) !important;
+  box-shadow:
+    inset 3px 3px 7px rgba(67, 120, 99, 0.12),
+    0 0 12px rgba(102, 187, 153, 0.16) !important;
+}
+
+.app-shell:not(.effective-display-mobile) .score-panel .score-toggle-button.score-toggle-bad.active {
+  border-color: rgba(176, 92, 112, 0.48) !important;
+  background:
+    linear-gradient(145deg, rgba(250, 232, 237, 0.98), rgba(224, 168, 183, 0.84)),
+    #e9c4ce !important;
+  background-image: linear-gradient(145deg, rgba(250, 232, 237, 0.98), rgba(224, 168, 183, 0.84)) !important;
+  box-shadow:
+    inset 3px 3px 7px rgba(132, 72, 87, 0.11),
+    0 0 12px rgba(197, 112, 133, 0.15) !important;
+}
+
+/* Weekly Overview uses the same decisive check geometry as Total Score. */
+.app-shell:not(.effective-display-mobile) .history-panel .history-attempt {
+  display: inline-grid !important;
+  place-items: center !important;
+  overflow: visible !important;
+  border: 1px solid rgba(117, 133, 153, 0.22) !important;
+  border-radius: 8px !important;
+  color: transparent !important;
+  background: rgba(233, 239, 246, 0.68) !important;
+  box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.78) !important;
+  font-size: 0 !important;
+}
+
+.app-shell:not(.effective-display-mobile) .history-panel .history-attempt::before {
+  content: none !important;
+}
+
+.app-shell:not(.effective-display-mobile) .history-panel .history-attempt.checked {
+  border-color: rgba(78, 148, 116, 0.42) !important;
+  background: linear-gradient(145deg, rgba(229, 247, 238, 0.96), rgba(163, 215, 191, 0.82)) !important;
+  box-shadow:
+    3px 4px 9px rgba(61, 115, 93, 0.12),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.84) !important;
+}
+
+.app-shell:not(.effective-display-mobile) .history-panel .history-attempt.history-penalty.checked {
+  border-color: rgba(176, 91, 111, 0.4) !important;
+  background: linear-gradient(145deg, rgba(251, 235, 239, 0.96), rgba(226, 174, 188, 0.82)) !important;
+  box-shadow:
+    3px 4px 9px rgba(127, 67, 82, 0.11),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.84) !important;
+}
+
+.app-shell:not(.effective-display-mobile) .history-panel .history-attempt.checked::before {
+  content: "" !important;
+  display: block !important;
+  width: 8px !important;
+  height: 15px !important;
+  margin-top: -3px !important;
+  border: 0 !important;
+  border-right: 4px solid #286f58 !important;
+  border-bottom: 4px solid #286f58 !important;
+  border-radius: 1px !important;
+  background: transparent !important;
+  transform: rotate(45deg) !important;
+}
+
+.app-shell:not(.effective-display-mobile) .history-panel .history-attempt.history-penalty.checked::before {
+  border-right-color: #8b3d51 !important;
+  border-bottom-color: #8b3d51 !important;
 }

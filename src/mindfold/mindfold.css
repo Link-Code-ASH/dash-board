@@ -68,25 +68,25 @@
 
 .mf2-gutter {
   position: relative;
-  flex: 0 0 28px;
+  flex: 0 0 32px;
   align-self: stretch;
   min-height: 34px;
-  cursor: grab;
+  cursor: default;
   touch-action: none;
 }
 
 .mf2-gutter:active {
-  cursor: grabbing;
+  cursor: default;
 }
 
 .mf2-menu-button {
   position: absolute;
-  top: calc(50% - 12px);
-  left: 2px;
+  top: calc(50% - 15px);
+  left: 1px;
   display: grid;
   place-items: center;
-  width: 24px;
-  height: 24px;
+  width: 30px;
+  height: 30px;
   padding: 0;
   border: 0;
   border-radius: 5px;
@@ -94,7 +94,7 @@
   color: rgba(58, 68, 81, 0.52);
   opacity: 0;
   transform: none;
-  cursor: grab;
+  cursor: default;
   transition: opacity 90ms ease, background-color 90ms ease, color 90ms ease;
 }
 
@@ -138,11 +138,11 @@
 }
 
 .mf2-menu-button:hover {
-  cursor: none;
+  cursor: default;
 }
 
 .mf2-menu-button:active {
-  cursor: grabbing;
+  cursor: default;
 }
 
 .mf2-rich-editor {
@@ -154,6 +154,9 @@
   border-radius: 0;
   background: transparent;
   color: inherit;
+  cursor: text;
+  user-select: text;
+  -webkit-user-select: text;
   font: inherit;
   font-size: 1.12rem;
   font-weight: 300;
@@ -186,7 +189,7 @@
 .mf2-mask:hover {
   color: inherit;
   background: rgba(40, 46, 55, 0.08);
-  cursor: none;
+  cursor: text;
 }
 
 .mf2-toggle-button,
@@ -314,13 +317,8 @@
 }
 
 .mf2-children::before {
-  content: "";
-  position: absolute;
-  top: 2px;
-  bottom: 2px;
-  left: 7px;
-  width: 1px;
-  background: rgba(76, 91, 108, 0.12);
+  content: none;
+  display: none;
 }
 
 .mf2-columns {
@@ -351,25 +349,38 @@
 .mf2-block-shell.drop-after::after {
   content: "";
   position: absolute;
-  left: 28px;
-  right: 4px;
+  left: 32px;
+  right: 2px;
   z-index: 5;
-  height: 2px;
-  border-radius: 2px;
-  background: rgba(58, 104, 151, 0.72);
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(67, 115, 165, 0.88);
+  box-shadow:
+    -7px 0 0 -1px rgba(67, 115, 165, 0.88),
+    0 0 0 3px rgba(94, 139, 187, 0.1),
+    0 3px 9px rgba(56, 96, 139, 0.2);
 }
 
 .mf2-block-shell.drop-before::before {
-  top: -1px;
+  top: -2px;
 }
 
 .mf2-block-shell.drop-after::after {
-  bottom: -1px;
+  bottom: -2px;
 }
 
 .mf2-block-shell.drop-inside > .mf2-block-row {
-  background: rgba(91, 133, 174, 0.1);
-  box-shadow: inset 0 0 0 1px rgba(63, 105, 148, 0.3);
+  width: calc(100% - 14px);
+  background: linear-gradient(90deg, rgba(178, 208, 235, 0.38), rgba(222, 235, 247, 0.2));
+  box-shadow:
+    inset 4px 0 0 rgba(69, 119, 169, 0.72),
+    inset 0 0 0 1px rgba(73, 116, 160, 0.24),
+    0 5px 14px rgba(59, 91, 126, 0.1);
+  transform: translateX(14px);
+}
+
+.mf2-block-row {
+  transition: background-color 100ms ease, box-shadow 100ms ease, transform 100ms ease, width 100ms ease;
 }
 
 .mf2-marquee {
@@ -933,7 +944,11 @@ body.mf2-dragging .mf2-block-shell.is-selected > .mf2-block-row {
   }
 
   .mf2-gutter {
-    flex-basis: 25px;
+    flex-basis: 30px;
+  }
+
+  .mf2-menu-button {
+    left: 0;
   }
 
   .mf2-rich-editor {

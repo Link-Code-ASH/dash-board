@@ -632,7 +632,7 @@ html body #root .app-shell .schedule-duty-group > label {
 .mindfold-notion-view .mindfold-block-row {
   min-height: 38px;
   padding-block: 0;
-  cursor: grab;
+  cursor: default;
   border-color: transparent !important;
   background: transparent !important;
   box-shadow: none !important;
@@ -652,6 +652,28 @@ html body #root .app-shell .schedule-duty-group > label {
   min-height: 32px;
   padding-block: 4px !important;
   cursor: text;
+  user-select: text !important;
+  -webkit-user-select: text !important;
+  -webkit-touch-callout: default;
+}
+
+.mindfold-notion-view .mindfold-rich-editor * {
+  user-select: text !important;
+  -webkit-user-select: text !important;
+}
+
+.mindfold-notion-view .mindfold-block-menu-trigger {
+  cursor: default !important;
+  touch-action: none;
+}
+
+.mindfold-notion-view .mindfold-block-menu-trigger:active {
+  cursor: default !important;
+}
+
+.mindfold-notion-view .mindfold-block-menu-trigger *,
+.mindfold-notion-view .mindfold-menu-glyph {
+  cursor: default !important;
 }
 
 .mindfold-notion-view .mindfold-notion-block.dragging {
@@ -2699,6 +2721,76 @@ html body #root .app-shell .history-panel .history-flag .flag-glyph {
     padding-inline: 3px !important;
     overflow: hidden !important;
   }
+}
+
+/* Mobile keeps the same pastel score semantics and strong check geometry. */
+.effective-display-mobile .mobile-score-checks.icon-only .mobile-score-check.good {
+  border-color: rgba(84, 155, 126, 0.4) !important;
+  background: linear-gradient(145deg, rgba(236, 249, 243, 0.96), rgba(198, 228, 214, 0.82)) !important;
+  box-shadow: 3px 4px 9px rgba(66, 108, 91, 0.11), inset 1px 1px 0 rgba(255, 255, 255, 0.86) !important;
+}
+
+.effective-display-mobile .mobile-score-checks.icon-only .mobile-score-check.bad {
+  border-color: rgba(177, 107, 123, 0.38) !important;
+  background: linear-gradient(145deg, rgba(252, 241, 244, 0.96), rgba(233, 204, 212, 0.82)) !important;
+  box-shadow: 3px 4px 9px rgba(111, 71, 82, 0.1), inset 1px 1px 0 rgba(255, 255, 255, 0.86) !important;
+}
+
+.effective-display-mobile .mobile-score-checks.icon-only .mobile-score-check.good.active {
+  border-color: rgba(68, 147, 113, 0.54) !important;
+  background: linear-gradient(145deg, rgba(224, 246, 236, 0.98), rgba(155, 212, 187, 0.88)) !important;
+  box-shadow: inset 3px 3px 7px rgba(66, 119, 98, 0.12), 0 0 11px rgba(101, 185, 151, 0.16) !important;
+}
+
+.effective-display-mobile .mobile-score-checks.icon-only .mobile-score-check.bad.active {
+  border-color: rgba(174, 88, 108, 0.52) !important;
+  background: linear-gradient(145deg, rgba(250, 232, 237, 0.98), rgba(224, 167, 182, 0.86)) !important;
+  box-shadow: inset 3px 3px 7px rgba(130, 70, 85, 0.11), 0 0 11px rgba(195, 109, 130, 0.15) !important;
+}
+
+.effective-display-mobile .history-panel .history-attempt {
+  display: inline-grid !important;
+  place-items: center !important;
+  overflow: visible !important;
+  border: 1px solid rgba(117, 133, 153, 0.22) !important;
+  border-radius: 6px !important;
+  color: transparent !important;
+  background: rgba(233, 239, 246, 0.68) !important;
+  box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.78) !important;
+  font-size: 0 !important;
+}
+
+.effective-display-mobile .history-panel .history-attempt::before {
+  content: none !important;
+}
+
+.effective-display-mobile .history-panel .history-attempt.checked {
+  border-color: rgba(78, 148, 116, 0.42) !important;
+  background: linear-gradient(145deg, rgba(229, 247, 238, 0.96), rgba(163, 215, 191, 0.84)) !important;
+}
+
+.effective-display-mobile .history-panel .history-attempt.history-penalty.checked {
+  border-color: rgba(176, 91, 111, 0.4) !important;
+  background: linear-gradient(145deg, rgba(251, 235, 239, 0.96), rgba(226, 174, 188, 0.84)) !important;
+}
+
+.effective-display-mobile .history-panel .history-attempt.checked::before {
+  content: "" !important;
+  display: block !important;
+  width: 6px !important;
+  height: 11px !important;
+  margin-top: -2px !important;
+  border: 0 !important;
+  border-right: 3px solid #286f58 !important;
+  border-bottom: 3px solid #286f58 !important;
+  border-radius: 1px !important;
+  background: transparent !important;
+  transform: rotate(45deg) !important;
+}
+
+.effective-display-mobile .history-panel .history-attempt.history-penalty.checked::before {
+  border-right-color: #8b3d51 !important;
+  border-bottom-color: #8b3d51 !important;
 }
 
 /* Weekly schedule rows use visible dividers; Enter remains a normal line break. */

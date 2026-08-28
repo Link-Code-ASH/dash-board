@@ -3490,6 +3490,7 @@ function MindfoldView({ addBlock, addTab, clearMasks, indentBlock, maskSelection
         tabIndex: 0,
         "aria-label": "Mindfold block text",
         "data-placeholder": block.toggle ? "토글 제목" : "내용 입력...",
+        onPointerDown: (event) => event.stopPropagation(),
         onFocus: () => {
           setEditingBlockId(block.id);
           setActiveBlock(block.id);
@@ -3873,8 +3874,8 @@ function MindfoldView({ addBlock, addTab, clearMasks, indentBlock, maskSelection
         h("button", {
           className: `mindfold-block-menu-trigger ${isMenuOpen ? "active" : ""}`,
           type: "button",
-          title: "블록 메뉴",
-          "aria-label": "블록 메뉴",
+          title: "드래그해서 블록 이동 · 클릭해서 메뉴 열기",
+          "aria-label": "블록 이동 및 메뉴",
           "aria-expanded": isMenuOpen,
           onPointerDown: (event) => beginPointerDrag(event, block.id),
           onMouseDown: (event) => {
@@ -3957,10 +3958,6 @@ function MindfoldView({ addBlock, addTab, clearMasks, indentBlock, maskSelection
           "--mindfold-text-color": mindfoldTextColors[block.color],
           "--mindfold-columns": block.columns,
           "--mindfold-column": layoutColumn == null ? undefined : layoutColumn + 1,
-        },
-        onPointerDownCapture: (event) => {
-          if (event.target.closest?.("button, .mindfold-block-menu, .mindfold-rich-editor")) return;
-          beginPointerDrag(event, block.id);
         },
       },
       ...(block.columns > 1
