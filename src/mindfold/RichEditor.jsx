@@ -77,10 +77,10 @@ function paintEditor(root, block) {
     fragment.appendChild(span);
   }
   root.replaceChildren(fragment);
-  root.dataset.empty = block.text ? "false" : "true";
 }
 
 const RichEditor = forwardRef(function RichEditor({
+  ariaLabel = "블록 내용",
   block,
   onBlur,
   onCompositionEnd,
@@ -90,7 +90,6 @@ const RichEditor = forwardRef(function RichEditor({
   onKeyDown,
   onPointerDown,
   onSelectionChange,
-  placeholder,
 }, forwardedRef) {
   const rootRef = useRef(null);
   const focusedRef = useRef(false);
@@ -123,7 +122,6 @@ const RichEditor = forwardRef(function RichEditor({
       const root = rootRef.current;
       if (!root) return;
       root.textContent = text;
-      root.dataset.empty = text ? "false" : "true";
       setSelectionOffsets(root, offset);
     },
   }), []);
@@ -143,11 +141,9 @@ const RichEditor = forwardRef(function RichEditor({
 
   return (
     <div
-      aria-label={placeholder}
+      aria-label={ariaLabel}
       className="mf2-rich-editor"
       contentEditable
-      data-empty={block.text ? "false" : "true"}
-      data-placeholder={placeholder}
       onBlur={(event) => {
         focusedRef.current = false;
         paintEditor(event.currentTarget, blockRef.current);
@@ -168,7 +164,6 @@ const RichEditor = forwardRef(function RichEditor({
         onFocus?.(event);
       }}
       onInput={(event) => {
-        event.currentTarget.dataset.empty = event.currentTarget.textContent ? "false" : "true";
         if (!composingRef.current) onInput?.(event.currentTarget.textContent || "", getSelectionOffsets(event.currentTarget));
       }}
       onKeyDown={(event) => onKeyDown?.(event, getSelectionOffsets(event.currentTarget))}
