@@ -1377,13 +1377,6 @@ function App() {
     });
   };
 
-  const toggleFlaggedDate = () => {
-    saveData((draft) => {
-      draft.flaggedDate = draft.flaggedDate === selectedDate ? "" : selectedDate;
-      return draft;
-    });
-  };
-
   const resetCarry = () => {
     saveData((draft) => {
       draft.carryResetDate = selectedDate;
@@ -2365,7 +2358,7 @@ function App() {
       updatePreset: updateSchoolPreset,
       updateSchoolWeeklyPlan,
     }),
-    h(HistoryPanel, { carryPenalties: data.carryPenalties, flaggedDate: data.flaggedDate, getDayTotal, onToggleFlag: toggleFlaggedDate, routineAttempts: data.routineAttempts, selectedDate }),
+    h(HistoryPanel, { carryPenalties: data.carryPenalties, getDayTotal, routineAttempts: data.routineAttempts, selectedDate }),
   );
 
   const mobileDashboardView = h(MobileDashboardView, {
@@ -2381,7 +2374,7 @@ function App() {
       routine: [
         h(MobileScorePanel, { key: "score", carryPenaltyMarked, entryCount: entries.length, onAdjustCarry: adjustCarry, onResetCarry: resetCarry, onToggleAttempt: toggleRoutineAttempt, onToggleCarryPenalty: toggleCarryPenalty, routineTried, scoreInfo }),
         h(TodayPlanPanel, { key: "today-plan", categories: data.categories, entries, mobile: true, presets: data.presets, schoolPresets: data.schoolPresets, schoolWeeklyPlan: data.schoolWeeklyPlan, selectedDate, weekday, weeklyPlan: data.weeklyPlan, toggleChoice }),
-        h(HistoryPanel, { key: "history", carryPenalties: data.carryPenalties, flaggedDate: data.flaggedDate, getDayTotal, onToggleFlag: toggleFlaggedDate, routineAttempts: data.routineAttempts, selectedDate }),
+        h(HistoryPanel, { key: "history", carryPenalties: data.carryPenalties, getDayTotal, routineAttempts: data.routineAttempts, selectedDate }),
       ],
       calendar: [
         h(MobileCalendarPanel, { key: "calendar", calendar: data.calendar, calendarDuties: data.calendarDuties, selectedDate, setSelectedDate, toggleCalendarDuty, updateCalendarNote }),
@@ -2713,7 +2706,7 @@ function MobileMemoPanel({ activeMemoId, addMemoCard, cards, removeMemoCard, set
       "div",
       { className: "mobile-memo-toolbar" },
       h("button", { type: "button", onClick: addMemoCard }, "+ Memo"),
-      h("button", { className: "danger", type: "button", disabled: cards.length <= 1, onClick: () => removeMemoCard(activeCard.id) }, "삭제"),
+      h("button", { className: "danger", type: "button", disabled: cards.length <= 1, title: "Delete memo", "aria-label": "Delete memo", onClick: () => removeMemoCard(activeCard.id) }, "\u00d7"),
     ),
     h(
       "div",
@@ -5091,26 +5084,15 @@ function WeeklyPanel({ addCategory, categories, isOpen, moveCategory, onToggle, 
   });
 }
 
-function HistoryPanel({ carryPenalties, flaggedDate, getDayTotal, onToggleFlag, routineAttempts, selectedDate }) {
+function HistoryPanel({ carryPenalties, getDayTotal, routineAttempts, selectedDate }) {
   const days = Array.from({ length: 7 }, (_, index) => {
     const date = new Date(`${selectedDate}T00:00:00`);
     date.setDate(date.getDate() + index - 3);
     const key = toDateKey(date);
     const penalized = Boolean(carryPenalties?.[key]);
-    return { key, flagged: key === flaggedDate, penalized, total: getDayTotal(key), tried: !penalized && Boolean(routineAttempts?.[key]) };
+    return { key, penalized, total: getDayTotal(key), tried: !penalized && Boolean(routineAttempts?.[key]) };
   });
   const scoreScaleMax = 25;
-  let uncheckedSinceFlag = 0;
-  if (flaggedDate && flaggedDate < selectedDate) {
-    let cursor = flaggedDate;
-    let guard = 0;
-    while (cursor < selectedDate && guard < 10000) {
-      if (!routineAttempts?.[cursor]) uncheckedSinceFlag += 1;
-      cursor = addDays(cursor, 1);
-      guard += 1;
-    }
-  }
-  const flagSummary = flaggedDate ? `Unchecked ${uncheckedSinceFlag} days` : "Set a flag";
   return h(
     "section",
     { className: "history-panel", "aria-label": "Last 7 days" },
@@ -5118,23 +5100,6 @@ function HistoryPanel({ carryPenalties, flaggedDate, getDayTotal, onToggleFlag, 
       "div",
       { className: "section-heading history-heading" },
       h("h2", null, "Weekly Overview"),
-      h(
-        "div",
-        { className: "history-heading-actions" },
-        h("span", null, flagSummary),
-        h(
-          "button",
-          {
-            className: `flag-button ${flaggedDate === selectedDate ? "active" : ""}`,
-            type: "button",
-            title: flaggedDate === selectedDate ? "Remove flag from selected date" : "Flag selected date",
-            "aria-label": flaggedDate === selectedDate ? "Remove flag from selected date" : "Flag selected date",
-            "aria-pressed": String(flaggedDate === selectedDate),
-            onClick: onToggleFlag,
-          },
-          h("span", { className: "flag-glyph", "aria-hidden": "true" }),
-        ),
-      ),
     ),
     h(
       "div",
@@ -5146,11 +5111,6 @@ function HistoryPanel({ carryPenalties, flaggedDate, getDayTotal, onToggleFlag, 
           h(
             "div",
             { className: `history-fill ${day.total > 0 ? "plus" : day.total < 0 ? "minus" : ""}`, style: { height: `${Math.max(16, (Math.min(scoreScaleMax, Math.abs(day.total)) / scoreScaleMax) * 112)}px` } },
-            h(
-              "span",
-              { className: `history-flag ${day.flagged ? "active" : ""}`, title: day.flagged ? "Flagged date" : "" },
-              day.flagged ? h("span", { className: "flag-glyph", "aria-hidden": "true" }) : null,
-            ),
             h("span", { className: `history-attempt ${day.penalized ? "history-penalty checked" : day.tried ? "checked" : ""}`, title: day.penalized ? "Carry -2 marked" : day.tried ? "Routine tried" : "Not checked" }, day.penalized || day.tried ? "\u2713" : ""),
           ),
           h("span", { className: "history-date" }, day.key.slice(5).replace("-", ".")),
