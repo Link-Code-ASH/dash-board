@@ -2686,3 +2686,20 @@ html body #root .app-shell .history-panel .history-flag .flag-glyph {
   opacity: 1;
   outline: none;
 }
+/* Shared memo formatting controls keep their own track beside the memo tabs. */
+html body #root .memo-stack-layout { grid-template-columns: minmax(0, 1fr) auto; }
+html body #root .memo-stack-layout > .memo-stack { grid-column: 1 / -1; }
+html body #root .memo-stack-layout > .memo-index { grid-column: 1; min-width: 0; }
+html body #root .memo-stack-layout > .memo-format-toolbar { grid-row: 1; grid-column: 2; }
+html body #root .memo-format-toolbar { display: flex; align-items: center; gap: 5px; flex-shrink: 0; margin-left: auto; }
+html body #root .memo-format-toolbar button { display: grid; place-items: center; width: 30px; height: 30px; min-width: 30px; padding: 0; border: 1px solid rgba(115,130,148,.2); border-radius: 6px; background: rgba(255,255,255,.55); color: #26303b; box-shadow: 2px 2px 5px rgba(60,75,95,.1), inset 1px 1px 2px #fff; cursor: pointer; }
+html body #root .memo-format-toolbar button:hover { background: rgba(255,255,255,.85); }
+html body #root .memo-format-toolbar button span { width: 13px; height: 13px; border-radius: 50%; }
+html body #root .memo-format-toolbar button b { font-family: inherit; font-weight: 700; font-size: 17px; line-height: 1; }
+html body #root .memo-rich-editor { white-space: pre-wrap; overflow-wrap: anywhere; overflow-y: auto; outline: none; cursor: text; box-sizing: border-box; }
+html body #root .memo-rich-editor span { font-size: inherit; font-family: inherit; line-height: inherit; }
+html body #root .mobile-memo-toolbar { flex-wrap: wrap; }
+@media (max-width: 480px) {
+  html body #root .memo-format-toolbar { gap: 4px; }
+  html body #root .memo-format-toolbar button { width: 28px; min-width: 28px; height: 30px; }
+}

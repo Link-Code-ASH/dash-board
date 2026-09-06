@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import MemoEditor, { MemoFormatToolbar } from "./MemoEditor.jsx";
 import MindfoldV2View from "./mindfold/MindfoldView.jsx";
 import { normalizeMindfold as normalizeMindfoldV2 } from "./mindfold/model.js";
 
@@ -189,6 +190,7 @@ function normalizeMemos(memos) {
     .filter((card) => card && card.id)
     .map((card, index) => ({
       id: card.id,
+      textFormats: card.textFormats && typeof card.textFormats === "object" ? card.textFormats : {},
       title: String(card.title == null ? `Memo ${index + 1}` : card.title).slice(0, 32),
       leftTitle: String(card.leftTitle || "").slice(0, 48),
       leftText: String(card.leftText ?? card.text ?? ""),
@@ -1014,7 +1016,7 @@ function normalizeSyncId(value) {
 }
 
 function panelClickIsInteractive(target) {
-  return Boolean(target.closest("button, input, textarea, select, label, a, summary, details, .no-panel-toggle"));
+  return Boolean(target.closest("button, input, textarea, select, label, a, summary, details, [contenteditable='true'], .no-panel-toggle"));
 }
 
 function CollapsiblePanel({ children, className, controls, description, isOpen, onToggle, title }) {
@@ -1440,6 +1442,10 @@ function App() {
     saveData((draft) => {
       const card = draft.memos.cards.find((item) => item.id === id);
       if (!card) return draft;
+      if (field === "formattedText") {
+        card[value.field] = value.text;
+        card.textFormats = { ...card.textFormats, [value.field]: value.marks };
+      }
       if (field === "title") card.title = value;
       if (field === "leftTitle") card.leftTitle = value;
       if (field === "leftText") card.leftText = value;
@@ -2733,6 +2739,7 @@ function MobileMemoPanel({ activeMemoId, addMemoCard, cards, removeMemoCard, set
       { className: "mobile-memo-toolbar" },
       h("button", { type: "button", onClick: addMemoCard }, "+ Memo"),
       h("button", { className: "danger", type: "button", disabled: cards.length <= 1, onClick: () => removeMemoCard(activeCard.id) }, "삭제"),
+      h(MemoFormatToolbar),
     ),
     h(
       "div",
@@ -2741,7 +2748,7 @@ function MobileMemoPanel({ activeMemoId, addMemoCard, cards, removeMemoCard, set
         "div",
         { className: "mobile-memo-area", key },
         h("span", { className: "mobile-memo-number" }, String(index + 1).padStart(2, "0")),
-        h(MemoArea, { cardId: activeCard.id, field, titleField, titleValue: activeCard[titleField] || "", updateMemoCard, value: activeCard[field] || "" }),
+        h(MemoArea, { cardId: activeCard.id, field, marks: activeCard.textFormats?.[field], titleField, titleValue: activeCard[titleField] || "", updateMemoCard, value: activeCard[field] || "" }),
       )),
     ),
     h("div", { className: "mobile-memo-dots", "aria-label": "Memo cards" }, cards.map((card, index) => h("button", { className: index === activeIndex ? "active" : "", type: "button", key: card.id, "aria-label": `Memo ${index + 1}`, onClick: () => setActiveMemo(card.id) }))),
@@ -4471,6 +4478,7 @@ function MemoPanel({ activeMemoId, addMemoCard, cards, moveMemoCard, removeMemoC
     h(
       "div",
       { className: "memo-stack-layout" },
+      h(MemoFormatToolbar),
       h(
         "div",
         {
@@ -4525,6 +4533,7 @@ function MemoPanel({ activeMemoId, addMemoCard, cards, moveMemoCard, removeMemoC
                     h(MemoArea, {
                       cardId: card.id,
                       field: area.field,
+                      marks: card.textFormats?.[area.field],
                       key: area.key,
                       titleField: area.titleField,
                       titleValue: area.titleValue,
@@ -4579,13 +4588,14 @@ function MemoPanel({ activeMemoId, addMemoCard, cards, moveMemoCard, removeMemoC
   );
 }
 
-function MemoArea({ cardId, field, titleField, titleValue, updateMemoCard, value }) {
+function MemoArea({ cardId, field, marks = [], titleField, titleValue, updateMemoCard, value }) {
   const [quickMemo, setQuickMemo] = useState("");
   const addQuickMemo = () => {
     const text = quickMemo.trim();
     if (!text) return;
     const taggedText = text.startsWith("#") ? text : `# ${text}`;
-    updateMemoCard(cardId, field, value ? `${taggedText}\n${value}` : taggedText);
+    const prefix = value ? `${taggedText}\n` : taggedText;
+    updateMemoCard(cardId, "formattedText", { field, text: prefix + value, marks: marks.map(mark => ({ ...mark, start: mark.start + prefix.length, end: mark.end + prefix.length })) });
     setQuickMemo("");
   };
   return h(
@@ -4614,12 +4624,12 @@ function MemoArea({ cardId, field, titleField, titleValue, updateMemoCard, value
         }
       },
     }),
-    h("textarea", {
-      className: "memo-large-textarea",
-      placeholder: "Write freely...",
+    h(MemoEditor, {
       value,
-      onChange: (event) => updateMemoCard(cardId, field, event.target.value),
-      onKeyDown: (event) => event.stopPropagation(),
+      marks,
+      getSelection: getMindfoldEditableSelection,
+      setSelection: setMindfoldEditableSelection,
+      onChange: (text, nextMarks) => updateMemoCard(cardId, "formattedText", { field, text, marks: nextMarks }),
     }),
   );
 }
