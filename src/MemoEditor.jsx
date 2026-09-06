@@ -3,6 +3,16 @@ import { adjustRanges } from "./mindfold/model.js";
 
 export const memoColors = { red: "#c53636", blue: "#2563bd", green: "#23794b", orange: "#bc570c" };
 
+function selectionIsFullyFormatted(ranges, start, end, type) {
+  let coveredUntil = start;
+  for (const range of ranges.filter(range => range.type === type).sort((a, b) => a.start - b.start)) {
+    if (range.start > coveredUntil) break;
+    if (range.end > coveredUntil) coveredUntil = range.end;
+    if (coveredUntil >= end) return true;
+  }
+  return false;
+}
+
 export function MemoFormatToolbar() {
   const apply = (format) => {
     const selection = window.getSelection();
@@ -11,8 +21,9 @@ export function MemoFormatToolbar() {
     editor?.dispatchEvent(new CustomEvent("memo-format", { detail: format }));
   };
   return <div className="memo-format-toolbar" role="toolbar" aria-label="메모 텍스트 서식" onPointerDown={(event) => { event.preventDefault(); event.stopPropagation(); }}>
-    <button type="button" title="굵게" aria-label="굵게" onClick={() => apply("bold")}><b>B</b></button>
-    {Object.entries(memoColors).map(([key, color], index) => <button type="button" key={key} title={["빨강", "파랑", "초록", "주황"][index]} aria-label={["빨강", "파랑", "초록", "주황"][index]} onClick={() => apply(key)}><span style={{ backgroundColor: color }} /></button>)}
+    <button className="memo-format-button memo-format-bold" type="button" title="굵게" aria-label="굵게" onClick={() => apply("bold")}><b>B</b></button>
+    <span className="memo-format-divider" aria-hidden="true" />
+    {Object.entries(memoColors).map(([key, color], index) => <button className={`memo-format-button memo-format-color ${key}`} type="button" key={key} title={["빨강", "파랑", "초록", "주황"][index]} aria-label={["빨강", "파랑", "초록", "주황"][index]} onClick={() => apply(key)}><span style={{ "--memo-ink": color }} /></button>)}
   </div>;
 }
 
@@ -29,8 +40,10 @@ export default function MemoEditor({ value, marks = [], onChange, getSelection, 
       const span = document.createElement("span");
       const active = ranges.filter(r => r.start <= start && r.end >= points[i+1]);
       span.textContent = text.slice(start, points[i+1]);
-      span.style.fontWeight = active.some(r => r.type === "bold") ? "700" : "300";
-      span.style.color = memoColors[active.findLast(r => memoColors[r.type])?.type] || "inherit";
+      const isBold = active.some(range => range.type === "bold");
+      const colorType = active.findLast(range => memoColors[range.type])?.type;
+      span.className = `memo-rich-fragment${isBold ? " is-bold" : ""}`;
+      span.style.color = colorType ? memoColors[colorType] : "";
       fragment.append(span);
     });
     el.replaceChildren(fragment);
@@ -48,12 +61,12 @@ export default function MemoEditor({ value, marks = [], onChange, getSelection, 
       if (start === end) return;
       const { value: text, marks: ranges } = current.current;
       const type = event.detail;
-      const bold = ranges.filter(r => r.type === "bold").sort((a,b) => a.start-b.start);
-      let covered = start;
-      for (const r of bold) if (r.start <= covered && r.end > covered) covered = r.end;
-      const remove = type === "bold" && covered >= end;
+      const remove = selectionIsFullyFormatted(ranges, start, end, type);
+      const clearsType = type === "bold"
+        ? (range) => range.type === "bold"
+        : (range) => Boolean(memoColors[range.type]);
       const next = ranges.flatMap(r => {
-        if ((type === "bold" ? r.type !== "bold" : !memoColors[r.type]) || r.end <= start || r.start >= end) return [r];
+        if (!clearsType(r) || r.end <= start || r.start >= end) return [r];
         return [...(r.start < start ? [{ ...r, end: start }] : []), ...(r.end > end ? [{ ...r, start: end }] : [])];
       });
       if (!remove) next.push({ start, end, type });

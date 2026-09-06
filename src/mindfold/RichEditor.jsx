@@ -1,4 +1,5 @@
 import React, { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
+import { TEXT_COLORS } from "./model.js";
 
 function getSelectionOffsets(root) {
   const selection = window.getSelection();
@@ -49,6 +50,17 @@ function setSelectionOffsets(root, start, end = start) {
   selection.addRange(range);
 }
 
+function getElementOffsets(root, element) {
+  if (!root || !element || !root.contains(element)) return null;
+  const startRange = document.createRange();
+  startRange.selectNodeContents(root);
+  startRange.setEndBefore(element);
+  const endRange = document.createRange();
+  endRange.selectNodeContents(root);
+  endRange.setEndAfter(element);
+  return { start: startRange.toString().length, end: endRange.toString().length };
+}
+
 function paintEditor(root, block) {
   if (!root) return;
   const boundaries = new Set([0, block.text.length]);
@@ -64,6 +76,7 @@ function paintEditor(root, block) {
     if (end <= start) continue;
     const text = block.text.slice(start, end);
     const markTypes = block.marks.filter((mark) => mark.start <= start && mark.end >= end).map((mark) => mark.type);
+    const colorType = markTypes.findLast((type) => type.startsWith("color-"));
     const masked = block.masks.some((mask) => mask.start <= start && mask.end >= end);
     if (!markTypes.length && !masked) {
       fragment.appendChild(document.createTextNode(text));
@@ -74,6 +87,7 @@ function paintEditor(root, block) {
     if (markTypes.includes("bold")) span.classList.add("mf2-inline-bold");
     if (markTypes.includes("italic")) span.classList.add("mf2-inline-italic");
     if (masked) span.classList.add("mf2-mask");
+    if (colorType) span.style.color = TEXT_COLORS[colorType.slice("color-".length)] || "";
     fragment.appendChild(span);
   }
   root.replaceChildren(fragment);
@@ -88,6 +102,7 @@ const RichEditor = forwardRef(function RichEditor({
   onFocus,
   onInput,
   onKeyDown,
+  onContextMenu,
   onPointerDown,
   onSelectionChange,
 }, forwardedRef) {
@@ -167,6 +182,10 @@ const RichEditor = forwardRef(function RichEditor({
         if (!composingRef.current) onInput?.(event.currentTarget.textContent || "", getSelectionOffsets(event.currentTarget));
       }}
       onKeyDown={(event) => onKeyDown?.(event, getSelectionOffsets(event.currentTarget))}
+      onContextMenu={(event) => {
+        const maskedElement = event.target.closest?.(".mf2-mask");
+        onContextMenu?.(event, getSelectionOffsets(event.currentTarget), getElementOffsets(event.currentTarget, maskedElement));
+      }}
       onPointerDown={onPointerDown}
       ref={rootRef}
       role="textbox"

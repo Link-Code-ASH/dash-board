@@ -2930,20 +2930,22 @@ html body #root .app-shell .history-panel .history-flag .flag-glyph {
   opacity: 1;
   outline: none;
 }
-/* Shared memo formatting controls keep their own track beside the memo tabs. */
-html body #root .memo-stack-layout { grid-template-columns: minmax(0, 1fr) auto; }
-html body #root .memo-stack-layout > .memo-stack { grid-column: 1 / -1; }
-html body #root .memo-stack-layout > .memo-index { grid-column: 1; min-width: 0; }
-html body #root .memo-stack-layout > .memo-format-toolbar { grid-row: 1; grid-column: 2; }
-html body #root .memo-format-toolbar { display: flex; align-items: center; gap: 5px; flex-shrink: 0; margin-left: auto; }
-html body #root .memo-format-toolbar button { display: grid; place-items: center; width: 30px; height: 30px; min-width: 30px; padding: 0; border: 1px solid rgba(115,130,148,.2); border-radius: 6px; background: rgba(255,255,255,.55); color: #26303b; box-shadow: 2px 2px 5px rgba(60,75,95,.1), inset 1px 1px 2px #fff; cursor: pointer; }
-html body #root .memo-format-toolbar button:hover { background: rgba(255,255,255,.85); }
-html body #root .memo-format-toolbar button span { width: 13px; height: 13px; border-radius: 50%; }
-html body #root .memo-format-toolbar button b { font-family: inherit; font-weight: 700; font-size: 17px; line-height: 1; }
+/* Memo controls share one quiet glass strip: navigation at left, formatting at right. */
+html body #root .memo-stack-layout { grid-template-columns: minmax(0, 1fr); }
+html body #root .memo-stack-layout > .memo-stack { grid-column: 1; grid-row: 2; }
+html body #root .memo-stack-layout > .memo-index { grid-column: 1; grid-row: 1; min-width: 0; align-items: center; }
+html body #root .memo-format-toolbar { display: flex; align-items: center; gap: 4px; flex-shrink: 0; margin-left: auto; padding-left: 8px; }
+html body #root .memo-format-divider { width: 1px; height: 19px; background: rgba(86, 103, 126, .2); margin-right: 3px; }
+html body #root .memo-format-button { display: grid; place-items: center; width: 27px; height: 27px; min-width: 27px; padding: 0; border: 1px solid transparent; border-radius: 50%; background: transparent; color: #26303b; cursor: pointer; transition: background 160ms ease, border-color 160ms ease, transform 160ms ease; }
+html body #root .memo-format-button:hover { border-color: rgba(112, 132, 158, .2); background: rgba(255,255,255,.62); transform: translateY(-1px); }
+html body #root .memo-format-bold b { font-family: inherit; font-size: 16px; font-weight: 700; line-height: 1; }
+html body #root .memo-format-color span { display: block; width: 13px; height: 13px; border: 2px solid color-mix(in srgb, var(--memo-ink) 55%, white); border-radius: 50%; background: color-mix(in srgb, var(--memo-ink) 72%, white); box-shadow: inset 0 1px 1px rgba(255,255,255,.7), 0 1px 2px rgba(54, 66, 83, .18); }
+html body #root .memo-format-color:hover span { background: var(--memo-ink); }
 html body #root .memo-rich-editor { white-space: pre-wrap; overflow-wrap: anywhere; overflow-y: auto; outline: none; cursor: text; box-sizing: border-box; }
-html body #root .memo-rich-editor span { font-size: inherit; font-family: inherit; line-height: inherit; }
+html body #root .memo-rich-editor .memo-rich-fragment { font-size: inherit; font-family: inherit; font-weight: 300 !important; line-height: inherit; }
+html body #root .memo-rich-editor .memo-rich-fragment.is-bold { font-weight: 700 !important; }
 html body #root .mobile-memo-toolbar { flex-wrap: wrap; }
 @media (max-width: 480px) {
-  html body #root .memo-format-toolbar { gap: 4px; }
-  html body #root .memo-format-toolbar button { width: 28px; min-width: 28px; height: 30px; }
+  html body #root .memo-format-toolbar { gap: 3px; padding-left: 6px; }
+  html body #root .memo-format-button { width: 26px; min-width: 26px; height: 26px; }
 }

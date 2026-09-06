@@ -189,7 +189,7 @@
 .mf2-mask:hover {
   color: inherit;
   background: rgba(40, 46, 55, 0.08);
-  cursor: text;
+  cursor: none;
 }
 
 .mf2-toggle-button,
@@ -879,6 +879,91 @@ body.mf2-dragging .mf2-block-shell.is-selected > .mf2-block-row {
 
 .mf2-menu-danger-row button {
   color: #9a5361;
+}
+
+.mf2-text-context-menu {
+  display: grid;
+  width: 242px;
+  max-height: none;
+  padding: 5px;
+  gap: 3px;
+  overflow: visible;
+}
+
+.mf2-text-context-actions {
+  display: flex;
+  gap: 3px;
+}
+
+.mf2-text-context-actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-width: 58px;
+  height: 30px;
+  padding: 0 8px;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  background: transparent;
+  color: #405066;
+  font: inherit;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+
+.mf2-text-context-actions button:hover {
+  border-color: rgba(255, 255, 255, 0.72);
+  background: rgba(255, 255, 255, 0.58);
+}
+
+.mf2-text-context-actions strong,
+.mf2-text-context-actions em {
+  width: 14px;
+  color: #273a50;
+  font-family: Arial, sans-serif;
+  font-size: 0.9rem;
+  line-height: 1;
+  text-align: center;
+}
+
+.mf2-text-context-actions i {
+  display: block;
+  width: 13px;
+  height: 13px;
+  border-radius: 3px;
+  background: rgba(48, 56, 68, 0.82);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.22);
+}
+
+.mf2-text-context-actions .unmask {
+  color: #8f4b59;
+}
+
+.mf2-text-context-colors {
+  display: grid;
+  grid-template-columns: repeat(11, minmax(0, 1fr));
+  gap: 4px;
+  padding: 4px 2px 1px;
+  border-top: 1px solid rgba(84, 101, 121, 0.12);
+}
+
+.mf2-inline-color {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  min-width: 0;
+  padding: 0;
+  border: 2px solid rgba(255, 255, 255, 0.7);
+  border-radius: 50%;
+  background: var(--swatch);
+  box-shadow: 0 1px 3px rgba(53, 63, 76, 0.18);
+  cursor: pointer;
+}
+
+.mf2-inline-color:hover {
+  border-color: rgba(45, 61, 79, 0.7);
+  transform: translateY(-1px);
 }
 
 .mf2-slash-menu {

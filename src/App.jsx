@@ -4468,7 +4468,6 @@ function MemoPanel({ activeMemoId, addMemoCard, cards, moveMemoCard, removeMemoC
     h(
       "div",
       { className: "memo-stack-layout" },
-      h(MemoFormatToolbar),
       h(
         "div",
         {
@@ -4573,6 +4572,7 @@ function MemoPanel({ activeMemoId, addMemoCard, cards, moveMemoCard, removeMemoC
             index + 1,
           ),
         ),
+        h(MemoFormatToolbar),
       ),
     ),
   );

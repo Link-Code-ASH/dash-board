@@ -1,5 +1,5 @@
 export const MINDFOLD_ENGINE_VERSION = 2;
-export const MINDFOLD_SCHEMA_REVISION = 4;
+export const MINDFOLD_SCHEMA_REVISION = 5;
 export const MINDFOLD_TRASH_DAYS = 30;
 export const MINDFOLD_TRASH_MS = MINDFOLD_TRASH_DAYS * 24 * 60 * 60 * 1000;
 
@@ -30,42 +30,46 @@ export const BLOCK_TYPE_OPTIONS = [
 ];
 
 export const TEXT_COLORS = {
-  ink: "#20252c",
-  graphite: "#525a65",
-  navy: "#315d88",
-  cobalt: "#326fba",
-  teal: "#247e7a",
-  forest: "#3d7a58",
-  olive: "#6f783e",
-  plum: "#795481",
-  violet: "#6655a5",
-  berry: "#a84d62",
-  rose: "#b85e82",
-  amber: "#9a6a2f",
-  coral: "#b75f4c",
-  sky: "#4f7f9e",
-  mint: "#3f8573",
-  lavender: "#716b9c",
+  black: "#20252c",
+  gray: "#586574",
+  red: "#b9394c",
+  blue: "#2f64a9",
+  green: "#287951",
+  orange: "#b86132",
+  yellow: "#947715",
+  purple: "#704fa3",
+  lime: "#66852a",
+  mint: "#247f70",
+  sky: "#357fae",
 };
 
 export const TEXT_COLOR_OPTIONS = [
-  ["ink", "먹색"],
-  ["graphite", "연필"],
-  ["navy", "남색"],
-  ["cobalt", "파랑"],
-  ["teal", "청록"],
-  ["forest", "초록"],
-  ["olive", "올리브"],
-  ["plum", "자두"],
-  ["violet", "보라"],
-  ["berry", "베리"],
-  ["rose", "장미"],
-  ["amber", "호박"],
-  ["coral", "코랄"],
-  ["sky", "하늘"],
+  ["red", "빨강"],
+  ["blue", "파랑"],
+  ["green", "초록"],
+  ["orange", "주황"],
+  ["yellow", "노랑"],
+  ["purple", "보라"],
+  ["lime", "연두"],
   ["mint", "민트"],
-  ["lavender", "라벤더"],
+  ["sky", "하늘색"],
+  ["gray", "회색"],
+  ["black", "검정"],
 ].map(([id, label]) => ({ id, label, value: TEXT_COLORS[id] }));
+
+export const INLINE_COLOR_MARK_TYPES = TEXT_COLOR_OPTIONS.map((option) => `color-${option.id}`);
+
+const LEGACY_COLOR_ALIASES = {
+  ink: "black", graphite: "gray", navy: "blue", cobalt: "blue", teal: "mint",
+  forest: "green", olive: "lime", plum: "purple", violet: "purple", berry: "red",
+  rose: "red", amber: "orange", coral: "orange", lavender: "purple",
+};
+
+function normalizeTextColor(color) {
+  return Object.prototype.hasOwnProperty.call(TEXT_COLORS, color)
+    ? color
+    : LEGACY_COLOR_ALIASES[color] || "black";
+}
 
 const createId = (prefix) => `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 
@@ -74,7 +78,7 @@ export function createBlock(overrides = {}) {
     id: overrides.id || createId("mf2-block"),
     type: INTERNAL_BLOCK_TYPES.includes(overrides.type) ? overrides.type : "text",
     text: String(overrides.text ?? "").replace(/\r\n/g, "\n"),
-    color: Object.prototype.hasOwnProperty.call(TEXT_COLORS, overrides.color) ? overrides.color : "ink",
+    color: normalizeTextColor(overrides.color),
     checked: overrides.checked === true,
     toggle: overrides.toggle === true,
     open: overrides.open !== false,
@@ -129,7 +133,7 @@ export function normalizeBlock(source) {
       if (!block.children.some((child) => child.column === column)) block.children.push(createBlock({ column }));
     }
   }
-  block.marks = normalizeRanges(source?.marks, block.text.length, ["bold", "italic"]);
+  block.marks = normalizeRanges(source?.marks, block.text.length, ["bold", "italic", ...INLINE_COLOR_MARK_TYPES]);
   block.masks = normalizeRanges(source?.masks, block.text.length).map(({ type, ...mask }) => mask);
   return block;
 }
@@ -397,18 +401,29 @@ export function adjustRanges(ranges, previousText, nextText) {
 export function setRange(block, kind, start, end, type = "") {
   if (end <= start) return;
   const source = kind === "marks" ? block.marks : block.masks;
+  const isInlineColor = kind === "marks" && INLINE_COLOR_MARK_TYPES.includes(type);
   const isCovered = source.some((range) => (
     range.start <= start && range.end >= end && (kind !== "marks" || range.type === type)
   ));
   if (isCovered) {
     block[kind] = source.flatMap((range) => {
-      if ((kind === "marks" && range.type !== type) || range.end <= start || range.start >= end) return [range];
+      const shouldClear = kind !== "marks" || range.type === type || (isInlineColor && INLINE_COLOR_MARK_TYPES.includes(range.type));
+      if (!shouldClear || range.end <= start || range.start >= end) return [range];
       const pieces = [];
       if (range.start < start) pieces.push({ ...range, id: createId("mf2-range"), end: start });
       if (range.end > end) pieces.push({ ...range, id: createId("mf2-range"), start: end });
       return pieces;
     });
   } else {
+    if (isInlineColor) {
+      block.marks = source.flatMap((range) => {
+        if (!INLINE_COLOR_MARK_TYPES.includes(range.type) || range.end <= start || range.start >= end) return [range];
+        return [
+          ...(range.start < start ? [{ ...range, id: createId("mf2-range"), end: start }] : []),
+          ...(range.end > end ? [{ ...range, id: createId("mf2-range"), start: end }] : []),
+        ];
+      });
+    }
     block[kind].push({ id: createId("mf2-range"), start, end, ...(kind === "marks" ? { type } : {}) });
   }
 }

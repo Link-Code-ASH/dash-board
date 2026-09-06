@@ -80,6 +80,7 @@ export default function MindfoldView({ mindfold, onCommit, onRedo, onUndo }) {
   const [selectedBlockIds, setSelectedBlockIds] = useState([]);
   const [focusedBlockId, setFocusedBlockId] = useState("");
   const [blockMenu, setBlockMenu] = useState(null);
+  const [textContextMenu, setTextContextMenu] = useState(null);
   const [slashMenu, setSlashMenu] = useState(null);
   const [slashIndex, setSlashIndex] = useState(0);
   const [dragState, setDragState] = useState(null);
@@ -138,6 +139,7 @@ export default function MindfoldView({ mindfold, onCommit, onRedo, onUndo }) {
     setSelectedBlockIds([]);
     setFocusedBlockId("");
     setBlockMenu(null);
+    setTextContextMenu(null);
     setSlashMenu(null);
   }, [activePage.id]);
 
@@ -151,10 +153,11 @@ export default function MindfoldView({ mindfold, onCommit, onRedo, onUndo }) {
   }, [activePage.blocks]);
 
   useEffect(() => {
-    if (!blockMenu && !slashMenu) return undefined;
+    if (!blockMenu && !textContextMenu && !slashMenu) return undefined;
     const close = (event) => {
       if (event.target.closest?.(".mf2-floating-menu, .mf2-menu-button")) return;
       setBlockMenu(null);
+      setTextContextMenu(null);
       setSlashMenu(null);
     };
     window.addEventListener("pointerdown", close);
@@ -344,9 +347,9 @@ export default function MindfoldView({ mindfold, onCommit, onRedo, onUndo }) {
     return true;
   }, [commit]);
 
-  const applyInlineFormat = useCallback((id, kind, type = "") => {
+  const applyInlineFormat = useCallback((id, kind, type = "", selectionOverride = null) => {
     const editor = editorRefs.current.get(id);
-    const selection = editor?.getSelection() || savedSelectionsRef.current.get(id) || { start: 0, end: 0 };
+    const selection = selectionOverride || editor?.getSelection() || savedSelectionsRef.current.get(id) || { start: 0, end: 0 };
     if (selection.end <= selection.start) return;
     let nextBlock = null;
     commit((next, page) => {
@@ -358,6 +361,43 @@ export default function MindfoldView({ mindfold, onCommit, onRedo, onUndo }) {
     });
     if (nextBlock) editor?.repaint(nextBlock, selection);
   }, [commit]);
+
+  const clearMaskRange = useCallback((id, selection) => {
+    const editor = editorRefs.current.get(id);
+    let nextBlock = null;
+    commit((next, page) => {
+      const block = findBlock(page.blocks, id);
+      if (!block) return;
+      block.masks = block.masks.filter((mask) => mask.end <= selection.start || mask.start >= selection.end);
+      nextBlock = block;
+      page.activeId = id;
+    });
+    if (nextBlock) editor?.repaint(nextBlock, selection);
+  }, [commit]);
+
+  const openTextContextMenu = useCallback((event, block, nativeSelection, maskedRange) => {
+    const selection = maskedRange || nativeSelection || editorRefs.current.get(block.id)?.getSelection() || savedSelectionsRef.current.get(block.id);
+    if (!selection || selection.end <= selection.start) return;
+    event.preventDefault();
+    event.stopPropagation();
+    savedSelectionsRef.current.set(block.id, selection);
+    setBlockMenu(null);
+    setSlashMenu(null);
+    setTextContextMenu({
+      id: block.id,
+      selection,
+      masked: Boolean(maskedRange),
+      left: clamp(event.clientX, 10, window.innerWidth - 248),
+      top: clamp(event.clientY + 8, 10, window.innerHeight - 92),
+    });
+  }, []);
+
+  const applyTextContextFormat = useCallback((kind, type = "") => {
+    if (!textContextMenu) return;
+    if (kind === "unmask") clearMaskRange(textContextMenu.id, textContextMenu.selection);
+    else applyInlineFormat(textContextMenu.id, kind, type, textContextMenu.selection);
+    setTextContextMenu(null);
+  }, [applyInlineFormat, clearMaskRange, textContextMenu]);
 
   const changeBlock = useCallback((id, patch) => {
     let nextBlock = null;
@@ -1037,9 +1077,11 @@ export default function MindfoldView({ mindfold, onCommit, onRedo, onUndo }) {
               selectedBlockIdsRef.current = [];
               setSelectedBlockIds([]);
               setBlockMenu(null);
+              setTextContextMenu(null);
             }}
             onInput={(text, selection) => handleBlockInput(block, text, selection)}
             onKeyDown={(event, selection) => handleEditorKeyDown(event, selection, block)}
+            onContextMenu={(event, selection, maskedRange) => openTextContextMenu(event, block, selection, maskedRange)}
             onPointerDown={beginTextSelectionDrag}
             onSelectionChange={(selection) => savedSelectionsRef.current.set(block.id, selection)}
             ariaLabel="블록 내용"
@@ -1182,6 +1224,21 @@ export default function MindfoldView({ mindfold, onCommit, onRedo, onUndo }) {
           </div>
           <div className="mf2-menu-row mf2-menu-danger-row">
             <button onClick={() => { setBlockMenu(null); deleteBlocksById([menuBlock.id]); }} type="button">블록 삭제</button>
+          </div>
+        </div>
+      ) : null}
+
+      {textContextMenu ? (
+        <div className="mf2-floating-menu mf2-text-context-menu" role="menu" style={{ left: textContextMenu.left, top: textContextMenu.top }}>
+          <div className="mf2-text-context-actions">
+            <button onPointerDown={(event) => event.preventDefault()} onClick={() => applyTextContextFormat("marks", "bold")} type="button"><strong>B</strong><span>굵게</span></button>
+            <button onPointerDown={(event) => event.preventDefault()} onClick={() => applyTextContextFormat("marks", "italic")} type="button"><em>I</em><span>기울임</span></button>
+            {textContextMenu.masked
+              ? <button className="unmask" onPointerDown={(event) => event.preventDefault()} onClick={() => applyTextContextFormat("unmask")} type="button"><i aria-hidden="true" /><span>마스킹 해제</span></button>
+              : <button onPointerDown={(event) => event.preventDefault()} onClick={() => applyTextContextFormat("masks")} type="button"><i aria-hidden="true" /><span>마스킹</span></button>}
+          </div>
+          <div className="mf2-text-context-colors" aria-label="글자 색상">
+            {TEXT_COLOR_OPTIONS.map((color) => <button className="mf2-inline-color" key={color.id} onPointerDown={(event) => event.preventDefault()} onClick={() => applyTextContextFormat("marks", `color-${color.id}`)} style={{ "--swatch": color.value }} title={color.label} aria-label={`${color.label} 글자`} type="button" />)}
           </div>
         </div>
       ) : null}
