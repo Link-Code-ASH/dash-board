@@ -91,6 +91,7 @@ export default function MindfoldView({ mindfold, onCommit, onRedo, onUndo }) {
   const dragRef = useRef(null);
   const suppressMenuClickRef = useRef({ id: "", until: 0 });
   const marqueeRef = useRef(null);
+  const textSelectionDragRef = useRef(null);
   const selectAllRef = useRef(0);
   const composingRef = useRef(new Set());
 
@@ -650,7 +651,7 @@ export default function MindfoldView({ mindfold, onCommit, onRedo, onUndo }) {
         const deltaX = pointerEvent.clientX - state.startX;
         const deltaY = pointerEvent.clientY - state.startY;
         const distance = Math.hypot(deltaX, deltaY);
-        if (distance < 4) return;
+        if (distance < 3) return;
 
         state.active = true;
         pointerEvent.preventDefault();
@@ -663,9 +664,26 @@ export default function MindfoldView({ mindfold, onCommit, onRedo, onUndo }) {
         setSelectedBlockIds(state.movingIds);
         document.body.classList.add("mf2-dragging");
       }
-      const targetElement = document.elementFromPoint(pointerEvent.clientX, pointerEvent.clientY)?.closest?.("[data-mf2-id]");
+      let targetElement = document.elementFromPoint(pointerEvent.clientX, pointerEvent.clientY)?.closest?.("[data-mf2-id]");
+      if (!targetElement || state.movingIds.includes(targetElement.dataset.mf2Id)) {
+        const nearbyTargets = [...document.querySelectorAll(".mf2-block-shell[data-mf2-id]")]
+          .filter((element) => !state.movingIds.includes(element.dataset.mf2Id))
+          .map((element) => {
+            const rect = element.querySelector(":scope > .mf2-block-row")?.getBoundingClientRect() || element.getBoundingClientRect();
+            const horizontalDistance = pointerEvent.clientX < rect.left
+              ? rect.left - pointerEvent.clientX
+              : pointerEvent.clientX > rect.right ? pointerEvent.clientX - rect.right : 0;
+            const verticalDistance = pointerEvent.clientY < rect.top
+              ? rect.top - pointerEvent.clientY
+              : pointerEvent.clientY > rect.bottom ? pointerEvent.clientY - rect.bottom : 0;
+            return { element, distance: Math.hypot(horizontalDistance * 0.45, verticalDistance) };
+          })
+          .filter((candidate) => candidate.distance <= 72)
+          .sort((a, b) => a.distance - b.distance);
+        targetElement = nearbyTargets[0]?.element || null;
+      }
       const targetId = targetElement?.dataset.mf2Id || "";
-      if (!targetId || state.movingIds.includes(targetId)) {
+      if (!targetId) {
         state.target = null;
         setDragState({ movingIds: state.movingIds, previewWidth: state.previewWidth, target: null, x: pointerEvent.clientX, y: pointerEvent.clientY });
         return;
@@ -673,9 +691,10 @@ export default function MindfoldView({ mindfold, onCommit, onRedo, onUndo }) {
       const rowElement = targetElement.querySelector(":scope > .mf2-block-row") || targetElement;
       const rect = rowElement.getBoundingClientRect();
       const verticalPosition = clamp((pointerEvent.clientY - rect.top) / Math.max(1, rect.height), 0, 1);
-      const placement = verticalPosition < 0.25
+      const insideThreshold = rect.left + clamp(rect.width * 0.36, 82, 150);
+      const placement = verticalPosition < 0.22
         ? "before"
-        : verticalPosition > 0.75 ? "after" : "inside";
+        : verticalPosition > 0.68 || pointerEvent.clientX < insideThreshold ? "after" : "inside";
       state.target = { id: targetId, placement };
       setDragState({ movingIds: state.movingIds, previewWidth: state.previewWidth, target: state.target, x: pointerEvent.clientX, y: pointerEvent.clientY });
     };
@@ -756,17 +775,66 @@ export default function MindfoldView({ mindfold, onCommit, onRedo, onUndo }) {
       const anchorShell = getShell(selection.anchorNode);
       const focusShell = getShell(selection.focusNode);
       if (!anchorShell || !focusShell || anchorShell === focusShell) return;
-      const ids = visibleBlocks.map((block) => block.id);
-      const anchorIndex = ids.indexOf(anchorShell.dataset.mf2Id);
-      const focusIndex = ids.indexOf(focusShell.dataset.mf2Id);
-      if (anchorIndex < 0 || focusIndex < 0) return;
-      const nextSelection = ids.slice(Math.min(anchorIndex, focusIndex), Math.max(anchorIndex, focusIndex) + 1);
-      selectedBlockIdsRef.current = nextSelection;
-      setSelectedBlockIds(nextSelection);
+      selectedBlockIdsRef.current = [];
+      setSelectedBlockIds([]);
     };
     document.addEventListener("selectionchange", handleNativeSelection);
     return () => document.removeEventListener("selectionchange", handleNativeSelection);
-  }, [visibleBlocks]);
+  }, []);
+
+  const beginTextSelectionDrag = useCallback((event) => {
+    if (event.button !== 0) return;
+    const getCaretPoint = (clientX, clientY) => {
+      if (document.caretPositionFromPoint) {
+        const position = document.caretPositionFromPoint(clientX, clientY);
+        if (position) return { node: position.offsetNode, offset: position.offset };
+      }
+      const range = document.caretRangeFromPoint?.(clientX, clientY);
+      return range ? { node: range.startContainer, offset: range.startOffset } : null;
+    };
+    const anchor = getCaretPoint(event.clientX, event.clientY);
+    if (!anchor) return;
+    const pointerId = event.pointerId;
+    const anchorEditor = event.currentTarget;
+    textSelectionDragRef.current = { anchor, anchorEditor, crossedBoundary: false, pointerId };
+
+    const move = (pointerEvent) => {
+      const state = textSelectionDragRef.current;
+      if (!state || state.pointerId !== pointerEvent.pointerId) return;
+      const targetEditor = document.elementFromPoint(pointerEvent.clientX, pointerEvent.clientY)?.closest?.(".mf2-rich-editor");
+      if (!targetEditor) return;
+      if (!state.crossedBoundary && targetEditor === state.anchorEditor) return;
+      state.crossedBoundary = true;
+      const focus = getCaretPoint(pointerEvent.clientX, pointerEvent.clientY);
+      if (!focus) return;
+      pointerEvent.preventDefault();
+      const selection = window.getSelection();
+      selection.removeAllRanges();
+      if (selection.setBaseAndExtent) {
+        selection.setBaseAndExtent(state.anchor.node, state.anchor.offset, focus.node, focus.offset);
+        return;
+      }
+      const range = document.createRange();
+      const anchorBeforeFocus = state.anchor.node === focus.node
+        ? state.anchor.offset <= focus.offset
+        : Boolean(state.anchor.node.compareDocumentPosition(focus.node) & Node.DOCUMENT_POSITION_FOLLOWING);
+      const start = anchorBeforeFocus ? state.anchor : focus;
+      const end = anchorBeforeFocus ? focus : state.anchor;
+      range.setStart(start.node, start.offset);
+      range.setEnd(end.node, end.offset);
+      selection.addRange(range);
+    };
+    const end = (pointerEvent) => {
+      if (textSelectionDragRef.current?.pointerId !== pointerEvent.pointerId) return;
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", end);
+      window.removeEventListener("pointercancel", end);
+      textSelectionDragRef.current = null;
+    };
+    window.addEventListener("pointermove", move, { passive: false });
+    window.addEventListener("pointerup", end);
+    window.addEventListener("pointercancel", end);
+  }, []);
 
   useEffect(() => {
     const handleGlobalKeys = (event) => {
@@ -945,7 +1013,7 @@ export default function MindfoldView({ mindfold, onCommit, onRedo, onUndo }) {
         style={{ "--mf2-depth": depth, "--mf2-color": TEXT_COLORS[block.color] }}
       >
         <div className="mf2-block-row">
-          <div className="mf2-gutter" onPointerDown={(event) => beginBlockDrag(event, block.id)}>
+          <div className="mf2-gutter">
             <button className="mf2-menu-button" onClick={(event) => openBlockMenu(event, block.id)} onPointerDown={(event) => beginBlockDrag(event, block.id, false, true)} title="블록 메뉴" type="button">
               <span aria-hidden="true" />
             </button>
@@ -972,7 +1040,7 @@ export default function MindfoldView({ mindfold, onCommit, onRedo, onUndo }) {
             }}
             onInput={(text, selection) => handleBlockInput(block, text, selection)}
             onKeyDown={(event, selection) => handleEditorKeyDown(event, selection, block)}
-            onPointerDown={(event) => beginBlockDrag(event, block.id, true)}
+            onPointerDown={beginTextSelectionDrag}
             onSelectionChange={(selection) => savedSelectionsRef.current.set(block.id, selection)}
             ariaLabel="블록 내용"
             ref={(api) => {
