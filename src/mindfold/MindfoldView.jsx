@@ -49,6 +49,55 @@ function splitRanges(ranges, offset) {
   };
 }
 
+function clipRangesBefore(ranges, offset) {
+  return (ranges || [])
+    .filter((range) => range.start < offset)
+    .map((range) => ({ ...range, end: Math.min(range.end, offset) }))
+    .filter((range) => range.end > range.start);
+}
+
+function clipRangesAfter(ranges, offset, destinationOffset) {
+  return (ranges || [])
+    .filter((range) => range.end > offset)
+    .map((range) => ({
+      ...range,
+      start: destinationOffset + Math.max(0, range.start - offset),
+      end: destinationOffset + range.end - offset,
+    }))
+    .filter((range) => range.end > range.start);
+}
+
+function resolveTextRangeSelection(blocks, selection) {
+  if (!selection) return null;
+  const anchorIndex = blocks.findIndex((block) => block.id === selection.anchorId);
+  const focusIndex = blocks.findIndex((block) => block.id === selection.focusId);
+  if (anchorIndex < 0 || focusIndex < 0) return null;
+  const forward = anchorIndex < focusIndex
+    || (anchorIndex === focusIndex && selection.anchorOffset <= selection.focusOffset);
+  const startIndex = forward ? anchorIndex : focusIndex;
+  const endIndex = forward ? focusIndex : anchorIndex;
+  const startBlock = blocks[startIndex];
+  const endBlock = blocks[endIndex];
+  const startOffset = clamp(forward ? selection.anchorOffset : selection.focusOffset, 0, startBlock.text.length);
+  const endOffset = clamp(forward ? selection.focusOffset : selection.anchorOffset, 0, endBlock.text.length);
+  const selectedBlocks = blocks.slice(startIndex, endIndex + 1);
+  const ranges = new Map();
+  selectedBlocks.forEach((block, index) => {
+    if (block.type === "divider") return;
+    const start = index === 0 ? startOffset : 0;
+    const end = index === selectedBlocks.length - 1 ? endOffset : block.text.length;
+    if (end > start) ranges.set(block.id, { start, end });
+  });
+  return {
+    blockIds: selectedBlocks.map((block) => block.id),
+    endId: endBlock.id,
+    endOffset,
+    ranges,
+    startId: startBlock.id,
+    startOffset,
+  };
+}
+
 function selectionIntersects(rect, selection) {
   return !(rect.right < selection.left || rect.left > selection.right || rect.bottom < selection.top || rect.top > selection.bottom);
 }
@@ -85,6 +134,7 @@ export default function MindfoldView({ mindfold, onCommit, onRedo, onUndo }) {
   const [slashIndex, setSlashIndex] = useState(0);
   const [dragState, setDragState] = useState(null);
   const [marquee, setMarquee] = useState(null);
+  const [textRangeSelection, setTextRangeSelection] = useState(null);
   const editorRefs = useRef(new Map());
   const selectedBlockIdsRef = useRef([]);
   const savedSelectionsRef = useRef(new Map());
@@ -93,6 +143,9 @@ export default function MindfoldView({ mindfold, onCommit, onRedo, onUndo }) {
   const suppressMenuClickRef = useRef({ id: "", until: 0 });
   const marqueeRef = useRef(null);
   const textSelectionDragRef = useRef(null);
+  const textRangeSelectionRef = useRef(null);
+  const selectionInputRef = useRef(null);
+  const selectionComposingRef = useRef(false);
   const selectAllRef = useRef(0);
   const composingRef = useRef(new Set());
 
@@ -100,6 +153,15 @@ export default function MindfoldView({ mindfold, onCommit, onRedo, onUndo }) {
     () => flattenBlocks(activePage.blocks).map(({ block }) => block),
     [activePage.blocks],
   );
+  const textRangeInfo = useMemo(
+    () => resolveTextRangeSelection(visibleBlocks, textRangeSelection),
+    [textRangeSelection, visibleBlocks],
+  );
+
+  const updateTextRangeSelection = useCallback((next) => {
+    textRangeSelectionRef.current = next;
+    setTextRangeSelection(next);
+  }, []);
 
   useEffect(() => {
     selectedBlockIdsRef.current = selectedBlockIds;
@@ -141,7 +203,8 @@ export default function MindfoldView({ mindfold, onCommit, onRedo, onUndo }) {
     setBlockMenu(null);
     setTextContextMenu(null);
     setSlashMenu(null);
-  }, [activePage.id]);
+    updateTextRangeSelection(null);
+  }, [activePage.id, updateTextRangeSelection]);
 
   useEffect(() => {
     const valid = new Set(flattenBlocks(activePage.blocks, { includeClosed: true }).map(({ block }) => block.id));
@@ -159,10 +222,11 @@ export default function MindfoldView({ mindfold, onCommit, onRedo, onUndo }) {
       setBlockMenu(null);
       setTextContextMenu(null);
       setSlashMenu(null);
+      if (blockMenu?.selection) updateTextRangeSelection(null);
     };
     window.addEventListener("pointerdown", close);
     return () => window.removeEventListener("pointerdown", close);
-  }, [blockMenu, slashMenu]);
+  }, [blockMenu, slashMenu, textContextMenu, updateTextRangeSelection]);
 
   const updateText = useCallback((id, text, selection = null) => {
     let nextBlock = null;
@@ -200,7 +264,7 @@ export default function MindfoldView({ mindfold, onCommit, onRedo, onUndo }) {
     return nextId;
   }, [commit, focusBlock]);
 
-  const splitBlock = useCallback((id, offset) => {
+  const splitBlock = useCallback((id, offset, options = {}) => {
     let nextId = "";
     let leftBlock = null;
     commit((next, page) => {
@@ -220,6 +284,8 @@ export default function MindfoldView({ mindfold, onCommit, onRedo, onUndo }) {
         text: nextText,
         color: block.color,
         column: location.parent?.type === "columns" ? block.column : null,
+        toggle: options.keepToggle === true,
+        open: options.keepToggle !== true,
       });
       nextBlock.marks = markParts.right;
       nextBlock.masks = maskParts.right;
@@ -262,6 +328,30 @@ export default function MindfoldView({ mindfold, onCommit, onRedo, onUndo }) {
       page.activeId = nextId;
     });
     if (parentBlock) editorRefs.current.get(id)?.repaint(parentBlock, { start: splitAt, end: splitAt });
+    if (nextId) focusBlock(nextId, 0);
+  }, [commit, focusBlock]);
+
+  const convertToDivider = useCallback((id) => {
+    let nextId = "";
+    commit((next, page) => {
+      const location = findBlockLocation(page.blocks, id);
+      if (!location) return;
+      const block = location.block;
+      block.type = "divider";
+      block.text = "";
+      block.marks = [];
+      block.masks = [];
+      block.checked = false;
+      block.toggle = false;
+      block.open = true;
+      const nextBlock = createBlock({
+        type: "text",
+        column: location.parent?.type === "columns" ? block.column : null,
+      });
+      nextId = nextBlock.id;
+      location.siblings.splice(location.index + 1, 0, nextBlock);
+      page.activeId = nextId;
+    });
     if (nextId) focusBlock(nextId, 0);
   }, [commit, focusBlock]);
 
@@ -349,7 +439,12 @@ export default function MindfoldView({ mindfold, onCommit, onRedo, onUndo }) {
 
   const applyInlineFormat = useCallback((id, kind, type = "", selectionOverride = null) => {
     const editor = editorRefs.current.get(id);
-    const selection = selectionOverride || editor?.getSelection() || savedSelectionsRef.current.get(id) || { start: 0, end: 0 };
+    const currentSelection = editor?.getSelection();
+    const savedSelection = savedSelectionsRef.current.get(id);
+    const selection = selectionOverride
+      || (currentSelection?.end > currentSelection?.start ? currentSelection : null)
+      || (savedSelection?.end > savedSelection?.start ? savedSelection : null)
+      || { start: 0, end: 0 };
     if (selection.end <= selection.start) return;
     let nextBlock = null;
     commit((next, page) => {
@@ -571,8 +666,10 @@ export default function MindfoldView({ mindfold, onCommit, onRedo, onUndo }) {
         const text = `${block.text.slice(0, selection.start)}\n${block.text.slice(selection.end)}`;
         editorRefs.current.get(block.id)?.replaceText(text, selection.start + 1);
         updateText(block.id, text, { start: selection.start + 1, end: selection.start + 1 });
-      } else if (block.toggle) {
+      } else if (block.toggle && block.open) {
         splitIntoToggleChild(block.id, selection.start);
+      } else if (block.toggle) {
+        splitBlock(block.id, selection.start, { keepToggle: true });
       } else if (!block.text && (["bullet", "check", "quote"].includes(block.type) || block.type.startsWith("heading-"))) {
         changeBlock(block.id, { type: "text", checked: false });
       } else {
@@ -615,6 +712,10 @@ export default function MindfoldView({ mindfold, onCommit, onRedo, onUndo }) {
   }, [activePage.blocks, applyInlineFormat, applyMarkdownShortcut, changeBlock, commit, deleteBlocksById, executeSlashCommand, filteredSlashCommands, focusBlock, mergeBackward, moveFocus, restoreHistory, runSlashCommand, slashIndex, slashMenu, splitBlock, splitIntoToggleChild, updateText, visibleBlocks]);
 
   const handleBlockInput = useCallback((block, text, selection) => {
+    if (text === "---" && selection.start === 3 && selection.end === 3) {
+      convertToDivider(block.id);
+      return;
+    }
     const shortcut = text.slice(0, selection.start).match(/^(#{1,4}|\*|-|\[\]|\[ \]|>) $/);
     if (shortcut && applyMarkdownShortcut(block.id, shortcut[1], selection, text)) return;
     updateText(block.id, text, selection);
@@ -632,7 +733,7 @@ export default function MindfoldView({ mindfold, onCommit, onRedo, onUndo }) {
     } else if (slashMenu?.id === block.id) {
       setSlashMenu(null);
     }
-  }, [applyMarkdownShortcut, slashMenu?.id, updateText]);
+  }, [applyMarkdownShortcut, convertToDivider, slashMenu?.id, updateText]);
 
   const selectBlock = useCallback((id, event) => {
     const ids = visibleBlocks.map((block) => block.id);
@@ -655,6 +756,21 @@ export default function MindfoldView({ mindfold, onCommit, onRedo, onUndo }) {
   const beginBlockDrag = useCallback((event, id, fromEditor = false, fromHandle = false) => {
     if (event.button !== 0 || (event.target.closest("button") && !fromHandle)) return;
     if (fromEditor && event.pointerType === "touch") return;
+    if (fromHandle) {
+      const selection = editorRefs.current.get(id)?.getSelection();
+      if (selection?.end > selection?.start) {
+        savedSelectionsRef.current.set(id, selection);
+        updateTextRangeSelection({
+          anchorId: id,
+          anchorOffset: selection.start,
+          focusId: id,
+          focusOffset: selection.end,
+        });
+      } else {
+        savedSelectionsRef.current.set(id, selection || { start: 0, end: 0 });
+        updateTextRangeSelection(null);
+      }
+    }
     if (!fromEditor) event.preventDefault();
     const movingIds = selectedBlockIds.includes(id) ? selectedBlockIds : [id];
     const sourceRect = event.currentTarget.closest("[data-mf2-id]")?.getBoundingClientRect();
@@ -700,6 +816,7 @@ export default function MindfoldView({ mindfold, onCommit, onRedo, onUndo }) {
         setFocusedBlockId("");
         setBlockMenu(null);
         setSlashMenu(null);
+        updateTextRangeSelection(null);
         selectedBlockIdsRef.current = state.movingIds;
         setSelectedBlockIds(state.movingIds);
         document.body.classList.add("mf2-dragging");
@@ -761,7 +878,7 @@ export default function MindfoldView({ mindfold, onCommit, onRedo, onUndo }) {
     window.addEventListener("pointermove", move, { passive: false });
     window.addEventListener("pointerup", end, { once: true });
     window.addEventListener("pointercancel", end, { once: true });
-  }, [activePage.blocks, commit, selectBlock, selectedBlockIds]);
+  }, [activePage.blocks, commit, selectBlock, selectedBlockIds, updateTextRangeSelection]);
 
   const beginMarquee = useCallback((event) => {
     if (event.button !== 0 || event.target.closest(".mf2-block-shell, .mf2-page-sidebar, button, input, .mf2-floating-menu")) return;
@@ -822,59 +939,124 @@ export default function MindfoldView({ mindfold, onCommit, onRedo, onUndo }) {
     return () => document.removeEventListener("selectionchange", handleNativeSelection);
   }, []);
 
+  const replaceTextRangeSelection = useCallback((insertedText = "") => {
+    const info = resolveTextRangeSelection(visibleBlocks, textRangeSelectionRef.current);
+    if (!info) return false;
+    const focusOffset = info.startOffset + insertedText.length;
+    commit((next, page) => {
+      const startBlock = findBlock(page.blocks, info.startId);
+      const endBlock = findBlock(page.blocks, info.endId);
+      if (!startBlock || !endBlock) return;
+      const prefix = startBlock.text.slice(0, info.startOffset);
+      const suffix = endBlock.text.slice(info.endOffset);
+      const suffixOffset = prefix.length + insertedText.length;
+      startBlock.marks = [
+        ...clipRangesBefore(startBlock.marks, info.startOffset),
+        ...clipRangesAfter(endBlock.marks, info.endOffset, suffixOffset),
+      ];
+      startBlock.masks = [
+        ...clipRangesBefore(startBlock.masks, info.startOffset),
+        ...clipRangesAfter(endBlock.masks, info.endOffset, suffixOffset),
+      ];
+      startBlock.text = `${prefix}${insertedText}${suffix}`;
+      if (startBlock.id !== endBlock.id && endBlock.children.length) {
+        startBlock.children.push(...endBlock.children);
+        endBlock.children = [];
+      }
+      removeBlocks(page, info.blockIds.filter((id) => id !== info.startId));
+      page.activeId = info.startId;
+    });
+    window.getSelection()?.removeAllRanges();
+    updateTextRangeSelection(null);
+    selectionComposingRef.current = false;
+    if (selectionInputRef.current) selectionInputRef.current.value = "";
+    focusBlock(info.startId, focusOffset);
+    return true;
+  }, [commit, focusBlock, updateTextRangeSelection, visibleBlocks]);
+
   const beginTextSelectionDrag = useCallback((event) => {
     if (event.button !== 0) return;
-    const getCaretPoint = (clientX, clientY) => {
-      if (document.caretPositionFromPoint) {
-        const position = document.caretPositionFromPoint(clientX, clientY);
-        if (position) return { node: position.offsetNode, offset: position.offset };
-      }
-      const range = document.caretRangeFromPoint?.(clientX, clientY);
-      return range ? { node: range.startContainer, offset: range.startOffset } : null;
+    const editors = [...document.querySelectorAll(".mf2-rich-editor")];
+    const getEditorAtPoint = (clientX, clientY) => {
+      const direct = document.elementFromPoint(clientX, clientY)?.closest?.(".mf2-rich-editor");
+      if (direct) return direct;
+      return editors
+        .map((editor) => {
+          const rect = editor.getBoundingClientRect();
+          const dx = clientX < rect.left ? rect.left - clientX : clientX > rect.right ? clientX - rect.right : 0;
+          const dy = clientY < rect.top ? rect.top - clientY : clientY > rect.bottom ? clientY - rect.bottom : 0;
+          return { editor, distance: Math.hypot(dx * 0.25, dy) };
+        })
+        .sort((a, b) => a.distance - b.distance)[0]?.editor || null;
     };
-    const anchor = getCaretPoint(event.clientX, event.clientY);
-    if (!anchor) return;
-    const pointerId = event.pointerId;
+    const getCaretOffset = (clientX, clientY, editor) => {
+      const rect = editor.getBoundingClientRect();
+      const x = clamp(clientX, rect.left + 2, rect.right - 2);
+      const y = clamp(clientY, rect.top + 2, rect.bottom - 2);
+      let point = null;
+      if (document.caretPositionFromPoint) {
+        const position = document.caretPositionFromPoint(x, y);
+        if (position && editor.contains(position.offsetNode)) point = { node: position.offsetNode, offset: position.offset };
+      }
+      if (!point) {
+        const range = document.caretRangeFromPoint?.(x, y);
+        if (range && editor.contains(range.startContainer)) point = { node: range.startContainer, offset: range.startOffset };
+      }
+      if (!point) return clientY < rect.top + rect.height / 2 ? 0 : editor.textContent.length;
+      const range = document.createRange();
+      range.selectNodeContents(editor);
+      range.setEnd(point.node, point.offset);
+      return range.toString().length;
+    };
     const anchorEditor = event.currentTarget;
-    textSelectionDragRef.current = { anchor, anchorEditor, crossedBoundary: false, pointerId };
+    const anchorId = anchorEditor.closest("[data-mf2-id]")?.dataset.mf2Id;
+    if (!anchorId) return;
+    const anchorOffset = getCaretOffset(event.clientX, event.clientY, anchorEditor);
+    const pointerId = event.pointerId;
+    updateTextRangeSelection(null);
+    textSelectionDragRef.current = { anchorId, anchorOffset, anchorEditor, crossedBoundary: false, pointerId };
 
     const move = (pointerEvent) => {
       const state = textSelectionDragRef.current;
       if (!state || state.pointerId !== pointerEvent.pointerId) return;
-      const targetEditor = document.elementFromPoint(pointerEvent.clientX, pointerEvent.clientY)?.closest?.(".mf2-rich-editor");
+      const targetEditor = getEditorAtPoint(pointerEvent.clientX, pointerEvent.clientY);
       if (!targetEditor) return;
       if (!state.crossedBoundary && targetEditor === state.anchorEditor) return;
       state.crossedBoundary = true;
-      const focus = getCaretPoint(pointerEvent.clientX, pointerEvent.clientY);
-      if (!focus) return;
       pointerEvent.preventDefault();
-      const selection = window.getSelection();
-      selection.removeAllRanges();
-      if (selection.setBaseAndExtent) {
-        selection.setBaseAndExtent(state.anchor.node, state.anchor.offset, focus.node, focus.offset);
-        return;
-      }
-      const range = document.createRange();
-      const anchorBeforeFocus = state.anchor.node === focus.node
-        ? state.anchor.offset <= focus.offset
-        : Boolean(state.anchor.node.compareDocumentPosition(focus.node) & Node.DOCUMENT_POSITION_FOLLOWING);
-      const start = anchorBeforeFocus ? state.anchor : focus;
-      const end = anchorBeforeFocus ? focus : state.anchor;
-      range.setStart(start.node, start.offset);
-      range.setEnd(end.node, end.offset);
-      selection.addRange(range);
+      window.getSelection()?.removeAllRanges();
+      document.activeElement?.blur();
+      setFocusedBlockId("");
+      selectedBlockIdsRef.current = [];
+      setSelectedBlockIds([]);
+      const focusId = targetEditor.closest("[data-mf2-id]")?.dataset.mf2Id;
+      if (!focusId) return;
+      updateTextRangeSelection({
+        anchorId: state.anchorId,
+        anchorOffset: state.anchorOffset,
+        focusId,
+        focusOffset: getCaretOffset(pointerEvent.clientX, pointerEvent.clientY, targetEditor),
+      });
     };
     const end = (pointerEvent) => {
       if (textSelectionDragRef.current?.pointerId !== pointerEvent.pointerId) return;
       window.removeEventListener("pointermove", move);
       window.removeEventListener("pointerup", end);
       window.removeEventListener("pointercancel", end);
+      const state = textSelectionDragRef.current;
       textSelectionDragRef.current = null;
+      if (state?.crossedBoundary && textRangeSelectionRef.current) {
+        requestAnimationFrame(() => {
+          if (!selectionInputRef.current) return;
+          selectionInputRef.current.value = "";
+          selectionInputRef.current.focus({ preventScroll: true });
+        });
+      }
     };
     window.addEventListener("pointermove", move, { passive: false });
     window.addEventListener("pointerup", end);
     window.addEventListener("pointercancel", end);
-  }, []);
+  }, [updateTextRangeSelection]);
 
   useEffect(() => {
     const handleGlobalKeys = (event) => {
@@ -942,13 +1124,22 @@ export default function MindfoldView({ mindfold, onCommit, onRedo, onUndo }) {
     const row = event.currentTarget.closest(".mf2-block-row");
     const rect = row.getBoundingClientRect();
     const width = 292;
-    setBlockMenu((current) => current?.id === id ? null : {
-      id,
-      left: clamp(rect.left + 26, 10, window.innerWidth - width - 10),
-      top: clamp(rect.top + 30, 10, window.innerHeight - 560),
+    const savedSelection = savedSelectionsRef.current.get(id);
+    const selection = savedSelection?.end > savedSelection?.start ? savedSelection : null;
+    setBlockMenu((current) => {
+      if (current?.id === id) {
+        updateTextRangeSelection(null);
+        return null;
+      }
+      return {
+        id,
+        selection,
+        left: clamp(rect.left + 26, 10, window.innerWidth - width - 10),
+        top: clamp(rect.top + 30, 10, window.innerHeight - 560),
+      };
     });
     setSlashMenu(null);
-  }, []);
+  }, [updateTextRangeSelection]);
 
   const addPage = useCallback(() => {
     let id = "";
@@ -1058,6 +1249,10 @@ export default function MindfoldView({ mindfold, onCommit, onRedo, onUndo }) {
               <span aria-hidden="true" />
             </button>
           </div>
+          {block.type === "divider" ? (
+            <button className="mf2-horizontal-rule" onClick={(event) => selectBlock(block.id, event)} type="button" aria-label="가로 구분선 선택"><span aria-hidden="true" /></button>
+          ) : (
+          <>
           {block.toggle ? (
             <button className={`mf2-toggle-button ${block.open ? "open" : ""}`} onClick={() => changeBlock(block.id, { open: !block.open })} title={block.open ? "접기" : "펼치기"} type="button" aria-label={block.open ? "접기" : "펼치기"}>
               <span aria-hidden="true" />
@@ -1073,6 +1268,7 @@ export default function MindfoldView({ mindfold, onCommit, onRedo, onUndo }) {
             onCompositionEnd={() => composingRef.current.delete(block.id)}
             onCompositionStart={() => composingRef.current.add(block.id)}
             onFocus={() => {
+              updateTextRangeSelection(null);
               setFocusedBlockId(block.id);
               selectedBlockIdsRef.current = [];
               setSelectedBlockIds([]);
@@ -1084,12 +1280,15 @@ export default function MindfoldView({ mindfold, onCommit, onRedo, onUndo }) {
             onContextMenu={(event, selection, maskedRange) => openTextContextMenu(event, block, selection, maskedRange)}
             onPointerDown={beginTextSelectionDrag}
             onSelectionChange={(selection) => savedSelectionsRef.current.set(block.id, selection)}
+            selectionRange={textRangeInfo?.ranges.get(block.id) || null}
             ariaLabel="블록 내용"
             ref={(api) => {
               if (api) editorRefs.current.set(block.id, api);
               else editorRefs.current.delete(block.id);
             }}
           />
+          </>
+          )}
         </div>
         {block.children.length && (!block.toggle || block.open) ? (
           <div className="mf2-children">{block.children.map((child) => renderBlock(child, depth + 1))}</div>
@@ -1181,6 +1380,33 @@ export default function MindfoldView({ mindfold, onCommit, onRedo, onUndo }) {
         <div className="mf2-document">{activePage.blocks.map((block) => renderBlock(block))}</div>
       </article>
 
+      {textRangeInfo ? (
+        <textarea
+          aria-label="선택한 텍스트 바꾸기"
+          className="mf2-selection-input"
+          onCompositionEnd={(event) => {
+            selectionComposingRef.current = false;
+            if (event.currentTarget.value) replaceTextRangeSelection(event.currentTarget.value);
+          }}
+          onCompositionStart={() => { selectionComposingRef.current = true; }}
+          onInput={(event) => {
+            if (!selectionComposingRef.current && event.currentTarget.value) {
+              replaceTextRangeSelection(event.currentTarget.value);
+            }
+          }}
+          onKeyDown={(event) => {
+            if (event.key === "Backspace" || event.key === "Delete") {
+              event.preventDefault();
+              replaceTextRangeSelection("");
+            } else if (event.key === "Escape") {
+              event.preventDefault();
+              updateTextRangeSelection(null);
+            }
+          }}
+          ref={selectionInputRef}
+        />
+      ) : null}
+
       {marquee ? <div className="mf2-marquee" style={{ left: marquee.left, top: marquee.top, width: marquee.right - marquee.left, height: marquee.bottom - marquee.top }} /> : null}
 
       {dragPreviewBlocks.length ? (
@@ -1207,14 +1433,26 @@ export default function MindfoldView({ mindfold, onCommit, onRedo, onUndo }) {
           </div>
           <div className="mf2-menu-row">
             <button className={menuBlock.toggle ? "active" : ""} onClick={() => changeBlock(menuBlock.id, { toggle: !menuBlock.toggle, open: true })} type="button">토글</button>
-            <button onClick={() => applyInlineFormat(menuBlock.id, "marks", "bold")} type="button"><strong>B</strong></button>
-            <button onClick={() => applyInlineFormat(menuBlock.id, "marks", "italic")} type="button"><em>I</em></button>
-            <button onClick={() => applyInlineFormat(menuBlock.id, "masks")} type="button">마스킹</button>
+            <button onPointerDown={(event) => event.preventDefault()} onClick={() => applyInlineFormat(menuBlock.id, "marks", "bold", blockMenu.selection)} type="button"><strong>B</strong></button>
+            <button onPointerDown={(event) => event.preventDefault()} onClick={() => applyInlineFormat(menuBlock.id, "marks", "italic", blockMenu.selection)} type="button"><em>I</em></button>
+            <button onPointerDown={(event) => event.preventDefault()} onClick={() => applyInlineFormat(menuBlock.id, "masks", "", blockMenu.selection)} type="button">마스킹</button>
           </div>
           <p>글자 색상</p>
           <div className="mf2-color-grid">
             {TEXT_COLOR_OPTIONS.map((color) => (
-              <button className={menuBlock.color === color.id ? "active" : ""} key={color.id} onClick={() => changeBlock(menuBlock.id, { color: color.id })} style={{ "--swatch": color.value }} title={color.label} type="button" aria-label={color.label} />
+              <button
+                className={!blockMenu.selection && menuBlock.color === color.id ? "active" : ""}
+                key={color.id}
+                onPointerDown={(event) => event.preventDefault()}
+                onClick={() => {
+                  if (blockMenu.selection) applyInlineFormat(menuBlock.id, "marks", `color-${color.id}`, blockMenu.selection);
+                  else changeBlock(menuBlock.id, { color: color.id });
+                }}
+                style={{ "--swatch": color.value }}
+                title={blockMenu.selection ? `${color.label} 글자` : color.label}
+                type="button"
+                aria-label={blockMenu.selection ? `${color.label} 글자` : color.label}
+              />
             ))}
           </div>
           <p>구조</p>

@@ -2,6 +2,11 @@ import React, { useEffect, useRef } from "react";
 import { adjustRanges } from "./mindfold/model.js";
 
 export const memoColors = { red: "#c53636", blue: "#2563bd", green: "#23794b", orange: "#bc570c" };
+const MEMO_DIVIDER = "\uFFFC";
+
+function cleanMemoRanges(text, ranges) {
+  return ranges.filter((range) => range.type !== "divider" || text.slice(range.start, range.end) === MEMO_DIVIDER);
+}
 
 function selectionIsFullyFormatted(ranges, start, end, type) {
   let coveredUntil = start;
@@ -24,6 +29,8 @@ export function MemoFormatToolbar() {
     <button className="memo-format-button memo-format-bold" type="button" title="굵게" aria-label="굵게" onClick={() => apply("bold")}><b>B</b></button>
     <span className="memo-format-divider" aria-hidden="true" />
     {Object.entries(memoColors).map(([key, color], index) => <button className={`memo-format-button memo-format-color ${key}`} type="button" key={key} title={["빨강", "파랑", "초록", "주황"][index]} aria-label={["빨강", "파랑", "초록", "주황"][index]} onClick={() => apply(key)}><span style={{ "--memo-ink": color }} /></button>)}
+    <span className="memo-format-divider" aria-hidden="true" />
+    <button className="memo-format-button memo-insert-divider" type="button" title="가로 구분선 삽입" aria-label="가로 구분선 삽입" onClick={() => apply("divider")}><span aria-hidden="true" /></button>
   </div>;
 }
 
@@ -31,6 +38,7 @@ export default function MemoEditor({ value, marks = [], onChange, getSelection, 
   const root = useRef(null);
   const current = useRef({ value, marks });
   const composing = useRef(false);
+  const pendingCompositionEnter = useRef(false);
   current.current = { value, marks };
   const paint = (text, ranges, selection) => {
     const el = root.current;
@@ -40,12 +48,30 @@ export default function MemoEditor({ value, marks = [], onChange, getSelection, 
       const span = document.createElement("span");
       const active = ranges.filter(r => r.start <= start && r.end >= points[i+1]);
       span.textContent = text.slice(start, points[i+1]);
+      if (active.some(range => range.type === "divider") && span.textContent === MEMO_DIVIDER) {
+        span.className = "memo-divider-node";
+        span.contentEditable = "false";
+        span.title = "구분선";
+        const remove = document.createElement("button");
+        remove.className = "memo-divider-remove";
+        remove.type = "button";
+        remove.title = "구분선 제거";
+        remove.setAttribute("aria-label", "구분선 제거");
+        span.append(remove);
+        fragment.append(span);
+        return;
+      }
       const isBold = active.some(range => range.type === "bold");
       const colorType = active.findLast(range => memoColors[range.type])?.type;
       span.className = `memo-rich-fragment${isBold ? " is-bold" : ""}`;
       span.style.color = colorType ? memoColors[colorType] : "";
       fragment.append(span);
     });
+    if (text.endsWith("\n")) {
+      const trailingBreak = document.createElement("br");
+      trailingBreak.className = "memo-trailing-break";
+      fragment.append(trailingBreak);
+    }
     el.replaceChildren(fragment);
     if (selection) setSelection(el, selection.start, selection.end);
   };
@@ -58,9 +84,27 @@ export default function MemoEditor({ value, marks = [], onChange, getSelection, 
     const el = root.current;
     const format = (event) => {
       const { start, end } = getSelection(el);
-      if (start === end) return;
       const { value: text, marks: ranges } = current.current;
       const type = event.detail;
+      if (type === "divider") {
+        const before = text.slice(0, start);
+        const after = text.slice(end);
+        const prefix = before && !before.endsWith("\n") ? "\n" : "";
+        const suffix = after.startsWith("\n") ? "" : "\n";
+        const insertion = `${prefix}${MEMO_DIVIDER}${suffix}`;
+        const dividerStart = start + prefix.length;
+        const nextText = before + insertion + after;
+        const nextRanges = cleanMemoRanges(nextText, [
+          ...adjustRanges(ranges, text, nextText),
+          { start: dividerStart, end: dividerStart + 1, type: "divider" },
+        ]);
+        const caret = dividerStart + 2;
+        el.focus();
+        paint(nextText, nextRanges, { start: caret, end: caret });
+        onChange(nextText, nextRanges);
+        return;
+      }
+      if (start === end) return;
       const remove = selectionIsFullyFormatted(ranges, start, end, type);
       const clearsType = type === "bold"
         ? (range) => range.type === "bold"
@@ -79,7 +123,24 @@ export default function MemoEditor({ value, marks = [], onChange, getSelection, 
   }, [onChange]);
   const input = () => {
     const text = root.current.textContent || "";
-    onChange(text, adjustRanges(current.current.marks, current.current.value, text));
+    onChange(text, cleanMemoRanges(text, adjustRanges(current.current.marks, current.current.value, text)));
+  };
+  const finishComposition = () => {
+    composing.current = false;
+    const el = root.current;
+    const text = el.textContent || "";
+    const selection = getSelection(el);
+    const ranges = cleanMemoRanges(text, adjustRanges(current.current.marks, current.current.value, text));
+    if (!pendingCompositionEnter.current) {
+      onChange(text, ranges);
+      return;
+    }
+    pendingCompositionEnter.current = false;
+    const next = text.slice(0, selection.start) + "\n" + text.slice(selection.end);
+    const nextRanges = cleanMemoRanges(next, adjustRanges(ranges, text, next));
+    const caret = selection.start + 1;
+    paint(next, nextRanges, { start: caret, end: caret });
+    onChange(next, nextRanges);
   };
   const insert = (text) => {
     const el = root.current;
@@ -91,8 +152,32 @@ export default function MemoEditor({ value, marks = [], onChange, getSelection, 
     onChange(next, ranges);
   };
   return <div ref={root} className="memo-large-textarea memo-rich-editor" role="textbox" aria-label="Write freely..." aria-multiline="true" contentEditable suppressContentEditableWarning
-    onCompositionStart={() => { composing.current = true; }} onCompositionEnd={() => { composing.current = false; input(); }}
+    onCompositionStart={() => { composing.current = true; pendingCompositionEnter.current = false; }} onCompositionEnd={finishComposition}
     onInput={() => { if (!composing.current) input(); }}
     onPaste={event => { event.preventDefault(); insert(event.clipboardData.getData("text/plain")); }}
-    onKeyDown={event => { event.stopPropagation(); if (event.nativeEvent.isComposing) return; if (event.key === "Enter") { event.preventDefault(); insert("\n"); } if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "b") { event.preventDefault(); root.current.dispatchEvent(new CustomEvent("memo-format", { detail: "bold" })); } }} />;
+    onClick={event => {
+      const button = event.target.closest?.(".memo-divider-remove");
+      if (!button) return;
+      event.preventDefault();
+      event.stopPropagation();
+      const divider = button.closest(".memo-divider-node");
+      const offsetRange = document.createRange();
+      offsetRange.selectNodeContents(root.current);
+      offsetRange.setEndBefore(divider);
+      const start = offsetRange.toString().length;
+      const old = current.current;
+      const next = old.value.slice(0, start) + old.value.slice(start + 1);
+      const ranges = cleanMemoRanges(next, adjustRanges(old.marks, old.value, next));
+      paint(next, ranges, { start, end: start });
+      onChange(next, ranges);
+    }}
+    onKeyDown={event => {
+      event.stopPropagation();
+      if (event.nativeEvent.isComposing || event.keyCode === 229 || composing.current) {
+        if (event.key === "Enter") pendingCompositionEnter.current = true;
+        return;
+      }
+      if (event.key === "Enter") { event.preventDefault(); insert("\n"); }
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "b") { event.preventDefault(); root.current.dispatchEvent(new CustomEvent("memo-format", { detail: "bold" })); }
+    }} />;
 }

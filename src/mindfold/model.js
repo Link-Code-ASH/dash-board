@@ -1,5 +1,5 @@
 export const MINDFOLD_ENGINE_VERSION = 2;
-export const MINDFOLD_SCHEMA_REVISION = 5;
+export const MINDFOLD_SCHEMA_REVISION = 6;
 export const MINDFOLD_TRASH_DAYS = 30;
 export const MINDFOLD_TRASH_MS = MINDFOLD_TRASH_DAYS * 24 * 60 * 60 * 1000;
 
@@ -13,6 +13,7 @@ export const BLOCK_TYPES = [
   "check",
   "quote",
   "callout",
+  "divider",
 ];
 
 const INTERNAL_BLOCK_TYPES = [...BLOCK_TYPES, "columns"];

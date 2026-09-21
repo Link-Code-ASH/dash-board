@@ -61,13 +61,17 @@ function getElementOffsets(root, element) {
   return { start: startRange.toString().length, end: endRange.toString().length };
 }
 
-function paintEditor(root, block) {
+function paintEditor(root, block, selectionRange = null) {
   if (!root) return;
   const boundaries = new Set([0, block.text.length]);
   [...block.marks, ...block.masks].forEach((range) => {
     boundaries.add(range.start);
     boundaries.add(range.end);
   });
+  if (selectionRange) {
+    boundaries.add(selectionRange.start);
+    boundaries.add(selectionRange.end);
+  }
   const points = [...boundaries].sort((a, b) => a - b);
   const fragment = document.createDocumentFragment();
   for (let index = 0; index < points.length - 1; index += 1) {
@@ -78,7 +82,8 @@ function paintEditor(root, block) {
     const markTypes = block.marks.filter((mark) => mark.start <= start && mark.end >= end).map((mark) => mark.type);
     const colorType = markTypes.findLast((type) => type.startsWith("color-"));
     const masked = block.masks.some((mask) => mask.start <= start && mask.end >= end);
-    if (!markTypes.length && !masked) {
+    const selected = Boolean(selectionRange && selectionRange.start <= start && selectionRange.end >= end);
+    if (!markTypes.length && !masked && !selected) {
       fragment.appendChild(document.createTextNode(text));
       continue;
     }
@@ -87,6 +92,7 @@ function paintEditor(root, block) {
     if (markTypes.includes("bold")) span.classList.add("mf2-inline-bold");
     if (markTypes.includes("italic")) span.classList.add("mf2-inline-italic");
     if (masked) span.classList.add("mf2-mask");
+    if (selected) span.classList.add("mf2-cross-selection");
     if (colorType) span.style.color = TEXT_COLORS[colorType.slice("color-".length)] || "";
     fragment.appendChild(span);
   }
@@ -105,18 +111,21 @@ const RichEditor = forwardRef(function RichEditor({
   onContextMenu,
   onPointerDown,
   onSelectionChange,
+  selectionRange = null,
 }, forwardedRef) {
   const rootRef = useRef(null);
   const focusedRef = useRef(false);
   const composingRef = useRef(false);
   const blockRef = useRef(block);
+  const selectionRangeRef = useRef(selectionRange);
   blockRef.current = block;
+  selectionRangeRef.current = selectionRange;
 
   useImperativeHandle(forwardedRef, () => ({
     focusAt(offset, end = offset) {
       const root = rootRef.current;
       if (!root) return;
-      if (root.textContent !== blockRef.current.text) paintEditor(root, blockRef.current);
+      if (root.textContent !== blockRef.current.text) paintEditor(root, blockRef.current, selectionRangeRef.current);
       root.focus({ preventScroll: true });
       setSelectionOffsets(root, offset, end);
       root.scrollIntoView({ block: "nearest" });
@@ -130,7 +139,7 @@ const RichEditor = forwardRef(function RichEditor({
     repaint(nextBlock, selection = null) {
       const root = rootRef.current;
       if (!root) return;
-      paintEditor(root, nextBlock || blockRef.current);
+      paintEditor(root, nextBlock || blockRef.current, selectionRangeRef.current);
       if (selection) setSelectionOffsets(root, selection.start, selection.end);
     },
     replaceText(text, offset = text.length) {
@@ -142,8 +151,8 @@ const RichEditor = forwardRef(function RichEditor({
   }), []);
 
   useEffect(() => {
-    if (!focusedRef.current) paintEditor(rootRef.current, block);
-  }, [block.text, block.marks, block.masks, block.type]);
+    if (!focusedRef.current || selectionRange) paintEditor(rootRef.current, block, selectionRange);
+  }, [block.text, block.marks, block.masks, block.type, selectionRange]);
 
   useEffect(() => {
     const updateSelection = () => {
@@ -161,7 +170,7 @@ const RichEditor = forwardRef(function RichEditor({
       contentEditable
       onBlur={(event) => {
         focusedRef.current = false;
-        paintEditor(event.currentTarget, blockRef.current);
+        paintEditor(event.currentTarget, blockRef.current, selectionRangeRef.current);
         onBlur?.(event);
       }}
       onCompositionEnd={(event) => {
