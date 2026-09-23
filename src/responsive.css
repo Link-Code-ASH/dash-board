@@ -2964,3 +2964,78 @@ html body #root .mobile-memo-toolbar { flex-wrap: wrap; }
   html body #root .memo-format-toolbar { gap: 3px; padding-left: 6px; }
   html body #root .memo-format-button { width: 26px; min-width: 26px; height: 26px; }
 }
+
+.hub-view-vault .account-sync {
+  display: grid;
+  gap: 12px;
+  padding: 8px 4px 18px;
+  border-bottom: 1px solid rgba(92, 109, 130, 0.18);
+}
+
+.account-sync-header {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 5px 14px;
+  min-width: 0;
+  color: #35475e;
+}
+
+.account-sync-header strong { font-weight: 700; }
+.account-sync-header span { color: #65768a; overflow-wrap: anywhere; }
+
+.account-sync-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.account-sync .text-button {
+  min-height: 40px;
+  padding: 7px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  border-radius: 7px;
+  color: #35475e;
+  background: rgba(235, 242, 249, 0.78);
+  box-shadow: 4px 5px 12px rgba(71, 87, 108, 0.12), inset 1px 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.account-sync .account-primary {
+  border-color: rgba(124, 149, 174, 0.38);
+  background: rgba(217, 231, 239, 0.86);
+}
+
+.account-sync .text-button:disabled { cursor: wait; opacity: 0.58; }
+.account-sync .sync-status { min-height: 1.4em; margin: 0; }
+
+.legacy-sync { padding: 14px 4px 2px; color: #586a80; }
+.legacy-sync summary { width: fit-content; cursor: pointer; font-weight: 700; }
+.legacy-sync .sync-grid { margin-top: 12px; }
+
+.account-gate {
+  display: grid;
+  place-items: center;
+  min-height: 100dvh;
+  padding: 20px;
+  color: #35475e;
+  background: #e7edf3;
+}
+
+.account-gate-content {
+  width: min(100%, 440px);
+  padding: 28px;
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  border-radius: 8px;
+  background: rgba(246, 249, 252, 0.78);
+  box-shadow: 12px 14px 30px rgba(71, 86, 107, 0.14), inset 1px 1px 0 rgba(255, 255, 255, 0.92);
+}
+
+.account-gate-content h1 { margin: 0 0 8px; font-size: 1.8rem; }
+.account-gate-content > p { margin: 0 0 22px; color: #64758a; }
+.account-gate .account-sync { display: grid; gap: 12px; }
+
+@media (max-width: 480px) {
+  .account-sync-actions { display: grid; grid-template-columns: 1fr; }
+  .account-sync-actions .text-button { width: 100%; }
+  .account-gate-content { padding: 22px; }
+}

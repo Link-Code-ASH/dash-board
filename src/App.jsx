@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import MemoEditor, { MemoFormatToolbar } from "./MemoEditor.jsx";
 import MindfoldV2View from "./mindfold/MindfoldView.jsx";
 import { normalizeMindfold as normalizeMindfoldV2 } from "./mindfold/model.js";
+import { accountClient, createAccountData, readAccountData, updateAccountData } from "./accountSync.js";
 
 const STORAGE_KEY = "routine-scoreboard-clean-v1";
 const SYNC_BACKEND_KEY = "dashboard-sync-backend-v1";
@@ -12,6 +13,9 @@ const SYNC_KDF_ITERATIONS = 250000;
 const NOTE_IMAGE_DB_NAME = "dashboard-note-images-v1";
 const NOTE_IMAGE_STORE_NAME = "images";
 const BACKUP_IMAGES_KEY = "_dashboardNoteImages";
+const ACCOUNT_OWNER_KEY = "hub-account-owner-v1";
+const ACCOUNT_CACHE_PREFIX = "hub-account-data-v1:";
+const ACCOUNT_SYNCED_PREFIX = "hub-account-synced-v1:";
 
 const h = React.createElement;
 
@@ -827,12 +831,21 @@ async function getAllNoteImages() {
   });
 }
 
-async function restoreNoteImages(records) {
+async function restoreNoteImages(records, { clear = true } = {}) {
   if (!Array.isArray(records)) return;
   await withNoteImageStore("readwrite", (store) => {
-    store.clear();
+    if (clear) store.clear();
     records.filter((record) => record?.id && record?.dataUrl).forEach((record) => store.put(record));
   });
+}
+
+async function getNoteImagesForState(state) {
+  const imageIds = new Set((state.noteTabs || []).flatMap((tab) =>
+    (state[tab.id]?.notes || []).flatMap((note) =>
+      (note.images || []).map((image) => image.id).concat(note.imageId || []),
+    ),
+  ));
+  return (await getAllNoteImages()).filter((record) => imageIds.has(record.id));
 }
 
 function createBackupPayload(state, images = []) {
@@ -857,6 +870,18 @@ function loadSyncBackend() {
   } catch {
     return { supabaseUrl: "", supabaseAnonKey: "" };
   }
+}
+
+function accountCacheKey(userId) {
+  return `${ACCOUNT_CACHE_PREFIX}${userId}`;
+}
+
+function accountSyncedKey(userId) {
+  return `${ACCOUNT_SYNCED_PREFIX}${userId}`;
+}
+
+function needsAccountGate() {
+  return Boolean(localStorage.getItem(ACCOUNT_OWNER_KEY) || !localStorage.getItem(STORAGE_KEY));
 }
 
 function toDateKey(date) {
@@ -1076,9 +1101,25 @@ function App() {
     busy: false,
     status: localStorage.getItem(SYNC_REMEMBER_KEY) === "true" ? "Ready to auto connect." : "Not connected.",
   });
+  const [account, setAccount] = useState({
+    user: null,
+    loading: true,
+    connected: false,
+    cloudAvailable: false,
+    busy: false,
+    status: "",
+  });
+  const [accountGate, setAccountGate] = useState(needsAccountGate);
 
   const dataRef = useRef(data);
   const syncRef = useRef(sync);
+  const accountRef = useRef(account);
+  const activeAccountIdRef = useRef(null);
+  const accountRevisionRef = useRef(null);
+  const accountSyncedAtRef = useRef("");
+  const accountWriteInFlightRef = useRef(false);
+  const accountPushTimerRef = useRef(null);
+  const accountPollTimerRef = useRef(null);
   const pushTimerRef = useRef(null);
   const pollTimerRef = useRef(null);
   const autoConnectRef = useRef(false);
@@ -1093,6 +1134,17 @@ function App() {
   useEffect(() => {
     syncRef.current = sync;
   }, [sync]);
+
+  useEffect(() => {
+    accountRef.current = account;
+  }, [account]);
+
+  useEffect(() => {
+    const { data: { subscription } } = accountClient.auth.onAuthStateChange((_event, session) => {
+      setAccount((current) => ({ ...current, user: session?.user || null, loading: false }));
+    });
+    return () => subscription.unsubscribe();
+  }, []);
 
   useEffect(() => {
     const query = window.matchMedia("(max-width: 760px)");
@@ -1132,7 +1184,7 @@ function App() {
         mindfoldHistoryGroupRef.current = { key: historyGroup, timestamp: now };
       }
       dataRef.current = normalized;
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized));
+      localStorage.setItem(activeAccountIdRef.current ? accountCacheKey(activeAccountIdRef.current) : STORAGE_KEY, JSON.stringify(normalized));
       if (!options.skipSync) scheduleAutoSync();
       return normalized;
     });
@@ -1148,6 +1200,148 @@ function App() {
 
   const setSyncStatus = (status) => {
     updateSync((current) => ({ ...current, status }));
+  };
+
+  const updateAccount = (updater) => {
+    setAccount((current) => {
+      const next = typeof updater === "function" ? updater(current) : updater;
+      accountRef.current = next;
+      return next;
+    });
+  };
+
+  const setAccountStatus = (status) => {
+    updateAccount((current) => ({ ...current, status }));
+  };
+
+  const signInWithGoogle = async () => {
+    updateAccount((current) => ({ ...current, busy: true, status: "Google 로그인으로 이동합니다..." }));
+    const { error } = await accountClient.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: `${window.location.origin}${window.location.pathname}` },
+    });
+    if (error) updateAccount((current) => ({ ...current, busy: false, status: `로그인 실패: ${error.message}` }));
+  };
+
+  const signOutOfGoogle = async () => {
+    window.clearTimeout(accountPushTimerRef.current);
+    window.clearInterval(accountPollTimerRef.current);
+    const { error } = await accountClient.auth.signOut();
+    if (error) {
+      setAccountStatus(`로그아웃 실패: ${error.message}`);
+      return;
+    }
+    activeAccountIdRef.current = null;
+    accountRevisionRef.current = null;
+    accountSyncedAtRef.current = "";
+    const legacy = loadState();
+    dataRef.current = legacy;
+    setData(legacy);
+    updateAccount((current) => ({ ...current, user: null, connected: false, cloudAvailable: false, busy: false, status: "로그아웃했습니다." }));
+    setAccountGate(needsAccountGate());
+  };
+
+  const activateAccountData = async (userId, row) => {
+    const { images, state } = splitBackupPayload(row.payload);
+    const normalized = normalizeState(state);
+    await restoreNoteImages(images, { clear: false });
+    activeAccountIdRef.current = userId;
+    accountRevisionRef.current = row.revision;
+    accountSyncedAtRef.current = normalized.updatedAt;
+    localStorage.setItem(ACCOUNT_OWNER_KEY, userId);
+    localStorage.setItem(accountCacheKey(userId), JSON.stringify(normalized));
+    localStorage.setItem(accountSyncedKey(userId), normalized.updatedAt);
+    window.clearTimeout(pushTimerRef.current);
+    window.clearInterval(pollTimerRef.current);
+    dataRef.current = normalized;
+    setData(normalized);
+    updateAccount((current) => ({ ...current, connected: true, cloudAvailable: true, busy: false, status: "Google 계정과 동기화 중입니다." }));
+    setAccountGate(false);
+  };
+
+  const loadAccountData = async () => {
+    const userId = accountRef.current.user?.id;
+    if (!userId) return;
+    updateAccount((current) => ({ ...current, busy: true, status: "계정 데이터를 확인하는 중입니다..." }));
+    try {
+      const row = await readAccountData(userId);
+      if (!row) {
+        setAccountStatus("이 계정에는 아직 저장된 데이터가 없습니다. 현재 기기 자료를 올려주세요.");
+        updateAccount((current) => ({ ...current, cloudAvailable: false, busy: false }));
+        return;
+      }
+      const hasUnsyncedAccountChanges = activeAccountIdRef.current === userId
+        && dataRef.current.updatedAt !== accountSyncedAtRef.current;
+      if (hasUnsyncedAccountChanges || (!activeAccountIdRef.current && localStorage.getItem(STORAGE_KEY))) {
+        downloadTextFile(`hub-before-google-${toDateKey(new Date())}.json`, JSON.stringify(createBackupPayload(dataRef.current, await getNoteImagesForState(dataRef.current)), null, 2));
+      }
+      await activateAccountData(userId, row);
+    } catch (error) {
+      updateAccount((current) => ({ ...current, busy: false, status: `가져오기 실패: ${error.message}` }));
+    }
+  };
+
+  const uploadAccountData = async () => {
+    const userId = accountRef.current.user?.id;
+    if (!userId) return;
+    const state = activeAccountIdRef.current === userId
+      ? dataRef.current
+      : JSON.parse(localStorage.getItem(accountCacheKey(userId)) || "null") || dataRef.current;
+    const row = await readAccountData(userId).catch((error) => {
+      setAccountStatus(`클라우드 확인 실패: ${error.message}`);
+      return undefined;
+    });
+    if (row === undefined) return;
+    if (row && !window.confirm("클라우드의 기존 자료를 이 기기 자료로 바꾸시겠습니까? 기존 클라우드 자료는 백업 파일로 내려받습니다.")) return;
+    if (!row && !window.confirm("현재 기기 자료가 가장 최신인지 확인하셨나요? 기존 PIN 동기화나 다른 기기에 더 최신 자료가 있을 수 있습니다. 이 자료를 Google 계정에 처음 저장하시겠습니까?")) return;
+    updateAccount((current) => ({ ...current, busy: true, status: "계정에 저장하는 중입니다..." }));
+    try {
+      if (row) downloadTextFile(`hub-cloud-before-replace-${toDateKey(new Date())}.json`, JSON.stringify(row.payload, null, 2));
+      const payload = createBackupPayload(state, await getNoteImagesForState(state));
+      const revision = row
+        ? await updateAccountData(userId, payload, row.revision)
+        : await createAccountData(userId, payload);
+      await activateAccountData(userId, { payload, revision });
+    } catch (error) {
+      updateAccount((current) => ({ ...current, busy: false, status: `저장 실패: ${error.message}` }));
+    }
+  };
+
+  const pushAccountData = async () => {
+    const userId = activeAccountIdRef.current;
+    if (!userId || !accountRef.current.connected || accountRef.current.busy || accountWriteInFlightRef.current) return;
+    accountWriteInFlightRef.current = true;
+    const state = dataRef.current;
+    updateAccount((current) => ({ ...current, busy: true }));
+    try {
+      const payload = createBackupPayload(state, await getNoteImagesForState(state));
+      const revision = await updateAccountData(userId, payload, accountRevisionRef.current);
+      accountRevisionRef.current = revision;
+      accountSyncedAtRef.current = state.updatedAt;
+      localStorage.setItem(accountSyncedKey(userId), state.updatedAt);
+      updateAccount((current) => ({ ...current, busy: false, status: "Google 계정에 저장되었습니다." }));
+      if (dataRef.current.updatedAt !== state.updatedAt) scheduleAutoSync();
+    } catch (error) {
+      updateAccount((current) => ({ ...current, busy: false, connected: error.message !== "CLOUD_CONFLICT", status: error.message === "CLOUD_CONFLICT" ? "다른 기기에서 자료가 바뀌었습니다. 클라우드 자료를 확인한 후 선택해주세요." : `동기화 실패: ${error.message}` }));
+    } finally {
+      accountWriteInFlightRef.current = false;
+    }
+  };
+
+  const pullAccountData = async () => {
+    const userId = activeAccountIdRef.current;
+    if (!userId || !accountRef.current.connected || accountRef.current.busy || accountWriteInFlightRef.current || accountPushTimerRef.current) return;
+    try {
+      const row = await readAccountData(userId);
+      if (!row || row.revision <= accountRevisionRef.current) return;
+      if (dataRef.current.updatedAt !== accountSyncedAtRef.current) {
+        updateAccount((current) => ({ ...current, connected: false, status: "다른 기기의 변경과 현재 기기의 변경이 겹쳤습니다. 자료를 확인한 후 선택해주세요." }));
+        return;
+      }
+      await activateAccountData(userId, row);
+    } catch (error) {
+      setAccountStatus(`새 자료 확인 실패: ${error.message}`);
+    }
   };
 
   const syncBackendReady = () => {
@@ -1271,6 +1465,15 @@ function App() {
   };
 
   const scheduleAutoSync = () => {
+    if (activeAccountIdRef.current) {
+      if (!accountRef.current.connected) return;
+      window.clearTimeout(accountPushTimerRef.current);
+      accountPushTimerRef.current = window.setTimeout(() => {
+        accountPushTimerRef.current = null;
+        pushAccountData();
+      }, 1400);
+      return;
+    }
     if (!syncBackendReady() || !syncIdentityReady() || syncRef.current.busy) return;
     window.clearTimeout(pushTimerRef.current);
     pushTimerRef.current = window.setTimeout(() => {
@@ -1281,6 +1484,8 @@ function App() {
 
   const startAutoSyncPolling = () => {
     window.clearInterval(pollTimerRef.current);
+    if (localStorage.getItem(ACCOUNT_OWNER_KEY)) return;
+    if (activeAccountIdRef.current) return;
     if (!syncBackendReady() || !syncIdentityReady()) return;
     pollTimerRef.current = window.setInterval(() => {
       const active = document.activeElement;
@@ -1297,6 +1502,80 @@ function App() {
       window.clearInterval(pollTimerRef.current);
     };
   }, []);
+
+  useEffect(() => {
+    if (account.loading) return;
+    const userId = account.user?.id;
+    if (!userId) {
+      window.clearTimeout(accountPushTimerRef.current);
+      window.clearInterval(accountPollTimerRef.current);
+      if (activeAccountIdRef.current) {
+        activeAccountIdRef.current = null;
+        const legacy = loadState();
+        dataRef.current = legacy;
+        setData(legacy);
+      }
+      updateAccount((current) => ({ ...current, connected: false, cloudAvailable: false, busy: false }));
+      setAccountGate(needsAccountGate());
+      return;
+    }
+    let cancelled = false;
+    const inspectAccount = async () => {
+      updateAccount((current) => ({ ...current, busy: true, status: "계정 자료를 확인하는 중입니다..." }));
+      try {
+        const row = await readAccountData(userId);
+        if (cancelled) return;
+        const savedOwner = localStorage.getItem(ACCOUNT_OWNER_KEY);
+        if (savedOwner === userId && row) {
+          const cached = JSON.parse(localStorage.getItem(accountCacheKey(userId)) || "null");
+          const lastSyncedAt = localStorage.getItem(accountSyncedKey(userId));
+          if (cached?.updatedAt && cached.updatedAt !== lastSyncedAt) {
+            activeAccountIdRef.current = userId;
+            accountRevisionRef.current = row.revision;
+            accountSyncedAtRef.current = lastSyncedAt || "";
+            dataRef.current = normalizeState(cached);
+            setData(dataRef.current);
+            updateAccount((current) => ({ ...current, busy: false, connected: false, cloudAvailable: true, status: "이 기기에 아직 올리지 않은 변경이 있습니다. 클라우드 자료와 비교한 뒤 선택해주세요." }));
+            setAccountGate(false);
+          } else {
+            await activateAccountData(userId, row);
+          }
+          return;
+        }
+        if (savedOwner && savedOwner !== userId) {
+          const empty = createFallbackState();
+          dataRef.current = empty;
+          setData(empty);
+          setAccountGate(true);
+        } else if (savedOwner === userId) {
+          const cached = JSON.parse(localStorage.getItem(accountCacheKey(userId)) || "null");
+          if (cached) {
+            activeAccountIdRef.current = userId;
+            dataRef.current = normalizeState(cached);
+            setData(dataRef.current);
+            setAccountGate(false);
+          }
+        }
+        updateAccount((current) => ({ ...current, busy: false, connected: false, cloudAvailable: Boolean(row), status: row ? "계정 자료가 있습니다. 가져올지 이 기기 자료를 사용할지 선택해주세요." : "계정에 저장된 자료가 없습니다. 이 기기 자료를 옮길 수 있습니다." }));
+      } catch (error) {
+        if (!cancelled) updateAccount((current) => ({ ...current, busy: false, status: `계정 확인 실패: ${error.message}` }));
+      }
+    };
+    inspectAccount();
+    return () => { cancelled = true; };
+  }, [account.loading, account.user?.id]);
+
+  useEffect(() => {
+    window.clearInterval(accountPollTimerRef.current);
+    if (!account.connected) return;
+    accountPollTimerRef.current = window.setInterval(() => {
+      const active = document.activeElement;
+      if (active?.matches?.("input, textarea, select, [contenteditable='true']") || accountRef.current.busy) return;
+      if (dataRef.current.updatedAt !== accountSyncedAtRef.current) pushAccountData();
+      else pullAccountData();
+    }, 15000);
+    return () => window.clearInterval(accountPollTimerRef.current);
+  }, [account.connected]);
 
   useEffect(() => {
     document.querySelectorAll(".collapsible-panel, .schedule-panel, .memo-panel, .history-panel, .score-meter, .score-details > div, .preset-card, .entry-item").forEach((element) => {
@@ -2238,12 +2517,12 @@ function App() {
       localStorage.removeItem(SYNC_PIN_KEY);
     }
     startAutoSyncPolling();
-    const pulled = await pullSyncData({ force: true });
-    if (!pulled) await pushSyncData();
+    await pullSyncData({ force: true });
   };
 
   useEffect(() => {
     if (autoConnectRef.current) return;
+    if (localStorage.getItem(ACCOUNT_OWNER_KEY)) return;
     if (!sync.rememberDevice || !sync.backend.supabaseUrl || !sync.backend.supabaseAnonKey || !sync.syncId || !sync.pin) return;
     autoConnectRef.current = true;
     setSyncStatus("Auto connecting...");
@@ -2266,14 +2545,14 @@ function App() {
   };
 
   const exportBackup = async () => {
-    const payload = createBackupPayload(dataRef.current, await getAllNoteImages());
+    const payload = createBackupPayload(dataRef.current, await getNoteImagesForState(dataRef.current));
     const filename = `dashboard-backup-${toDateKey(new Date())}.json`;
     downloadTextFile(filename, JSON.stringify(payload, null, 2));
   };
 
   const copyBackup = async () => {
     try {
-      const payload = createBackupPayload(dataRef.current, await getAllNoteImages());
+      const payload = createBackupPayload(dataRef.current, await getNoteImagesForState(dataRef.current));
       await navigator.clipboard.writeText(JSON.stringify(payload, null, 2));
       window.alert("Dashboard backup data, including memo images, was copied to the clipboard.");
     } catch {
@@ -2289,9 +2568,9 @@ function App() {
       const normalized = normalizeState(state);
       const confirmed = window.confirm("This will replace the dashboard data in this browser with the selected backup file. Continue?");
       if (!confirmed) return;
-      await restoreNoteImages(images);
+      await restoreNoteImages(images, { clear: !activeAccountIdRef.current });
       dataRef.current = normalized;
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized));
+      localStorage.setItem(activeAccountIdRef.current ? accountCacheKey(activeAccountIdRef.current) : STORAGE_KEY, JSON.stringify(normalized));
       setData(normalized);
       scheduleAutoSync();
     } catch {
@@ -2417,8 +2696,15 @@ function App() {
       onToggle: () => togglePanel("display"),
     }),
     h(SyncPanel, {
+      account,
       forgetThisDevice,
       isOpen: openPanels.sync,
+      onGoogleSignIn: signInWithGoogle,
+      onGoogleSignOut: signOutOfGoogle,
+      onAccountLoad: loadAccountData,
+      onAccountUpload: uploadAccountData,
+      onAccountRefresh: pullAccountData,
+      onAccountSave: pushAccountData,
       onToggle: () => togglePanel("sync"),
       onConnect: connectSync,
       onGenerate: () => {
@@ -2440,6 +2726,24 @@ function App() {
       onToggle: () => togglePanel("system"),
     }),
   );
+
+  if (accountGate) {
+    return h("main", { className: "account-gate" },
+      h("div", { className: "account-gate-content" },
+        h("h1", null, "HUB"),
+        h("p", null, "Google 계정으로 연결해주세요."),
+        h(AccountSyncControls, {
+          account,
+          onGoogleSignIn: signInWithGoogle,
+          onGoogleSignOut: signOutOfGoogle,
+          onAccountLoad: loadAccountData,
+          onAccountUpload: uploadAccountData,
+          onAccountRefresh: pullAccountData,
+          onAccountSave: pushAccountData,
+        }),
+      ),
+    );
+  }
 
   return h(
     "main",
@@ -4276,11 +4580,35 @@ function DisplayModePanel({ displayMode, effectiveMode, isOpen, onChange, onTogg
   });
 }
 
-function SyncPanel({ forgetThisDevice, isOpen, onConnect, onGenerate, onPull, onPush, onToggle, setSync, sync, syncReady }) {
+function AccountSyncControls({ account, onAccountLoad, onAccountRefresh, onAccountSave, onAccountUpload, onGoogleSignIn, onGoogleSignOut }) {
+  return h("div", { className: "account-sync" },
+    h("div", { className: "account-sync-header" },
+      h("strong", null, "Google 계정"),
+      account.user ? h("span", null, account.user.email) : null,
+    ),
+    !account.user
+      ? h("button", { className: "text-button account-primary", type: "button", disabled: account.loading || account.busy, onClick: onGoogleSignIn }, account.loading ? "로그인 확인 중..." : "Google로 로그인")
+      : h("div", { className: "account-sync-actions" },
+        account.connected
+          ? h(React.Fragment, null,
+            h("button", { className: "text-button", type: "button", disabled: account.busy, onClick: onAccountSave }, "지금 저장"),
+            h("button", { className: "text-button", type: "button", disabled: account.busy, onClick: onAccountRefresh }, "새로고침"),
+          )
+          : h(React.Fragment, null,
+            account.cloudAvailable ? h("button", { className: "text-button account-primary", type: "button", disabled: account.busy, onClick: onAccountLoad }, "클라우드 자료 가져오기") : null,
+            h("button", { className: "text-button", type: "button", disabled: account.busy, onClick: onAccountUpload }, account.cloudAvailable ? "이 기기 자료로 교체" : "이 기기 자료 옮기기"),
+          ),
+        h("button", { className: "text-button", type: "button", disabled: account.busy, onClick: onGoogleSignOut }, "로그아웃"),
+      ),
+    h("p", { className: "sync-status", role: "status" }, account.status),
+  );
+}
+
+function SyncPanel({ account, forgetThisDevice, isOpen, onAccountLoad, onAccountRefresh, onAccountSave, onAccountUpload, onConnect, onGenerate, onGoogleSignIn, onGoogleSignOut, onPull, onPush, onToggle, setSync, sync, syncReady }) {
   return h(CollapsiblePanel, {
     className: "sync-panel",
     controls: "syncBody",
-    description: "Sync ID와 PIN으로 여러 기기의 데이터를 연결합니다.",
+    description: "Google 계정으로 기기 사이의 자료를 연결합니다.",
     isOpen,
     onToggle,
     title: "기기 동기화",
@@ -4289,6 +4617,9 @@ function SyncPanel({ forgetThisDevice, isOpen, onConnect, onGenerate, onPull, on
       body: h(
         "div",
         { className: "sync-body", id: "syncBody" },
+        h(AccountSyncControls, { account, onAccountLoad, onAccountRefresh, onAccountSave, onAccountUpload, onGoogleSignIn, onGoogleSignOut }),
+        !account.connected ? h("details", { className: "legacy-sync" },
+          h("summary", null, "기존 PIN 동기화"),
         h(
           "div",
           { className: "sync-grid" },
@@ -4324,6 +4655,7 @@ function SyncPanel({ forgetThisDevice, isOpen, onConnect, onGenerate, onPull, on
           ),
         ),
         h("p", { className: "sync-status" }, sync.status),
+        ) : null,
       ),
     },
   });
