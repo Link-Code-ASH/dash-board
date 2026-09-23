@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import MemoEditor, { MemoFormatToolbar } from "./MemoEditor.jsx";
 import MindfoldV2View from "./mindfold/MindfoldView.jsx";
 import { normalizeMindfold as normalizeMindfoldV2 } from "./mindfold/model.js";
@@ -1281,19 +1282,55 @@ function App() {
     }
   };
 
-  const uploadAccountData = async () => {
+  const getAccountUploadState = (userId) => {
+    if (activeAccountIdRef.current === userId) return dataRef.current;
+    try {
+      return JSON.parse(localStorage.getItem(accountCacheKey(userId)) || "null") || dataRef.current;
+    } catch {
+      return dataRef.current;
+    }
+  };
+
+  const prepareAccountReplacement = async () => {
     const userId = accountRef.current.user?.id;
-    if (!userId) return;
-    const state = activeAccountIdRef.current === userId
-      ? dataRef.current
-      : JSON.parse(localStorage.getItem(accountCacheKey(userId)) || "null") || dataRef.current;
+    if (!userId) return null;
+    try {
+      const row = await readAccountData(userId);
+      if (!row) {
+        setAccountStatus("클라우드 자료가 없습니다. 계정 상태를 새로 확인해주세요.");
+        return null;
+      }
+      return {
+        userId,
+        revision: row.revision,
+        localUpdatedAt: getAccountUploadState(userId).updatedAt,
+        cloudUpdatedAt: row.payload?.updatedAt || row.updated_at,
+        sourceHost: window.location.host,
+      };
+    } catch (error) {
+      setAccountStatus(`클라우드 확인 실패: ${error.message}`);
+      return null;
+    }
+  };
+
+  const uploadAccountData = async (replacement = null) => {
+    const userId = accountRef.current.user?.id;
+    if (!userId) return false;
+    const state = getAccountUploadState(userId);
     const row = await readAccountData(userId).catch((error) => {
       setAccountStatus(`클라우드 확인 실패: ${error.message}`);
       return undefined;
     });
-    if (row === undefined) return;
-    if (row && !window.confirm("클라우드의 기존 자료를 이 기기 자료로 바꾸시겠습니까? 기존 클라우드 자료는 백업 파일로 내려받습니다.")) return;
-    if (!row && !window.confirm("현재 기기 자료가 가장 최신인지 확인하셨나요? 기존 PIN 동기화나 다른 기기에 더 최신 자료가 있을 수 있습니다. 이 자료를 Google 계정에 처음 저장하시겠습니까?")) return;
+    if (row === undefined) return false;
+    if (row && (!replacement || replacement.userId !== userId || replacement.revision !== row.revision || replacement.localUpdatedAt !== state.updatedAt)) {
+      setAccountStatus("확인 후 자료가 변경되었습니다. 교체 내용을 다시 확인해주세요.");
+      return false;
+    }
+    if (!row && replacement) {
+      setAccountStatus("클라우드 상태가 변경되었습니다. 다시 확인해주세요.");
+      return false;
+    }
+    if (!row && !window.confirm("현재 기기 자료가 가장 최신인지 확인하셨나요? 기존 PIN 동기화나 다른 기기에 더 최신 자료가 있을 수 있습니다. 이 자료를 Google 계정에 처음 저장하시겠습니까?")) return false;
     updateAccount((current) => ({ ...current, busy: true, status: "계정에 저장하는 중입니다..." }));
     try {
       if (row) downloadTextFile(`hub-cloud-before-replace-${toDateKey(new Date())}.json`, JSON.stringify(row.payload, null, 2));
@@ -1302,8 +1339,10 @@ function App() {
         ? await updateAccountData(userId, payload, row.revision)
         : await createAccountData(userId, payload);
       await activateAccountData(userId, { payload, revision });
+      return true;
     } catch (error) {
       updateAccount((current) => ({ ...current, busy: false, status: `저장 실패: ${error.message}` }));
+      return false;
     }
   };
 
@@ -2702,6 +2741,7 @@ function App() {
       onGoogleSignIn: signInWithGoogle,
       onGoogleSignOut: signOutOfGoogle,
       onAccountLoad: loadAccountData,
+      onPrepareReplacement: prepareAccountReplacement,
       onAccountUpload: uploadAccountData,
       onAccountRefresh: pullAccountData,
       onAccountSave: pushAccountData,
@@ -2737,6 +2777,7 @@ function App() {
           onGoogleSignIn: signInWithGoogle,
           onGoogleSignOut: signOutOfGoogle,
           onAccountLoad: loadAccountData,
+          onPrepareReplacement: prepareAccountReplacement,
           onAccountUpload: uploadAccountData,
           onAccountRefresh: pullAccountData,
           onAccountSave: pushAccountData,
@@ -4580,7 +4621,60 @@ function DisplayModePanel({ displayMode, effectiveMode, isOpen, onChange, onTogg
   });
 }
 
-function AccountSyncControls({ account, onAccountLoad, onAccountRefresh, onAccountSave, onAccountUpload, onGoogleSignIn, onGoogleSignOut }) {
+function formatAccountSyncDate(value) {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? "알 수 없음" : date.toLocaleString("ko-KR", { dateStyle: "medium", timeStyle: "short" });
+}
+
+function AccountSyncControls({ account, onAccountLoad, onAccountRefresh, onAccountSave, onAccountUpload, onGoogleSignIn, onGoogleSignOut, onPrepareReplacement }) {
+  const [replacement, setReplacement] = useState(null);
+  const [confirmation, setConfirmation] = useState("");
+  const [preparing, setPreparing] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const confirmationRef = useRef(null);
+
+  useEffect(() => {
+    setReplacement(null);
+    setConfirmation("");
+  }, [account.user?.id, account.connected]);
+
+  useEffect(() => {
+    if (replacement) confirmationRef.current?.focus();
+  }, [replacement]);
+
+  const closeReplacement = () => {
+    setReplacement(null);
+    setConfirmation("");
+  };
+
+  const openReplacement = async () => {
+    setPreparing(true);
+    try {
+      const preview = await onPrepareReplacement();
+      if (preview) {
+        setConfirmation("");
+        setReplacement(preview);
+      }
+    } finally {
+      setPreparing(false);
+    }
+  };
+
+  const confirmReplacement = async () => {
+    if (confirmation !== "교체" || !replacement || submitting || account.busy) return;
+    setSubmitting(true);
+    try {
+      await onAccountUpload(replacement);
+      closeReplacement();
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const localIsOlder = replacement
+    && new Date(replacement.localUpdatedAt).getTime() < new Date(replacement.cloudUpdatedAt).getTime();
+  const isLocalPreview = replacement && /^(localhost|127\.0\.0\.1)(:|$)/.test(replacement.sourceHost);
+
   return h("div", { className: "account-sync" },
     h("div", { className: "account-sync-header" },
       h("strong", null, "Google 계정"),
@@ -4596,15 +4690,52 @@ function AccountSyncControls({ account, onAccountLoad, onAccountRefresh, onAccou
           )
           : h(React.Fragment, null,
             account.cloudAvailable ? h("button", { className: "text-button account-primary", type: "button", disabled: account.busy, onClick: onAccountLoad }, "클라우드 자료 가져오기") : null,
-            h("button", { className: "text-button", type: "button", disabled: account.busy, onClick: onAccountUpload }, account.cloudAvailable ? "이 기기 자료로 교체" : "이 기기 자료 옮기기"),
+            !account.cloudAvailable ? h("button", { className: "text-button", type: "button", disabled: account.busy, onClick: () => onAccountUpload() }, "이 기기 자료 옮기기") : null,
           ),
         h("button", { className: "text-button", type: "button", disabled: account.busy, onClick: onGoogleSignOut }, "로그아웃"),
       ),
     h("p", { className: "sync-status", role: "status" }, account.status),
+    account.user && !account.connected && account.cloudAvailable
+      ? h("details", { className: "account-replace-advanced" },
+        h("summary", null, "클라우드 자료 교체"),
+        h("p", null, "현재 주소에 남아 있는 자료로 Google 클라우드 자료를 덮어쓸 때만 사용합니다."),
+        h("button", { className: "text-button", type: "button", disabled: account.busy || preparing, onClick: openReplacement }, preparing ? "자료 확인 중..." : "교체 내용 확인"),
+      )
+      : null,
+    replacement && account.user && !account.connected
+      ? createPortal(h("div", { className: "account-replace-backdrop", onMouseDown: (event) => { if (event.target === event.currentTarget && !submitting) closeReplacement(); } },
+        h("section", {
+          className: "account-replace-dialog",
+          role: "alertdialog",
+          "aria-modal": "true",
+          "aria-labelledby": "account-replace-title",
+          "aria-describedby": "account-replace-description",
+          onKeyDown: (event) => { if (event.key === "Escape" && !submitting) closeReplacement(); },
+        },
+          h("h2", { id: "account-replace-title" }, "Google 클라우드 자료 교체"),
+          h("p", { id: "account-replace-description" }, "현재 주소의 브라우저 자료가 Google 클라우드 자료를 덮어씁니다. 다른 기기에도 교체된 내용이 표시됩니다."),
+          h("dl", { className: "account-replace-comparison" },
+            h("div", null, h("dt", null, "Google 클라우드"), h("dd", null, formatAccountSyncDate(replacement.cloudUpdatedAt))),
+            h("div", null, h("dt", null, `현재 주소 (${replacement.sourceHost})`), h("dd", null, formatAccountSyncDate(replacement.localUpdatedAt))),
+          ),
+          isLocalPreview ? h("p", { className: "account-replace-warning" }, "이 주소는 개발용 미리보기입니다. 실제 웹사이트와 저장된 자료가 다를 수 있으니 교체 전에 내용을 확인하세요.") : null,
+          localIsOlder ? h("p", { className: "account-replace-warning" }, "현재 주소의 자료가 클라우드 자료보다 오래됐습니다. 진행하면 최신 내용이 예전 내용으로 바뀔 수 있습니다.") : null,
+          h("p", { className: "account-replace-backup" }, "교체 전에 기존 클라우드 자료를 백업 파일로 내려받습니다."),
+          h("label", { className: "account-replace-confirmation" },
+            h("span", null, "진행하려면 '교체'를 입력하세요"),
+            h("input", { ref: confirmationRef, type: "text", autoComplete: "off", value: confirmation, onChange: (event) => setConfirmation(event.target.value), onKeyDown: (event) => { if (event.key === "Enter") { event.preventDefault(); confirmReplacement(); } } }),
+          ),
+          h("div", { className: "account-replace-actions" },
+            h("button", { className: "text-button", type: "button", disabled: submitting, onClick: closeReplacement }, "취소"),
+            h("button", { className: "text-button account-replace-submit", type: "button", disabled: confirmation !== "교체" || submitting || account.busy, onClick: confirmReplacement }, submitting ? "교체 중..." : "클라우드 자료 교체"),
+          ),
+        ),
+      ), document.body)
+      : null,
   );
 }
 
-function SyncPanel({ account, forgetThisDevice, isOpen, onAccountLoad, onAccountRefresh, onAccountSave, onAccountUpload, onConnect, onGenerate, onGoogleSignIn, onGoogleSignOut, onPull, onPush, onToggle, setSync, sync, syncReady }) {
+function SyncPanel({ account, forgetThisDevice, isOpen, onAccountLoad, onAccountRefresh, onAccountSave, onAccountUpload, onConnect, onGenerate, onGoogleSignIn, onGoogleSignOut, onPrepareReplacement, onPull, onPush, onToggle, setSync, sync, syncReady }) {
   return h(CollapsiblePanel, {
     className: "sync-panel",
     controls: "syncBody",
@@ -4617,7 +4748,7 @@ function SyncPanel({ account, forgetThisDevice, isOpen, onAccountLoad, onAccount
       body: h(
         "div",
         { className: "sync-body", id: "syncBody" },
-        h(AccountSyncControls, { account, onAccountLoad, onAccountRefresh, onAccountSave, onAccountUpload, onGoogleSignIn, onGoogleSignOut }),
+        h(AccountSyncControls, { account, onAccountLoad, onAccountRefresh, onAccountSave, onAccountUpload, onGoogleSignIn, onGoogleSignOut, onPrepareReplacement }),
         !account.connected ? h("details", { className: "legacy-sync" },
           h("summary", null, "기존 PIN 동기화"),
         h(
