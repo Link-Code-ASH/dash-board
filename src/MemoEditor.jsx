@@ -18,6 +18,16 @@ function selectionIsFullyFormatted(ranges, start, end, type) {
   return false;
 }
 
+function caretRangeAtPoint(x, y) {
+  if (document.caretRangeFromPoint) return document.caretRangeFromPoint(x, y);
+  const position = document.caretPositionFromPoint?.(x, y);
+  if (!position) return null;
+  const range = document.createRange();
+  range.setStart(position.offsetNode, position.offset);
+  range.collapse(true);
+  return range;
+}
+
 export function MemoFormatToolbar() {
   const apply = (format) => {
     const selection = window.getSelection();
@@ -39,7 +49,21 @@ export default function MemoEditor({ value, marks = [], onChange, getSelection, 
   const current = useRef({ value, marks });
   const composing = useRef(false);
   const pendingCompositionEnter = useRef(false);
+  const pan = useRef(null);
+  const positionTrack = useRef(null);
   current.current = { value, marks };
+  const updatePosition = () => {
+    const el = root.current;
+    const track = positionTrack.current;
+    if (!el || !track) return;
+    const maxScroll = el.scrollHeight - el.clientHeight;
+    track.style.opacity = maxScroll > 1 ? "1" : "0";
+    if (maxScroll <= 1) return;
+    const thumb = track.firstElementChild;
+    const height = Math.min(track.clientHeight, Math.max(24, track.clientHeight * el.clientHeight / el.scrollHeight));
+    thumb.style.height = `${height}px`;
+    thumb.style.top = `${(track.clientHeight - height) * el.scrollTop / maxScroll}px`;
+  };
   const paint = (text, ranges, selection) => {
     const el = root.current;
     const points = [...new Set([0, text.length, ...ranges.flatMap(r => [r.start, r.end])])].filter(n => n >= 0 && n <= text.length).sort((a,b) => a-b);
@@ -74,7 +98,15 @@ export default function MemoEditor({ value, marks = [], onChange, getSelection, 
     }
     el.replaceChildren(fragment);
     if (selection) setSelection(el, selection.start, selection.end);
+    updatePosition();
   };
+  useEffect(() => {
+    const observer = new ResizeObserver(updatePosition);
+    observer.observe(root.current);
+    observer.observe(positionTrack.current);
+    updatePosition();
+    return () => observer.disconnect();
+  }, []);
   useEffect(() => {
     if (composing.current) return;
     const selection = document.activeElement === root.current ? getSelection(root.current) : null;
@@ -151,7 +183,42 @@ export default function MemoEditor({ value, marks = [], onChange, getSelection, 
     paint(next, ranges, { start: start + text.length, end: start + text.length });
     onChange(next, ranges);
   };
-  return <div ref={root} className="memo-large-textarea memo-rich-editor" role="textbox" aria-label="Write freely..." aria-multiline="true" contentEditable suppressContentEditableWarning
+  const endPan = (event) => {
+    const gesture = pan.current;
+    if (!gesture || gesture.pointerId !== event.pointerId) return;
+    const el = root.current;
+    pan.current = null;
+    el.classList.remove("memo-panning");
+    if (el.hasPointerCapture(event.pointerId)) el.releasePointerCapture(event.pointerId);
+    if (gesture.moved || event.type !== "pointerup") return;
+    el.focus({ preventScroll: true });
+    const range = caretRangeAtPoint(gesture.x, gesture.y);
+    if (!range || !el.contains(range.startContainer)) return;
+    const selection = window.getSelection();
+    selection.removeAllRanges();
+    selection.addRange(range);
+  };
+  return <div className="memo-editor-shell"><div ref={root} className="memo-large-textarea memo-rich-editor" role="textbox" aria-label="Write freely..." aria-multiline="true" contentEditable suppressContentEditableWarning
+    onPointerDown={event => {
+      const el = root.current;
+      if (event.pointerType !== "mouse" || event.button !== 0 || event.detail > 1 || event.shiftKey || event.altKey || event.ctrlKey || event.metaKey || event.target.closest?.(".memo-divider-remove") || el.scrollHeight <= el.clientHeight + 1) return;
+      event.preventDefault();
+      event.stopPropagation();
+      pan.current = { pointerId: event.pointerId, x: event.clientX, y: event.clientY, scrollTop: el.scrollTop, moved: false };
+      el.setPointerCapture(event.pointerId);
+    }}
+    onPointerMove={event => {
+      const gesture = pan.current;
+      if (!gesture || gesture.pointerId !== event.pointerId) return;
+      const dy = event.clientY - gesture.y;
+      if (!gesture.moved && Math.hypot(event.clientX - gesture.x, dy) < 5) return;
+      gesture.moved = true;
+      root.current.classList.add("memo-panning");
+      root.current.scrollTop = gesture.scrollTop - dy * 1.2;
+      window.getSelection()?.removeAllRanges();
+      event.preventDefault();
+    }}
+    onPointerUp={endPan} onPointerCancel={endPan} onLostPointerCapture={endPan} onScroll={updatePosition}
     onCompositionStart={() => { composing.current = true; pendingCompositionEnter.current = false; }} onCompositionEnd={finishComposition}
     onInput={() => { if (!composing.current) input(); }}
     onPaste={event => { event.preventDefault(); insert(event.clipboardData.getData("text/plain")); }}
@@ -179,5 +246,5 @@ export default function MemoEditor({ value, marks = [], onChange, getSelection, 
       }
       if (event.key === "Enter") { event.preventDefault(); insert("\n"); }
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "b") { event.preventDefault(); root.current.dispatchEvent(new CustomEvent("memo-format", { detail: "bold" })); }
-    }} />;
+    }} /><span ref={positionTrack} className="memo-position-track" aria-hidden="true"><span /></span></div>;
 }
