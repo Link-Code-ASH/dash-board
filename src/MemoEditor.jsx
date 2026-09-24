@@ -190,7 +190,7 @@ export default function MemoEditor({ value, marks = [], onChange, getSelection, 
     pan.current = null;
     el.classList.remove("memo-panning");
     if (el.hasPointerCapture(event.pointerId)) el.releasePointerCapture(event.pointerId);
-    if (gesture.moved || event.type !== "pointerup") return;
+    if (gesture.mode !== "pending" || event.type !== "pointerup") return;
     el.focus({ preventScroll: true });
     const range = caretRangeAtPoint(gesture.x, gesture.y);
     if (!range || !el.contains(range.startContainer)) return;
@@ -204,18 +204,37 @@ export default function MemoEditor({ value, marks = [], onChange, getSelection, 
       if (event.pointerType !== "mouse" || event.button !== 0 || event.detail > 1 || event.shiftKey || event.altKey || event.ctrlKey || event.metaKey || event.target.closest?.(".memo-divider-remove") || el.scrollHeight <= el.clientHeight + 1) return;
       event.preventDefault();
       event.stopPropagation();
-      pan.current = { pointerId: event.pointerId, x: event.clientX, y: event.clientY, scrollTop: el.scrollTop, moved: false };
+      pan.current = { pointerId: event.pointerId, x: event.clientX, y: event.clientY, scrollTop: el.scrollTop, mode: "pending" };
       el.setPointerCapture(event.pointerId);
     }}
     onPointerMove={event => {
       const gesture = pan.current;
       if (!gesture || gesture.pointerId !== event.pointerId) return;
+      const dx = event.clientX - gesture.x;
       const dy = event.clientY - gesture.y;
-      if (!gesture.moved && Math.hypot(event.clientX - gesture.x, dy) < 5) return;
-      gesture.moved = true;
-      root.current.classList.add("memo-panning");
-      root.current.scrollTop = gesture.scrollTop - dy * 1.2;
-      window.getSelection()?.removeAllRanges();
+      if (gesture.mode === "pending") {
+        if (Math.hypot(dx, dy) < 5) return;
+        gesture.mode = Math.abs(dx) > Math.abs(dy) ? "select" : "pan";
+        if (gesture.mode === "pan") {
+          root.current.classList.add("memo-panning");
+          window.getSelection()?.removeAllRanges();
+        } else {
+          gesture.anchor = caretRangeAtPoint(gesture.x, gesture.y);
+          root.current.focus({ preventScroll: true });
+        }
+      }
+      if (gesture.mode === "pan") root.current.scrollTop = gesture.scrollTop - dy * 1.35;
+      else {
+        const el = root.current;
+        const rect = el.getBoundingClientRect();
+        const range = caretRangeAtPoint(
+          Math.max(rect.left + 1, Math.min(event.clientX, rect.right - 1)),
+          Math.max(rect.top + 1, Math.min(event.clientY, rect.bottom - 1)),
+        );
+        if (gesture.anchor && range && el.contains(gesture.anchor.startContainer) && el.contains(range.startContainer)) {
+          window.getSelection()?.setBaseAndExtent(gesture.anchor.startContainer, gesture.anchor.startOffset, range.startContainer, range.startOffset);
+        }
+      }
       event.preventDefault();
     }}
     onPointerUp={endPan} onPointerCancel={endPan} onLostPointerCapture={endPan} onScroll={updatePosition}
@@ -237,6 +256,17 @@ export default function MemoEditor({ value, marks = [], onChange, getSelection, 
       const ranges = cleanMemoRanges(next, adjustRanges(old.marks, old.value, next));
       paint(next, ranges, { start, end: start });
       onChange(next, ranges);
+    }}
+    onDoubleClick={event => {
+      if (event.target.closest?.(".memo-divider-remove")) return;
+      event.preventDefault();
+      const el = root.current;
+      el.focus({ preventScroll: true });
+      const { start } = getSelection(el);
+      const text = current.current.value;
+      const lineStart = start > 0 ? text.lastIndexOf("\n", start - 1) + 1 : 0;
+      const lineEnd = text.indexOf("\n", start);
+      setSelection(el, lineStart, lineEnd < 0 ? text.length : lineEnd);
     }}
     onKeyDown={event => {
       event.stopPropagation();

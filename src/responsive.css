@@ -2945,7 +2945,7 @@ html body #root .memo-insert-divider span { position: relative; display: block; 
 html body #root .memo-insert-divider span::before { content: ""; position: absolute; top: 50%; left: 0; width: 7px; height: 1px; background: #596b80; box-shadow: 11px 0 0 #596b80; transform: translateY(-50%); }
 html body #root .memo-insert-divider span::after { content: ""; position: absolute; top: 50%; left: 50%; width: 4px; height: 4px; border: 1px solid rgba(80, 98, 119, .72); border-radius: 1px; background: rgba(239, 243, 248, .92); transform: translate(-50%, -50%) rotate(45deg); }
 html body #root .memo-editor-shell { position: relative; min-width: 0; min-height: 0; height: 100%; }
-html body #root .memo-rich-editor { white-space: pre-wrap; overflow-wrap: anywhere; overflow-y: hidden !important; outline: none; cursor: text; box-sizing: border-box; scrollbar-width: none; }
+html body #root .memo-rich-editor { white-space: pre-wrap; overflow-wrap: anywhere; overflow-y: hidden !important; outline: none; cursor: text; box-sizing: border-box; scrollbar-width: none; user-select: text; }
 html body #root .memo-rich-editor::-webkit-scrollbar { display: none; }
 html body #root .memo-rich-editor.memo-panning { cursor: grabbing; user-select: none; }
 html body #root .effective-display-mobile .memo-rich-editor { overflow-y: auto !important; overscroll-behavior-y: contain; touch-action: pan-y; }
