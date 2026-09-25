@@ -17,6 +17,16 @@ export async function readAccountData(userId) {
   return data;
 }
 
+export async function readAccountRevision(userId) {
+  const { data, error } = await accountClient
+    .from("hub_user_data")
+    .select("revision")
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (error) throw error;
+  return data?.revision ?? null;
+}
+
 export async function createAccountData(userId, payload) {
   const { data, error } = await accountClient
     .from("hub_user_data")

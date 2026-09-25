@@ -852,6 +852,10 @@ html body #root .app-shell .date-marker-panel .date-marker-dday:not(.empty) {
   overflow: hidden !important;
 }
 
+.effective-display-mobile .mobile-dashboard-view.section-memo {
+  grid-template-rows: minmax(0, 1fr) 58px !important;
+}
+
 .effective-display-mobile .mobile-dashboard-header {
   display: grid !important;
   grid-template-columns: 40px minmax(0, 1fr) 40px !important;
@@ -924,8 +928,8 @@ html body #root .app-shell .date-marker-panel .date-marker-dday:not(.empty) {
   position: static !important;
   z-index: auto !important;
   display: grid !important;
-  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-  gap: 5px !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 4px !important;
   width: 100% !important;
   min-width: 0 !important;
   min-height: 0 !important;
@@ -949,7 +953,7 @@ html body #root .app-shell .date-marker-panel .date-marker-dday:not(.empty) {
   border-radius: 7px !important;
   color: #6a7a90 !important;
   background: transparent !important;
-  font-size: 0.78rem !important;
+  font-size: 0.74rem !important;
 }
 
 .effective-display-mobile .mobile-dashboard-nav button.active {
@@ -1325,19 +1329,16 @@ html body #root .app-shell .date-marker-panel .date-marker-dday:not(.empty) {
   grid-template-columns: 1fr !important;
 }
 
-html body #root .app-shell.effective-display-mobile .mobile-today-plan .daily-plan-row .today-plan-card.range-card,
-html body #root .app-shell.effective-display-mobile .mobile-today-plan .school-plan-row .today-plan-card.range-card {
+html body #root .app-shell.effective-display-mobile .mobile-today-plan .daily-plan-row .today-plan-card.range-card {
   grid-template-rows: auto auto !important;
 }
 
-html body #root .app-shell.effective-display-mobile .mobile-today-plan .daily-plan-row .range-card .plan-title,
-html body #root .app-shell.effective-display-mobile .mobile-today-plan .school-plan-row .range-card .plan-title {
+html body #root .app-shell.effective-display-mobile .mobile-today-plan .daily-plan-row .range-card .plan-title {
   grid-column: 1 !important;
   grid-row: 1 !important;
 }
 
-html body #root .app-shell.effective-display-mobile .mobile-today-plan .daily-plan-row .range-card .range-score-buttons,
-html body #root .app-shell.effective-display-mobile .mobile-today-plan .school-plan-row .range-card .range-score-buttons {
+html body #root .app-shell.effective-display-mobile .mobile-today-plan .daily-plan-row .range-card .range-score-buttons {
   grid-column: 1 !important;
   grid-row: 2 !important;
 }
@@ -1347,7 +1348,7 @@ html body #root .app-shell.effective-display-mobile .mobile-today-plan .weekly-p
   gap: 7px !important;
 }
 
-html body #root .app-shell.effective-display-mobile .mobile-today-plan .weekly-plan-row .today-plan-card {
+html body #root .app-shell.effective-display-mobile .mobile-today-plan :is(.weekly-plan-row, .school-plan-row) .today-plan-card:not(.range-card) {
   grid-template-columns: minmax(0, 1fr) minmax(122px, 42%) !important;
   grid-template-rows: auto auto !important;
   width: 100% !important;
@@ -1355,7 +1356,7 @@ html body #root .app-shell.effective-display-mobile .mobile-today-plan .weekly-p
   min-height: 76px !important;
 }
 
-html body #root .app-shell.effective-display-mobile .mobile-today-plan .weekly-plan-row .plan-label {
+html body #root .app-shell.effective-display-mobile .mobile-today-plan :is(.weekly-plan-row, .school-plan-row) .plan-label {
   display: block !important;
   grid-column: 1 !important;
   grid-row: 1 !important;
@@ -1366,31 +1367,39 @@ html body #root .app-shell.effective-display-mobile .mobile-today-plan .weekly-p
   line-height: 1.2 !important;
 }
 
-html body #root .app-shell.effective-display-mobile .mobile-today-plan .weekly-plan-row .plan-title {
+html body #root .app-shell.effective-display-mobile .mobile-today-plan :is(.weekly-plan-row, .school-plan-row) .plan-title {
   grid-column: 1 !important;
   grid-row: 2 !important;
   align-self: start !important;
 }
 
-html body #root .app-shell.effective-display-mobile .mobile-today-plan .weekly-plan-row .choice-buttons {
+html body #root .app-shell.effective-display-mobile .mobile-today-plan :is(.weekly-plan-row, .school-plan-row) .choice-buttons {
   grid-column: 2 !important;
   grid-row: 1 / span 2 !important;
   align-self: center !important;
 }
 
-html body #root .app-shell.effective-display-mobile .mobile-today-plan .weekly-plan-row .today-plan-card.range-card {
+html body #root .app-shell.effective-display-mobile .mobile-today-plan :is(.weekly-plan-row, .school-plan-row) .today-plan-card.range-card {
   grid-template-columns: 1fr !important;
   grid-template-rows: auto auto auto !important;
 }
 
-html body #root .app-shell.effective-display-mobile .mobile-today-plan .weekly-plan-row .range-card .plan-label,
-html body #root .app-shell.effective-display-mobile .mobile-today-plan .weekly-plan-row .range-card .plan-title,
-html body #root .app-shell.effective-display-mobile .mobile-today-plan .weekly-plan-row .range-card .range-score-buttons {
+html body #root .app-shell.effective-display-mobile .mobile-today-plan :is(.weekly-plan-row, .school-plan-row) .range-card .plan-label,
+html body #root .app-shell.effective-display-mobile .mobile-today-plan :is(.weekly-plan-row, .school-plan-row) .range-card .plan-title,
+html body #root .app-shell.effective-display-mobile .mobile-today-plan :is(.weekly-plan-row, .school-plan-row) .range-card .range-score-buttons {
   grid-column: 1 !important;
 }
 
-html body #root .app-shell.effective-display-mobile .mobile-today-plan .weekly-plan-row .range-card .range-score-buttons {
+html body #root .app-shell.effective-display-mobile .mobile-today-plan :is(.weekly-plan-row, .school-plan-row) .range-card .range-score-buttons {
   grid-row: 3 !important;
+}
+
+html body #root .app-shell.effective-display-mobile .mobile-today-plan :is(.weekly-plan-row, .school-plan-row) .range-card .plan-label {
+  grid-row: 1 !important;
+}
+
+html body #root .app-shell.effective-display-mobile .mobile-today-plan :is(.weekly-plan-row, .school-plan-row) .range-card .plan-title {
+  grid-row: 2 !important;
 }
 
 .effective-display-mobile .mobile-today-plan .plan-label:empty {
@@ -1859,21 +1868,49 @@ html body #root .app-shell.effective-display-mobile .mobile-today-plan .weekly-p
 }
 
 .effective-display-mobile.hub-view-vault .vault-heading {
-  grid-template-columns: 102px minmax(0, 1fr) !important;
-  align-items: center !important;
-  align-content: center !important;
-  gap: 12px !important;
-  min-height: 88px !important;
-  padding: 14px 16px !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  align-items: start !important;
+  gap: 5px !important;
+  min-height: 0 !important;
+  padding: 15px 17px !important;
 }
 
 .effective-display-mobile.hub-view-vault .vault-heading h1 {
-  font-size: 2rem !important;
+  font-size: 1.6rem !important;
 }
 
 .effective-display-mobile.hub-view-vault .vault-heading > p {
-  font-size: 0.76rem !important;
+  max-width: none !important;
+  font-size: 0.78rem !important;
   line-height: 1.4 !important;
+}
+
+.effective-display-mobile.hub-view-vault .vault-heading .eyebrow {
+  width: auto !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  color: #73849a !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.effective-display-mobile.hub-view-vault .vault-grid .section-heading {
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 10px !important;
+  min-height: 52px !important;
+  text-align: left !important;
+}
+
+.effective-display-mobile.hub-view-vault .vault-grid .section-heading > div {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.effective-display-mobile.hub-view-vault .vault-grid .section-heading .heading-actions {
+  flex: 0 0 34px;
 }
 
 .effective-display-mobile.hub-view-vault .vault-grid {
@@ -1887,14 +1924,14 @@ html body #root .app-shell.effective-display-mobile .mobile-today-plan .weekly-p
 }
 
 .effective-display-mobile.hub-view-vault .display-mode-options {
-  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  grid-template-columns: minmax(0, 1fr) !important;
   gap: 6px !important;
 }
 
 .effective-display-mobile.hub-view-vault .display-mode-option {
-  min-height: 70px !important;
-  padding: 8px 6px !important;
-  text-align: center !important;
+  min-height: 52px !important;
+  padding: 8px 12px !important;
+  text-align: left !important;
 }
 
 .effective-display-mobile.hub-view-vault .display-mode-option strong {
@@ -1943,12 +1980,18 @@ html body #root .app-shell.effective-display-mobile .mobile-today-plan .weekly-p
   }
 
   .effective-display-mobile .hub-nav-button {
-    padding-inline: 6px !important;
-    font-size: 0.7rem !important;
+    padding-inline: 4px !important;
+    font-size: 0.68rem !important;
+  }
+
+  html body #root .app-shell.effective-display-mobile .hub-brand {
+    flex-basis: 64px !important;
+    min-width: 64px !important;
   }
 
   .mobile-score-main {
-    grid-template-columns: 1fr 90px;
+    grid-template-columns: minmax(0, 1fr) 96px;
+    gap: 8px;
   }
 
   .effective-display-mobile .mobile-today-plan .today-plan-card {
@@ -2694,32 +2737,45 @@ html body #root .app-shell .history-panel .history-flag .flag-glyph {
 
   html body #root .app-shell.effective-display-mobile .history-panel .history-attempt {
     top: 8px !important;
-    left: 4px !important;
+    left: clamp(2px, 1vw, 4px) !important;
     right: auto !important;
-    width: 18px !important;
-    min-width: 18px !important;
-    height: 18px !important;
+    width: clamp(14px, 4.5vw, 18px) !important;
+    min-width: clamp(14px, 4.5vw, 18px) !important;
+    height: clamp(14px, 4.5vw, 18px) !important;
     font-size: 0.68rem !important;
   }
 
   html body #root .app-shell.effective-display-mobile .history-panel .history-flag,
   html body #root .app-shell.effective-display-mobile .history-panel .history-flag.active {
     top: 7px !important;
-    right: 3px !important;
+    right: clamp(2px, 0.8vw, 3px) !important;
     left: auto !important;
-    width: 18px !important;
-    min-width: 18px !important;
-    height: 18px !important;
+    width: clamp(14px, 4.5vw, 18px) !important;
+    min-width: clamp(14px, 4.5vw, 18px) !important;
+    height: clamp(14px, 4.5vw, 18px) !important;
   }
 
   html body #root .app-shell.effective-display-mobile .history-panel .history-flag .flag-glyph {
-    width: 18px;
-    height: 18px;
+    width: 100%;
+    height: 100%;
   }
 
   html body #root .app-shell.effective-display-mobile .history-panel .history-day {
-    padding-inline: 3px !important;
+    padding-inline: clamp(1px, 0.6vw, 3px) !important;
     overflow: hidden !important;
+  }
+
+  html body #root .app-shell.effective-display-mobile .history-panel .history-date {
+    min-width: 0 !important;
+    font-size: clamp(0.62rem, 2.8vw, 0.75rem) !important;
+    white-space: nowrap !important;
+  }
+
+  html body #root .app-shell.effective-display-mobile .history-panel .history-score {
+    width: 100% !important;
+    min-width: 0 !important;
+    padding: 2px 0 !important;
+    box-sizing: border-box !important;
   }
 }
 
@@ -2965,7 +3021,23 @@ html body #root .memo-divider-remove:hover { color: #3f5065; opacity: 1; }
 @media (hover: none) {
   html body #root .memo-divider-remove { opacity: .34; transform: translate(-50%, -50%) scale(1); }
 }
-html body #root .mobile-memo-toolbar { flex-wrap: wrap; }
+html body #root .effective-display-mobile .mobile-memo-toolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 36px;
+  align-items: center;
+  gap: 8px;
+}
+html body #root .effective-display-mobile .mobile-memo-toolbar > button:first-child { justify-self: start; }
+html body #root .effective-display-mobile .mobile-memo-toolbar > button.danger { grid-column: 2; justify-self: end; }
+html body #root .effective-display-mobile .mobile-memo-toolbar > .memo-format-toolbar {
+  grid-column: 1 / -1;
+  justify-content: center;
+  width: 100%;
+  margin: 0;
+  padding: 7px 0 0;
+  border-top: 1px solid rgba(107, 126, 151, 0.2);
+  gap: clamp(5px, 3vw, 12px);
+}
 @media (max-width: 480px) {
   html body #root .memo-format-toolbar { gap: 3px; padding-left: 6px; }
   html body #root .memo-format-button { width: 26px; min-width: 26px; height: 26px; }

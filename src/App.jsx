@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import MemoEditor, { MemoFormatToolbar } from "./MemoEditor.jsx";
 import MindfoldV2View from "./mindfold/MindfoldView.jsx";
 import { normalizeMindfold as normalizeMindfoldV2 } from "./mindfold/model.js";
-import { accountClient, createAccountData, readAccountData, updateAccountData } from "./accountSync.js";
+import { accountClient, createAccountData, readAccountData, readAccountRevision, updateAccountData } from "./accountSync.js";
 
 const STORAGE_KEY = "routine-scoreboard-clean-v1";
 const SYNC_BACKEND_KEY = "dashboard-sync-backend-v1";
@@ -1119,6 +1119,9 @@ function App() {
   const accountRevisionRef = useRef(null);
   const accountSyncedAtRef = useRef("");
   const accountWriteInFlightRef = useRef(false);
+  const accountPullInFlightRef = useRef(false);
+  const accountCheckInFlightRef = useRef(false);
+  const accountRefreshPendingRef = useRef(false);
   const accountPushTimerRef = useRef(null);
   const accountPollTimerRef = useRef(null);
   const pushTimerRef = useRef(null);
@@ -1235,6 +1238,7 @@ function App() {
     activeAccountIdRef.current = null;
     accountRevisionRef.current = null;
     accountSyncedAtRef.current = "";
+    accountRefreshPendingRef.current = false;
     const legacy = loadState();
     dataRef.current = legacy;
     setData(legacy);
@@ -1242,10 +1246,13 @@ function App() {
     setAccountGate(needsAccountGate());
   };
 
-  const activateAccountData = async (userId, row) => {
+  const activateAccountData = async (userId, row, expectedUpdatedAt = null) => {
+    if (expectedUpdatedAt && (activeAccountIdRef.current !== userId || accountRef.current.user?.id !== userId)) return false;
     const { images, state } = splitBackupPayload(row.payload);
     const normalized = normalizeState(state);
     await restoreNoteImages(images, { clear: false });
+    if (expectedUpdatedAt && (activeAccountIdRef.current !== userId || accountRef.current.user?.id !== userId
+      || dataRef.current.updatedAt !== expectedUpdatedAt)) return false;
     activeAccountIdRef.current = userId;
     accountRevisionRef.current = row.revision;
     accountSyncedAtRef.current = normalized.updatedAt;
@@ -1258,6 +1265,7 @@ function App() {
     setData(normalized);
     updateAccount((current) => ({ ...current, connected: true, cloudAvailable: true, busy: false, status: "Google 계정과 동기화 중입니다." }));
     setAccountGate(false);
+    return true;
   };
 
   const loadAccountData = async () => {
@@ -1349,6 +1357,10 @@ function App() {
   const pushAccountData = async () => {
     const userId = activeAccountIdRef.current;
     if (!userId || !accountRef.current.connected || accountRef.current.busy || accountWriteInFlightRef.current) return;
+    if (accountPullInFlightRef.current) {
+      scheduleAutoSync();
+      return;
+    }
     accountWriteInFlightRef.current = true;
     const state = dataRef.current;
     updateAccount((current) => ({ ...current, busy: true }));
@@ -1360,6 +1372,10 @@ function App() {
       localStorage.setItem(accountSyncedKey(userId), state.updatedAt);
       updateAccount((current) => ({ ...current, busy: false, status: "Google 계정에 저장되었습니다." }));
       if (dataRef.current.updatedAt !== state.updatedAt) scheduleAutoSync();
+      else if (accountRefreshPendingRef.current) {
+        accountRefreshPendingRef.current = false;
+        window.setTimeout(() => pullAccountData(), 0);
+      }
     } catch (error) {
       updateAccount((current) => ({ ...current, busy: false, connected: error.message !== "CLOUD_CONFLICT", status: error.message === "CLOUD_CONFLICT" ? "다른 기기에서 자료가 바뀌었습니다. 클라우드 자료를 확인한 후 선택해주세요." : `동기화 실패: ${error.message}` }));
     } finally {
@@ -1367,19 +1383,51 @@ function App() {
     }
   };
 
-  const pullAccountData = async () => {
+  const pullAccountData = async (remoteRevision = null) => {
     const userId = activeAccountIdRef.current;
-    if (!userId || !accountRef.current.connected || accountRef.current.busy || accountWriteInFlightRef.current || accountPushTimerRef.current) return;
+    if (!userId || !accountRef.current.connected) return;
+    if (remoteRevision !== null && remoteRevision <= accountRevisionRef.current) return;
+    if (accountRef.current.busy || accountWriteInFlightRef.current || accountPushTimerRef.current || accountPullInFlightRef.current
+      || dataRef.current.updatedAt !== accountSyncedAtRef.current) {
+      accountRefreshPendingRef.current = true;
+      return;
+    }
+    accountPullInFlightRef.current = true;
+    const localUpdatedAt = dataRef.current.updatedAt;
+    const localRevision = accountRevisionRef.current;
+    accountRefreshPendingRef.current = false;
     try {
       const row = await readAccountData(userId);
       if (!row || row.revision <= accountRevisionRef.current) return;
-      if (dataRef.current.updatedAt !== accountSyncedAtRef.current) {
-        updateAccount((current) => ({ ...current, connected: false, status: "다른 기기의 변경과 현재 기기의 변경이 겹쳤습니다. 자료를 확인한 후 선택해주세요." }));
+      if (dataRef.current.updatedAt !== localUpdatedAt || dataRef.current.updatedAt !== accountSyncedAtRef.current) {
+        accountRefreshPendingRef.current = true;
         return;
       }
-      await activateAccountData(userId, row);
+      if (accountRevisionRef.current !== localRevision) {
+        accountRefreshPendingRef.current = true;
+        return;
+      }
+      if (!await activateAccountData(userId, row, localUpdatedAt)) accountRefreshPendingRef.current = true;
     } catch (error) {
       setAccountStatus(`새 자료 확인 실패: ${error.message}`);
+    } finally {
+      accountPullInFlightRef.current = false;
+      if (accountRefreshPendingRef.current && dataRef.current.updatedAt === accountSyncedAtRef.current
+        && !accountPushTimerRef.current) window.setTimeout(() => checkAccountUpdates(), 0);
+    }
+  };
+
+  const checkAccountUpdates = async () => {
+    const userId = activeAccountIdRef.current;
+    if (!userId || !accountRef.current.connected || document.hidden || accountCheckInFlightRef.current) return;
+    accountCheckInFlightRef.current = true;
+    try {
+      const revision = await readAccountRevision(userId);
+      if (revision !== null && revision > accountRevisionRef.current) await pullAccountData(revision);
+    } catch (error) {
+      setAccountStatus(`새 자료 확인 실패: ${error.message}`);
+    } finally {
+      accountCheckInFlightRef.current = false;
     }
   };
 
@@ -1574,11 +1622,24 @@ function App() {
             accountSyncedAtRef.current = lastSyncedAt || "";
             dataRef.current = normalizeState(cached);
             setData(dataRef.current);
-            updateAccount((current) => ({ ...current, busy: false, connected: false, cloudAvailable: true, status: "이 기기에 아직 올리지 않은 변경이 있습니다. 클라우드 자료와 비교한 뒤 선택해주세요." }));
+            const cloudUnchanged = lastSyncedAt && row.payload?.updatedAt === lastSyncedAt;
+            updateAccount((current) => ({ ...current, busy: false, connected: Boolean(cloudUnchanged), cloudAvailable: true,
+              status: cloudUnchanged ? "이 기기의 변경을 계정에 저장하는 중입니다." : "이 기기와 다른 기기의 변경이 겹쳤습니다. 자료를 확인한 뒤 선택해주세요." }));
             setAccountGate(false);
+            if (cloudUnchanged) {
+              window.clearTimeout(accountPushTimerRef.current);
+              accountPushTimerRef.current = window.setTimeout(() => {
+                accountPushTimerRef.current = null;
+                pushAccountData();
+              }, 1400);
+            }
           } else {
             await activateAccountData(userId, row);
           }
+          return;
+        }
+        if (row && !savedOwner) {
+          await activateAccountData(userId, row);
           return;
         }
         if (savedOwner && savedOwner !== userId) {
@@ -1595,7 +1656,7 @@ function App() {
             setAccountGate(false);
           }
         }
-        updateAccount((current) => ({ ...current, busy: false, connected: false, cloudAvailable: Boolean(row), status: row ? "계정 자료가 있습니다. 가져올지 이 기기 자료를 사용할지 선택해주세요." : "계정에 저장된 자료가 없습니다. 이 기기 자료를 옮길 수 있습니다." }));
+        updateAccount((current) => ({ ...current, busy: false, connected: false, cloudAvailable: Boolean(row), status: row ? "이 기기에 다른 계정의 자료가 있습니다. 계정 자료를 확인한 뒤 가져와주세요." : "계정에 저장된 자료가 없습니다. 이 기기 자료를 옮길 수 있습니다." }));
       } catch (error) {
         if (!cancelled) updateAccount((current) => ({ ...current, busy: false, status: `계정 확인 실패: ${error.message}` }));
       }
@@ -1606,15 +1667,29 @@ function App() {
 
   useEffect(() => {
     window.clearInterval(accountPollTimerRef.current);
-    if (!account.connected) return;
+    if (!account.connected || !account.user?.id) return;
+    const userId = account.user.id;
+    const channel = accountClient.channel(`hub-user-data-${userId}`)
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "hub_user_data", filter: `user_id=eq.${userId}` },
+        ({ new: row }) => pullAccountData(row?.revision))
+      .subscribe((status) => {
+        if (status === "SUBSCRIBED") checkAccountUpdates();
+      });
+    const checkOnResume = () => { if (!document.hidden) checkAccountUpdates(); };
+    window.addEventListener("focus", checkOnResume);
+    document.addEventListener("visibilitychange", checkOnResume);
     accountPollTimerRef.current = window.setInterval(() => {
-      const active = document.activeElement;
-      if (active?.matches?.("input, textarea, select, [contenteditable='true']") || accountRef.current.busy) return;
-      if (dataRef.current.updatedAt !== accountSyncedAtRef.current) pushAccountData();
-      else pullAccountData();
-    }, 15000);
-    return () => window.clearInterval(accountPollTimerRef.current);
-  }, [account.connected]);
+      if (dataRef.current.updatedAt !== accountSyncedAtRef.current && !accountPushTimerRef.current) pushAccountData();
+      else checkAccountUpdates();
+    }, 10000);
+    checkAccountUpdates();
+    return () => {
+      window.clearInterval(accountPollTimerRef.current);
+      window.removeEventListener("focus", checkOnResume);
+      document.removeEventListener("visibilitychange", checkOnResume);
+      accountClient.removeChannel(channel);
+    };
+  }, [account.connected, account.user?.id]);
 
   useEffect(() => {
     document.querySelectorAll(".collapsible-panel, .schedule-panel, .memo-panel, .history-panel, .score-meter, .score-details > div, .preset-card, .entry-item").forEach((element) => {
@@ -2710,6 +2785,8 @@ function App() {
     views: {
       schedule: [
         h(MobileSevenDaySchedule, { key: "seven-day-schedule", calendar: data.calendar, calendarDuties: data.calendarDuties, selectedDate }),
+      ],
+      memo: [
         h(MobileMemoPanel, { key: "memo", activeMemoId: data.memos.activeMemoId, addMemoCard, cards: data.memos.cards, removeMemoCard, setActiveMemo, updateMemoCard }),
       ],
       routine: [
@@ -2820,6 +2897,7 @@ function MobileDashboardView({ activeSection, onChangeSection, selectedDate, shi
   const sections = [
     { id: "schedule", label: "Schedule" },
     { id: "routine", label: "Routine" },
+    { id: "memo", label: "Memo" },
     { id: "calendar", label: "Calendar" },
   ];
   useEffect(() => {
@@ -2839,8 +2917,8 @@ function MobileDashboardView({ activeSection, onChangeSection, selectedDate, shi
   };
   return h(
     "section",
-    { className: "mobile-dashboard-view", "aria-label": "모바일 대시보드" },
-    h(
+    { className: `mobile-dashboard-view section-${activeSection}`, "aria-label": "모바일 대시보드" },
+    activeSection !== "memo" && h(
       "header",
       { className: "mobile-dashboard-header" },
       h("button", { type: "button", "aria-label": "이전 날짜", onClick: () => shiftDate(-1) }, "‹"),

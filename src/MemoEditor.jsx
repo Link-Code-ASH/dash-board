@@ -261,12 +261,19 @@ export default function MemoEditor({ value, marks = [], onChange, getSelection, 
       if (event.target.closest?.(".memo-divider-remove")) return;
       event.preventDefault();
       const el = root.current;
-      el.focus({ preventScroll: true });
-      const { start } = getSelection(el);
+      const point = caretRangeAtPoint(event.clientX, event.clientY);
+      if (!point || !el.contains(point.startContainer)) return;
+      const prefix = document.createRange();
+      prefix.selectNodeContents(el);
+      prefix.setEnd(point.startContainer, point.startOffset);
       const text = current.current.value;
+      const start = Math.min(text.length, prefix.cloneContents().textContent.length);
       const lineStart = start > 0 ? text.lastIndexOf("\n", start - 1) + 1 : 0;
       const lineEnd = text.indexOf("\n", start);
-      setSelection(el, lineStart, lineEnd < 0 ? text.length : lineEnd);
+      el.focus({ preventScroll: true });
+      requestAnimationFrame(() => {
+        if (el.isConnected && document.activeElement === el) setSelection(el, lineStart, lineEnd < 0 ? text.length : lineEnd);
+      });
     }}
     onKeyDown={event => {
       event.stopPropagation();
