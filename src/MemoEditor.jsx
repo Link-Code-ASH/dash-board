@@ -190,13 +190,6 @@ export default function MemoEditor({ value, marks = [], onChange, getSelection, 
     pan.current = null;
     el.classList.remove("memo-panning");
     if (el.hasPointerCapture(event.pointerId)) el.releasePointerCapture(event.pointerId);
-    if (gesture.mode !== "pending" || event.type !== "pointerup") return;
-    el.focus({ preventScroll: true });
-    const range = caretRangeAtPoint(gesture.x, gesture.y);
-    if (!range || !el.contains(range.startContainer)) return;
-    const selection = window.getSelection();
-    selection.removeAllRanges();
-    selection.addRange(range);
   };
   return <div className="memo-editor-shell"><div ref={root} className="memo-large-textarea memo-rich-editor" role="textbox" aria-label="Write freely..." aria-multiline="true" contentEditable suppressContentEditableWarning
     onMouseDown={event => {
@@ -205,10 +198,7 @@ export default function MemoEditor({ value, marks = [], onChange, getSelection, 
     onPointerDown={event => {
       const el = root.current;
       if (event.pointerType !== "mouse" || event.button !== 0 || event.detail > 1 || event.shiftKey || event.altKey || event.ctrlKey || event.metaKey || event.target.closest?.(".memo-divider-remove") || el.scrollHeight <= el.clientHeight + 1) return;
-      event.preventDefault();
-      event.stopPropagation();
       pan.current = { pointerId: event.pointerId, x: event.clientX, y: event.clientY, scrollTop: el.scrollTop, mode: "pending" };
-      el.setPointerCapture(event.pointerId);
     }}
     onPointerMove={event => {
       const gesture = pan.current;
@@ -218,6 +208,7 @@ export default function MemoEditor({ value, marks = [], onChange, getSelection, 
       if (gesture.mode === "pending") {
         if (Math.hypot(dx, dy) < 5) return;
         gesture.mode = Math.abs(dx) > Math.abs(dy) ? "select" : "pan";
+        root.current.setPointerCapture(event.pointerId);
         if (gesture.mode === "pan") {
           root.current.classList.add("memo-panning");
           window.getSelection()?.removeAllRanges();
@@ -241,6 +232,7 @@ export default function MemoEditor({ value, marks = [], onChange, getSelection, 
       event.preventDefault();
     }}
     onPointerUp={endPan} onPointerCancel={endPan} onLostPointerCapture={endPan} onScroll={updatePosition}
+    onDragStart={event => event.preventDefault()}
     onCompositionStart={() => { composing.current = true; pendingCompositionEnter.current = false; }} onCompositionEnd={finishComposition}
     onInput={() => { if (!composing.current) input(); }}
     onPaste={event => { event.preventDefault(); insert(event.clipboardData.getData("text/plain")); }}
@@ -274,6 +266,7 @@ export default function MemoEditor({ value, marks = [], onChange, getSelection, 
       const lineStart = start > 0 ? text.lastIndexOf("\n", start - 1) + 1 : 0;
       const lineEnd = text.indexOf("\n", start);
       el.focus({ preventScroll: true });
+      setSelection(el, lineStart, lineEnd < 0 ? text.length : lineEnd);
       requestAnimationFrame(() => {
         if (el.isConnected && document.activeElement === el) setSelection(el, lineStart, lineEnd < 0 ? text.length : lineEnd);
       });
