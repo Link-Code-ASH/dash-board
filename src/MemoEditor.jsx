@@ -199,6 +199,9 @@ export default function MemoEditor({ value, marks = [], onChange, getSelection, 
     selection.addRange(range);
   };
   return <div className="memo-editor-shell"><div ref={root} className="memo-large-textarea memo-rich-editor" role="textbox" aria-label="Write freely..." aria-multiline="true" contentEditable suppressContentEditableWarning
+    onMouseDown={event => {
+      if (event.button === 0 && event.detail === 2) event.preventDefault();
+    }}
     onPointerDown={event => {
       const el = root.current;
       if (event.pointerType !== "mouse" || event.button !== 0 || event.detail > 1 || event.shiftKey || event.altKey || event.ctrlKey || event.metaKey || event.target.closest?.(".memo-divider-remove") || el.scrollHeight <= el.clientHeight + 1) return;
@@ -266,8 +269,8 @@ export default function MemoEditor({ value, marks = [], onChange, getSelection, 
       const prefix = document.createRange();
       prefix.selectNodeContents(el);
       prefix.setEnd(point.startContainer, point.startOffset);
-      const text = current.current.value;
-      const start = Math.min(text.length, prefix.cloneContents().textContent.length);
+      const text = el.textContent || "";
+      const start = Math.min(text.length, prefix.toString().length);
       const lineStart = start > 0 ? text.lastIndexOf("\n", start - 1) + 1 : 0;
       const lineEnd = text.indexOf("\n", start);
       el.focus({ preventScroll: true });
