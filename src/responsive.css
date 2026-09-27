@@ -3189,6 +3189,15 @@ html body #root .app-shell .school-weekly-grid .school-subject-cell {
   box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.76), 3px 4px 10px rgba(75, 90, 108, 0.08);
 }
 
+html body #root .app-shell .school-weekly-panel .school-weekly-grid {
+  grid-template-columns: minmax(120px, 180px) repeat(7, minmax(120px, 1fr));
+  margin-bottom: 16px;
+}
+
+html body #root .app-shell .school-weekly-panel.collapsed .school-weekly-grid {
+  display: none;
+}
+
 html body #root .app-shell .school-weekly-grid .school-subject-label {
   position: sticky;
   left: 0;

@@ -1965,15 +1965,6 @@ function App() {
     });
   };
 
-  const updateSchoolWeeklyPlan = (presetKey, dayKey, value) => {
-    saveData((draft) => {
-      if (!draft.schoolWeeklyPlan) draft.schoolWeeklyPlan = {};
-      if (!draft.schoolWeeklyPlan[presetKey]) draft.schoolWeeklyPlan[presetKey] = createEmptyWeeklyPlan([{ key: presetKey }])[presetKey];
-      draft.schoolWeeklyPlan[presetKey][dayKey] = value;
-      return draft;
-    });
-  };
-
   const updateSchoolSubject = (dayKey, value) => {
     saveData((draft) => {
       draft.schoolSubjects[dayKey] = value;
@@ -2740,7 +2731,6 @@ function App() {
       presets: data.presets,
       schoolPresets: data.schoolPresets,
       schoolSubjects: data.schoolSubjects,
-      schoolWeeklyPlan: data.schoolWeeklyPlan,
       selectedDate,
       weekday,
       weeklyPlan: data.weeklyPlan,
@@ -2789,10 +2779,8 @@ function App() {
       removePreset: removeSchoolPreset,
       selectedDate,
       schoolSubjects: data.schoolSubjects,
-      schoolWeeklyPlan: data.schoolWeeklyPlan,
       updateSchoolSubject,
       updatePreset: updateSchoolPreset,
-      updateSchoolWeeklyPlan,
     }),
     h(HistoryPanel, { carryPenalties: data.carryPenalties, getDayTotal, routineAttempts: data.routineAttempts, selectedDate }),
   );
@@ -2811,7 +2799,7 @@ function App() {
       ],
       routine: [
         h(MobileScorePanel, { key: "score", carryPenaltyMarked, entryCount: entries.length, onAdjustCarry: adjustCarry, onResetCarry: resetCarry, onToggleAttempt: toggleRoutineAttempt, onToggleCarryPenalty: toggleCarryPenalty, routineTried, scoreInfo }),
-        h(TodayPlanPanel, { key: "today-plan", categories: data.categories, entries, mobile: true, presets: data.presets, schoolPresets: data.schoolPresets, schoolSubjects: data.schoolSubjects, schoolWeeklyPlan: data.schoolWeeklyPlan, selectedDate, weekday, weeklyPlan: data.weeklyPlan, toggleChoice }),
+        h(TodayPlanPanel, { key: "today-plan", categories: data.categories, entries, mobile: true, presets: data.presets, schoolPresets: data.schoolPresets, schoolSubjects: data.schoolSubjects, selectedDate, weekday, weeklyPlan: data.weeklyPlan, toggleChoice }),
         h(MobileSchoolSubjects, { key: "edu-subjects", schoolSubjects: data.schoolSubjects, selectedDate, updateSchoolSubject }),
         h(HistoryPanel, { key: "history", carryPenalties: data.carryPenalties, getDayTotal, routineAttempts: data.routineAttempts, selectedDate }),
       ],
@@ -5362,7 +5350,7 @@ function createPresetPlanCard({ entries, label = "", planKey, preset, section, t
   };
 }
 
-function TodayPlanPanel({ categories, entries, mobile = false, presets, schoolPresets, schoolSubjects, schoolWeeklyPlan, selectedDate, toggleChoice, weekday, weeklyPlan }) {
+function TodayPlanPanel({ categories, entries, mobile = false, presets, schoolPresets, schoolSubjects, selectedDate, toggleChoice, weekday, weeklyPlan }) {
   const schoolSubject = schoolSubjects?.[weekday.key]?.trim();
   return h(
     "section",
@@ -5384,8 +5372,7 @@ function TodayPlanPanel({ categories, entries, mobile = false, presets, schoolPr
         title: schoolSubject ? `EDU - ${schoolSubject}` : "EDU",
         cards: schoolPresets.map((preset) => {
           const planKey = `school:${selectedDate}:${preset.key}`;
-          const value = getWeeklyPlanEntry(schoolWeeklyPlan?.[preset.key]?.[weekday.key], selectedDate).value;
-          return createPresetPlanCard({ entries, label: preset.name, planKey, preset, section: "Edu", toggleChoice, value });
+          return createPresetPlanCard({ entries, planKey, preset, section: "Edu", toggleChoice });
         }),
       }),
       h(PlanRow, {
@@ -5466,10 +5453,10 @@ function PlanCard({ label, nScore, onToggle, scoreRange, selectedChoice, value, 
   );
 }
 
-function DailyPanel({ addPreset, controlsId = "presetGrid", isOpen, movePreset, onToggle, presets, removePreset, title = "Daily", updatePreset }) {
+function DailyPanel({ addPreset, controlsId = "presetGrid", isOpen, leadingContent, movePreset, onToggle, presets, removePreset, title = "Daily", updatePreset }) {
   const [dragPresetKey, setDragPresetKey] = useState("");
   return h(CollapsiblePanel, {
-    className: "quick-panel",
+    className: `quick-panel ${leadingContent ? "school-weekly-panel" : ""}`,
     controls: controlsId,
     description: `Set recurring ${title.toLowerCase()} checks and scores.`,
     isOpen,
@@ -5477,7 +5464,7 @@ function DailyPanel({ addPreset, controlsId = "presetGrid", isOpen, movePreset, 
     title,
     children: {
       actions: h("button", { className: "text-button daily-tool", type: "button", onClick: addPreset }, "+"),
-      body: h(
+      body: h(React.Fragment, null, leadingContent, h(
         "div",
         { className: "preset-grid", id: controlsId },
         presets.map((preset, index) =>
@@ -5514,92 +5501,40 @@ function DailyPanel({ addPreset, controlsId = "presetGrid", isOpen, movePreset, 
             h("button", { className: "mini-button danger", type: "button", onClick: () => removePreset(index) }, "\u00d7"),
           ),
         ),
-      ),
+      )),
     },
   });
 }
 
-function SchoolWeeklyPanel({ addPreset, isOpen, movePreset, onToggle, presets, removePreset, schoolSubjects, schoolWeeklyPlan, selectedDate, updatePreset, updateSchoolSubject, updateSchoolWeeklyPlan }) {
-  const [dragPresetKey, setDragPresetKey] = useState("");
+function SchoolWeeklyPanel({ addPreset, isOpen, movePreset, onToggle, presets, removePreset, schoolSubjects, selectedDate, updatePreset, updateSchoolSubject }) {
   const selectedWeekday = getWeekdayKey(selectedDate);
-  return h(CollapsiblePanel, {
-    className: "weekly-panel school-weekly-panel",
-    controls: "schoolWeeklyGrid",
-    description: "Assign recurring education plans for each weekday.",
+  const subjectGrid = h("div", { className: "weekly-grid school-weekly-grid", id: "schoolWeeklyGrid" },
+    h("div", { className: "weekly-corner" }, "Subject"),
+    ...weekDays.map((day) => h("div", { className: `weekly-day ${day.key === selectedWeekday ? "active" : ""}`, key: day.key }, day.label)),
+    h("div", { className: "school-subject-label" }, "Subject"),
+    ...weekDays.map((day) => h("div", { className: "school-subject-cell", key: `subject-${day.key}` },
+      h("input", {
+        className: "school-subject-input",
+        type: "text",
+        maxLength: 80,
+        "aria-label": `Edu subject ${day.full}`,
+        value: schoolSubjects?.[day.key] || "",
+        onChange: (event) => updateSchoolSubject(day.key, event.target.value),
+        onKeyDown: (event) => event.stopPropagation(),
+      }),
+    )),
+  );
+  return h(DailyPanel, {
+    addPreset,
+    controlsId: "schoolPresetGrid",
     isOpen,
+    leadingContent: subjectGrid,
+    movePreset,
     onToggle,
+    presets,
+    removePreset: (index) => removePreset(presets[index].key),
     title: "Edu",
-    children: {
-      actions: h("button", { className: "text-button weekly-tool", type: "button", onClick: addPreset }, "+"),
-      body: h(
-        "div",
-        { className: "weekly-grid school-weekly-grid", id: "schoolWeeklyGrid" },
-        h("div", { className: "weekly-corner" }, "Category"),
-        ...weekDays.map((day) => h("div", { className: `weekly-day ${day.key === selectedWeekday ? "active" : ""}`, key: day.key }, day.label)),
-        h("div", { className: "school-subject-label" }, "Subject"),
-        ...weekDays.map((day) => h("div", { className: "school-subject-cell", key: `subject-${day.key}` },
-          h("input", {
-            className: "school-subject-input",
-            type: "text",
-            maxLength: 80,
-            "aria-label": `Edu subject ${day.full}`,
-            value: schoolSubjects?.[day.key] || "",
-            onChange: (event) => updateSchoolSubject(day.key, event.target.value),
-            onKeyDown: (event) => event.stopPropagation(),
-          }),
-        )),
-        ...presets.flatMap((preset) => [
-          h(
-            "div",
-            {
-              className: `weekly-category ${dragPresetKey === preset.key ? "dragging" : ""}`,
-              draggable: true,
-              key: `${preset.key}-label`,
-              onDragStart: (event) => {
-                if (panelClickIsInteractive(event.target)) {
-                  event.preventDefault();
-                  return;
-                }
-                setDragPresetKey(preset.key);
-                event.dataTransfer.effectAllowed = "move";
-                event.dataTransfer.setData("text/school-weekly-preset", preset.key);
-              },
-              onDragOver: (event) => {
-                event.preventDefault();
-                event.dataTransfer.dropEffect = "move";
-              },
-              onDrop: (event) => {
-                event.preventDefault();
-                const fromKey = event.dataTransfer.getData("text/school-weekly-preset") || dragPresetKey;
-                movePreset(fromKey, preset.key);
-                setDragPresetKey("");
-              },
-              onDragEnd: () => setDragPresetKey(""),
-            },
-            h("input", {
-              className: "category-name-input",
-              type: "text",
-              maxLength: 32,
-              value: preset.name,
-              onChange: (event) => updatePreset(preset.key, "name", event.target.value),
-              onKeyDown: (event) => event.stopPropagation(),
-            }),
-            h("label", { className: `score-field y-field ${getPresetScoreRange(preset) ? "range-score" : "positive-score"}`, title: getPresetScoreRange(preset) ? "Y range" : "Y score" }, h("input", { className: "category-score-input y-score", type: "text", inputMode: getPresetScoreRange(preset) ? "text" : "numeric", value: preset.yScore, onChange: (event) => updatePreset(preset.key, "yScore", event.target.value), onKeyDown: (event) => event.stopPropagation() })),
-            h("label", { className: "score-field n-field negative-score", title: "N score" }, h("input", { className: "category-score-input n-score", type: "text", inputMode: "numeric", value: preset.nScore, onChange: (event) => updatePreset(preset.key, "nScore", event.target.value), onKeyDown: (event) => event.stopPropagation() })),
-            h("div", { className: "category-actions" }, h("button", { className: "mini-button danger", type: "button", disabled: presets.length <= 1, onClick: () => removePreset(preset.key) }, "\u00d7")),
-          ),
-          ...weekDays.map((day) =>
-            h(WeeklyScheduleCell, {
-              active: day.key === selectedWeekday,
-              key: `${preset.key}-${day.key}`,
-              onChange: (value) => updateSchoolWeeklyPlan(preset.key, day.key, value),
-              placeholder: "Plan",
-              value: schoolWeeklyPlan?.[preset.key]?.[day.key] || "",
-            }),
-          ),
-        ]),
-      ),
-    },
+    updatePreset: (index, field, value) => updatePreset(presets[index].key, field, value),
   });
 }
 
