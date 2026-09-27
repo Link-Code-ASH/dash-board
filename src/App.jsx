@@ -17,6 +17,7 @@ const BACKUP_IMAGES_KEY = "_dashboardNoteImages";
 const ACCOUNT_OWNER_KEY = "hub-account-owner-v1";
 const ACCOUNT_CACHE_PREFIX = "hub-account-data-v1:";
 const ACCOUNT_SYNCED_PREFIX = "hub-account-synced-v1:";
+const ACCOUNT_RECOVERY_PREFIX = "hub-account-recovery-v1:";
 
 const h = React.createElement;
 
@@ -891,6 +892,24 @@ function accountSyncedKey(userId) {
   return `${ACCOUNT_SYNCED_PREFIX}${userId}`;
 }
 
+function preserveAccountDraft(userId, state) {
+  try {
+    localStorage.setItem(`${ACCOUNT_RECOVERY_PREFIX}${userId}:${Date.now()}`, JSON.stringify(state));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function latestAccountDraftKey(userId) {
+  const prefix = `${ACCOUNT_RECOVERY_PREFIX}${userId}:`;
+  return Object.keys(localStorage).filter((key) => key.startsWith(prefix)).sort().at(-1) || "";
+}
+
+function accountEditTime(state) {
+  return Date.parse(state?.updatedAt || "") || 0;
+}
+
 function needsAccountGate() {
   return Boolean(localStorage.getItem(ACCOUNT_OWNER_KEY) || !localStorage.getItem(STORAGE_KEY));
 }
@@ -1300,6 +1319,20 @@ function App() {
     }
   };
 
+  const downloadAccountRecovery = async () => {
+    const userId = accountRef.current.user?.id;
+    const key = userId && latestAccountDraftKey(userId);
+    if (!key) return;
+    try {
+      const saved = JSON.parse(localStorage.getItem(key));
+      const { images, state } = splitBackupPayload(saved);
+      const payload = createBackupPayload(state, images.length ? images : await getNoteImagesForState(state));
+      downloadTextFile(`hub-recovery-${toDateKey(new Date())}.json`, JSON.stringify(payload, null, 2));
+    } catch (error) {
+      setAccountStatus(`백업 다운로드 실패: ${error.message}`);
+    }
+  };
+
   const getAccountUploadState = (userId) => {
     if (activeAccountIdRef.current === userId) return dataRef.current;
     try {
@@ -1366,7 +1399,7 @@ function App() {
 
   const pushAccountData = async () => {
     const userId = activeAccountIdRef.current;
-    if (!userId || !accountRef.current.connected || accountRef.current.busy || accountWriteInFlightRef.current) return;
+    if (!userId || accountRef.current.user?.id !== userId || !accountRef.current.connected || accountRef.current.busy || accountWriteInFlightRef.current) return;
     if (accountPullInFlightRef.current) {
       scheduleAutoSync();
       return;
@@ -1387,7 +1420,34 @@ function App() {
         window.setTimeout(() => pullAccountData(), 0);
       }
     } catch (error) {
-      updateAccount((current) => ({ ...current, busy: false, connected: error.message !== "CLOUD_CONFLICT", status: error.message === "CLOUD_CONFLICT" ? "다른 기기에서 자료가 바뀌었습니다. 클라우드 자료를 확인한 후 선택해주세요." : `동기화 실패: ${error.message}` }));
+      if (error.message === "CLOUD_CONFLICT") {
+        try {
+          const row = await readAccountData(userId);
+          if (!row) throw new Error("클라우드 자료를 찾을 수 없습니다.");
+          const latestLocal = dataRef.current;
+          const localIsNewer = accountEditTime(latestLocal) > accountEditTime(row.payload);
+          const displaced = localIsNewer ? row.payload : latestLocal;
+          if (!preserveAccountDraft(userId, displaced)) {
+            throw new Error("로컬 백업 공간이 부족해 자동 갱신을 중단했습니다.");
+          }
+          if (localIsNewer) {
+            accountRevisionRef.current = row.revision;
+            accountSyncedAtRef.current = row.payload?.updatedAt || "";
+            updateAccount((current) => ({ ...current, busy: false, status: "이 기기의 최신 변경을 계정에 다시 저장하는 중입니다." }));
+            scheduleAutoSync();
+          } else if (!await activateAccountData(userId, row, latestLocal.updatedAt)) {
+            accountRefreshPendingRef.current = true;
+            updateAccount((current) => ({ ...current, busy: false }));
+            window.setTimeout(() => checkAccountUpdates(), 0);
+          } else {
+            setAccountStatus("다른 기기의 최신 자료를 가져왔습니다. 이전 기기 자료는 백업에 보관했습니다.");
+          }
+        } catch (conflictError) {
+          updateAccount((current) => ({ ...current, busy: false, connected: false, status: `자동 동기화 실패: ${conflictError.message}` }));
+        }
+      } else {
+        updateAccount((current) => ({ ...current, busy: false, status: `동기화 실패: ${error.message}` }));
+      }
     } finally {
       accountWriteInFlightRef.current = false;
     }
@@ -1395,7 +1455,7 @@ function App() {
 
   const pullAccountData = async (remoteRevision = null) => {
     const userId = activeAccountIdRef.current;
-    if (!userId || !accountRef.current.connected) return;
+    if (!userId || accountRef.current.user?.id !== userId || !accountRef.current.connected) return;
     if (remoteRevision !== null && remoteRevision <= accountRevisionRef.current) return;
     if (accountRef.current.busy || accountWriteInFlightRef.current || accountPushTimerRef.current || accountPullInFlightRef.current
       || dataRef.current.updatedAt !== accountSyncedAtRef.current) {
@@ -1429,7 +1489,7 @@ function App() {
 
   const checkAccountUpdates = async () => {
     const userId = activeAccountIdRef.current;
-    if (!userId || !accountRef.current.connected || document.hidden || accountCheckInFlightRef.current) return;
+    if (!userId || accountRef.current.user?.id !== userId || !accountRef.current.connected || document.hidden || accountCheckInFlightRef.current) return;
     accountCheckInFlightRef.current = true;
     try {
       const revision = await readAccountRevision(userId);
@@ -1617,39 +1677,44 @@ function App() {
       return;
     }
     let cancelled = false;
+    let retryTimer = null;
     const inspectAccount = async () => {
       updateAccount((current) => ({ ...current, busy: true, status: "계정 자료를 확인하는 중입니다..." }));
       try {
         const row = await readAccountData(userId);
         if (cancelled) return;
         const savedOwner = localStorage.getItem(ACCOUNT_OWNER_KEY);
-        if (savedOwner === userId && row) {
-          const cached = JSON.parse(localStorage.getItem(accountCacheKey(userId)) || "null");
+        if (row) {
+          const cached = savedOwner === userId ? JSON.parse(localStorage.getItem(accountCacheKey(userId)) || "null") : null;
           const lastSyncedAt = localStorage.getItem(accountSyncedKey(userId));
           if (cached?.updatedAt && cached.updatedAt !== lastSyncedAt) {
-            activeAccountIdRef.current = userId;
-            accountRevisionRef.current = row.revision;
-            accountSyncedAtRef.current = lastSyncedAt || "";
-            dataRef.current = normalizeState(cached);
-            setData(dataRef.current);
             const cloudUnchanged = lastSyncedAt && row.payload?.updatedAt === lastSyncedAt;
-            updateAccount((current) => ({ ...current, busy: false, connected: Boolean(cloudUnchanged), cloudAvailable: true,
-              status: cloudUnchanged ? "이 기기의 변경을 계정에 저장하는 중입니다." : "이 기기와 다른 기기의 변경이 겹쳤습니다. 자료를 확인한 뒤 선택해주세요." }));
-            setAccountGate(false);
-            if (cloudUnchanged) {
+            const localIsNewer = accountEditTime(cached) > accountEditTime(row.payload);
+            if (cloudUnchanged || localIsNewer) {
+              if (!cloudUnchanged && !preserveAccountDraft(userId, row.payload)) {
+                throw new Error("로컬 백업 공간이 부족해 자동 갱신을 중단했습니다.");
+              }
+              activeAccountIdRef.current = userId;
+              accountRevisionRef.current = row.revision;
+              accountSyncedAtRef.current = row.payload?.updatedAt || "";
+              dataRef.current = normalizeState(cached);
+              setData(dataRef.current);
+              updateAccount((current) => ({ ...current, busy: false, connected: true, cloudAvailable: true,
+                status: "이 기기의 변경을 계정에 저장하는 중입니다." }));
+              setAccountGate(false);
               window.clearTimeout(accountPushTimerRef.current);
               accountPushTimerRef.current = window.setTimeout(() => {
                 accountPushTimerRef.current = null;
                 pushAccountData();
               }, 1400);
+            } else {
+              if (!preserveAccountDraft(userId, cached)) throw new Error("로컬 백업 공간이 부족해 자동 갱신을 중단했습니다.");
+              await activateAccountData(userId, row);
+              setAccountStatus("클라우드 최신 자료를 가져왔습니다. 이전 기기 자료는 백업에 보관했습니다.");
             }
           } else {
             await activateAccountData(userId, row);
           }
-          return;
-        }
-        if (row && !savedOwner) {
-          await activateAccountData(userId, row);
           return;
         }
         if (savedOwner && savedOwner !== userId) {
@@ -1668,11 +1733,16 @@ function App() {
         }
         updateAccount((current) => ({ ...current, busy: false, connected: false, cloudAvailable: Boolean(row), status: row ? "이 기기에 다른 계정의 자료가 있습니다. 계정 자료를 확인한 뒤 가져와주세요." : "계정에 저장된 자료가 없습니다. 이 기기 자료를 옮길 수 있습니다." }));
       } catch (error) {
-        if (!cancelled) updateAccount((current) => ({ ...current, busy: false, status: `계정 확인 실패: ${error.message}` }));
+        if (!cancelled) {
+          updateAccount((current) => ({ ...current, busy: false, status: `계정 확인 실패: ${error.message}` }));
+          if (error.message !== "로컬 백업 공간이 부족해 자동 갱신을 중단했습니다.") {
+            retryTimer = window.setTimeout(inspectAccount, 10000);
+          }
+        }
       }
     };
     inspectAccount();
-    return () => { cancelled = true; };
+    return () => { cancelled = true; window.clearTimeout(retryTimer); };
   }, [account.loading, account.user?.id]);
 
   useEffect(() => {
@@ -2831,6 +2901,7 @@ function App() {
       onAccountUpload: uploadAccountData,
       onAccountRefresh: pullAccountData,
       onAccountSave: pushAccountData,
+      onAccountRecovery: downloadAccountRecovery,
       onToggle: () => togglePanel("sync"),
       onConnect: connectSync,
       onGenerate: () => {
@@ -2867,6 +2938,7 @@ function App() {
           onAccountUpload: uploadAccountData,
           onAccountRefresh: pullAccountData,
           onAccountSave: pushAccountData,
+          onAccountRecovery: downloadAccountRecovery,
         }),
       ),
     );
@@ -4713,7 +4785,7 @@ function formatAccountSyncDate(value) {
   return Number.isNaN(date.getTime()) ? "알 수 없음" : date.toLocaleString("ko-KR", { dateStyle: "medium", timeStyle: "short" });
 }
 
-function AccountSyncControls({ account, onAccountLoad, onAccountRefresh, onAccountSave, onAccountUpload, onGoogleSignIn, onGoogleSignOut, onPrepareReplacement }) {
+function AccountSyncControls({ account, onAccountLoad, onAccountRecovery, onAccountRefresh, onAccountSave, onAccountUpload, onGoogleSignIn, onGoogleSignOut, onPrepareReplacement }) {
   const [replacement, setReplacement] = useState(null);
   const [confirmation, setConfirmation] = useState("");
   const [preparing, setPreparing] = useState(false);
@@ -4782,6 +4854,9 @@ function AccountSyncControls({ account, onAccountLoad, onAccountRefresh, onAccou
         h("button", { className: "text-button", type: "button", disabled: account.busy, onClick: onGoogleSignOut }, "로그아웃"),
       ),
     h("p", { className: "sync-status", role: "status" }, account.status),
+    account.user && latestAccountDraftKey(account.user.id)
+      ? h("button", { className: "text-button", type: "button", onClick: onAccountRecovery }, "이전 기기 자료 백업 다운로드")
+      : null,
     account.user && !account.connected && account.cloudAvailable
       ? h("details", { className: "account-replace-advanced" },
         h("summary", null, "클라우드 자료 교체"),
@@ -4822,7 +4897,7 @@ function AccountSyncControls({ account, onAccountLoad, onAccountRefresh, onAccou
   );
 }
 
-function SyncPanel({ account, forgetThisDevice, isOpen, onAccountLoad, onAccountRefresh, onAccountSave, onAccountUpload, onConnect, onGenerate, onGoogleSignIn, onGoogleSignOut, onPrepareReplacement, onPull, onPush, onToggle, setSync, sync, syncReady }) {
+function SyncPanel({ account, forgetThisDevice, isOpen, onAccountLoad, onAccountRecovery, onAccountRefresh, onAccountSave, onAccountUpload, onConnect, onGenerate, onGoogleSignIn, onGoogleSignOut, onPrepareReplacement, onPull, onPush, onToggle, setSync, sync, syncReady }) {
   return h(CollapsiblePanel, {
     className: "sync-panel",
     controls: "syncBody",
@@ -4835,7 +4910,7 @@ function SyncPanel({ account, forgetThisDevice, isOpen, onAccountLoad, onAccount
       body: h(
         "div",
         { className: "sync-body", id: "syncBody" },
-        h(AccountSyncControls, { account, onAccountLoad, onAccountRefresh, onAccountSave, onAccountUpload, onGoogleSignIn, onGoogleSignOut, onPrepareReplacement }),
+        h(AccountSyncControls, { account, onAccountLoad, onAccountRecovery, onAccountRefresh, onAccountSave, onAccountUpload, onGoogleSignIn, onGoogleSignOut, onPrepareReplacement }),
         !account.connected ? h("details", { className: "legacy-sync" },
           h("summary", null, "기존 PIN 동기화"),
         h(
