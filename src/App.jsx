@@ -155,6 +155,13 @@ function normalizeWeeklyPlan(plan, categories) {
   return normalized;
 }
 
+function normalizeSchoolSubjects(subjects) {
+  return weekDays.reduce((normalized, day) => {
+    normalized[day.key] = typeof subjects?.[day.key] === "string" ? subjects[day.key].slice(0, 80) : "";
+    return normalized;
+  }, {});
+}
+
 function normalizeDateMarkers(markers) {
   return Array.from({ length: 8 }, (_, index) => ({
     text: markers?.[index]?.text || "",
@@ -663,6 +670,7 @@ function createFallbackState() {
     carryResetDate: "",
     carryAdjustment: 0,
     schoolPresets: clonePresets(),
+    schoolSubjects: normalizeSchoolSubjects(),
     schoolWeeklyPlan: createEmptyWeeklyPlan(clonePresets()),
     presets: clonePresets(),
     categories,
@@ -700,6 +708,7 @@ function normalizeState(source) {
     "carryResetDate",
     "carryAdjustment",
     "schoolPresets",
+    "schoolSubjects",
     "schoolWeeklyPlan",
     "presets",
     "categories",
@@ -732,6 +741,7 @@ function normalizeState(source) {
     carryResetDate: source?.carryResetDate || "",
     carryAdjustment: scoreNumber(source?.carryAdjustment, 0),
     schoolPresets,
+    schoolSubjects: normalizeSchoolSubjects(source?.schoolSubjects),
     schoolWeeklyPlan: normalizeWeeklyPlan(source?.schoolWeeklyPlan, schoolPresets),
     presets: normalizePresets(source?.presets),
     categories,
@@ -1964,6 +1974,13 @@ function App() {
     });
   };
 
+  const updateSchoolSubject = (dayKey, value) => {
+    saveData((draft) => {
+      draft.schoolSubjects[dayKey] = value;
+      return draft;
+    });
+  };
+
   const addCategory = () => {
     saveData((draft) => {
       const category = { key: createKey("cat"), label: `New Category ${draft.categories.length + 1}`, yScore: 5, nScore: -2 };
@@ -2722,6 +2739,7 @@ function App() {
       entries,
       presets: data.presets,
       schoolPresets: data.schoolPresets,
+      schoolSubjects: data.schoolSubjects,
       schoolWeeklyPlan: data.schoolWeeklyPlan,
       selectedDate,
       weekday,
@@ -2770,7 +2788,9 @@ function App() {
       presets: data.schoolPresets,
       removePreset: removeSchoolPreset,
       selectedDate,
+      schoolSubjects: data.schoolSubjects,
       schoolWeeklyPlan: data.schoolWeeklyPlan,
+      updateSchoolSubject,
       updatePreset: updateSchoolPreset,
       updateSchoolWeeklyPlan,
     }),
@@ -2791,7 +2811,8 @@ function App() {
       ],
       routine: [
         h(MobileScorePanel, { key: "score", carryPenaltyMarked, entryCount: entries.length, onAdjustCarry: adjustCarry, onResetCarry: resetCarry, onToggleAttempt: toggleRoutineAttempt, onToggleCarryPenalty: toggleCarryPenalty, routineTried, scoreInfo }),
-        h(TodayPlanPanel, { key: "today-plan", categories: data.categories, entries, mobile: true, presets: data.presets, schoolPresets: data.schoolPresets, schoolWeeklyPlan: data.schoolWeeklyPlan, selectedDate, weekday, weeklyPlan: data.weeklyPlan, toggleChoice }),
+        h(TodayPlanPanel, { key: "today-plan", categories: data.categories, entries, mobile: true, presets: data.presets, schoolPresets: data.schoolPresets, schoolSubjects: data.schoolSubjects, schoolWeeklyPlan: data.schoolWeeklyPlan, selectedDate, weekday, weeklyPlan: data.weeklyPlan, toggleChoice }),
+        h(MobileSchoolSubjects, { key: "edu-subjects", schoolSubjects: data.schoolSubjects, selectedDate, updateSchoolSubject }),
         h(HistoryPanel, { key: "history", carryPenalties: data.carryPenalties, getDayTotal, routineAttempts: data.routineAttempts, selectedDate }),
       ],
       calendar: [
@@ -5341,7 +5362,8 @@ function createPresetPlanCard({ entries, label = "", planKey, preset, section, t
   };
 }
 
-function TodayPlanPanel({ categories, entries, mobile = false, presets, schoolPresets, schoolWeeklyPlan, selectedDate, toggleChoice, weekday, weeklyPlan }) {
+function TodayPlanPanel({ categories, entries, mobile = false, presets, schoolPresets, schoolSubjects, schoolWeeklyPlan, selectedDate, toggleChoice, weekday, weeklyPlan }) {
+  const schoolSubject = schoolSubjects?.[weekday.key]?.trim();
   return h(
     "section",
     { className: `today-plan-panel ${mobile ? "mobile-today-plan" : ""}`, "aria-label": "Today plan" },
@@ -5359,7 +5381,7 @@ function TodayPlanPanel({ categories, entries, mobile = false, presets, schoolPr
       }),
       h(PlanRow, {
         className: "school-plan-row",
-        title: "Edu",
+        title: schoolSubject ? `EDU - ${schoolSubject}` : "EDU",
         cards: schoolPresets.map((preset) => {
           const planKey = `school:${selectedDate}:${preset.key}`;
           const value = getWeeklyPlanEntry(schoolWeeklyPlan?.[preset.key]?.[weekday.key], selectedDate).value;
@@ -5497,7 +5519,7 @@ function DailyPanel({ addPreset, controlsId = "presetGrid", isOpen, movePreset, 
   });
 }
 
-function SchoolWeeklyPanel({ addPreset, isOpen, movePreset, onToggle, presets, removePreset, schoolWeeklyPlan, selectedDate, updatePreset, updateSchoolWeeklyPlan }) {
+function SchoolWeeklyPanel({ addPreset, isOpen, movePreset, onToggle, presets, removePreset, schoolSubjects, schoolWeeklyPlan, selectedDate, updatePreset, updateSchoolSubject, updateSchoolWeeklyPlan }) {
   const [dragPresetKey, setDragPresetKey] = useState("");
   const selectedWeekday = getWeekdayKey(selectedDate);
   return h(CollapsiblePanel, {
@@ -5514,6 +5536,18 @@ function SchoolWeeklyPanel({ addPreset, isOpen, movePreset, onToggle, presets, r
         { className: "weekly-grid school-weekly-grid", id: "schoolWeeklyGrid" },
         h("div", { className: "weekly-corner" }, "Category"),
         ...weekDays.map((day) => h("div", { className: `weekly-day ${day.key === selectedWeekday ? "active" : ""}`, key: day.key }, day.label)),
+        h("div", { className: "school-subject-label" }, "Subject"),
+        ...weekDays.map((day) => h("div", { className: "school-subject-cell", key: `subject-${day.key}` },
+          h("input", {
+            className: "school-subject-input",
+            type: "text",
+            maxLength: 80,
+            "aria-label": `Edu subject ${day.full}`,
+            value: schoolSubjects?.[day.key] || "",
+            onChange: (event) => updateSchoolSubject(day.key, event.target.value),
+            onKeyDown: (event) => event.stopPropagation(),
+          }),
+        )),
         ...presets.flatMap((preset) => [
           h(
             "div",
@@ -5567,6 +5601,28 @@ function SchoolWeeklyPanel({ addPreset, isOpen, movePreset, onToggle, presets, r
       ),
     },
   });
+}
+
+function MobileSchoolSubjects({ schoolSubjects, selectedDate, updateSchoolSubject }) {
+  const selectedWeekday = getWeekdayKey(selectedDate);
+  return h(
+    "section",
+    { className: "mobile-school-subjects", "aria-label": "Edu subjects" },
+    h("h2", null, "Subject"),
+    h("div", { className: "mobile-school-subject-list" }, weekDays.map((day) =>
+      h("label", { className: `mobile-school-subject-day ${day.key === selectedWeekday ? "active" : ""}`, key: day.key },
+        h("span", null, day.label),
+        h("input", {
+          type: "text",
+          maxLength: 80,
+          "aria-label": `Edu subject ${day.full}`,
+          value: schoolSubjects?.[day.key] || "",
+          onChange: (event) => updateSchoolSubject(day.key, event.target.value),
+          onKeyDown: (event) => event.stopPropagation(),
+        }),
+      ),
+    )),
+  );
 }
 
 function WeeklyScheduleCell({ active, onChange, placeholder, value }) {

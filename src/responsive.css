@@ -964,6 +964,7 @@ html body #root .app-shell .date-marker-panel .date-marker-dday:not(.empty) {
 
 .effective-display-mobile .mobile-glass-card,
 .effective-display-mobile .mobile-today-plan,
+.effective-display-mobile .mobile-school-subjects,
 .effective-display-mobile .section-calendar > .date-marker-panel,
 .effective-display-mobile .section-routine > .history-panel {
   width: 100% !important;
@@ -3173,4 +3174,100 @@ html body #root .effective-display-mobile .mobile-memo-toolbar > .memo-format-to
   .account-replace-dialog { padding: 20px; }
   .account-replace-actions { display: grid; grid-template-columns: 1fr 1fr; }
   .account-replace-actions .text-button { min-width: 0; padding-inline: 8px; }
+}
+
+html body #root .app-shell .school-weekly-grid .school-subject-label,
+html body #root .app-shell .school-weekly-grid .school-subject-cell {
+  min-width: 0;
+  min-height: 62px;
+  display: flex;
+  align-items: center;
+  padding: 8px 10px;
+  border: 1px solid rgba(110, 126, 145, 0.27);
+  border-radius: 7px;
+  background: linear-gradient(145deg, rgba(244, 248, 251, 0.89), rgba(206, 217, 227, 0.7));
+  box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.76), 3px 4px 10px rgba(75, 90, 108, 0.08);
+}
+
+html body #root .app-shell .school-weekly-grid .school-subject-label {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  color: #34465a;
+  font-weight: 700;
+}
+
+html body #root .app-shell .school-weekly-grid .school-subject-input {
+  width: 100%;
+  min-width: 0;
+  height: 42px;
+  padding: 6px 8px;
+  border: 1px solid rgba(116, 134, 153, 0.3);
+  border-radius: 5px;
+  outline: none;
+  color: #233245;
+  background: rgba(255, 255, 255, 0.55);
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+}
+
+html body #root .app-shell .school-weekly-grid .school-subject-input:focus-visible,
+html body #root .app-shell .mobile-school-subject-day input:focus-visible {
+  border-color: #7896b3;
+  outline: 2px solid rgba(120, 150, 179, 0.32);
+  outline-offset: 1px;
+}
+
+html body #root .app-shell .school-plan-row > h3 {
+  min-width: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-transform: none;
+}
+
+.effective-display-mobile .mobile-school-subjects h2 {
+  margin: 0 0 10px;
+  color: #364b61;
+  font-size: 1rem;
+}
+
+.effective-display-mobile .mobile-school-subject-list {
+  display: grid;
+  gap: 6px;
+}
+
+.effective-display-mobile .mobile-school-subject-day {
+  min-width: 0;
+  min-height: 43px;
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  padding: 5px 8px;
+  border: 1px solid rgba(116, 134, 153, 0.19);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.35);
+  color: #53677c;
+  font-weight: 700;
+}
+
+.effective-display-mobile .mobile-school-subject-day.active {
+  border-color: rgba(163, 119, 95, 0.4);
+  background: rgba(240, 221, 206, 0.45);
+  color: #694d42;
+}
+
+.effective-display-mobile .mobile-school-subject-day input {
+  width: 100%;
+  min-width: 0;
+  min-height: 32px;
+  padding: 4px 7px;
+  border: 1px solid rgba(116, 134, 153, 0.24);
+  border-radius: 5px;
+  outline: none;
+  color: #233245;
+  background: rgba(255, 255, 255, 0.6);
+  font: inherit;
+  font-weight: 600;
 }
