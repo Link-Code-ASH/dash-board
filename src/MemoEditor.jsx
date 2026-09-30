@@ -64,48 +64,83 @@ export default function MemoEditor({ value, marks = [], onChange, getSelection, 
     thumb.style.height = `${height}px`;
     thumb.style.top = `${(track.clientHeight - height) * el.scrollTop / maxScroll}px`;
   };
-  const paint = (text, ranges, selection) => {
-    const el = root.current;
-    const points = [...new Set([0, text.length, ...ranges.flatMap(r => [r.start, r.end])])].filter(n => n >= 0 && n <= text.length).sort((a,b) => a-b);
-    const fragment = document.createDocumentFragment();
-    points.slice(0,-1).forEach((start, i) => {
-      const span = document.createElement("span");
-      const active = ranges.filter(r => r.start <= start && r.end >= points[i+1]);
-      span.textContent = text.slice(start, points[i+1]);
-      if (active.some(range => range.type === "divider") && span.textContent === MEMO_DIVIDER) {
-        span.className = "memo-divider-node";
-        span.contentEditable = "false";
-        span.title = "구분선";
-        const remove = document.createElement("button");
-        remove.className = "memo-divider-remove";
-        remove.type = "button";
-        remove.title = "구분선 제거";
-        remove.setAttribute("aria-label", "구분선 제거");
-        span.append(remove);
-        fragment.append(span);
-        return;
+  const updateIndents = () => {
+    const indents = [];
+    root.current?.querySelectorAll(".memo-hanging-line").forEach(line => {
+      const prefixLength = Number(line.dataset.prefixLength);
+      const walker = document.createTreeWalker(line, NodeFilter.SHOW_TEXT);
+      const range = document.createRange();
+      range.selectNodeContents(line);
+      let remaining = prefixLength;
+      while (walker.nextNode()) {
+        const node = walker.currentNode;
+        if (remaining <= node.length) {
+          range.setEnd(node, remaining);
+          indents.push([line, range.getBoundingClientRect().width]);
+          break;
+        }
+        remaining -= node.length;
       }
-      const isBold = active.some(range => range.type === "bold");
-      const colorType = active.findLast(range => memoColors[range.type])?.type;
-      span.className = `memo-rich-fragment${isBold ? " is-bold" : ""}`;
-      span.style.color = colorType ? memoColors[colorType] : "";
-      fragment.append(span);
     });
-    if (text.endsWith("\n")) {
-      const trailingBreak = document.createElement("br");
-      trailingBreak.className = "memo-trailing-break";
-      fragment.append(trailingBreak);
-    }
-    el.replaceChildren(fragment);
-    if (selection) setSelection(el, selection.start, selection.end);
+    indents.forEach(([line, width]) => line.style.setProperty("--memo-hanging-indent", `${width}px`));
     updatePosition();
   };
+  const paint = (text, ranges, selection) => {
+    const el = root.current;
+    const fragment = document.createDocumentFragment();
+    let offset = 0;
+    text.split("\n").forEach((lineText, lineIndex, lines) => {
+      const line = document.createElement("span");
+      const prefix = /^[\t ]*#[\t ]+/.exec(lineText)?.[0];
+      line.className = `memo-rich-line${prefix ? " memo-hanging-line" : ""}`;
+      if (prefix) line.dataset.prefixLength = String(prefix.length);
+      const lineEnd = offset + lineText.length;
+      const points = [...new Set([offset, lineEnd, ...ranges.flatMap(r => [r.start, r.end])])].filter(n => n >= offset && n <= lineEnd).sort((a,b) => a-b);
+      points.slice(0,-1).forEach((start, i) => {
+        const span = document.createElement("span");
+        const active = ranges.filter(r => r.start <= start && r.end >= points[i+1]);
+        span.textContent = text.slice(start, points[i+1]);
+        if (active.some(range => range.type === "divider") && span.textContent === MEMO_DIVIDER) {
+          span.className = "memo-divider-node";
+          span.contentEditable = "false";
+          span.title = "구분선";
+          const remove = document.createElement("button");
+          remove.className = "memo-divider-remove";
+          remove.type = "button";
+          remove.title = "구분선 제거";
+          remove.setAttribute("aria-label", "구분선 제거");
+          span.append(remove);
+          line.append(span);
+          return;
+        }
+        const isBold = active.some(range => range.type === "bold");
+        const colorType = active.findLast(range => memoColors[range.type])?.type;
+        span.className = `memo-rich-fragment${isBold ? " is-bold" : ""}`;
+        span.style.color = colorType ? memoColors[colorType] : "";
+        line.append(span);
+      });
+      if (!lineText) line.append(document.createTextNode(""), document.createElement("br"));
+      fragment.append(line);
+      if (lineIndex < lines.length - 1) fragment.append(document.createTextNode("\n"));
+      offset = lineEnd + 1;
+    });
+    el.replaceChildren(fragment);
+    updateIndents();
+    if (selection) setSelection(el, selection.start, selection.end);
+  };
   useEffect(() => {
-    const observer = new ResizeObserver(updatePosition);
+    const observer = new ResizeObserver(updateIndents);
     observer.observe(root.current);
     observer.observe(positionTrack.current);
-    updatePosition();
-    return () => observer.disconnect();
+    let disposed = false;
+    document.fonts.ready.then(() => { if (!disposed) updateIndents(); });
+    document.fonts.addEventListener("loadingdone", updateIndents);
+    updateIndents();
+    return () => {
+      disposed = true;
+      observer.disconnect();
+      document.fonts.removeEventListener("loadingdone", updateIndents);
+    };
   }, []);
   useEffect(() => {
     if (composing.current) return;

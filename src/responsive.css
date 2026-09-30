@@ -3005,6 +3005,8 @@ html body #root .memo-editor-shell { position: relative; min-width: 0; min-heigh
 html body #root .memo-rich-editor { white-space: pre-wrap; overflow-wrap: anywhere; overflow-y: hidden !important; outline: none; cursor: text; box-sizing: border-box; scrollbar-width: none; user-select: text; }
 html body #root .memo-rich-editor::-webkit-scrollbar { display: none; }
 html body #root .memo-rich-editor.memo-panning { cursor: grabbing; user-select: none; }
+html body #root .memo-rich-editor .memo-rich-line { display: inline-block; width: 100%; min-height: 1lh; box-sizing: border-box; vertical-align: top; white-space: pre-wrap; }
+html body #root .memo-rich-editor .memo-hanging-line { padding-left: var(--memo-hanging-indent, 1em); text-indent: calc(-1 * var(--memo-hanging-indent, 1em)); }
 html body #root .effective-display-mobile .memo-rich-editor { overflow-y: auto !important; overscroll-behavior-y: contain; touch-action: pan-y; }
 html body #root .memo-position-track { position: absolute; z-index: 1; top: 10px; right: 7px; bottom: 10px; width: 4px; border-radius: 3px; background: rgba(95, 113, 135, .12); opacity: 0; pointer-events: none; transition: opacity 180ms ease; }
 html body #root .memo-position-track > span { position: absolute; left: 0; width: 100%; min-height: 24px; border-radius: inherit; background: rgba(82, 105, 132, .6); box-shadow: 0 0 0 1px rgba(255, 255, 255, .35); }
