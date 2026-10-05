@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import MemoEditor, { MemoFormatToolbar } from "./MemoEditor.jsx";
-import MindfoldV2View from "./mindfold/MindfoldView.jsx";
+import { backupWorkspace, restoreWorkspace } from "./mindfold/repository.js";
 import { normalizeMindfold as normalizeMindfoldV2 } from "./mindfold/model.js";
 import { accountClient, createAccountData, readAccountData, readAccountRevision, updateAccountData } from "./accountSync.js";
 
@@ -20,6 +20,7 @@ const ACCOUNT_SYNCED_PREFIX = "hub-account-synced-v1:";
 const ACCOUNT_RECOVERY_PREFIX = "hub-account-recovery-v1:";
 
 const h = React.createElement;
+const MindfoldWorkspace = React.lazy(() => import("./mindfold/MindfoldWorkspace.jsx"));
 
 const weekDays = [
   { key: "mon", label: "Mon", full: "Monday" },
@@ -868,8 +869,8 @@ function createBackupPayload(state, images = []) {
 }
 
 function splitBackupPayload(payload) {
-  const { [BACKUP_IMAGES_KEY]: images, ...state } = payload && typeof payload === "object" ? payload : {};
-  return { images: Array.isArray(images) ? images : [], state };
+  const { [BACKUP_IMAGES_KEY]: images, _mindfoldV3: documents, ...state } = payload && typeof payload === "object" ? payload : {};
+  return { images: Array.isArray(images) ? images : [], state, documents };
 }
 
 function loadSyncBackend() {
@@ -2737,14 +2738,21 @@ function App() {
   };
 
   const exportBackup = async () => {
-    const payload = createBackupPayload(dataRef.current, await getNoteImagesForState(dataRef.current));
-    const filename = `dashboard-backup-${toDateKey(new Date())}.json`;
-    downloadTextFile(filename, JSON.stringify(payload, null, 2));
+    try {
+      window.dispatchEvent(new Event("mindfold:flush"));
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      const payload = createBackupPayload(dataRef.current, await getNoteImagesForState(dataRef.current));
+      payload._mindfoldV3 = await backupWorkspace(activeAccountIdRef.current);
+      const filename = `dashboard-backup-${toDateKey(new Date())}.json`;
+      downloadTextFile(filename, JSON.stringify(payload, null, 2));
+    } catch (error) { window.alert(`Backup failed: ${error.message}`); }
   };
 
   const copyBackup = async () => {
     try {
+      window.dispatchEvent(new Event("mindfold:flush"));
       const payload = createBackupPayload(dataRef.current, await getNoteImagesForState(dataRef.current));
+      payload._mindfoldV3 = await backupWorkspace(activeAccountIdRef.current);
       await navigator.clipboard.writeText(JSON.stringify(payload, null, 2));
       window.alert("Dashboard backup data, including memo images, was copied to the clipboard.");
     } catch {
@@ -2756,11 +2764,12 @@ function App() {
     if (!file) return;
     try {
       const text = await file.text();
-      const { images, state } = splitBackupPayload(JSON.parse(text));
+      const { images, state, documents } = splitBackupPayload(JSON.parse(text));
       const normalized = normalizeState(state);
       const confirmed = window.confirm("This will replace the dashboard data in this browser with the selected backup file. Continue?");
       if (!confirmed) return;
       await restoreNoteImages(images, { clear: !activeAccountIdRef.current });
+      if (documents) await restoreWorkspace(activeAccountIdRef.current, documents);
       dataRef.current = normalized;
       localStorage.setItem(activeAccountIdRef.current ? accountCacheKey(activeAccountIdRef.current) : STORAGE_KEY, JSON.stringify(normalized));
       setData(normalized);
@@ -2953,12 +2962,8 @@ function App() {
     },
     h(HubBar, { activeView, onToggleVault: toggleVault, setActiveView: navigateView }),
     activeView === "mindfold"
-      ? h(MindfoldV2View, {
-          mindfold: data.mindfold,
-          onCommit: commitMindfold,
-          onRedo: () => restoreMindfoldHistory("redo"),
-          onUndo: () => restoreMindfoldHistory("undo"),
-        })
+      ? h(React.Suspense, { fallback: h("div", { className: "mf3-loading" }, "Mindfold") },
+          h(MindfoldWorkspace, { legacy: data.mindfold, displayMode: effectiveDisplayMode }))
       : activeView === "vault"
         ? h(VaultView, { settingsPanels })
         : effectiveDisplayMode === "mobile" && activeView === "dashboard"

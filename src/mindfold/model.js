@@ -152,9 +152,9 @@ function normalizePage(source, index) {
 }
 
 export function normalizeMindfold(source) {
-  // V1 data is intentionally not migrated. The V2 editor starts clean while the
-  // rest of the dashboard state remains untouched.
-  if (source?.engineVersion !== MINDFOLD_ENGINE_VERSION || source?.schemaRevision !== MINDFOLD_SCHEMA_REVISION) return createMindfold();
+  // Preserve unknown versions so a newer document can never become an empty save.
+  if (source?.engineVersion && (source.engineVersion !== MINDFOLD_ENGINE_VERSION || source.schemaRevision !== MINDFOLD_SCHEMA_REVISION)) return source;
+  if (!source) return createMindfold();
   const tabs = (Array.isArray(source.tabs) ? source.tabs : []).filter(Boolean).map(normalizePage);
   if (!tabs.length) tabs.push(createPage());
   const trash = (Array.isArray(source.trash) ? source.trash : [])

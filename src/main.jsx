@@ -3,7 +3,7 @@ import { createRoot } from "react-dom/client";
 import App from "./App.jsx";
 import "./styles.css";
 import "./responsive.css";
-import "./mindfold/mindfold.css";
+import "./mindfold/document.css";
 
 createRoot(document.querySelector("#root")).render(
   React.createElement(React.StrictMode, null, React.createElement(App)),
