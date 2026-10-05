@@ -1259,7 +1259,7 @@ function App() {
   const signOutOfGoogle = async () => {
     window.clearTimeout(accountPushTimerRef.current);
     window.clearInterval(accountPollTimerRef.current);
-    const { error } = await accountClient.auth.signOut();
+    const { error } = await accountClient.auth.signOut({ scope: "local" });
     if (error) {
       setAccountStatus(`로그아웃 실패: ${error.message}`);
       return;
