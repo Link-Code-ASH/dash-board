@@ -80,11 +80,11 @@ export function useHubRoute() {
         module !== "settings" &&
         module !== installedModule()
       ) {
-        window.location.assign(`${appBase()}${module}/${hash}`);
+        window.location[options.replace ? "replace" : "assign"](`${appBase()}${module}/${hash}`);
         return;
       }
       if (window.location.hash !== hash)
-        window.history.pushState(null, "", hash);
+        window.history[options.replace ? "replaceState" : "pushState"](null, "", hash);
       setRoute(readRoute());
     },
     [],

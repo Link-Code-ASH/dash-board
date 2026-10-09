@@ -1,11 +1,11 @@
 import { lazy } from "react";
 import {
   LayoutDashboard,
-  ListChecks,
   GraduationCap,
   Languages,
   NotebookPen,
 } from "lucide-react";
+import { ScheduleIcon } from "./icons.jsx";
 
 export const modules = [
   {
@@ -17,8 +17,8 @@ export const modules = [
   },
   {
     id: "routine",
-    name: "Routine",
-    icon: ListChecks,
+    name: "Schedule",
+    icon: ScheduleIcon,
     path: "routine/",
     Component: lazy(() => import("./views/Routine.jsx")),
   },

@@ -1,0 +1,172 @@
+/* Role tokens allow future fonts without touching editor geometry. */
+#root .hub-app {
+  --hub-font-body:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans KR",
+    "Malgun Gothic", sans-serif;
+  --hub-font-heading: var(--hub-font-body);
+}
+html body #root .hub-app .hub-content-modern :is(h1, h2, h3) {
+  font-family: var(--hub-font-heading) !important;
+}
+#root .hub-app .flow-layout,
+#root .hub-app .flow-layout > * {
+  min-width: 0;
+}
+#root .hub-app .flow-week-viewport {
+  overflow: clip;
+}
+#root .hub-app.hub-desktop .hub-content-modern {
+  container: hub-content / inline-size;
+}
+#root .hub-app.hub-desktop {
+  --hub-memo-height: 420px;
+}
+#root .hub-app.hub-desktop .flow-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 28px;
+}
+#root .hub-app.hub-desktop .flow-overview {
+  gap: 28px;
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+#root .hub-app.hub-desktop .flow-overview > section + section {
+  border-top: 1px solid #dde2e8;
+  padding-top: 24px;
+}
+#root .hub-app.hub-desktop .hub-memo-section {
+  margin-top: 0;
+}
+#root .hub-app.hub-desktop .hub-memo-cell {
+  background: linear-gradient(135deg, #ffffffb3, #fafbfccc);
+  box-shadow:
+    0 3px 12px #27313d05,
+    inset 0 1px 0 #fff;
+  border-color: #dce1e7;
+}
+#root .hub-app.hub-desktop .hub-sidebar {
+  background: #f5f7f9d9;
+  backdrop-filter: blur(18px);
+}
+#root .hub-app.hub-desktop .flow-markers .date-marker-panel {
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+html body #root .hub-app.hub-desktop .flow-markers .date-marker-list {
+  background: transparent !important;
+  box-shadow: none !important;
+  border: 0 !important;
+}
+@container hub-content (min-width: 1500px) {
+  #root .hub-app.hub-desktop .flow-layout {
+    grid-template-columns: minmax(0, 48fr) minmax(0, 52fr);
+    align-items: start;
+    gap: 28px;
+  }
+  #root .hub-app.hub-desktop .flow-layout > .hub-memo-section {
+    border-left: 1px solid #dde2e8;
+    padding-left: 28px;
+  }
+}
+
+.hub-icon-dialog {
+  max-height: calc(100dvh - 16px);
+  overflow-y: auto;
+  color: #303744;
+}
+.hub-symbol-picker {
+  padding: 8px 12px 12px;
+}
+.hub-symbol-picker input[type="search"] {
+  width: 100%;
+  min-height: 38px;
+  padding: 8px 10px;
+  border: 1px solid #dce2e9;
+  border-radius: 6px;
+  background: #f6f8fa;
+  color: #303744;
+  font: inherit;
+}
+.hub-symbol-categories {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 12px 0;
+}
+.hub-icon-dialog .hub-symbol-categories button {
+  padding: 6px 8px;
+  font-size: 12px;
+  background: transparent;
+  border: 0;
+  color: #606b79;
+  border-radius: 5px;
+}
+.hub-icon-dialog .hub-symbol-categories button[aria-pressed="true"] {
+  background: #e7edf3;
+  color: #2e4055;
+}
+.hub-symbol-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 5px;
+  height: 224px;
+  overflow-y: auto;
+  align-content: start;
+}
+.hub-icon-dialog .hub-symbol-grid button {
+  display: grid;
+  place-items: center;
+  height: 40px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+}
+.hub-icon-dialog .hub-symbol-grid button:hover {
+  background: #eef1f5;
+}
+.hub-icon-dialog .hub-symbol-grid button[aria-pressed="true"] {
+  border-color: #9bacc0;
+  background: #eaf0f6;
+}
+.hub-symbol-grid p {
+  grid-column: 1 / -1;
+  font-size: 14px;
+}
+.hub-symbol-colors {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding-top: 14px;
+  margin-top: 8px;
+  border-top: 1px solid #e1e5ea;
+}
+.hub-icon-dialog .hub-symbol-colors button {
+  width: 24px;
+  height: 24px;
+  min-width: 24px;
+  padding: 0;
+  border: 3px solid white;
+  border-radius: 50%;
+  background: var(--swatch);
+  box-shadow: 0 0 0 1px #e2e6eb;
+}
+.hub-icon-dialog .hub-symbol-colors button[aria-pressed="true"] {
+  box-shadow: 0 0 0 2px #596a7d;
+}
+.hub-symbol-colors input[type="color"] {
+  width: 30px;
+  height: 30px;
+  min-width: 0;
+  padding: 2px;
+  border: 1px solid #cdd5de;
+  background: transparent;
+  border-radius: 5px;
+  cursor: pointer;
+}
+.hub-symbol-picker button {
+  cursor: pointer;
+}

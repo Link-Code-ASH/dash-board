@@ -10,6 +10,14 @@ import {
 import { readRoute } from "../src/hub/routing.js";
 import { mergeDashboard } from "../src/hub/merge.js";
 
+test("monochrome symbols preserve legacy emojis and survive backups", () => {
+  const state = normalizeState({ itemIcons: { "daily:a": "book" }, itemSymbols: { "daily:a": { name: "book", color: "#6484b3" } } });
+  const restored = normalizeState(splitBackupPayload(JSON.parse(JSON.stringify(createBackupPayload(state, [], null)))).state);
+  assert.deepEqual(restored.itemSymbols, state.itemSymbols);
+  assert.deepEqual(restored.itemIcons, state.itemIcons);
+  assert.deepEqual(normalizeState({ itemSymbols: { bad: { name: "!", color: "red" }, good: { name: "star", color: "invalid" } } }).itemSymbols, { good: { name: "star", color: "#64748b" } });
+});
+
 test("item icons remain separate from text and survive reorder, backup and restore", () => {
   const before = normalizeState();
   const preset = before.presets[0];

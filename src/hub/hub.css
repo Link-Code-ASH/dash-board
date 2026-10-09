@@ -247,8 +247,8 @@ html body:has(.hub-app)::after {
 }
 #root .hub-app .hub-content-modern {
   width: 100%;
-  max-width: 1580px;
-  padding: 32px 36px 64px;
+  max-width: none;
+  padding: 32px 28px 64px;
   margin: 0 auto;
   min-width: 0;
   font-family: inherit;
@@ -331,7 +331,7 @@ html body:has(.hub-app)::after {
 }
 #root .hub-app .flow-overview {
   display: grid;
-  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
   gap: 24px;
   align-items: start;
   padding-bottom: 32px;
@@ -870,7 +870,7 @@ html body:has(.hub-app)::after {
 }
 #root .hub-app .hub-memo-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 22px 20px;
 }
 #root .hub-app .hub-memo-cell {
@@ -1799,9 +1799,7 @@ html
   .hub-app
   :is(.hub-content-modern, .hub-sidebar, .hub-topbar, .hub-mobile-nav)
   * {
-  font-family:
-    -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans KR",
-    "Malgun Gothic", sans-serif !important;
+  font-family: var(--hub-font-body, -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans KR", "Malgun Gothic", sans-serif) !important;
 }
 html body #root .hub-app .hub-content-modern .preset-card {
   grid-template-areas: none !important;
@@ -1845,8 +1843,8 @@ html body #root .hub-app .hub-memo-cell .memo-quick-textarea {
   overflow: hidden !important;
 }
 html body #root .hub-app .hub-memo-cell .memo-rich-editor {
-  height: 300px !important;
-  min-height: 300px !important;
+  height: var(--hub-memo-height, 300px) !important;
+  min-height: var(--hub-memo-height, 300px) !important;
   padding: 5px 10px 12px 0 !important;
   border: 0 !important;
   background: transparent !important;

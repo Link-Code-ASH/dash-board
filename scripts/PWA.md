@@ -10,7 +10,7 @@ The plugin serves real HTML responses in development and emits these physical bu
 | --- | --- | --- |
 | `/hub/` | `dist/hub/index.html` | HUB |
 | `/flow/` | `dist/flow/index.html` | Flow |
-| `/routine/` | `dist/routine/index.html` | Routine |
+| `/routine/` | `dist/routine/index.html` | Schedule |
 | `/edu/` | `dist/edu/index.html` | Edu |
 | `/lingo/` | `dist/lingo/index.html` | Lingo |
 | `/mindfold/` | `dist/mindfold/index.html` | Mindfold |

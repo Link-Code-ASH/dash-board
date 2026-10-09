@@ -5,7 +5,7 @@ import path from "node:path";
 export const apps = {
   hub: "HUB",
   flow: "Flow",
-  routine: "Routine",
+  routine: "Schedule",
   edu: "Edu",
   lingo: "Lingo",
   mindfold: "Mindfold",

@@ -3,24 +3,20 @@ import {
   Plus,
   Trash2,
   CalendarDays,
-  ListTodo,
+  Flag,
   ChevronRight,
   ChevronLeft,
   StickyNote,
 } from "lucide-react";
 import { useDashboardData } from "../context.jsx";
 import { addDays, calendarDutyOptions } from "../../dashboard/model.js";
-import {
-  CalendarPanel,
-  MobileCalendarPanel,
-  DateMarkerPanel,
-  MemoArea,
-} from "../../dashboard/components.jsx";
+import { DateMarkerPanel, MemoArea } from "../../dashboard/components.jsx";
 import { MemoFormatToolbar } from "../../MemoEditor.jsx";
 import { DateHeading, RoutineTasks } from "./shared.jsx";
 import { moduleIds } from "../routing.js";
 import { todayKey } from "../routing.js";
 import ItemIconButton from "../ItemIconButton.jsx";
+import { ScheduleIcon, navigationStrokeWidth } from "../icons.jsx";
 
 function MemoDesk() {
   const d = useDashboardData();
@@ -130,119 +126,87 @@ function MemoDesk() {
 
 export default function Flow({ route, navigate }) {
   const d = useDashboardData();
-  const calendar = route.section === "calendar";
+  useEffect(() => {
+    if (route.section === "calendar")
+      navigate("routine", "calendar", route.date, {
+        week: route.week,
+        replace: true,
+      });
+  }, [route.section, route.date, route.week, navigate]);
   return (
     <div className="flow-view">
       <DateHeading title="Flow" />
-      <nav className="hub-segments" aria-label="Flow 보기">
-        <button
-          aria-current={!calendar ? "page" : undefined}
-          onClick={() => navigate("flow", "today")}
-        >
-          <ListTodo size={17} />
-          Today
-        </button>
-        <button
-          aria-current={calendar ? "page" : undefined}
-          onClick={() => navigate("flow", "calendar")}
-        >
-          <CalendarDays size={17} />
-          Calendar
-        </button>
-      </nav>
-      {calendar ? (
-        <div className="flow-calendar">
-          {d.effectiveDisplayMode === "mobile" ? (
-            <MobileCalendarPanel
-              calendar={d.data.calendar}
-              calendarDuties={d.data.calendarDuties}
+      <div className="flow-layout">
+        <div className="flow-overview">
+          <section className="flow-schedule">
+            <div className="hub-section-title">
+              <h2>
+                <CalendarDays size={18} />
+                일정
+              </h2>
+              <button
+                title="전체 달력"
+                aria-label="전체 달력"
+                onClick={() => navigate("routine", "calendar")}
+              >
+                <CalendarDays size={18} />
+              </button>
+            </div>
+            <TwoWeekSchedule route={route} navigate={navigate} />
+            <div className="flow-selected-heading">
+              <strong>{d.selectedDate.slice(5).replace("-", "/")} 일정</strong>
+              <div className="flow-duty-controls">
+                {calendarDutyOptions.map((option) => (
+                  <label key={option.key}>
+                    <input
+                      type="checkbox"
+                      checked={
+                        !!d.data.calendarDuties[d.selectedDate]?.[option.key]
+                      }
+                      onChange={() =>
+                        d.toggleCalendarDuty(d.selectedDate, option.key)
+                      }
+                    />
+                    {option.label}
+                  </label>
+                ))}
+              </div>
+            </div>
+            <ScheduleEditor />
+            <ExternalFlowItems date={d.selectedDate} navigate={navigate} />
+          </section>
+          <section className="flow-routines">
+            <div className="hub-section-title">
+              <h2>
+                <ScheduleIcon size={18} strokeWidth={navigationStrokeWidth} />
+                오늘 할 일
+              </h2>
+              <button
+                aria-label="Schedule 열기"
+                title="Schedule 열기"
+                onClick={() => navigate("routine")}
+              >
+                <ChevronRight size={18} />
+              </button>
+            </div>
+            <RoutineTasks compact />
+          </section>
+          <section className="flow-markers">
+            <div className="hub-section-title">
+              <h2>
+                <Flag size={18} />
+                Date Marker
+              </h2>
+            </div>
+            <DateMarkerPanel
+              dateMarkers={d.data.dateMarkers}
               selectedDate={d.selectedDate}
-              setSelectedDate={d.setSelectedDate}
-              toggleCalendarDuty={d.toggleCalendarDuty}
-              updateCalendarNote={d.updateCalendarNote}
+              updateDateMarker={d.updateDateMarker}
             />
-          ) : (
-            <CalendarPanel
-              calendar={d.data.calendar}
-              calendarDuties={d.data.calendarDuties}
-              selectedDate={d.selectedDate}
-              isOpen
-              onToggle={() => {}}
-              openMonths={d.openMonths}
-              setOpenMonths={d.setOpenMonths}
-              toggleCalendarDuty={d.toggleCalendarDuty}
-              updateCalendarNote={d.updateCalendarNote}
-            />
-          )}
-          <h2>Date markers</h2>
-          <DateMarkerPanel
-            dateMarkers={d.data.dateMarkers}
-            selectedDate={d.selectedDate}
-            updateDateMarker={d.updateDateMarker}
-          />
+          </section>
         </div>
-      ) : (
-        <>
-          <div className="flow-overview">
-            <section className="flow-schedule">
-              <div className="hub-section-title">
-                <h2>
-                  <CalendarDays size={18} />
-                  Schedule
-                </h2>
-                <button
-                  title="전체 달력"
-                  aria-label="전체 달력"
-                  onClick={() => navigate("flow", "calendar")}
-                >
-                  <CalendarDays size={18} />
-                </button>
-              </div>
-              <TwoWeekSchedule route={route} navigate={navigate} />
-              <div className="flow-selected-heading">
-                <strong>
-                  {d.selectedDate.slice(5).replace("-", "/")} 일정
-                </strong>
-                <div className="flow-duty-controls">
-                  {calendarDutyOptions.map((option) => (
-                    <label key={option.key}>
-                      <input
-                        type="checkbox"
-                        checked={
-                          !!d.data.calendarDuties[d.selectedDate]?.[option.key]
-                        }
-                        onChange={() =>
-                          d.toggleCalendarDuty(d.selectedDate, option.key)
-                        }
-                      />
-                      {option.label}
-                    </label>
-                  ))}
-                </div>
-              </div>
-              <ScheduleEditor />
-              <ExternalFlowItems date={d.selectedDate} navigate={navigate} />
-            </section>
-            <section className="flow-routines">
-              <div className="hub-section-title">
-                <h2>
-                  <ListTodo size={18} />
-                  Routine
-                </h2>
-                <button
-                  aria-label="Routine 열기"
-                  title="Routine 열기"
-                  onClick={() => navigate("routine")}
-                >
-                  <ChevronRight size={18} />
-                </button>
-              </div>
-              <RoutineTasks compact />
-            </section>
-          </div>
-          <MemoDesk />
-        </>
-      )}
+        <MemoDesk />
+      </div>
     </div>
   );
 }
@@ -251,10 +215,48 @@ function TwoWeekSchedule({ route, navigate }) {
   const d = useDashboardData();
   const week = route.week;
   const actualToday = todayKey();
-  const move = (direction) =>
-    navigate("flow", "today", addDays(d.selectedDate, direction * 7), {
-      week: addDays(week, direction * 7),
-    });
+  const content = useRef(null);
+  const viewport = useRef(null);
+  const previousWeek = useRef(week);
+  const requested = useRef({ week, date: d.selectedDate });
+  useLayoutEffect(() => {
+    requested.current = { week, date: d.selectedDate };
+  }, [week, d.selectedDate]);
+  useLayoutEffect(() => {
+    const previous = previousWeek.current;
+    previousWeek.current = week;
+    if (previous === week) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      viewport.current.style.minHeight = "";
+      return;
+    }
+    const element = content.current;
+    const frame = viewport.current;
+    frame.style.minHeight = `${Math.max(frame.clientHeight, element.scrollHeight)}px`;
+    const animation = element.animate(
+      [
+        {
+          opacity: 0.3,
+          transform: `translateX(${week > previous ? 18 : -18}px)`,
+        },
+        { opacity: 1, transform: "translateX(0)" },
+      ],
+      { duration: 180, easing: "ease-out" },
+    );
+    animation.onfinish = () => {
+      frame.style.minHeight = "";
+    };
+    return () => animation.cancel();
+  }, [week]);
+  const move = (direction) => {
+    viewport.current.style.minHeight = `${viewport.current.clientHeight}px`;
+    const next = {
+      week: addDays(requested.current.week, direction * 7),
+      date: addDays(requested.current.date, direction * 7),
+    };
+    requested.current = next;
+    navigate("flow", "today", next.date, { week: next.week });
+  };
   return (
     <div className="flow-fortnight">
       <div className="flow-week-navigation">
@@ -271,69 +273,73 @@ function TwoWeekSchedule({ route, navigate }) {
           </button>
         </div>
       </div>
-      {[0, 1].map((row) => (
-        <section
-          className="flow-week"
-          key={row}
-          aria-label={row ? "다음 주 일정" : "이번 주 일정"}
-        >
-          <h3>{row ? "Next week" : "This week"}</h3>
-          <div className="flow-week-grid">
-            {Array.from({ length: 7 }, (_, column) => {
-              const date = addDays(week, row * 7 + column);
-              const lines = (d.data.calendar[date] || "")
-                .split("\n")
-                .filter((line) => line.trim());
-              const duties = calendarDutyOptions.filter(
-                (option) => d.data.calendarDuties[date]?.[option.key],
-              );
-              return (
-                <button
-                  type="button"
-                  className={`flow-day ${date === actualToday ? "is-today" : ""}`}
-                  key={date}
-                  aria-pressed={date === d.selectedDate}
-                  aria-label={`${date} 일정 선택`}
-                  onClick={() => navigate("flow", "today", date, { week })}
-                >
-                  <span className="flow-day-heading">
-                    <small>
-                      {
-                        ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"][
-                          column
-                        ]
-                      }
-                    </small>
-                    <strong>
-                      {Number(date.slice(5, 7))}/{Number(date.slice(8))}
-                    </strong>
-                    {date === actualToday && (
-                      <span className="flow-today-dot" title="오늘" />
-                    )}
-                  </span>
-                  <span className="flow-day-content">
-                    {duties.length > 0 && (
-                      <span className="flow-day-duties">
-                        {duties.map((option) => (
-                          <span key={option.key}>{option.label}</span>
+      <div className="flow-week-viewport" ref={viewport}>
+        <div ref={content}>
+          {[0, 1].map((row) => (
+            <section
+              className="flow-week"
+              key={row}
+              aria-label={row ? "다음 주 일정" : "이번 주 일정"}
+            >
+              <h3>{row ? "Next week" : "This week"}</h3>
+              <div className="flow-week-grid">
+                {Array.from({ length: 7 }, (_, column) => {
+                  const date = addDays(week, row * 7 + column);
+                  const lines = (d.data.calendar[date] || "")
+                    .split("\n")
+                    .filter((line) => line.trim());
+                  const duties = calendarDutyOptions.filter(
+                    (option) => d.data.calendarDuties[date]?.[option.key],
+                  );
+                  return (
+                    <button
+                      type="button"
+                      className={`flow-day ${date === actualToday ? "is-today" : ""}`}
+                      key={date}
+                      aria-pressed={date === d.selectedDate}
+                      aria-label={`${date} 일정 선택`}
+                      onClick={() => navigate("flow", "today", date, { week })}
+                    >
+                      <span className="flow-day-heading">
+                        <small>
+                          {
+                            ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"][
+                              column
+                            ]
+                          }
+                        </small>
+                        <strong>
+                          {Number(date.slice(5, 7))}/{Number(date.slice(8))}
+                        </strong>
+                        {date === actualToday && (
+                          <span className="flow-today-dot" title="오늘" />
+                        )}
+                      </span>
+                      <span className="flow-day-content">
+                        {duties.length > 0 && (
+                          <span className="flow-day-duties">
+                            {duties.map((option) => (
+                              <span key={option.key}>{option.label}</span>
+                            ))}
+                          </span>
+                        )}
+                        {lines.map((line, i) => (
+                          <span className="flow-day-event" key={i}>
+                            {line}
+                          </span>
                         ))}
+                        {!lines.length && !duties.length && (
+                          <span className="flow-day-empty">—</span>
+                        )}
                       </span>
-                    )}
-                    {lines.map((line, i) => (
-                      <span className="flow-day-event" key={i}>
-                        {line}
-                      </span>
-                    ))}
-                    {!lines.length && !duties.length && (
-                      <span className="flow-day-empty">—</span>
-                    )}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </section>
-      ))}
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

@@ -1,8 +1,8 @@
 {
   "id": "./",
-  "name": "Routine",
-  "short_name": "Routine",
-  "description": "Routine personal workspace",
+  "name": "Schedule",
+  "short_name": "Schedule",
+  "description": "Schedule personal workspace",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

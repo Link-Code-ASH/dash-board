@@ -1176,6 +1176,18 @@ export function useDashboard(selectedDate, setSelectedDate) {
     });
   };
 
+  const updateItemSymbol = (key, symbol) => {
+    saveData((next) => {
+      next.itemSymbols ||= {};
+      if (symbol) next.itemSymbols[key] = symbol;
+      else {
+        delete next.itemSymbols[key];
+        if (next.itemIcons) delete next.itemIcons[key];
+      }
+      return next;
+    });
+  };
+
   const updateMemoCard = (id, field, value) => {
     saveData((draft) => {
       const card = draft.memos.cards.find((item) => item.id === id);
@@ -1730,6 +1742,7 @@ export function useDashboard(selectedDate, setSelectedDate) {
     moveMemoCard,
     updateMemoCard,
     updateItemIcon,
+    updateItemSymbol,
     addMemoCard,
     removeMemoCard,
     addPresetTo,

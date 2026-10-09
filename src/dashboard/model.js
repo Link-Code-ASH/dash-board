@@ -681,11 +681,19 @@ export function normalizeItemIcons(icons) {
   ));
 }
 
+export function normalizeItemSymbols(symbols) {
+  if (!symbols || typeof symbols !== "object" || Array.isArray(symbols)) return {};
+  return Object.fromEntries(Object.entries(symbols)
+    .filter(([key, value]) => key && value && typeof value.name === "string" && /^[a-z][a-z0-9-]{0,47}$/.test(value.name))
+    .map(([key, value]) => [key, { name: value.name, color: /^#[0-9a-f]{6}$/i.test(value.color) ? value.color : "#64748b" }]));
+}
+
 export function createFallbackState() {
   const categories = cloneCategories();
   return {
     days: {},
     itemIcons: {},
+    itemSymbols: {},
     memos: normalizeMemos(),
     calendar: {},
     calendarDuties: {},
@@ -724,6 +732,7 @@ export function normalizeState(source) {
   }, {});
   const knownKeys = new Set([
     "itemIcons",
+    "itemSymbols",
     "days",
     "memos",
     "calendar",
@@ -758,6 +767,7 @@ export function normalizeState(source) {
   return {
     ...extraTabData,
     itemIcons: normalizeItemIcons(source?.itemIcons),
+    itemSymbols: normalizeItemSymbols(source?.itemSymbols),
     days: source?.days && typeof source.days === "object" ? source.days : {},
     memos: normalizeMemos(source?.memos),
     calendar: source?.calendar && typeof source.calendar === "object" ? source.calendar : {},

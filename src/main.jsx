@@ -5,6 +5,7 @@ import "./styles.css";
 import "./responsive.css";
 import "./mindfold/document.css";
 import "./hub/hub.css";
+import "./hub/desktop.css";
 import { registerPwa } from "./hub/pwa.js";
 import { restoreAuthReturn } from "./hub/authReturn.js";
 

@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { DashboardProvider, useHubRuntime } from "./hub/context.jsx";
 import { modules } from "./hub/registry.jsx";
+import { navigationStrokeWidth } from "./hub/icons.jsx";
 import { appBase, installedModule, useHubRoute } from "./hub/routing.js";
 
 const SettingsView = React.lazy(() => import("./hub/views/Settings.jsx"));
@@ -121,7 +122,7 @@ function HubShell({ route, navigate }) {
                 aria-current={route.module === id ? "page" : undefined}
                 onClick={() => navigate(id)}
               >
-                <Icon size={20} />
+                <Icon size={20} strokeWidth={navigationStrokeWidth} />
                 <span>{name}</span>
               </button>
             ))}
@@ -221,7 +222,7 @@ function HubShell({ route, navigate }) {
               aria-current={route.module === id ? "page" : undefined}
               onClick={() => navigate(id)}
             >
-              <Icon size={21} />
+              <Icon size={21} strokeWidth={navigationStrokeWidth} />
               <span>{name}</span>
             </button>
           ))}
