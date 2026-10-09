@@ -1,0 +1,2200 @@
+/* HUB shell is independent of the legacy Dashboard theme. */
+html body #root .hub-app.hub-mobile .flow-duty-controls label {
+  min-height: 44px;
+  min-width: 44px;
+}
+html body #root .hub-app.hub-mobile .hub-memo-toolbar button {
+  min-width: 44px !important;
+  min-height: 44px !important;
+}
+html body #root .hub-app.hub-mobile .hub-task-actions button {
+  min-width: 44px !important;
+  min-height: 44px !important;
+}
+html body #root .hub-app .history-attempt {
+  min-width: 18px !important;
+  max-width: 18px !important;
+}
+html body #root .hub-app .history-score {
+  min-width: 0 !important;
+  max-width: 100% !important;
+  width: auto !important;
+  padding: 2px 5px !important;
+  font-variant-numeric: tabular-nums;
+}
+html body #root .hub-app .flow-schedule-editor {
+  background: #fafbfc !important;
+  box-shadow: none !important;
+  border: 1px solid #e0e4ea !important;
+  font-size: 16px !important;
+}
+html:has(.hub-app),
+html body:has(.hub-app) {
+  background: #f5f6f8 !important;
+  background-image: none !important;
+  color: #242831;
+}
+html body:has(.hub-app)::before,
+html body:has(.hub-app)::after {
+  display: none !important;
+}
+#root .hub-app {
+  --hub-line: #e1e4e9;
+  --hub-muted: #747c88;
+  --hub-ink: #242831;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans KR",
+    "Malgun Gothic", sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--hub-ink);
+  letter-spacing: 0;
+  min-height: 100dvh;
+  background: #f5f6f8;
+}
+#root .hub-app *,
+#root .hub-app *::before,
+#root .hub-app *::after {
+  box-sizing: border-box;
+  letter-spacing: 0;
+}
+#root
+  .hub-app
+  :is(.hub-sidebar, .hub-topbar, .hub-mobile-nav, .hub-content-modern)
+  :is(button, input, textarea, select) {
+  font-family: inherit !important;
+  color: inherit;
+  text-transform: none;
+}
+#root
+  .hub-app
+  :is(.hub-sidebar, .hub-topbar, .hub-mobile-nav, .hub-content-modern)
+  button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-width: 32px;
+  min-height: 34px;
+  padding: 6px 10px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: #444c59;
+  box-shadow: none;
+  transform: none;
+  text-shadow: none;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.3;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    color 0.15s;
+}
+#root
+  .hub-app
+  :is(.hub-sidebar, .hub-topbar, .hub-mobile-nav, .hub-content-modern)
+  button:hover {
+  background: #e9ecf0;
+  transform: none;
+}
+#root .hub-app button:disabled {
+  opacity: 0.38;
+  cursor: default;
+}
+#root
+  .hub-app
+  :is(button, a, input, textarea, [contenteditable]):focus-visible {
+  outline: 2px solid #7f99b9;
+  outline-offset: 2px;
+}
+#root .hub-app .hub-sidebar {
+  position: fixed;
+  z-index: 30;
+  inset: 0 auto 0 0;
+  width: 208px;
+  padding: 22px 14px 16px;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--hub-line);
+  background: rgba(248, 249, 251, 0.94);
+  backdrop-filter: blur(16px);
+}
+#root .hub-app .hub-identity {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 10px 18px;
+  color: #232830;
+  text-decoration: none;
+  font-size: 22px;
+  font-weight: 700;
+}
+#root .hub-app .hub-identity img {
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
+}
+#root .hub-app .hub-collapse {
+  align-self: flex-end;
+  margin-bottom: 24px;
+}
+#root .hub-app .hub-sidebar nav {
+  display: grid;
+  gap: 5px;
+}
+#root .hub-app .hub-sidebar nav button,
+#root .hub-app .hub-sidebar-bottom button {
+  width: 100%;
+  justify-content: flex-start;
+  gap: 13px;
+  min-height: 44px;
+  padding: 10px 13px;
+}
+#root .hub-app .hub-sidebar button[aria-current="page"] {
+  background: #e4e9f0;
+  color: #202936;
+  font-weight: 650;
+  box-shadow:
+    inset 0 1px 2px #fff,
+    0 2px 5px #252b3410;
+}
+#root .hub-app .hub-sidebar-bottom {
+  margin-top: auto;
+  display: grid;
+  gap: 15px;
+  padding-top: 24px;
+}
+#root .hub-app .hub-connection {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  color: var(--hub-muted);
+  white-space: nowrap;
+}
+#root .hub-app .hub-sidebar-bottom .hub-connection {
+  padding: 0 13px;
+}
+#root .hub-app .hub-main {
+  min-width: 0;
+  margin-left: 208px;
+}
+#root .hub-app.hub-sidebar-collapsed .hub-sidebar {
+  width: 72px;
+  padding-inline: 10px;
+}
+#root
+  .hub-app.hub-sidebar-collapsed
+  .hub-sidebar
+  :is(
+    strong,
+    nav span,
+    .hub-sidebar-bottom span span,
+    .hub-sidebar-bottom button span
+  ) {
+  display: none;
+}
+#root
+  .hub-app.hub-sidebar-collapsed
+  .hub-sidebar
+  :is(
+    .hub-identity,
+    nav button,
+    .hub-sidebar-bottom button,
+    .hub-sidebar-bottom .hub-connection
+  ) {
+  justify-content: center;
+  padding-inline: 0;
+}
+#root .hub-app.hub-sidebar-collapsed .hub-main {
+  margin-left: 72px;
+}
+#root .hub-app .hub-topbar {
+  height: 56px;
+  position: sticky;
+  top: 0;
+  z-index: 25;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 30px;
+  background: rgba(245, 246, 248, 0.92);
+  border-bottom: 1px solid var(--hub-line);
+  backdrop-filter: blur(18px);
+}
+#root .hub-app .hub-breadcrumb,
+#root .hub-app .hub-top-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  font-size: 13px;
+}
+#root .hub-app .hub-breadcrumb > span {
+  color: var(--hub-muted);
+}
+#root .hub-app .hub-breadcrumb img {
+  width: 26px;
+  height: 26px;
+}
+#root .hub-app .hub-top-actions a {
+  display: flex;
+  color: inherit;
+  padding: 8px;
+}
+#root .hub-app .hub-content-modern {
+  width: 100%;
+  max-width: 1580px;
+  padding: 32px 36px 64px;
+  margin: 0 auto;
+  min-width: 0;
+  font-family: inherit;
+}
+#root .hub-app .hub-content-modern :is(h1, h2, h3, p) {
+  margin: 0;
+  font-family: inherit !important;
+  text-shadow: none;
+  transform: none;
+}
+#root .hub-app .hub-content-modern h1 {
+  font-size: 24px;
+  line-height: 1.35;
+  font-weight: 650;
+  color: #252a33;
+}
+#root .hub-app .hub-content-modern h2 {
+  font-size: 17px !important;
+  line-height: 1.4;
+  font-weight: 650;
+  color: #303744 !important;
+}
+#root .hub-app .hub-content-modern h3 {
+  font-size: 13px;
+  font-weight: 650;
+}
+#root .hub-app .hub-page-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 25px;
+}
+#root .hub-app .hub-page-heading p {
+  font-size: 14px;
+  color: var(--hub-muted);
+  margin-top: 5px;
+}
+#root .hub-app .hub-date-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--hub-line);
+  border-radius: 7px;
+  background: #fafbfc;
+  box-shadow:
+    0 2px 5px #272e3805,
+    inset 0 1px 1px #fff;
+}
+#root .hub-app .hub-date-controls input {
+  width: 140px;
+  height: 34px;
+  padding: 0 6px;
+  border: 0;
+  background: transparent;
+  color: #343a45;
+  font-size: 14px;
+  text-align: center;
+  color-scheme: light;
+  transform: none;
+}
+#root .hub-app .hub-segments {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 26px;
+  border-bottom: 1px solid var(--hub-line);
+  padding-bottom: 10px;
+}
+#root .hub-app .hub-segments button[aria-current="page"] {
+  background: #e7ebf1;
+  color: #283548;
+}
+#root .hub-app .hub-section-title {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 14px;
+}
+#root .hub-app .flow-overview {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+  padding-bottom: 32px;
+  border-bottom: 1px solid var(--hub-line);
+}
+#root .hub-app .hub-section-title h2,
+#root .hub-app .hub-memo-toolbar h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+#root .hub-app .hub-section-title h2 svg,
+#root .hub-app .hub-memo-toolbar h2 svg {
+  color: #8192a7;
+}
+#root .hub-app .flow-week-navigation {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+  font-size: 13px;
+  color: #788291;
+}
+#root .hub-app .flow-week-navigation > div {
+  display: flex;
+  gap: 4px;
+}
+#root .hub-app .flow-week {
+  margin-bottom: 14px;
+}
+#root .hub-app .flow-week h3 {
+  font-size: 12px;
+  font-weight: 500;
+  color: #7a8594;
+  margin: 0 0 6px;
+}
+#root .hub-app .flow-week-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 4px;
+}
+#root .hub-app .flow-fortnight .flow-day {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  min-width: 0;
+  min-height: 132px;
+  height: 100%;
+  padding: 9px 7px;
+  border: 1px solid #e0e5ec;
+  border-radius: 6px;
+  background: #fafbfc;
+  text-align: left;
+  white-space: normal;
+  gap: 8px;
+  color: #394452;
+}
+#root .hub-app .flow-fortnight .flow-day:hover {
+  background: #f0f3f8;
+}
+#root .hub-app .flow-fortnight .flow-day.is-today {
+  background: #f5f1e5;
+  border-color: #e4d8b2;
+}
+#root .hub-app .flow-fortnight .flow-day[aria-pressed="true"] {
+  border-color: #839bb8;
+  box-shadow: inset 0 0 0 1px #839bb8;
+  background: #eaf0f7;
+}
+#root .hub-app .flow-fortnight .flow-day-heading {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+#root .hub-app .flow-fortnight .flow-day-heading small {
+  font-size: 11px;
+  color: #798594;
+}
+#root .hub-app .flow-fortnight .flow-day-heading strong {
+  font-size: 13px;
+  font-weight: 600;
+}
+#root .hub-app .flow-today-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #ba984c;
+  flex-shrink: 0;
+}
+#root .hub-app .flow-fortnight .flow-day-content {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+  width: 100%;
+  font-size: 13px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+#root .hub-app .flow-fortnight .flow-day-event {
+  white-space: pre-wrap;
+}
+#root .hub-app .flow-fortnight .flow-day-event + .flow-day-event {
+  padding-top: 5px;
+  border-top: 1px solid #dde3eb;
+}
+#root .hub-app .flow-fortnight .flow-day-duties {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+#root .hub-app .flow-fortnight .flow-day-duties > span {
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: #e4e9f0;
+  color: #5c718e;
+  font-size: 12px;
+}
+#root .hub-app .flow-fortnight .flow-day-empty {
+  color: #a8b0ba;
+}
+#root .hub-app .flow-selected-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 18px;
+  margin-bottom: 8px;
+}
+#root .hub-app .flow-selected-heading > strong {
+  font-size: 13px;
+  font-weight: 500;
+  color: #717e8f;
+}
+#root .hub-app .flow-selected-heading .flow-duty-controls {
+  padding: 0;
+  gap: 12px;
+}
+#root .hub-app .hub-task-groups.is-compact .hub-task-list {
+  gap: 0;
+}
+#root .hub-app .flow-routines .hub-task-groups.is-compact .hub-task {
+  border: 0;
+  border-bottom: 1px solid #e5e8ed;
+  border-radius: 0;
+  min-height: 40px;
+  padding: 4px 2px;
+  gap: 8px;
+  background: transparent;
+}
+#root .hub-app .hub-task-groups.is-compact .hub-task.selected-positive {
+  background: #eef5f0;
+}
+#root .hub-app .hub-task-groups.is-compact .hub-task.selected-negative {
+  background: #faf0f0;
+}
+#root .hub-app .hub-task-groups.is-compact .hub-task-copy strong {
+  font-size: 14px;
+}
+#root .hub-app .hub-task-groups.is-compact .hub-task-actions {
+  max-width: none;
+  flex-wrap: nowrap;
+}
+#root .hub-app .hub-task-groups.is-compact .hub-task-actions small {
+  display: none;
+}
+#root .hub-app .hub-task-groups.is-compact .hub-task-actions button {
+  min-width: 32px;
+  min-height: 30px;
+  padding: 4px 6px;
+}
+#root .hub-app .hub-score-select {
+  max-width: 92px;
+  min-width: 64px;
+  height: 32px;
+  padding: 4px 6px;
+  border: 1px solid #dce3eb;
+  border-radius: 5px;
+  background: #fafcfe;
+  color: #64768c;
+  font-size: 12px;
+  box-shadow: none;
+}
+#root .hub-app .hub-score-select.is-selected {
+  background: #dcece1;
+  color: #36664c;
+  border-color: #b8d1c1;
+}
+#root .hub-app .hub-content-modern .hub-item-icon {
+  width: 30px;
+  min-width: 30px;
+  height: 30px;
+  min-height: 30px;
+  flex: 0 0 30px;
+  padding: 0;
+  font-size: 19px;
+  border: 0;
+  color: #8b98a9;
+  background: transparent;
+  box-shadow: none;
+}
+#root .hub-app .hub-content-modern .hub-item-icon:hover {
+  background: #e8edf4;
+  color: #5d7490;
+}
+#root .hub-app .hub-memo-group-heading {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 14px;
+}
+#root .hub-app .hub-memo-group-heading .hub-memo-group-title {
+  margin: 0;
+  flex: 1;
+  min-width: 0;
+}
+#root .hub-app .memo-title-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+#root .hub-app .hub-memo-cell .memo-title-row {
+  padding-right: 36px;
+}
+#root .hub-app .memo-title-row .memo-title-input {
+  flex: 1;
+  min-width: 0;
+}
+.hub-icon-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: #28374818;
+}
+.hub-icon-dialog {
+  position: fixed;
+  width: 350px;
+  max-width: calc(100vw - 16px);
+  max-height: calc(100dvh - 16px);
+  overflow: auto;
+  padding: 8px;
+  border: 1px solid #dce3eb;
+  border-radius: 8px;
+  background: #f6f8fc;
+  box-shadow: 0 12px 40px #273a5129;
+  color: #354252;
+  font:
+    14px/1.5 system-ui,
+    sans-serif;
+}
+.hub-icon-dialog header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 4px 8px 8px;
+}
+.hub-icon-dialog header strong {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.hub-icon-dialog button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  min-height: 32px;
+}
+.hub-icon-dialog button:hover {
+  background: #e4eaf3;
+}
+.hub-icon-dialog .hub-icon-remove {
+  width: 100%;
+}
+.hub-icon-dialog button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.hub-icon-dialog .mf3-emoji-picker {
+  width: 100%;
+  overflow: hidden;
+}
+.hub-icon-dialog em-emoji-picker {
+  width: 100%;
+  --border-radius: 6px;
+  --font-family: system-ui, sans-serif;
+}
+#root .hub-app.hub-mobile .flow-week-grid {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 6px;
+}
+#root .hub-app.hub-mobile .flow-fortnight .flow-day {
+  flex-direction: row;
+  min-height: 58px;
+  padding: 10px;
+  gap: 14px;
+}
+#root .hub-app.hub-mobile .flow-day-heading {
+  width: 58px;
+  flex: 0 0 58px;
+  align-content: flex-start;
+}
+#root .hub-app.hub-mobile .flow-day-content {
+  flex: 1;
+}
+#root .hub-app.hub-mobile .hub-item-icon {
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  flex-basis: 44px;
+}
+#root .hub-app.hub-mobile .hub-score-select {
+  min-height: 44px;
+}
+@media (max-width: 600px) {
+  .hub-icon-dialog {
+    left: 8px !important;
+    right: 8px;
+    top: auto !important;
+    bottom: 8px;
+    width: auto;
+    max-width: 350px;
+    margin: 0 auto;
+  }
+  .hub-icon-dialog button {
+    min-height: 44px;
+  }
+}
+#root .hub-app .flow-duty-controls {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 4px 0 14px;
+}
+#root .hub-app .flow-duty-controls label {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 14px;
+  color: #596371;
+}
+#root .hub-app .flow-duty-controls input {
+  appearance: auto;
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: #748ba9;
+}
+#root .hub-app .flow-schedule-editor {
+  display: block;
+  width: 100%;
+  min-height: 70px;
+  resize: none;
+  overflow: hidden;
+  border: 1px solid #e0e4ea;
+  border-radius: 7px;
+  background: #fafbfc;
+  box-shadow: inset 0 1px 3px #26334306;
+  font-size: 15px;
+  line-height: 1.6;
+  padding: 12px;
+  color: #303744;
+}
+#root .hub-app .hub-task-groups {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
+#root .hub-app .hub-task-group h3 {
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+  align-items: center;
+  color: #5c697c;
+  padding: 0 0 7px;
+}
+#root .hub-app .hub-task-group h3 span {
+  font-size: 11px;
+  font-weight: 400;
+  color: #8c94a0;
+}
+#root .hub-app .hub-task-group[data-kind="weekly"] h3 {
+  color: #877353;
+}
+#root .hub-app .hub-task-group[data-kind="edu"] h3 {
+  color: #637f73;
+}
+#root .hub-app .hub-task-list {
+  display: grid;
+  gap: 6px;
+}
+#root .hub-app .hub-task {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  min-height: 57px;
+  border: 1px solid #e4e7eb;
+  border-radius: 6px;
+  background: #fafbfc;
+}
+#root .hub-app .hub-task.selected-positive {
+  background: #eef5f0;
+  border-color: #d7e7dc;
+}
+#root .hub-app .hub-task.selected-negative {
+  background: #faf0f0;
+  border-color: #edd9d9;
+}
+#root .hub-app .hub-task-copy {
+  min-width: 0;
+  flex: 1;
+  display: grid;
+  gap: 3px;
+}
+#root .hub-app .hub-task-copy strong {
+  font-size: 16px;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+#root .hub-app .hub-task-copy small {
+  font-size: 11px;
+  color: #808a96;
+}
+#root .hub-app .hub-task-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 5px;
+  flex-shrink: 0;
+  max-width: 55%;
+}
+#root .hub-app .hub-task-actions button {
+  min-width: 43px;
+  padding: 6px 8px;
+  border: 1px solid #e2e6eb;
+  background: #fff9;
+  font-size: 12px;
+  gap: 5px;
+}
+#root .hub-app .hub-task-actions small {
+  font-size: 10px;
+  color: #89909b;
+}
+#root .hub-app .hub-task-actions .yes[aria-pressed="true"] {
+  background: #dcece1;
+  border-color: #b8d1c1;
+  color: #36664c;
+}
+#root .hub-app .hub-task-actions .no[aria-pressed="true"] {
+  background: #f0dddd;
+  border-color: #dbbdbd;
+  color: #934b4b;
+}
+#root .hub-app .hub-empty-inline {
+  padding: 10px 0;
+  font-size: 13px;
+  color: #9299a4;
+}
+#root .hub-app .hub-content-modern :is(h1, h2, h3) {
+  text-transform: none !important;
+}
+#root .hub-app .hub-content-modern .hub-date-controls input {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+#root .hub-app.hub-desktop .flow-routines .hub-task-list {
+  grid-template-columns: minmax(0, 1fr);
+}
+#root .hub-app.hub-desktop .flow-routines .hub-task {
+  gap: 7px;
+  padding: 8px;
+}
+#root .hub-app.hub-desktop .flow-routines .hub-task-copy strong {
+  font-size: 16px;
+}
+#root .hub-app.hub-desktop .flow-routines .hub-task-actions button {
+  min-width: 33px;
+  padding: 5px;
+}
+#root .hub-app .hub-memo-section {
+  margin-top: 28px;
+}
+#root .hub-app .hub-memo-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+#root .hub-app .hub-memo-tabs {
+  display: flex;
+  gap: 3px;
+  flex-wrap: wrap;
+}
+#root .hub-app .hub-memo-tabs button {
+  font-size: 12px;
+  min-width: 32px;
+}
+#root .hub-app .hub-memo-tabs button[aria-pressed="true"] {
+  background: #e3e8ef;
+}
+#root .hub-app .hub-memo-toolbar .memo-format-toolbar {
+  margin-left: auto;
+  position: static;
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+  background: transparent;
+  box-shadow: none;
+  border: 0;
+}
+#root .hub-app .hub-memo-group-title {
+  display: block;
+  max-width: 100%;
+  width: 340px;
+  border: 0;
+  background: transparent;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 4px 0 14px;
+  color: #7a8390;
+}
+#root .hub-app .hub-memo-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 22px 20px;
+}
+#root .hub-app .hub-memo-cell {
+  position: relative;
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid #dfe4e9;
+  border-radius: 7px;
+  background: #fafbfc;
+  --memo-accent: #98acc6;
+}
+#root .hub-app .hub-memo-cell[data-color="1"] {
+  --memo-accent: #a7bca8;
+}
+#root .hub-app .hub-memo-cell[data-color="2"] {
+  --memo-accent: #c8ada6;
+}
+#root .hub-app .hub-memo-cell[data-color="3"] {
+  --memo-accent: #b4a9c9;
+}
+#root .hub-app .hub-memo-cell[data-color="4"] {
+  --memo-accent: #c5b88b;
+}
+#root .hub-app .hub-memo-cell[data-color="5"] {
+  --memo-accent: #97b9bc;
+}
+#root .hub-app .hub-memo-number {
+  position: absolute;
+  right: 16px;
+  top: 16px;
+  font-size: 11px;
+  color: #9099a6;
+}
+#root .hub-app .hub-memo-number::before {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  background: var(--memo-accent);
+  border-radius: 2px;
+  margin-right: 6px;
+}
+#root .hub-app .hub-memo-cell .memo-area {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+#root .hub-app .hub-memo-cell .memo-title-input {
+  width: calc(100% - 40px);
+  height: 30px;
+  min-height: 30px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  color: #465364;
+  font-size: 15px !important;
+  font-weight: 600;
+  transform: none;
+  text-align: left;
+}
+#root .hub-app .hub-memo-cell .memo-quick-input {
+  width: 100%;
+  min-height: 42px;
+  height: 42px;
+  padding: 10px 11px;
+  resize: none;
+  overflow: hidden;
+  border: 1px solid #e2e6eb;
+  background: #f0f3f6;
+  border-radius: 5px;
+  font-size: 13px;
+  line-height: 20px;
+  box-shadow: none;
+}
+#root .hub-app .hub-memo-cell .memo-editor-shell {
+  position: relative;
+  min-width: 0;
+}
+#root .hub-app .hub-memo-cell .memo-rich-editor {
+  width: 100%;
+  min-height: 260px;
+  height: 300px;
+  max-height: none;
+  padding: 5px 10px 12px 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  font-family: inherit !important;
+  font-size: 15px !important;
+  line-height: 1.75;
+  color: #333d4b;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: none;
+}
+#root .hub-app .hub-memo-cell .memo-rich-editor::-webkit-scrollbar {
+  display: none;
+}
+#root .hub-app .hub-memo-cell .memo-rich-line {
+  min-height: 1.75em;
+}
+#root .hub-app .hub-memo-cell .memo-rich-fragment {
+  font-family: inherit !important;
+  font-size: inherit !important;
+}
+#root .hub-app .hub-memo-cell .memo-rich-fragment.is-bold {
+  font-weight: 650 !important;
+  -webkit-text-stroke: 0;
+}
+#root .hub-app .routine-summary {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.65fr) minmax(0, 1.35fr);
+  gap: 32px;
+  align-items: start;
+  margin-bottom: 32px;
+}
+#root .hub-app .routine-score {
+  padding: 20px;
+  background: #fafbfc;
+  border: 1px solid #dfe4e9;
+  border-radius: 7px;
+}
+#root .hub-app .score-carry-tools {
+  display: flex;
+  gap: 2px;
+}
+#root .hub-app .score-carry-tools button {
+  min-width: 28px;
+  padding: 5px;
+}
+#root .hub-app .score-primary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 18px 0 24px;
+}
+#root .hub-app .score-value {
+  font: 600 48px/1.15 inherit;
+  font-size: 48px;
+  font-weight: 600;
+  color: #2c3441;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+#root .hub-app .routine-score .score-checks {
+  position: static;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: auto;
+  height: auto;
+  transform: none;
+  padding: 0;
+}
+#root .hub-app .score-checks input {
+  appearance: auto;
+  width: 23px;
+  height: 23px;
+  margin: 0;
+  padding: 0;
+}
+#root .hub-app .score-check-green {
+  accent-color: #648b73;
+}
+#root .hub-app .score-check-red {
+  accent-color: #b46f72;
+}
+#root .hub-app .score-checks label {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  color: #63866e;
+  border: 1px solid #9bb5a3;
+  border-radius: 5px;
+  background: #eff5f1;
+}
+#root .hub-app .score-checks label.score-check-red {
+  color: #a66469;
+  border-color: #c8a1a4;
+  background: #f8eeee;
+}
+#root .hub-app .score-checks label input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+#root .hub-app .score-checks label svg {
+  opacity: 0.18;
+  pointer-events: none;
+}
+#root .hub-app .score-checks label:has(input:checked) svg {
+  opacity: 1;
+  stroke-width: 3;
+}
+#root .hub-app .score-checks label:has(input:focus-visible) {
+  outline: 2px solid #7f99b9;
+  outline-offset: 3px;
+}
+#root .hub-app.hub-mobile .score-checks label {
+  width: 44px;
+  height: 44px;
+}
+#root .hub-app.hub-desktop .routine-summary .hub-task-list {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+#root .hub-app .score-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  padding-top: 18px;
+  border-top: 1px solid var(--hub-line);
+}
+#root .hub-app .score-metrics div {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+#root .hub-app .score-metrics span {
+  font-size: 12px;
+  color: #7d8795;
+}
+#root .hub-app .score-metrics strong {
+  font-size: 21px;
+  font-weight: 550;
+}
+#root .hub-app .routine-editors {
+  display: grid;
+  gap: 14px;
+  margin-bottom: 30px;
+}
+#root
+  .hub-app
+  .hub-content-modern
+  :is(.collapsible-panel, .calendar-panel, .date-marker-panel, .history-panel) {
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 18px;
+  border: 1px solid #e0e4e9;
+  border-radius: 7px;
+  background: #fafbfc !important;
+  box-shadow: none !important;
+  filter: none;
+  transform: none;
+}
+#root
+  .hub-app
+  .hub-content-modern
+  :is(
+    .collapsible-panel,
+    .calendar-panel,
+    .date-marker-panel,
+    .history-panel
+  )::before,
+#root
+  .hub-app
+  .hub-content-modern
+  :is(
+    .collapsible-panel,
+    .calendar-panel,
+    .date-marker-panel,
+    .history-panel
+  )::after {
+  display: none;
+}
+#root .hub-app .hub-content-modern .section-heading {
+  background: transparent;
+  padding: 0 0 12px;
+  margin: 0;
+  min-height: 36px;
+  border: 0;
+  transform: none;
+}
+#root .hub-app .hub-content-modern .section-heading p {
+  display: none;
+}
+#root .hub-app .hub-content-modern .collapsed .section-heading {
+  padding-bottom: 0;
+}
+#root .hub-app .hub-content-modern .collapsed > :not(.section-heading) {
+  display: none !important;
+}
+#root .hub-app .hub-content-modern .preset-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+}
+#root .hub-app .hub-content-modern .preset-card {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(70px, 1fr) 50px 50px 30px;
+  align-items: center;
+  gap: 5px;
+  min-height: 52px;
+  padding: 8px;
+  background: #f1f3f6;
+  border: 1px solid #e1e5eb;
+  border-radius: 5px;
+  box-shadow: none;
+}
+#root .hub-app .hub-content-modern .preset-card input {
+  width: 100%;
+  min-width: 0;
+  height: 34px;
+  padding: 5px;
+  border: 0;
+  background: transparent;
+  font-size: 14px !important;
+  transform: none;
+}
+#root .hub-app .hub-content-modern .preset-card .score-field {
+  display: flex;
+  align-items: center;
+  padding: 0;
+  min-width: 0;
+  background: transparent;
+  box-shadow: none;
+}
+#root .hub-app .hub-content-modern .weekly-grid {
+  grid-template-columns: 120px repeat(7, minmax(100px, 1fr));
+  overflow-x: auto;
+  max-width: 100%;
+  gap: 6px;
+  padding-bottom: 10px;
+}
+#root
+  .hub-app
+  .hub-content-modern
+  :is(.weekly-day, .weekly-corner, .school-subject-label) {
+  color: #667487;
+  font-size: 12px;
+  background: transparent;
+  box-shadow: none;
+  border: 0;
+}
+#root
+  .hub-app
+  .hub-content-modern
+  :is(.weekly-schedule-cell, .school-subject-cell, .weekly-category) {
+  min-width: 0;
+  background: #f0f3f6;
+  border: 1px solid #e1e5eb;
+  border-radius: 5px;
+  box-shadow: none;
+  padding: 6px;
+}
+#root
+  .hub-app
+  .hub-content-modern
+  :is(.weekly-input, .school-subject-input, .weekly-category input) {
+  min-width: 0;
+  width: 100%;
+  padding: 6px;
+  background: transparent;
+  border: 0;
+  font-size: 14px !important;
+  color: #384556;
+  text-shadow: none;
+}
+#root .hub-app .hub-content-modern .weekly-input {
+  resize: none;
+  field-sizing: content;
+  min-height: 80px;
+  overflow: hidden;
+}
+#root .hub-app .flow-calendar > h2 {
+  margin: 28px 0 14px;
+}
+#root .hub-app .hub-content-modern .date-marker-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+#root .hub-app .hub-content-modern .date-marker {
+  display: grid;
+  grid-template-columns: minmax(80px, 1fr) 150px 70px;
+  align-items: center;
+  gap: 8px;
+  padding: 10px;
+  background: #f0f3f6;
+  border: 1px solid #e1e5eb;
+  border-radius: 5px;
+  min-width: 0;
+}
+#root .hub-app .hub-content-modern .date-marker input {
+  width: 100%;
+  min-width: 0;
+  font-size: 14px !important;
+  color: #384556 !important;
+  background: transparent;
+  border: 0;
+  padding: 5px 2px;
+  height: 36px;
+  transform: none !important;
+  color-scheme: light;
+}
+#root .hub-app .hub-content-modern .date-marker-dday {
+  font-size: 14px;
+  text-align: center;
+  padding: 7px 0;
+  color: #5b6e86;
+  background: #e0e7ef;
+  transform: none;
+}
+#root .hub-app .hub-content-modern .history-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 8px;
+}
+#root .hub-app .hub-content-modern .history-panel {
+  margin-top: 24px;
+}
+#root .hub-app .hub-module-ready {
+  min-height: 55dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  color: #7b8797;
+}
+#root .hub-app .hub-module-ready p {
+  font-size: 14px;
+  color: #8d95a1;
+}
+#root .hub-app .hub-settings {
+  max-width: 960px;
+  margin: auto;
+  display: grid;
+  gap: 20px;
+}
+#root .hub-app .hub-settings .hub-page-heading {
+  margin-bottom: 0;
+}
+#root .hub-app .hub-install-settings {
+  padding: 10px 0 24px;
+  border-bottom: 1px solid var(--hub-line);
+}
+#root .hub-app .hub-install-settings p {
+  font-size: 14px;
+  color: #7c8795;
+  margin: 10px 0 16px;
+}
+#root .hub-app .hub-install-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+#root .hub-app .hub-install-links a {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  color: #52647a;
+  font-size: 14px;
+  text-decoration: none;
+  padding: 8px 12px;
+  border: 1px solid #dce2ea;
+  border-radius: 5px;
+}
+#root .hub-app .hub-login {
+  max-width: 480px;
+  margin: 10vh auto;
+}
+#root .hub-app .hub-login > img {
+  width: 56px;
+  height: 56px;
+  margin-bottom: 20px;
+}
+#root .hub-app .hub-login > p {
+  margin: 12px 0 24px;
+  color: #798495;
+}
+#root .hub-app .hub-loading,
+#root .hub-app .hub-error {
+  padding: 40px 0;
+  color: #7c8593;
+}
+#root .hub-app .hub-mindfold-content {
+  min-width: 0;
+}
+#root .hub-app .mf3-workspace {
+  min-height: calc(100dvh - 56px);
+}
+#root .hub-app.hub-standalone .hub-main,
+#root .hub-app.hub-mobile .hub-main {
+  margin-left: 0;
+}
+#root .hub-app .hub-mobile-nav {
+  position: fixed;
+  z-index: 50;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
+  background: rgba(249, 250, 252, 0.96);
+  backdrop-filter: blur(18px);
+  border-top: 1px solid #dce2e9;
+}
+#root .hub-app .hub-mobile-nav button {
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  min-height: 50px;
+  padding: 5px 2px;
+  font-size: 10px;
+}
+#root .hub-app .hub-mobile-nav button[aria-current="page"] {
+  background: #e7ecf2;
+  color: #354c69;
+}
+#root .hub-app.hub-mobile {
+  padding-bottom: calc(72px + env(safe-area-inset-bottom));
+}
+#root .hub-app.hub-mobile.hub-standalone {
+  padding-bottom: 0;
+}
+#root .hub-app.hub-mobile .hub-topbar {
+  padding: 0 16px;
+}
+#root .hub-app.hub-mobile .hub-topbar .hub-connection span {
+  display: none;
+}
+#root .hub-app.hub-mobile .hub-content-modern {
+  padding: 24px 16px 40px;
+}
+#root .hub-app.hub-mobile .hub-page-heading {
+  flex-wrap: wrap;
+  gap: 16px;
+}
+#root .hub-app.hub-mobile .hub-date-controls {
+  width: 100%;
+  justify-content: space-between;
+}
+#root .hub-app.hub-mobile :is(.hub-topbar, .hub-content-modern) button {
+  min-height: 44px;
+}
+#root
+  .hub-app.hub-mobile
+  :is(.flow-overview, .routine-summary, .hub-memo-grid) {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 24px;
+}
+#root .hub-app.hub-mobile .hub-memo-toolbar {
+  gap: 8px;
+}
+#root .hub-app.hub-mobile .hub-memo-toolbar .memo-format-toolbar {
+  margin-left: 0;
+}
+#root .hub-app.hub-mobile .hub-task-actions {
+  max-width: 58%;
+}
+#root .hub-app.hub-mobile .hub-task-copy strong {
+  font-size: 16px;
+}
+#root .hub-app.hub-mobile .hub-task-actions button {
+  min-width: 42px;
+}
+#root
+  .hub-app.hub-mobile
+  .hub-content-modern
+  :is(.date-marker-list, .preset-grid) {
+  grid-template-columns: minmax(0, 1fr);
+}
+#root .hub-app.hub-mobile .hub-content-modern .date-marker {
+  grid-template-columns: minmax(60px, 1fr) 132px 55px;
+  padding: 8px;
+  gap: 5px;
+}
+#root .hub-app.hub-mobile .hub-content-modern .history-grid {
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 4px;
+}
+@media (max-width: 1180px) {
+  #root .hub-app.hub-desktop .hub-content-modern {
+    padding: 28px 24px 48px;
+  }
+  #root .hub-app .hub-content-modern .date-marker-list {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 1380px) {
+  #root .hub-app.hub-desktop .flow-overview {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Limit legacy decoration to its old views; reused editors use HUB controls. */
+html
+  body
+  #root
+  .hub-app
+  .hub-content-modern
+  :is(.collapsible-panel, .calendar-panel, .date-marker-panel, .history-panel) {
+  padding: 18px !important;
+  border: 1px solid #e0e4e9 !important;
+  border-radius: 7px !important;
+  background: #fafbfc !important;
+  box-shadow: none !important;
+}
+html body #root .hub-app .hub-content-modern .section-heading {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  min-height: 36px !important;
+  padding: 0 0 12px !important;
+  margin: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+html
+  body
+  #root
+  .hub-app
+  .hub-content-modern
+  :is(
+    .section-heading,
+    .section-heading h2,
+    .preset-card,
+    .weekly-category,
+    .weekly-day,
+    .calendar-month
+  )::before,
+html
+  body
+  #root
+  .hub-app
+  .hub-content-modern
+  :is(
+    .section-heading,
+    .section-heading h2,
+    .preset-card,
+    .weekly-category,
+    .weekly-day,
+    .calendar-month
+  )::after {
+  display: none !important;
+}
+html body #root .hub-app .hub-content-modern .section-heading h2 {
+  font-size: 17px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  transform: none !important;
+  background: none !important;
+}
+html body #root .hub-app .hub-content-modern .heading-actions {
+  position: static !important;
+  display: flex !important;
+  margin: 0 !important;
+}
+html body #root .hub-app .hub-content-modern .section-heading button {
+  width: 34px !important;
+  height: 34px !important;
+  min-height: 34px !important;
+  border: 1px solid #dce2e9 !important;
+  border-radius: 5px !important;
+  background: #f0f3f6 !important;
+  box-shadow: none !important;
+  transform: none !important;
+  color: #526279 !important;
+}
+html body #root .hub-app .hub-content-modern .weekly-grid {
+  display: grid;
+  grid-template-columns: 145px repeat(7, minmax(108px, 1fr)) !important;
+  gap: 6px !important;
+  padding: 0 0 12px !important;
+  margin: 0 !important;
+}
+html
+  body
+  #root
+  .hub-app
+  .hub-content-modern
+  :is(.weekly-day, .weekly-corner, .school-subject-label) {
+  color: #617087 !important;
+  background: #edf1f6 !important;
+  border: 0 !important;
+  border-radius: 4px !important;
+  box-shadow: none !important;
+  font-size: 12px !important;
+  padding: 10px 6px !important;
+  min-height: 36px !important;
+  height: auto !important;
+}
+html
+  body
+  #root
+  .hub-app
+  .hub-content-modern
+  :is(.weekly-category, .weekly-schedule-cell, .school-subject-cell) {
+  min-width: 0 !important;
+  max-width: 100% !important;
+  border: 1px solid #e0e5eb !important;
+  border-radius: 5px !important;
+  background: #f4f6f9 !important;
+  box-shadow: none !important;
+  padding: 8px !important;
+}
+html body #root .hub-app .hub-content-modern .weekly-category {
+  display: grid !important;
+  grid-template-areas: "name name name" "y n actions" !important;
+  grid-template-rows: 34px 34px !important;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 30px !important;
+  align-content: start !important;
+  align-items: center !important;
+  gap: 6px !important;
+}
+html
+  body
+  #root
+  .hub-app
+  .hub-content-modern
+  .weekly-category
+  .category-name-input {
+  grid-column: 1/-1 !important;
+  text-align: left !important;
+}
+html
+  body
+  #root
+  .hub-app
+  .hub-content-modern
+  :is(
+    .weekly-category input,
+    .preset-card input,
+    .school-subject-input,
+    .weekly-input
+  ) {
+  position: static !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding: 6px !important;
+  border: 0 !important;
+  border-radius: 3px !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: #36455a !important;
+  font-size: 14px !important;
+  line-height: 1.5 !important;
+  transform: none !important;
+  text-shadow: none !important;
+}
+html
+  body
+  #root
+  .hub-app
+  .hub-content-modern
+  :is(.weekly-category input, .preset-card input, .school-subject-input) {
+  height: 34px !important;
+  min-height: 34px !important;
+}
+html
+  body
+  #root
+  .hub-app
+  .hub-content-modern
+  :is(.weekly-category .score-field, .preset-card .score-field) {
+  display: block !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  min-width: 0 !important;
+  width: 100% !important;
+  border: 0 !important;
+  background: #e8edf3 !important;
+  box-shadow: none !important;
+  border-radius: 4px !important;
+  transform: none !important;
+}
+html body #root .hub-app .hub-content-modern .score-field input {
+  text-align: center !important;
+}
+html body #root .hub-app .hub-content-modern .category-actions {
+  position: static !important;
+  grid-column: auto !important;
+  display: flex !important;
+  justify-content: center !important;
+  margin: 0 !important;
+  width: 30px !important;
+}
+html
+  body
+  #root
+  .hub-app
+  .hub-content-modern
+  :is(.category-actions button, .preset-card button, .weekly-add-divider) {
+  border: 0 !important;
+  background: #e8edf3 !important;
+  box-shadow: none !important;
+  transform: none !important;
+  color: #69788c !important;
+  border-radius: 4px !important;
+  font-size: 16px !important;
+}
+html
+  body
+  #root
+  .hub-app
+  .hub-content-modern
+  :is(.category-actions button, .preset-card button) {
+  width: 28px !important;
+  min-width: 28px !important;
+  height: 34px !important;
+  min-height: 34px !important;
+  padding: 0 !important;
+}
+html body #root .hub-app .hub-content-modern .weekly-input {
+  field-sizing: content;
+  min-height: 70px !important;
+  height: auto !important;
+  resize: none !important;
+  overflow: hidden !important;
+  text-align: left !important;
+}
+html body #root .hub-app .hub-content-modern .preset-card {
+  display: grid !important;
+  grid-template-columns: minmax(50px, 1fr) 52px 46px 28px !important;
+  gap: 6px !important;
+  min-height: 52px !important;
+  padding: 8px !important;
+  background: #f3f5f8 !important;
+  border: 1px solid #e0e5eb !important;
+  box-shadow: none !important;
+  border-radius: 5px !important;
+}
+html
+  body
+  #root
+  .hub-app
+  .hub-content-modern
+  .collapsed
+  > :not(.section-heading) {
+  display: none !important;
+}
+html body #root .hub-app .hub-content-modern .history-bars {
+  display: grid !important;
+  grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
+  gap: 8px !important;
+}
+html body #root .hub-app .hub-content-modern .history-day {
+  display: grid !important;
+  grid-template-rows: 120px 24px 28px !important;
+  justify-items: center !important;
+  align-items: end !important;
+  min-width: 0 !important;
+  padding: 10px 4px !important;
+  border: 1px solid #e2e7ed !important;
+  border-radius: 5px !important;
+  background: #f2f5f8 !important;
+  box-shadow: none !important;
+}
+html body #root .hub-app .hub-content-modern .history-day.today {
+  border-color: #a5b6ce !important;
+  background: #eaf0f7 !important;
+}
+html body #root .hub-app .hub-content-modern .history-fill {
+  position: relative !important;
+  width: 70% !important;
+  min-width: 0 !important;
+  max-width: 48px !important;
+  margin: 0 !important;
+  background: #dce5ef !important;
+  border-radius: 4px 4px 0 0 !important;
+  box-shadow: none !important;
+}
+html body #root .hub-app .hub-content-modern .history-fill.plus {
+  background: #bed7c8 !important;
+}
+html body #root .hub-app .hub-content-modern .history-fill.minus {
+  background: #e5c5c8 !important;
+}
+html body #root .hub-app .hub-content-modern .history-attempt {
+  position: absolute !important;
+  left: 50% !important;
+  top: -26px !important;
+  transform: translateX(-50%) !important;
+  display: grid !important;
+  place-items: center !important;
+  width: 18px !important;
+  height: 18px !important;
+  font: 600 12px/1 sans-serif !important;
+  border: 1px solid #bbc6d1 !important;
+  border-radius: 3px !important;
+  background: #fff !important;
+  color: #638c71 !important;
+}
+html body #root .hub-app .hub-content-modern .history-attempt.history-penalty {
+  color: #b37075 !important;
+}
+html
+  body
+  #root
+  .hub-app
+  .hub-content-modern
+  :is(.history-date, .history-score) {
+  position: static !important;
+  transform: none !important;
+  font-family: inherit !important;
+  font-size: 12px !important;
+  line-height: 1.5 !important;
+  color: #66758a !important;
+}
+html
+  body
+  #root
+  .hub-app
+  :is(.hub-content-modern, .hub-sidebar, .hub-topbar, .hub-mobile-nav)
+  * {
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans KR",
+    "Malgun Gothic", sans-serif !important;
+}
+html body #root .hub-app .hub-content-modern .preset-card {
+  grid-template-areas: none !important;
+}
+html body #root .hub-app .hub-content-modern .preset-card > * {
+  grid-area: auto !important;
+}
+html body #root .hub-app .hub-memo-cell .memo-area {
+  padding: 0 !important;
+  border: 0 !important;
+  background: none !important;
+  box-shadow: none !important;
+}
+html body #root .hub-app .hub-memo-cell .memo-title-input {
+  width: 100% !important;
+  height: 30px !important;
+  min-height: 30px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  line-height: 30px !important;
+  color: #485669 !important;
+  transform: none !important;
+}
+html body #root .hub-app .hub-memo-cell .memo-quick-textarea {
+  width: 100% !important;
+  height: 44px !important;
+  min-height: 44px !important;
+  padding: 10px !important;
+  border: 1px solid #e2e6eb !important;
+  border-radius: 5px !important;
+  background: #f0f3f6 !important;
+  box-shadow: none !important;
+  font-size: 14px !important;
+  font-weight: 400 !important;
+  line-height: 22px !important;
+  resize: none !important;
+  overflow: hidden !important;
+}
+html body #root .hub-app .hub-memo-cell .memo-rich-editor {
+  height: 300px !important;
+  min-height: 300px !important;
+  padding: 5px 10px 12px 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  font-weight: 400 !important;
+  font-size: 16px !important;
+  line-height: 1.65 !important;
+}
+html body #root .hub-app .hub-memo-cell .memo-rich-fragment {
+  font-weight: 400 !important;
+  -webkit-text-stroke: 0 !important;
+}
+html body #root .hub-app .hub-memo-cell .memo-rich-fragment.is-bold {
+  font-weight: 650 !important;
+}
+html body #root .hub-app .hub-memo-group-title {
+  height: 36px !important;
+  min-height: 36px !important;
+  padding: 4px 0 !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  margin-bottom: 14px;
+}
+html body #root .hub-app .flow-calendar .mobile-calendar-card {
+  padding: 14px !important;
+  background: #fafbfc !important;
+  border: 1px solid #e0e4e9 !important;
+  border-radius: 7px !important;
+  box-shadow: none !important;
+}
+html body #root .hub-app .mobile-calendar-heading button {
+  border: 1px solid #e1e5eb !important;
+  background: #f0f3f6 !important;
+  box-shadow: none !important;
+  color: #526174 !important;
+}
+html body #root .hub-app .mobile-calendar-grid button.selected {
+  background: #e1e8f2 !important;
+  border: 1px solid #b2c2d8 !important;
+  color: #324862 !important;
+}
+html body #root .hub-app .mobile-calendar-editor {
+  margin-top: 16px !important;
+  padding: 12px 0 0 !important;
+  border-top: 1px solid #e0e4e9 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+html body #root .hub-app .mobile-calendar-editor textarea {
+  background: #f3f5f8 !important;
+  border: 1px solid #e1e5eb !important;
+  border-radius: 5px !important;
+  padding: 12px !important;
+  box-shadow: none !important;
+  font-size: 16px !important;
+  color: #36455a !important;
+}
+html body #root .hub-app .mobile-duty-buttons button {
+  background: transparent !important;
+  box-shadow: none !important;
+  border: 1px solid #e1e5eb !important;
+}
+html body #root .hub-app .mobile-duty-buttons button.active {
+  background: #e0e9e3 !important;
+}
+html body #root .hub-app .date-marker-list {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 10px !important;
+}
+html body #root .hub-app .date-marker {
+  display: grid !important;
+  grid-template-areas: none !important;
+  grid-template-columns: minmax(70px, 1fr) 144px 60px !important;
+  gap: 8px !important;
+  align-items: center !important;
+  padding: 9px !important;
+  min-height: 56px !important;
+  background: #f1f4f7 !important;
+  border: 1px solid #e0e5eb !important;
+  border-radius: 5px !important;
+  box-shadow: none !important;
+}
+html body #root .hub-app .date-marker > * {
+  grid-area: auto !important;
+  position: static !important;
+  min-width: 0 !important;
+  width: 100% !important;
+  margin: 0 !important;
+  transform: none !important;
+}
+html body #root .hub-app .date-marker input {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  padding: 4px 0 !important;
+  font-size: 14px !important;
+  height: 36px !important;
+  line-height: normal !important;
+}
+html body #root .hub-app .date-marker-dday {
+  display: grid !important;
+  place-items: center !important;
+  height: 32px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 4px !important;
+  background: #e1e8ef !important;
+  color: #536780 !important;
+  font-size: 13px !important;
+  box-shadow: none !important;
+}
+@media (max-width: 1180px) {
+  html body #root .hub-app .date-marker-list {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+}
+html body #root .hub-app.hub-mobile .date-marker-list {
+  grid-template-columns: minmax(0, 1fr) !important;
+}
+html body #root .hub-app.hub-mobile .date-marker {
+  grid-template-columns: minmax(50px, 1fr) 127px 45px !important;
+  gap: 5px !important;
+  padding: 7px !important;
+}
+html body #root .hub-app .calendar-months {
+  display: grid !important;
+  gap: 10px !important;
+}
+html body #root .hub-app .calendar-month {
+  padding: 0 !important;
+  border: 0 !important;
+  border-bottom: 1px solid #e0e5eb !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  overflow: hidden !important;
+}
+html body #root .hub-app .calendar-month-toggle {
+  width: 100% !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  height: 46px !important;
+  padding: 10px 12px !important;
+  border: 0 !important;
+  border-radius: 5px !important;
+  background: #eaf0f5 !important;
+  box-shadow: none !important;
+  color: #425267 !important;
+  font-size: 15px !important;
+  text-transform: none !important;
+}
+html body #root .hub-app .calendar-month-toggle :is(span, strong) {
+  color: inherit !important;
+  font-size: inherit !important;
+  font-weight: 550 !important;
+  text-shadow: none !important;
+}
+html body #root .hub-app .calendar-month-toggle strong {
+  font-size: 12px !important;
+  color: #7c899a !important;
+}
+html body #root .hub-app .calendar-weeks {
+  overflow-x: auto !important;
+  padding: 12px 0 !important;
+}
+html body #root .hub-app .calendar-week-scroll {
+  overflow: visible !important;
+  min-width: 840px !important;
+  padding: 0 !important;
+  margin: 0 0 8px !important;
+}
+html body #root .hub-app :is(.calendar-days, .calendar-weekdays) {
+  display: grid !important;
+  grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
+  gap: 6px !important;
+  min-width: 0 !important;
+  width: 100% !important;
+}
+html body #root .hub-app .calendar-weekdays span {
+  padding: 8px !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  color: #788496 !important;
+}
+html body #root .hub-app .calendar-day {
+  display: flex !important;
+  flex-direction: column !important;
+  min-width: 0 !important;
+  min-height: 160px !important;
+  height: auto !important;
+  padding: 8px !important;
+  border: 1px solid #e0e5eb !important;
+  border-radius: 5px !important;
+  background: #f3f5f8 !important;
+  box-shadow: none !important;
+}
+html body #root .hub-app .calendar-day.selected {
+  border-color: #9aafcd !important;
+  background: #edf2f8 !important;
+}
+html body #root .hub-app .calendar-date {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  gap: 6px !important;
+  height: auto !important;
+  min-height: 26px !important;
+  padding: 0 !important;
+  color: #536278 !important;
+}
+html body #root .hub-app .calendar-date b {
+  color: #44556c !important;
+  font-size: 15px !important;
+  font-weight: 600 !important;
+}
+html body #root .hub-app .calendar-duty-checks {
+  display: flex !important;
+  gap: 4px !important;
+  min-width: 0 !important;
+}
+html body #root .hub-app .calendar-duty {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 2px !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+html body #root .hub-app .calendar-duty input {
+  appearance: auto !important;
+  width: 12px !important;
+  height: 12px !important;
+  min-width: 12px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  accent-color: #728aa7;
+}
+html body #root .hub-app .calendar-duty em {
+  font-size: 11px !important;
+  font-style: normal !important;
+  color: #7d8a9c !important;
+}
+html body #root .hub-app .calendar-day textarea {
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 110px !important;
+  height: auto !important;
+  field-sizing: content;
+  overflow: hidden !important;
+  resize: none !important;
+  margin: 6px 0 0 !important;
+  padding: 6px 0 !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  font-size: 14px !important;
+  font-weight: 400 !important;
+  line-height: 1.6 !important;
+  color: #36455a !important;
+}
+html body #root .hub-app .calendar-day::before,
+html body #root .hub-app .calendar-day::after {
+  display: none !important;
+}
+html body #root .hub-app .display-mode-options {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 8px !important;
+}
+html body #root .hub-app .display-mode-option {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  justify-content: center !important;
+  min-width: 0 !important;
+  gap: 5px !important;
+  padding: 12px !important;
+  background: #f2f4f7 !important;
+  border: 1px solid #e0e5eb !important;
+  border-radius: 5px !important;
+  box-shadow: none !important;
+}
+html body #root .hub-app .display-mode-option.active {
+  background: #e5ecf4 !important;
+  border-color: #b3c3d7 !important;
+}
+html body #root .hub-app .display-mode-option strong {
+  white-space: nowrap !important;
+  font-size: 14px !important;
+}
+html body #root .hub-app .display-mode-option span {
+  font-size: 12px !important;
+  color: #7a8799 !important;
+}
+html body #root .hub-app .hub-settings .account-sync button {
+  background: #e8edf3 !important;
+  border: 1px solid #ccd5e0 !important;
+  border-radius: 5px !important;
+  color: #435570 !important;
+  box-shadow: none !important;
+}
+html body #root .hub-app.hub-mobile .display-mode-options {
+  grid-template-columns: 1fr !important;
+}
+html body #root .hub-app.hub-mobile .display-mode-option {
+  flex-direction: row !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+}
+html
+  body
+  #root
+  .hub-app.hub-mobile
+  .hub-content-modern
+  .section-heading
+  button {
+  min-width: 44px !important;
+  min-height: 44px !important;
+}
+html body #root .hub-app .hub-recoveries {
+  border-top: 1px solid #e0e5eb;
+  padding-top: 18px;
+}
+html body #root .hub-app .hub-recoveries summary {
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 600;
+}
+html body #root .hub-app .hub-recovery-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 0;
+  border-bottom: 1px solid #e0e5eb;
+  font-size: 13px;
+  color: #6c7c90;
+}
+html body #root .hub-app .hub-recovery-row > div {
+  display: flex;
+  gap: 6px;
+}

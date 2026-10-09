@@ -7,7 +7,7 @@ import React, {
   useState,
 } from "react";
 import {
-  PanelLeft,
+  Library,
   Plus,
   FolderPlus,
   Folder,
@@ -49,7 +49,7 @@ const Tool = ({ icon: Icon, label, onClick, ...rest }) => (
 export default function MindfoldWorkspace({ legacy, displayMode }) {
   const { workspace, userId, status, mutate, setComposing, addPage } =
     useDocuments(legacy);
-  const [sidebar, setSidebar] = useState(() => window.innerWidth > 1000),
+  const [manager, setManager] = useState(false),
     [search, setSearch] = useState(""),
     [trash, setTrash] = useState(false),
     [collapsed, setCollapsed] = useState([]),
@@ -61,6 +61,7 @@ export default function MindfoldWorkspace({ legacy, displayMode }) {
   const editorRef = useRef(null),
     fileRef = useRef(null),
     dragged = useRef(null);
+  const tabsRef = useRef(null);
   const page =
     workspace?.pages.find(
       (p) => p.id === workspace.activePageId && !p.deletedAt,
@@ -82,6 +83,38 @@ export default function MindfoldWorkspace({ legacy, displayMode }) {
           workspace.pageOrder.indexOf(a.id) - workspace.pageOrder.indexOf(b.id),
       );
   }, [workspace, search]);
+  const pageTabs = useMemo(
+    () =>
+      workspace
+        ? [...workspace.pages]
+            .filter((p) => !p.deletedAt)
+            .sort(
+              (a, b) =>
+                workspace.pageOrder.indexOf(a.id) -
+                workspace.pageOrder.indexOf(b.id),
+            )
+        : [],
+    [workspace],
+  );
+  useEffect(() => {
+    const tab = tabsRef.current?.querySelector('[aria-current="page"]');
+    if (!tab) return;
+    const strip = tabsRef.current;
+    if (tab.offsetLeft < strip.scrollLeft) strip.scrollLeft = tab.offsetLeft;
+    else if (
+      tab.offsetLeft + tab.offsetWidth >
+      strip.scrollLeft + strip.clientWidth
+    )
+      strip.scrollLeft = tab.offsetLeft + tab.offsetWidth - strip.clientWidth;
+  }, [page?.id, pageTabs]);
+  useEffect(() => {
+    if (!manager) return;
+    const escape = (event) => {
+      if (event.key === "Escape") setManager(false);
+    };
+    window.addEventListener("keydown", escape);
+    return () => window.removeEventListener("keydown", escape);
+  }, [manager]);
   useEffect(() => {
     if (!error) return;
     const timer = setTimeout(() => setError(""), 12000);
@@ -103,7 +136,8 @@ export default function MindfoldWorkspace({ legacy, displayMode }) {
     );
     setTrash(false);
     setPageMenu("");
-    if (displayMode === "mobile" || window.innerWidth < 760) setSidebar(false);
+    setManager(false);
+    setIconPage("");
   };
   const changePage = (id, patch) =>
     mutate(
@@ -157,8 +191,13 @@ export default function MindfoldWorkspace({ legacy, displayMode }) {
     setRename({ kind: "folder", id: folder.id, value: folder.label });
   const drop = (event, target) => {
     event.preventDefault();
+    event.stopPropagation();
     const item = dragged.current;
     if (!item) return;
+    if (item.id === target) {
+      dragged.current = null;
+      return;
+    }
     if (item.kind === "page") {
       const targetPage = workspace.pages.find((p) => p.id === target);
       mutate(
@@ -217,6 +256,14 @@ export default function MindfoldWorkspace({ legacy, displayMode }) {
       </button>
       <div className="mf3-page-actions">
         <Tool
+          icon={ChevronDown}
+          label={`${p.label} 관리`}
+          onClick={() => {
+            select(p.id);
+            setPageMenu(p.id);
+          }}
+        />
+        <Tool
           icon={Pencil}
           label={`${p.label} 이름 수정`}
           onClick={() => setRename({ kind: "page", id: p.id, value: p.label })}
@@ -240,23 +287,60 @@ export default function MindfoldWorkspace({ legacy, displayMode }) {
     );
   return (
     <div
-      className={`mf3-workspace ${sidebar ? "with-sidebar" : ""} ${displayMode === "mobile" ? "is-mobile" : ""}`}
+      className={`mf3-workspace ${displayMode === "mobile" ? "is-mobile" : ""}`}
     >
-      {sidebar && (
+      <nav className="mf3-page-navigation" aria-label="Mindfold 페이지">
+        <div className="mf3-page-tabs" ref={tabsRef}>
+          {pageTabs.map((p) => (
+            <button
+              type="button"
+              className="mf3-page-tab"
+              key={p.id}
+              title={p.label}
+              aria-current={!trash && p.id === page?.id ? "page" : undefined}
+              onClick={() => select(p.id)}
+            >
+              <span className="mf3-page-icon">
+                {p.icon || <FileText size={15} />}
+              </span>
+              <span>{p.label}</span>
+              {p.favorite && <Star size={12} />}
+            </button>
+          ))}
+        </div>
+        <Tool
+          icon={Library}
+          label="페이지 목록 관리"
+          aria-expanded={manager}
+          aria-controls="mf3-page-manager"
+          onClick={() => {
+            setManager((v) => !v);
+            setPageMenu("");
+          }}
+        />
+      </nav>
+      {manager && (
         <>
           <button
             type="button"
-            className="mf3-sidebar-backdrop"
+            className="mf3-manager-backdrop"
             aria-label="페이지 목록 닫기"
-            onClick={() => setSidebar(false)}
+            onClick={() => setManager(false)}
           />
-          <aside className="mf3-sidebar" aria-label="페이지 목록">
-            <div className="mf3-sidebar-title">
-              <span>Mindfold</span>
+          <section
+            id="mf3-page-manager"
+            className="mf3-page-manager"
+            aria-label="페이지 목록 관리"
+          >
+            <div className="mf3-manager-title">
+              <span>
+                <Library size={18} />
+                페이지 관리
+              </span>
               <Tool
-                icon={PanelLeft}
+                icon={X}
                 label="페이지 목록 닫기"
-                onClick={() => setSidebar(false)}
+                onClick={() => setManager(false)}
               />
             </div>
             <label className="mf3-page-search">
@@ -268,13 +352,14 @@ export default function MindfoldWorkspace({ legacy, displayMode }) {
                 onChange={(e) => setSearch(e.target.value)}
               />
             </label>
-            <div className="mf3-sidebar-tools">
+            <div className="mf3-manager-tools">
               <button
                 type="button"
                 onClick={() => {
                   flush();
                   addPage();
                   setTrash(false);
+                  setManager(false);
                 }}
               >
                 <Plus size={16} />
@@ -366,6 +451,7 @@ export default function MindfoldWorkspace({ legacy, displayMode }) {
                           onClick={() => {
                             flush();
                             addPage(folder.id);
+                            setManager(false);
                           }}
                         />
                         <Tool
@@ -423,6 +509,7 @@ export default function MindfoldWorkspace({ legacy, displayMode }) {
               onClick={() => {
                 flush();
                 setTrash((v) => !v);
+                setManager(false);
               }}
             >
               <Trash2 size={16} />
@@ -437,17 +524,12 @@ export default function MindfoldWorkspace({ legacy, displayMode }) {
                 }
               </small>
             </button>
-          </aside>
+          </section>
         </>
       )}
       <main className="mf3-main">
         <header className="mf3-pagebar">
           <div className="mf3-pagebar-start">
-            <Tool
-              icon={PanelLeft}
-              label="페이지 목록 열고 닫기"
-              onClick={() => setSidebar((v) => !v)}
-            />
             {!trash && page && (
               <>
                 <button
