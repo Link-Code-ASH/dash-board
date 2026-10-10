@@ -1,3 +1,4 @@
+import CalendarNoteEditor, { CalendarText } from "../CalendarNoteEditor.jsx";
 import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
   Plus,
@@ -17,6 +18,7 @@ import { moduleIds } from "../routing.js";
 import { todayKey } from "../routing.js";
 import ItemIconButton from "../ItemIconButton.jsx";
 import { ScheduleIcon, navigationStrokeWidth } from "../icons.jsx";
+import { FlowScore, WeeklyOverview } from "../FlowSummary.jsx";
 
 function MemoDesk() {
   const d = useDashboardData();
@@ -130,6 +132,7 @@ export default function Flow({ route, navigate }) {
     if (route.section === "calendar")
       navigate("routine", "calendar", route.date, {
         week: route.week,
+        month: route.month,
         replace: true,
       });
   }, [route.section, route.date, route.week, navigate]);
@@ -137,7 +140,7 @@ export default function Flow({ route, navigate }) {
     <div className="flow-view">
       <DateHeading title="Flow" />
       <div className="flow-layout">
-        <div className="flow-overview">
+        <div className="flow-workspace">
           <section className="flow-schedule">
             <div className="hub-section-title">
               <h2>
@@ -154,9 +157,7 @@ export default function Flow({ route, navigate }) {
             </div>
             <TwoWeekSchedule route={route} navigate={navigate} />
             <div className="flow-selected-heading">
-              <strong>
-                {d.selectedDate.slice(5).replace("-", "/")} Schedule
-              </strong>
+              <strong>{d.selectedDate.slice(5).replace("-", "/")}</strong>
               <div className="flow-duty-controls">
                 {calendarDutyOptions.map((option) => (
                   <label key={option.key}>
@@ -177,7 +178,7 @@ export default function Flow({ route, navigate }) {
             <ScheduleEditor />
             <ExternalFlowItems date={d.selectedDate} navigate={navigate} />
           </section>
-          <div className="flow-day-details">
+          <aside className="flow-support" aria-label="오늘 루틴과 보조 정보">
             <section className="flow-routines">
               <div className="hub-section-title">
                 <h2>
@@ -185,8 +186,8 @@ export default function Flow({ route, navigate }) {
                   Today's Tasks
                 </h2>
                 <button
-                  aria-label="Schedule 열기"
-                  title="Schedule 열기"
+                  aria-label="Planner 열기"
+                  title="Planner 열기"
                   onClick={() => navigate("routine")}
                 >
                   <ChevronRight size={18} />
@@ -194,6 +195,10 @@ export default function Flow({ route, navigate }) {
               </div>
               <RoutineTasks compact />
             </section>
+            <div className="flow-reviews">
+              <FlowScore />
+              <WeeklyOverview navigate={navigate} />
+            </div>
             <section className="flow-markers">
               <div className="hub-section-title">
                 <h2>
@@ -207,7 +212,7 @@ export default function Flow({ route, navigate }) {
                 updateDateMarker={d.updateDateMarker}
               />
             </section>
-          </div>
+          </aside>
         </div>
         <MemoDesk />
       </div>
@@ -277,6 +282,11 @@ function TwoWeekSchedule({ route, navigate }) {
           </button>
         </div>
       </div>
+      <div className="flow-weekday-header" aria-label="요일">
+        {["월 MON", "화 TUE", "수 WED", "목 THU", "금 FRI", "토 SAT", "일 SUN"].map((day) => (
+          <span key={day}>{day}</span>
+        ))}
+      </div>
       <div className="flow-week-viewport" ref={viewport}>
         <div ref={content}>
           {[0, 1].map((row) => (
@@ -285,13 +295,14 @@ function TwoWeekSchedule({ route, navigate }) {
               key={row}
               aria-label={row ? "다음 주 일정" : "이번 주 일정"}
             >
-              <h3>{row ? "Next week" : "This week"}</h3>
               <div className="flow-week-grid">
                 {Array.from({ length: 7 }, (_, column) => {
                   const date = addDays(week, row * 7 + column);
-                  const lines = (d.data.calendar[date] || "")
-                    .split("\n")
-                    .filter((line) => line.trim());
+                  let offset = 0;
+                  const lines = (d.data.calendar[date] || "").split("\n").map((text) => {
+                    const start = offset; offset += text.length + 1;
+                    return { text, marks: (d.data.calendarFormats?.[date] || []).map((mark) => ({ ...mark, start: mark.start - start, end: mark.end - start })) };
+                  }).filter((line) => line.text.trim());
                   const duties = calendarDutyOptions.filter(
                     (option) => d.data.calendarDuties[date]?.[option.key],
                   );
@@ -329,7 +340,7 @@ function TwoWeekSchedule({ route, navigate }) {
                         )}
                         {lines.map((line, i) => (
                           <span className="flow-day-event" key={i}>
-                            {line}
+                            <CalendarText text={line.text} marks={line.marks} />
                           </span>
                         ))}
                         {!lines.length && !duties.length && (
@@ -350,38 +361,9 @@ function TwoWeekSchedule({ route, navigate }) {
 
 function ScheduleEditor() {
   const d = useDashboardData();
-  const ref = useRef(null);
-  const value = d.data.calendar[d.selectedDate] || "";
-  useLayoutEffect(() => {
-    const input = ref.current;
-    const fit = () => {
-      input.style.height = "0px";
-      input.style.height = `${Math.max(70, input.scrollHeight + 2)}px`;
-    };
-    fit();
-    let width = input.clientWidth;
-    const observer = new ResizeObserver(() => {
-      if (width !== input.clientWidth) {
-        width = input.clientWidth;
-        fit();
-      }
-    });
-    observer.observe(input);
-    return () => observer.disconnect();
-  }, [value, d.selectedDate]);
-  return (
-    <textarea
-      ref={ref}
-      className="flow-schedule-editor"
-      aria-label="선택 날짜 일정"
-      spellCheck={false}
-      placeholder="일정을 입력하세요"
-      value={value}
-      onChange={(event) =>
-        d.updateCalendarNote(d.selectedDate, event.target.value)
-      }
-    />
-  );
+  return <CalendarNoteEditor key={d.selectedDate} label="선택 날짜 일정"
+    value={d.data.calendar[d.selectedDate] || ""} marks={d.data.calendarFormats?.[d.selectedDate]}
+    onChange={(value, marks) => d.updateCalendarNote(d.selectedDate, value, marks)} />;
 }
 
 function ExternalFlowItems({ date, navigate }) {

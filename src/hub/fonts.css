@@ -1,0 +1,21 @@
+@font-face {
+  font-family: "Pretendard HUB";
+  src: url("../assets/fonts/PretendardVariable.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+}
+@font-face {
+  font-family: "IBM Plex Sans KR HUB";
+  src: url("../assets/fonts/IBMPlexSansKR-Medium.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+}
+@font-face {
+  font-family: "IBM Plex Sans KR HUB";
+  src: url("../assets/fonts/IBMPlexSansKR-SemiBold.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 600 900;
+  font-display: swap;
+}

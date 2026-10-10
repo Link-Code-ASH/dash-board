@@ -9,6 +9,8 @@ import {
 } from "../src/dashboard/model.js";
 import { readRoute } from "../src/hub/routing.js";
 import { mergeDashboard } from "../src/hub/merge.js";
+import { isValidMonth, monthCells, shiftMonth } from "../src/hub/calendarMonth.js";
+import { symbols } from "../src/hub/symbols.js";
 
 test("monochrome symbols preserve legacy emojis and survive backups", () => {
   const state = normalizeState({ itemIcons: { "daily:a": "book" }, itemSymbols: { "daily:a": { name: "book", color: "#6484b3" } } });
@@ -89,4 +91,36 @@ test("date selection retains an explicit displayed week on reload and back navig
   assert.equal(readRoute().week, "2026-10-05");
   window.location.hash = "#/flow/today?date=2027-01-03";
   assert.equal(readRoute().week, "2026-12-28");
+});
+
+test("calendar routes preserve displayed month independently of selected date", (t) => {
+  const original = globalThis.window;
+  t.after(() => { globalThis.window = original; });
+  globalThis.window = { location: { pathname: "/routine/", hash: "#/routine/calendar?date=2026-10-10&week=2026-10-05&month=2027-01" } };
+  assert.equal(readRoute().date, "2026-10-10");
+  assert.equal(readRoute().month, "2027-01");
+  window.location.hash = "#/routine/calendar?date=2026-10-10&month=2026-13";
+  assert.equal(readRoute().month, "2026-10");
+  window.location.hash = "#/routine/calendar?date=2026-10-10";
+  assert.equal(readRoute().month, "2026-10");
+});
+
+test("month grids cover leap days and year transitions without changing date keys", () => {
+  const february = monthCells("2024-02");
+  assert.equal(february.length % 7, 0);
+  assert.equal(february.filter(Boolean).length, 29);
+  assert.equal(february[3], "2024-02-01");
+  assert.ok(february.includes("2024-02-29"));
+  assert.equal(shiftMonth("2026-12", 1), "2027-01");
+  assert.equal(shiftMonth("2027-01", -1), "2026-12");
+  assert.equal(isValidMonth("0000-01"), false);
+  assert.equal(isValidMonth("2026-00"), false);
+});
+
+test("311 unique icons retain legacy IDs and searchable English aliases", () => {
+  assert.equal(symbols.length, 311);
+  assert.equal(new Set(symbols.map((item) => item.name)).size, 311);
+  for (const name of ["book", "note", "education", "exercise", "circle", "location"])
+    assert.ok(symbols.some((item) => item.name === name && item.Icon));
+  assert.ok(symbols.some((item) => item.keywords.includes("subway")));
 });

@@ -3,6 +3,7 @@ import React, {
   Suspense,
   useEffect,
   useId,
+  useLayoutEffect,
   useRef,
   useState,
 } from "react";
@@ -22,6 +23,37 @@ export default function ItemIconButton({ itemKey, label }) {
   const trigger = useRef(null);
   const dialog = useRef(null);
   const titleId = useId();
+  const open = position !== null;
+  useLayoutEffect(() => {
+    if (!open) return;
+    const place = () => {
+      const anchor = trigger.current.getBoundingClientRect();
+      const panel = dialog.current.getBoundingClientRect();
+      const viewport = window.visualViewport;
+      const width = viewport?.width || window.innerWidth;
+      const height = viewport?.height || window.innerHeight;
+      const x = viewport?.offsetLeft || 0;
+      const y = viewport?.offsetTop || 0;
+      const left = Math.max(x + 8, Math.min(anchor.left, x + width - panel.width - 8));
+      const preferredTop = anchor.bottom + 6 + panel.height <= y + height - 8
+        ? anchor.bottom + 6 : anchor.top - panel.height - 6;
+      const top = Math.max(y + 8, Math.min(preferredTop, y + height - panel.height - 8));
+      setPosition((current) => current && (current.left !== left || current.top !== top)
+        ? { left, top } : current);
+    };
+    place();
+    const observer = new ResizeObserver(place);
+    observer.observe(dialog.current);
+    window.addEventListener("resize", place);
+    window.addEventListener("scroll", place, true);
+    window.visualViewport?.addEventListener("resize", place);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", place);
+      window.removeEventListener("scroll", place, true);
+      window.visualViewport?.removeEventListener("resize", place);
+    };
+  }, [open]);
   const close = () => {
     setPosition(null);
     trigger.current?.focus();
@@ -68,14 +100,7 @@ export default function ItemIconButton({ itemKey, label }) {
         aria-expanded={!!position}
         onClick={() => {
           if (position) return close();
-          const rect = trigger.current.getBoundingClientRect();
-          setPosition({
-            left: Math.max(8, Math.min(rect.left, window.innerWidth - 358)),
-            top: Math.max(
-              8,
-              Math.min(rect.bottom + 6, window.innerHeight - 510),
-            ),
-          });
+          setPosition({ left: 8, top: 8 });
         }}
       >
         {Icon ? (

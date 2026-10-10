@@ -1,0 +1,36 @@
+.calendar-note-editor { position: relative; min-width: 0; }
+.calendar-text-surface { position: relative; }
+html body #root .hub-app .calendar-text-surface textarea,
+html body #root .hub-app .calendar-text-mirror {
+  box-sizing: border-box; width: 100%; margin: 0; padding: 8px;
+  border: 1px solid transparent; border-radius: 0;
+  font: inherit; font-size: 14px; line-height: 1.6; letter-spacing: normal;
+  white-space: pre-wrap; overflow-wrap: break-word; word-break: normal;
+  tab-size: 8; text-align: left;
+}
+html body #root .hub-app .calendar-text-surface textarea {
+  position: relative; display: block; resize: none; overflow: hidden;
+  background: transparent !important; color: transparent !important;
+  box-shadow: none !important;
+  -webkit-text-fill-color: transparent; caret-color: #273549;
+}
+html body #root .hub-app .calendar-text-surface textarea::placeholder {
+  color: #87919f; -webkit-text-fill-color: #87919f;
+}
+html body #root .hub-app .calendar-text-mirror {
+  position: absolute; inset: 0; pointer-events: none; overflow: hidden; color: #273549;
+}
+.calendar-color-toolbar { display: flex; align-items: center; gap: 4px; padding: 4px; flex-wrap: wrap; }
+.calendar-color-hint { font-size: 11px; color: #697586; margin-right: 4px; }
+html body #root .hub-app .calendar-color-toolbar button {
+  display: inline-grid; place-items: center; min-width: 28px; min-height: 28px;
+  padding: 3px; border: 1px solid #dce2e9; border-radius: 5px; background: #fff; font-size: 11px;
+}
+.calendar-color-toolbar button span { width: 14px; height: 14px; border-radius: 50%; background: var(--calendar-swatch); }
+.calendar-color-toolbar button:disabled { opacity: .4; }
+.calendar-note-editor.is-compact .calendar-color-toolbar {
+  position: absolute; bottom: 100%; left: 0; z-index: 5; width: 100%; box-sizing: border-box;
+  background: #fff; box-shadow: 0 2px 12px #24344a22; border-radius: 6px; visibility: hidden;
+}
+.calendar-note-editor.is-compact:focus-within .calendar-color-toolbar { visibility: visible; }
+.calendar-note-editor.is-compact .calendar-color-hint { display: none; }

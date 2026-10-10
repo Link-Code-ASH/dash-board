@@ -111,7 +111,8 @@ returns `{ moduleId, section? }`; the parent validates this against its module
 whitelist and navigates only through internal paths. It is a resolver, not a
 navigation side effect. The registry remains pass-through: the UI validates
 items/targets, catches and displays source errors, and implements commands.
-No Edu/Lingo learning schema, sample data, or concrete commands are supplied.
+No Edu/Lingo Flow commands are supplied. Lingo owns its vocabulary data separately
+and does not register automatic daily study items.
 The caller defines the date convention with each real module. Method arguments,
 results, and provider errors pass through without transformation.
 
@@ -175,8 +176,10 @@ Run `node --test tests/hub.test.js` for focused registry/merge tests or
 - `registry.jsx`: the five lazy-loaded feature screens.
 - `context.jsx` and `dashboard/useDashboard.js`: existing Dashboard data adapter.
   Flow and Routine share this adapter; neither stores a second copy of checks.
-- `views/Edu.jsx` and `views/lingo/`: integration placeholders, not learning or
-  academy-management implementations. Future data belongs to separate repositories.
+- `views/Edu.jsx` and `views/lingo/English.jsx`: integration placeholders.
+- `views/lingo/Japanese.jsx` and `../lingo/`: Japanese vocabulary imports, manual
+  stages, flashcards, account-scoped storage, and an app-lifetime backup provider.
+  See `../lingo/README.md` for deployment and Google Sheets configuration.
 - `dashboard/syncState.js`: local journals, Web Locks, and recoverable three-way
   merging. Chrome's Web Locks serialize same-origin writers; browsers without
   Web Locks cannot guarantee cross-window atomic writes.

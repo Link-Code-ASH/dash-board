@@ -1,3 +1,4 @@
+import { normalizeCalendarFormats } from "./calendarText.js";
 import React from "react";
 import { normalizeMindfold as normalizeMindfoldV2 } from "../mindfold/model.js";
 
@@ -696,6 +697,7 @@ export function createFallbackState() {
     itemSymbols: {},
     memos: normalizeMemos(),
     calendar: {},
+    calendarFormats: {},
     calendarDuties: {},
     routineAttempts: {},
     carryPenalties: {},
@@ -736,6 +738,7 @@ export function normalizeState(source) {
     "days",
     "memos",
     "calendar",
+    "calendarFormats",
     "calendarDuties",
     "routineAttempts",
     "carryPenalties",
@@ -770,6 +773,7 @@ export function normalizeState(source) {
     itemSymbols: normalizeItemSymbols(source?.itemSymbols),
     days: source?.days && typeof source.days === "object" ? source.days : {},
     memos: normalizeMemos(source?.memos),
+    calendarFormats: normalizeCalendarFormats(source?.calendar, source?.calendarFormats),
     calendar: source?.calendar && typeof source.calendar === "object" ? source.calendar : {},
     calendarDuties: normalizeCalendarDuties(source?.calendarDuties),
     routineAttempts: source?.routineAttempts && typeof source.routineAttempts === "object" ? source.routineAttempts : {},

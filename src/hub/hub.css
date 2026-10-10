@@ -499,7 +499,8 @@ html body:has(.hub-app)::after {
   flex-wrap: nowrap;
 }
 #root .hub-app .hub-task-groups.is-compact .hub-task-actions small {
-  display: none;
+  display: inline;
+  font-variant-numeric: tabular-nums;
 }
 #root .hub-app .hub-task-groups.is-compact .hub-task-actions button {
   min-width: 32px;
@@ -572,7 +573,7 @@ html body:has(.hub-app)::after {
 }
 .hub-icon-dialog {
   position: fixed;
-  width: 350px;
+  width: 520px;
   max-width: calc(100vw - 16px);
   max-height: calc(100dvh - 16px);
   overflow: auto;
@@ -582,9 +583,7 @@ html body:has(.hub-app)::after {
   background: #f6f8fc;
   box-shadow: 0 12px 40px #273a5129;
   color: #354252;
-  font:
-    14px/1.5 system-ui,
-    sans-serif;
+  font: 14px/1.5 "Pretendard HUB", system-ui, sans-serif;
 }
 .hub-icon-dialog header {
   display: flex;
@@ -619,15 +618,6 @@ html body:has(.hub-app)::after {
 .hub-icon-dialog button:disabled {
   opacity: 0.4;
   cursor: default;
-}
-.hub-icon-dialog .mf3-emoji-picker {
-  width: 100%;
-  overflow: hidden;
-}
-.hub-icon-dialog em-emoji-picker {
-  width: 100%;
-  --border-radius: 6px;
-  --font-family: system-ui, sans-serif;
 }
 #root .hub-app.hub-mobile .flow-week-grid {
   grid-template-columns: minmax(0, 1fr);
@@ -1381,7 +1371,8 @@ html body:has(.hub-app)::after {
   left: 0;
   right: 0;
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
   padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
   background: rgba(249, 250, 252, 0.96);
   backdrop-filter: blur(18px);

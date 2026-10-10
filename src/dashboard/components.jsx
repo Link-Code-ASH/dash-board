@@ -1,3 +1,4 @@
+import CalendarNoteEditor from "../hub/CalendarNoteEditor.jsx";
 import React, { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import MemoEditor, { MemoFormatToolbar } from "../MemoEditor.jsx";
@@ -185,7 +186,7 @@ export function MobileScorePanel({ carryPenaltyMarked, entryCount, onAdjustCarry
   );
 }
 
-export function MobileCalendarPanel({ calendar, calendarDuties, selectedDate, setSelectedDate, toggleCalendarDuty, updateCalendarNote }) {
+export function MobileCalendarPanel({ calendar, calendarFormats, calendarDuties, selectedDate, setSelectedDate, toggleCalendarDuty, updateCalendarNote }) {
   const selected = new Date(`${selectedDate}T00:00:00`);
   const year = selected.getFullYear();
   const monthIndex = selected.getMonth();
@@ -241,7 +242,7 @@ export function MobileCalendarPanel({ calendar, calendarDuties, selectedDate, se
           option.label,
         )),
       ),
-      h("textarea", { maxLength: 600, placeholder: "이 날짜의 일정을 입력하세요", value: calendar[selectedDate] || "", onChange: (event) => updateCalendarNote(selectedDate, event.target.value) }),
+      h(CalendarNoteEditor, { key: selectedDate, label: "선택 날짜 일정", value: calendar[selectedDate] || "", marks: calendarFormats?.[selectedDate], onChange: (value, marks) => updateCalendarNote(selectedDate, value, marks) }),
     ),
   );
 }
@@ -1345,7 +1346,7 @@ export function MobileSchoolSubjects({ schoolSubjects, selectedDate, updateSchoo
   );
 }
 
-export function WeeklyScheduleCell({ active, onChange, placeholder, value }) {
+export function WeeklyScheduleCell({ active, label, onChange, placeholder, value }) {
   const itemRefs = useRef([]);
   const items = getWeeklyPlanItems(value);
   const saveItems = (nextItems, focusIndex = -1) => {
@@ -1378,6 +1379,7 @@ export function WeeklyScheduleCell({ active, onChange, placeholder, value }) {
         : null,
       h("textarea", {
         className: "weekly-input",
+        "aria-label": label ? `${label} ${index + 1}` : undefined,
         key: `item-${index}`,
         maxLength: 180,
         placeholder,
@@ -1471,7 +1473,7 @@ export function WeeklyPanel({ addCategory, categories, isOpen, moveCategory, onT
   });
 }
 
-export function HistoryPanel({ carryPenalties, getDayTotal, routineAttempts, selectedDate }) {
+export function HistoryPanel({ carryPenalties, compact = false, getDayTotal, routineAttempts, selectedDate }) {
   const days = Array.from({ length: 7 }, (_, index) => {
     const date = new Date(`${selectedDate}T00:00:00`);
     date.setDate(date.getDate() + index - 3);
@@ -1497,7 +1499,7 @@ export function HistoryPanel({ carryPenalties, getDayTotal, routineAttempts, sel
           { className: `history-day ${day.key === selectedDate ? "today" : ""}`, key: day.key },
           h(
             "div",
-            { className: `history-fill ${day.total > 0 ? "plus" : day.total < 0 ? "minus" : ""}`, style: { height: `${Math.max(16, (Math.min(scoreScaleMax, Math.abs(day.total)) / scoreScaleMax) * 112)}px` } },
+            { className: `history-fill ${day.total > 0 ? "plus" : day.total < 0 ? "minus" : ""}`, style: { height: `${Math.max(compact ? 3 : 16, (Math.min(scoreScaleMax, Math.abs(day.total)) / scoreScaleMax) * (compact ? 20 : 112))}px` } },
             h("span", { className: `history-attempt ${day.penalized ? "history-penalty checked" : day.tried ? "checked" : ""}`, title: day.penalized ? "Carry -2 marked" : day.tried ? "Routine tried" : "Not checked" }, day.penalized || day.tried ? "\u2713" : ""),
           ),
           h("span", { className: "history-date" }, day.key.slice(5).replace("-", ".")),

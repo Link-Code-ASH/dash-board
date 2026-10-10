@@ -1,13 +1,28 @@
-/* Role tokens allow future fonts without touching editor geometry. */
+@import "./fonts.css";
+@import "./routine-desktop.css";
+
+/* These roles intentionally exclude the Mindfold document surface. */
 #root .hub-app {
   --hub-font-body:
-    -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans KR",
+    "Pretendard HUB", -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans KR",
     "Malgun Gothic", sans-serif;
-  --hub-font-heading: var(--hub-font-body);
+  --hub-font-heading: "IBM Plex Sans KR HUB", var(--hub-font-body);
 }
 html body #root .hub-app .hub-content-modern :is(h1, h2, h3) {
   font-family: var(--hub-font-heading) !important;
 }
+html body #root .hub-app :is(.hub-identity strong, .hub-page-heading p,
+  .hub-date-controls input, .flow-day-heading strong, .planner-date-number,
+  .planner-month-toolbar h2) {
+  font-family: var(--hub-font-heading) !important;
+  font-variant-numeric: tabular-nums;
+}
+#root .hub-app.hub-desktop .hub-page-heading h1 { font-size: 26px; }
+#root .hub-app.hub-desktop :is(.hub-section-title h2, .hub-memo-toolbar h2) {
+  font-size: 18px;
+  font-weight: 600;
+}
+.flow-weekday-header { display: none; }
 #root .hub-app .flow-layout,
 #root .hub-app .flow-layout > * {
   min-width: 0;
@@ -35,26 +50,22 @@ html body #root .hub-app .hub-content-modern :is(h1, h2, h3) {
 #root .hub-app.hub-desktop .flow-day-details {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: 28px;
+  gap: 14px;
   border-top: 1px solid #dde2e8;
-  padding-top: 24px;
+  padding-top: 12px;
 }
 #root .hub-app .flow-day-details > section {
   min-width: 0;
 }
 #root .hub-app.hub-mobile .flow-day-details {
   display: grid;
-  gap: 28px;
+  gap: 16px;
 }
 @container flow-overview (min-width: 740px) {
   #root .hub-app.hub-desktop .flow-day-details {
     grid-template-columns: minmax(0, 1.08fr) minmax(0, 1fr);
-    gap: 24px;
+    gap: 16px;
     align-items: start;
-  }
-  #root .hub-app.hub-desktop .flow-markers {
-    padding-left: 24px;
-    border-left: 1px solid #dde2e8;
   }
 }
 #root .hub-app.hub-desktop .hub-memo-section {
@@ -71,12 +82,6 @@ html body #root .hub-app .hub-content-modern :is(h1, h2, h3) {
   background: #f5f7f9d9;
   backdrop-filter: blur(18px);
 }
-#root .hub-app.hub-desktop .flow-markers .date-marker-panel {
-  padding: 0 !important;
-  border: 0 !important;
-  background: transparent !important;
-  box-shadow: none !important;
-}
 html body #root .hub-app .flow-markers .date-marker-list {
   grid-template-columns: minmax(0, 1fr) !important;
   background: transparent !important;
@@ -90,15 +95,44 @@ html body #root .hub-app .flow-markers .date-marker-panel {
   box-shadow: none !important;
 }
 html body #root .hub-app.hub-desktop .flow-markers .date-marker {
-  grid-template-columns: minmax(55px, 1fr) 132px 52px !important;
+  grid-template-columns: minmax(55px, 1fr) 132px 58px !important;
+  padding: 2px 0 !important;
+  border: 0 !important;
+  border-bottom: 1px solid #dfe4eb !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  min-height: 34px !important;
 }
 html body #root .hub-app.hub-desktop .flow-markers .date-marker input {
-  height: 36px !important;
-  min-height: 36px !important;
+  height: 30px !important;
+  min-height: 30px !important;
+  font-size: 13px !important;
+  color: #445263 !important;
+}
+html body #root .hub-app.hub-desktop .flow-markers .date-marker input::placeholder {
+  color: #82909e !important;
+  opacity: 1;
 }
 html body #root .hub-app.hub-desktop .flow-markers .date-marker-dday {
-  height: 32px !important;
-  min-height: 32px !important;
+  height: 26px !important;
+  min-height: 26px !important;
+  font-weight: 600 !important;
+  font-variant-numeric: tabular-nums;
+  box-shadow: inset 0 1px 1px #53658012, 0 1px 0 #ffffff !important;
+}
+#root .hub-app.hub-desktop .flow-markers {
+  padding: 10px 12px 6px;
+  border: 1px solid #d7dee7;
+  border-radius: 8px;
+  background: linear-gradient(145deg, #ffffffd9, #eef2f6d9);
+  box-shadow: 0 6px 18px #2431440b, 0 1px 3px #24314408, inset 0 1px 0 #fff;
+  backdrop-filter: blur(12px);
+}
+html body #root .hub-app.hub-desktop .flow-markers .date-marker-list {
+  gap: 0 !important;
+}
+html body #root .hub-app.hub-desktop .flow-markers .date-marker:last-child {
+  border-bottom: 0 !important;
 }
 
 /* Pastel accents identify sections; document surfaces stay neutral. */
@@ -173,20 +207,74 @@ html body #root .hub-app .hub-memo-cell .memo-quick-textarea {
   background: color-mix(in srgb, var(--memo-accent) 13%, #fafbfc) !important;
 }
 
-#root .hub-app.hub-desktop .flow-week h3 {
+/* One connected fortnight worksheet, rather than fourteen separate cards. */
+#root .hub-app.hub-desktop .flow-weekday-header {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  padding: 10px 0;
+  border: 1px solid #dce2e9;
+  border-bottom: 0;
+  border-radius: 6px 6px 0 0;
+  background: #f0f3f7;
+  color: #667383;
   font-size: 14px;
+  font-weight: 500;
+  text-align: center;
 }
-#root .hub-app.hub-desktop .flow-fortnight .flow-day-heading small {
-  font-size: 13px;
+#root .hub-app.hub-desktop .flow-week-viewport {
+  border: 1px solid #dce2e9;
+  border-radius: 0 0 6px 6px;
+  background: #ffffff9e;
 }
+#root .hub-app.hub-desktop .flow-week { margin: 0; }
+#root .hub-app.hub-desktop .flow-week h3 {
+  padding: 7px 12px;
+  margin: 0;
+  font-size: 14px;
+  border-bottom: 1px solid #dce2e9;
+  background: #f5f7f9;
+  color: #6a7583;
+}
+#root .hub-app.hub-desktop .flow-week + .flow-week h3 { border-top: 1px solid #dce2e9; }
+#root .hub-app.hub-desktop .flow-week-grid { gap: 0; }
+#root .hub-app.hub-desktop .flow-fortnight .flow-day {
+  min-height: 176px;
+  padding: 12px 10px 16px;
+  gap: 12px;
+  border: 0;
+  border-right: 1px solid #e0e5eb;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+#root .hub-app.hub-desktop .flow-fortnight .flow-day:last-child { border-right: 0; }
+#root .hub-app.hub-desktop .flow-fortnight .flow-day:hover { background: #f3f6f9; }
+#root .hub-app.hub-desktop .flow-fortnight .flow-day.is-today { background: #f7f3e8; }
+#root .hub-app.hub-desktop .flow-fortnight .flow-day[aria-pressed="true"] {
+  background: #ecf2f8;
+  box-shadow: inset 0 0 0 1px #93a9c0;
+}
+#root .hub-app.hub-desktop .flow-fortnight .flow-day.is-today[aria-pressed="true"] {
+  background: #f5f2e9;
+}
+#root .hub-app.hub-desktop .flow-fortnight .flow-day-heading small { display: none; }
 #root .hub-app.hub-desktop .flow-fortnight .flow-day-heading strong {
-  font-size: 15px;
+  font-size: 16px;
 }
 #root .hub-app.hub-desktop .flow-fortnight .flow-day-content {
-  font-size: 14px;
+  font-size: 15px;
+  line-height: 1.6;
+  gap: 8px;
+}
+#root .hub-app.hub-desktop .flow-fortnight .flow-day-event + .flow-day-event {
+  padding-top: 8px;
+  border-color: #e2e7ed;
 }
 #root .hub-app.hub-desktop .flow-fortnight .flow-day-duties > span {
   font-size: 13px;
+  padding: 0 3px;
+  background: transparent;
+  color: #657b91;
 }
 #root .hub-app .flow-week-navigation,
 #root .hub-app .flow-selected-heading > strong {
@@ -272,14 +360,19 @@ html body #root .hub-app .memo-format-color span {
   font: inherit;
 }
 .hub-symbol-categories {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 4px;
   margin: 12px 0;
 }
 .hub-icon-dialog .hub-symbol-categories button {
-  padding: 6px 8px;
-  font-size: 13px;
+  height: 40px;
+  min-height: 40px;
+  min-width: 0;
+  padding: 0 4px;
+  font-size: 14px;
+  line-height: 1.2;
+  white-space: nowrap;
   background: transparent;
   border: 0;
   color: #606b79;
@@ -291,16 +384,19 @@ html body #root .hub-app .memo-format-color span {
 }
 .hub-symbol-grid {
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 5px;
-  height: 224px;
-  overflow-y: auto;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 6px;
+  height: 294px;
+  grid-auto-rows: 44px;
+  scrollbar-gutter: stable;
+  overflow-y: scroll;
   align-content: start;
 }
 .hub-icon-dialog .hub-symbol-grid button {
   display: grid;
   place-items: center;
-  height: 40px;
+  height: 44px;
+  min-height: 44px;
   padding: 0;
   border: 1px solid transparent;
   border-radius: 6px;
@@ -356,6 +452,19 @@ html body #root .hub-app .memo-format-color span {
   cursor: pointer;
 }
 @media (max-width: 600px) {
+  .hub-symbol-categories {
+    display: flex;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    padding-bottom: 4px;
+  }
+  .hub-icon-dialog .hub-symbol-categories button {
+    flex: 0 0 auto;
+    height: 44px;
+    min-height: 44px;
+    padding: 0 10px;
+  }
+  .hub-symbol-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); }
   .hub-icon-dialog .hub-symbol-colors button {
     width: 36px;
     height: 36px;
@@ -364,3 +473,218 @@ html body #root .hub-app .memo-format-color span {
     flex-basis: 36px;
   }
 }
+
+/* Desktop monthly calendar shares the worksheet's neutral surface. */
+#root .hub-app.hub-desktop .planner-calendar { min-width: 0; }
+#root .hub-app.hub-desktop .planner-month-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 8px 0 20px;
+}
+#root .hub-app.hub-desktop .planner-month-toolbar h2 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 500;
+  color: #323e4d;
+}
+#root .hub-app.hub-desktop .planner-month-toolbar > div {
+  display: flex;
+  gap: 6px;
+}
+#root .hub-app.hub-desktop .planner-month-toolbar button {
+  min-height: 40px;
+  min-width: 40px;
+  padding: 0 10px;
+}
+#root .hub-app.hub-desktop .planner-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  padding: 12px 0;
+  border: 1px solid #dce2e9;
+  border-bottom: 0;
+  border-radius: 6px 6px 0 0;
+  background: #f0f3f7;
+  color: #667383;
+  font-size: 14px;
+  font-weight: 500;
+  text-align: center;
+}
+#root .hub-app.hub-desktop :is(.planner-weekdays, .flow-weekday-header) span:nth-child(6) { color: #6d849e; }
+#root .hub-app.hub-desktop :is(.planner-weekdays, .flow-weekday-header) span:nth-child(7) { color: #a1747b; }
+#root .hub-app.hub-desktop .planner-month-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 1px;
+  border: 1px solid #dce2e9;
+  border-radius: 0 0 6px 6px;
+  overflow: clip;
+  background: #dce2e9;
+}
+#root .hub-app.hub-desktop .planner-date-cell {
+  min-width: 0;
+  padding: 12px;
+  background: #fcfdfe;
+}
+#root .hub-app.hub-desktop .planner-date-blank { background: #f2f4f7; }
+#root .hub-app.hub-desktop .planner-date-cell.is-today { background: #f7f3e8; }
+#root .hub-app.hub-desktop .planner-date-cell.is-selected {
+  background: #edf3f8;
+  box-shadow: inset 0 0 0 1px #93a9c0;
+}
+#root .hub-app.hub-desktop .planner-date-cell.is-selected.is-today { background: #f5f2e9; }
+#root .hub-app.hub-desktop .planner-date-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  min-height: 32px;
+  margin-bottom: 8px;
+}
+#root .hub-app.hub-desktop .planner-date-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 32px;
+  padding: 0 4px;
+  gap: 5px;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  font-size: 17px;
+  font-weight: 500;
+}
+#root .hub-app.hub-desktop .planner-today-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #b69344;
+}
+#root .hub-app.hub-desktop .planner-duty-checks {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+#root .hub-app.hub-desktop .planner-duty-checks label {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  min-height: 28px;
+  font-size: 13px;
+  color: #778494;
+  cursor: pointer;
+}
+#root .hub-app.hub-desktop .planner-duty-checks label.is-checked { color: #526e8a; }
+html body #root .hub-app.hub-desktop .planner-duty-checks input {
+  appearance: auto;
+  width: 14px;
+  height: 14px;
+  min-width: 14px;
+  min-height: 14px;
+  margin: 0;
+  padding: 0;
+  accent-color: #758fa8;
+}
+html body #root .hub-app.hub-desktop .planner-calendar-note {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  min-height: 112px;
+  padding: 4px 0;
+  border: 0 !important;
+  border-radius: 0;
+  background: none !important;
+  box-shadow: none !important;
+  color: #384554;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.6;
+  resize: none;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+html body #root .hub-app.hub-desktop .planner-calendar-note:focus-visible {
+  outline: 1px solid #a9b9cb;
+  outline-offset: 4px;
+  box-shadow: none;
+}
+
+/* Keep weekday labels visually above both weeks and easy to scan. */
+#root .hub-app.hub-desktop .flow-weekday-header {
+  color: #34465c; font-weight: 700; padding: 8px 0;
+}
+#root .hub-app .flow-routines .hub-task-groups { gap: 8px; }
+#root .hub-app .flow-routines .hub-task-group h3 { padding: 4px 8px; margin: 0; }
+#root .hub-app .flow-routines .hub-task-actions button { display: inline-flex; align-items: center; gap: 4px; }
+#root .hub-app .flow-routines .hub-task-actions small { font-size: 11px; }
+
+/* Give working text room and keep secondary labels quiet. */
+#root .hub-app .flow-summary { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; gap: 20px; margin-bottom: 24px; }
+#root .hub-app :is(.flow-view, .routine-view) .hub-page-heading h1 { font-size: 30px; }
+#root .hub-app :is(.flow-view, .routine-view) .hub-page-heading p { font-size: 16px; }
+#root .hub-app .flow-view :is(.hub-section-title h2, .hub-memo-toolbar h2) { font-size: 21px; }
+#root .hub-app .flow-routines .hub-task-group h3 { font-size: 17px; padding: 7px 10px; }
+#root .hub-app .flow-routines .hub-task-copy strong { font-size: 18px; line-height: 1.45; }
+#root .hub-app .flow-routines .hub-task-copy small { font-size: 14px; }
+#root .hub-app .flow-routines .hub-task-actions button { font-size: 16px; min-height: 36px; padding: 5px 8px; }
+#root .hub-app .flow-routines .hub-task-actions small { font-size: 14px; }
+#root .hub-app .flow-routines .hub-score-select { font-size: 15px; min-height: 36px; }
+#root .hub-app .flow-routines .hub-task-groups.is-compact .hub-task { min-height: 48px; }
+html body #root .hub-app.hub-desktop .flow-markers .date-marker input { font-size: 16px !important; min-height: 36px !important; height: 36px !important; }
+html body #root .hub-app.hub-desktop .flow-markers .date-marker { min-height: 40px !important; grid-template-columns: minmax(70px, 1fr) 148px 58px !important; }
+html body #root .hub-app .flow-markers .date-marker-dday { font-size: 15px !important; }
+#root .hub-app.hub-desktop .flow-fortnight .flow-day-heading strong { font-size: 18px; }
+#root .hub-app.hub-desktop .flow-fortnight .flow-day-content { font-size: 17px; }
+#root .hub-app.hub-desktop .flow-fortnight .flow-day { min-height: 136px; gap: 8px; }
+#root .hub-app.hub-desktop .flow-weekday-header { font-size: 16px; }
+html body #root .hub-app .calendar-text-surface textarea,
+html body #root .hub-app .calendar-text-mirror { font-size: 17px; }
+html body #root .hub-app .calendar-note-editor.is-compact :is(textarea, .calendar-text-mirror) { font-size: 16px; }
+@container hub-content (max-width: 1050px) {
+ #root .hub-app .flow-summary { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+}
+@media (max-width: 900px) {
+ #root .hub-app .flow-summary { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+}
+@media (max-width: 600px) {
+ #root .hub-app .flow-routines .hub-task-actions button { min-height: 44px; }
+}
+
+/* The schedule uses the full width; supporting tools sit underneath. */
+#root .hub-app .flow-workspace { display: grid; grid-template-columns: minmax(0, 1fr); align-items: start; gap: 22px; min-width: 0; }
+#root .hub-app .flow-workspace > * { min-width: 0; }
+#root .hub-app .flow-support { display: grid; grid-template-columns: minmax(0, 1fr) 320px 280px; align-items: start; gap: 24px; padding-top: 18px; border-top: 1px solid #dce3eb; }
+#root .hub-app .flow-support > * { min-width: 0; }
+#root .hub-app .flow-reviews { display: flex; flex-direction: column; gap: 12px; }
+#root .hub-app .flow-support .hub-section-title { margin-bottom: 8px; }
+#root .hub-app .flow-support .hub-section-title h2 { font-size: 17px; }
+#root .hub-app .flow-schedule > .hub-section-title h2 { font-size: 24px !important; }
+#root .hub-app.hub-desktop .flow-fortnight .flow-day { min-height: clamp(180px, calc((100dvh - 350px) / 2), 260px); padding: 12px 10px; }
+#root .hub-app.hub-desktop .flow-support .hub-task-groups { display: grid; grid-template-columns: repeat(2, minmax(0, 300px)); align-items: start; gap: 16px; }
+#root .hub-app .flow-support .hub-task-group h3 { font-size: 15px; padding: 5px 7px; }
+#root .hub-app .flow-support .hub-task-copy strong { font-size: 16px; }
+#root .hub-app .flow-support .hub-task-copy small { font-size: 12px; }
+#root .hub-app .flow-support .hub-task-groups.is-compact .hub-task { min-height: 40px; gap: 5px; padding: 3px 0; }
+#root .hub-app .flow-support .hub-item-icon { width: 24px; min-width: 24px; height: 30px; padding: 0; }
+#root .hub-app .flow-support .hub-task-actions { gap: 4px; }
+#root .hub-app .flow-support .hub-task-actions button { font-size: 14px; min-width: 36px; min-height: 30px; padding: 3px 5px; gap: 3px; }
+#root .hub-app .flow-support .hub-task-actions small { font-size: 12px; }
+#root .hub-app .flow-support .flow-markers { padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+html body #root .hub-app.hub-desktop .flow-support .date-marker { grid-template-columns: minmax(60px, 1fr) 126px 44px !important; min-height: 34px !important; }
+html body #root .hub-app.hub-desktop .flow-support .date-marker input { font-size: 14px !important; height: 30px !important; min-height: 30px !important; }
+@container hub-content (max-width: 1100px) {
+  #root .hub-app .flow-support { grid-template-columns: minmax(0, 320px) minmax(0, 280px); }
+  #root .hub-app .flow-support .flow-routines { grid-column: 1 / -1; }
+}
+@container hub-content (max-width: 640px) {
+  #root .hub-app .flow-support { grid-template-columns: minmax(0, 1fr); }
+  #root .hub-app.hub-desktop .flow-support .hub-task-groups { grid-template-columns: minmax(0, 1fr); }
+}
+#root .hub-app.hub-mobile .flow-workspace { grid-template-columns: minmax(0, 1fr); gap: 22px; }
+#root .hub-app.hub-mobile .flow-support { display: flex; flex-direction: column; gap: 20px; }
+#root .hub-app.hub-mobile .flow-support > * { width: 100%; }
+#root .hub-app.hub-mobile .flow-support .hub-task-actions button { min-height: 40px; }

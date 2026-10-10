@@ -121,7 +121,8 @@ export function RoutineTasks({ compact = false }) {
   ];
   return (
     <div className={`hub-task-groups ${compact ? "is-compact" : ""}`}>
-      {groups.map((group) => (
+      {!groups.some((group) => group.cards.length) && <p className="hub-empty-inline">Planner에서 루틴을 추가해주세요.</p>}
+      {groups.filter((group) => group.cards.length).map((group) => (
         <section className="hub-task-group" data-kind={group.id} key={group.id}>
           <h3>
             {group.title}

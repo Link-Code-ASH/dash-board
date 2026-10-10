@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useLayoutEffect } from "react";
 import { symbols, symbolGroups, defaultSymbolColor } from "./symbols.js";
 
 const colors = [
@@ -12,11 +12,13 @@ const colors = [
   "#66999e",
 ];
 export default function SymbolPicker({ value, onChange }) {
+  const grid = useRef(null);
   const [query, setQuery] = useState("");
   const [group, setGroup] = useState("전체");
   const [draftColor, setDraftColor] = useState(
     value?.color || defaultSymbolColor,
   );
+  useLayoutEffect(() => { if (grid.current) grid.current.scrollTop = 0; }, [group, query]);
   const color = value?.color || draftColor;
   const recolor = (next) => {
     setDraftColor(next);
@@ -25,7 +27,7 @@ export default function SymbolPicker({ value, onChange }) {
   const filtered = symbols.filter(
     (item) =>
       (group === "전체" || item.group === group) &&
-      `${item.name} ${item.label}`.includes(query.trim().toLowerCase()),
+      `${item.keywords} ${item.label}`.toLowerCase().includes(query.trim().toLowerCase()),
   );
   return (
     <div className="hub-symbol-picker">
@@ -47,7 +49,7 @@ export default function SymbolPicker({ value, onChange }) {
           </button>
         ))}
       </div>
-      <div className="hub-symbol-grid" aria-label="아이콘">
+      <div ref={grid} className="hub-symbol-grid" aria-label="아이콘">
         {filtered.map(({ name, Icon, label }) => (
           <button
             key={name}

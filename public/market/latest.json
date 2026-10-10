@@ -1,0 +1,37 @@
+{
+  "version": 1,
+  "checkedAt": "2026-10-10T14:38:16.720Z",
+  "quotes": {
+    "KRW=X": {
+      "symbol": "KRW=X",
+      "date": "2026-10-09",
+      "close": 1340.9000244140625,
+      "weeklyClose": 1342.56005859375,
+      "weeklyDate": "2026-10-04",
+      "source": "Yahoo Finance",
+      "fetchedAt": "2026-10-10T14:38:16.699Z",
+      "kind": "환율 일별 최근값"
+    },
+    "TQQQ": {
+      "symbol": "TQQQ",
+      "date": "2026-10-09",
+      "close": 81.27999877929688,
+      "weeklyClose": 81.01000213623047,
+      "weeklyDate": "2026-10-02",
+      "source": "Yahoo Finance",
+      "fetchedAt": "2026-10-10T14:38:16.716Z",
+      "kind": "정규장 종가"
+    },
+    "SOXL": {
+      "symbol": "SOXL",
+      "date": "2026-10-09",
+      "close": 139.75999450683594,
+      "weeklyClose": 163.7100067138672,
+      "weeklyDate": "2026-10-02",
+      "source": "Yahoo Finance",
+      "fetchedAt": "2026-10-10T14:38:16.719Z",
+      "kind": "정규장 종가"
+    }
+  },
+  "errors": {}
+}

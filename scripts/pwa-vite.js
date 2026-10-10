@@ -5,10 +5,11 @@ import path from "node:path";
 export const apps = {
   hub: "HUB",
   flow: "Flow",
-  routine: "Schedule",
+  routine: "Planner",
   edu: "Edu",
   lingo: "Lingo",
   mindfold: "Mindfold",
+  stock: "Stock",
 };
 
 const entryPattern = new RegExp(`^/(${Object.keys(apps).join("|")})(?:/|/index\\.html)?$`);

@@ -5,6 +5,9 @@ on:
     branches:
       - main
   workflow_dispatch:
+  schedule:
+    - cron: '17 22 * * 1-5'
+    - cron: '17 7 * * 2-6'
 
 permissions:
   contents: read
@@ -36,6 +39,16 @@ jobs:
 
       - name: Build
         run: npm run build
+        env:
+          VITE_GOOGLE_CLIENT_ID: ${{ vars.VITE_GOOGLE_CLIENT_ID }}
+          VITE_GOOGLE_PICKER_API_KEY: ${{ vars.VITE_GOOGLE_PICKER_API_KEY }}
+          VITE_GOOGLE_APP_ID: ${{ vars.VITE_GOOGLE_APP_ID }}
+
+      - name: Refresh public closing prices and exchange rate
+        run: node scripts/stock-market.js
+
+      - name: Copy market snapshot into build
+        run: cp public/market/latest.json dist/market/latest.json
 
       - name: Setup Pages
         uses: actions/configure-pages@v5

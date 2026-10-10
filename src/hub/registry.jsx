@@ -4,6 +4,7 @@ import {
   GraduationCap,
   Languages,
   NotebookPen,
+  ChartNoAxesCombined,
 } from "lucide-react";
 import { ScheduleIcon } from "./icons.jsx";
 
@@ -17,7 +18,7 @@ export const modules = [
   },
   {
     id: "routine",
-    name: "Schedule",
+    name: "Planner",
     icon: ScheduleIcon,
     path: "routine/",
     Component: lazy(() => import("./views/Routine.jsx")),
@@ -42,5 +43,12 @@ export const modules = [
     icon: NotebookPen,
     path: "mindfold/",
     Component: lazy(() => import("./views/Mindfold.jsx")),
+  },
+  {
+    id: "stock",
+    name: "Stock",
+    icon: ChartNoAxesCombined,
+    path: "stock/",
+    Component: lazy(() => import("./views/Stock.jsx")),
   },
 ];

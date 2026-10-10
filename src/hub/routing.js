@@ -1,16 +1,17 @@
 import { useCallback, useEffect, useState } from "react";
 import { getWeekStart } from "../dashboard/model.js";
+import { isValidMonth } from "./calendarMonth.js";
 
-export const moduleIds = ["flow", "routine", "edu", "lingo", "mindfold"];
+export const moduleIds = ["flow", "routine", "edu", "lingo", "mindfold", "stock"];
 export function appBase(path = window.location.pathname) {
   return path
-    .replace(/(?:hub|flow|routine|edu|lingo|mindfold)\/(?:index\.html)?$/, "")
+    .replace(/(?:hub|flow|routine|edu|lingo|mindfold|stock)\/(?:index\.html)?$/, "")
     .replace(/index\.html$/, "")
     .replace(/\/?$/, "/");
 }
 export function installedModule(path = window.location.pathname) {
   return (
-    path.match(/\/(flow|routine|edu|lingo|mindfold)\/(?:index\.html)?$/)?.[1] ||
+    path.match(/\/(flow|routine|edu|lingo|mindfold|stock)\/(?:index\.html)?$/)?.[1] ||
     null
   );
 }
@@ -32,6 +33,7 @@ export function readRoute() {
       ? date
       : todayKey();
   const week = params.get("week");
+  const month = params.get("month");
   return {
     module:
       module === "settings"
@@ -41,6 +43,7 @@ export function readRoute() {
       section ||
       (module === "lingo" || standalone === "lingo" ? "ja" : "today"),
     date: selectedDate,
+    month: isValidMonth(month) ? month : selectedDate.slice(0, 7),
     week: getWeekStart(
       /^\d{4}-\d{2}-\d{2}$/.test(week || "") &&
         !Number.isNaN(new Date(`${week}T12:00:00`).getTime())
@@ -74,7 +77,11 @@ export function useHubRoute() {
       const week = getWeekStart(
         options.week || (date ? nextDate : current.week),
       );
-      const hash = `#/${module}/${section}?date=${nextDate}&week=${week}`;
+      const month = options.month || (date ? nextDate.slice(0, 7) : current.month);
+      const query = new URLSearchParams({ date: nextDate, week });
+      if (section === "calendar" && (module === "routine" || module === "flow"))
+        query.set("month", isValidMonth(month) ? month : nextDate.slice(0, 7));
+      const hash = `#/${module}/${section}?${query}`;
       if (
         installedModule() &&
         module !== "settings" &&

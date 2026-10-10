@@ -1,0 +1,98 @@
+#root .hub-app .lingo-workspace { max-width: 1180px; margin: 0 auto; padding: 12px 0 40px; color: #283c3a; }
+#root .hub-app .lingo-workspace h1 { margin: 4px 0 8px; font-size: clamp(25px, 3vw, 34px); line-height: 1.3; letter-spacing: -.8px; }
+#root .hub-app .lingo-workspace h2 { margin: 0; font-size: 19px; line-height: 1.5; }
+#root .hub-app .lingo-workspace p { margin: 8px 0; }
+#root .hub-app .lingo-eyebrow { color: #60887b; font-size: 11px; font-weight: 750; letter-spacing: 1.6px; }
+#root .hub-app .lingo-muted { color: #75827f; font-size: 13px; }
+#root .hub-app .lingo-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+#root .hub-app .lingo-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+#root .hub-app .lingo-workspace button { min-height: 40px; border-radius: 8px; }
+#root .hub-app .lingo-workspace button.lingo-primary { background: #386d5b; color: white; border: 1px solid #386d5b; padding: 10px 16px; }
+#root .hub-app .lingo-workspace button.lingo-primary:hover { background: #2b5949; }
+#root .hub-app .lingo-panel { background: #fff; border: 1px solid #e0e8e4; border-radius: 14px; padding: 24px; }
+#root .hub-app .lingo-sync { margin: 16px 0 22px; color: #75827f; font-size: 12px; }
+#root .hub-app .lingo-sync button { min-height: 30px; font-size: 12px; }
+#root .hub-app .lingo-empty { text-align: center; padding: 70px 20px; background: linear-gradient(145deg, #f6faf7, white); }
+#root .hub-app .lingo-empty > svg { margin-bottom: 20px; color: #77978a; }
+#root .hub-app .lingo-empty p { line-height: 1.9; margin: 14px 0 24px; }
+#root .hub-app .lingo-library { display: grid; grid-template-columns: 210px minmax(0, 1fr); gap: 24px; align-items: start; }
+#root .hub-app .lingo-decks > .lingo-row { padding: 8px 10px 15px; color: #75827f; font-size: 12px; }
+#root .hub-app .lingo-decks h2 { font-size: 13px; }
+#root .hub-app .lingo-decks > button { display: flex; justify-content: flex-start; width: 100%; text-align: left; gap: 12px; padding: 14px 12px; margin-bottom: 6px; }
+#root .hub-app .lingo-decks > button[aria-current] { background: #e7efea; color: #386d5b; }
+#root .hub-app .lingo-decks > button span { min-width: 0; }
+#root .hub-app .lingo-decks strong { display: block; overflow-wrap: anywhere; font-size: 14px; }
+#root .hub-app .lingo-decks small { display: block; color: #75827f; margin-top: 5px; font-size: 11px; }
+#root .hub-app .lingo-stages { display: grid; grid-template-columns: repeat(6, 1fr); gap: 7px; margin: 22px 0; }
+#root .hub-app .lingo-stages button { display: flex; flex-direction: column; border: 1px solid #e7ece9; padding: 10px 4px; color: #78837f; }
+#root .hub-app .lingo-stages button strong { font-size: 20px; font-weight: 600; color: #354a42; }
+#root .hub-app .lingo-stages button span { font-size: 11px; }
+#root .hub-app .lingo-stages button[aria-pressed=true] { background: #edf4ef; border-color: #769e8a; color: #386d5b; }
+#root .hub-app .lingo-search { display: flex; align-items: center; gap: 10px; border: 1px solid #e2e8e4; border-radius: 8px; padding: 0 12px; color: #849089; }
+#root .hub-app .lingo-workspace input:not([type=checkbox]), #root .hub-app .lingo-workspace select { min-height: 40px; border: 1px solid #dce4df; border-radius: 7px; background: white; color: #34453d; padding: 8px 10px; font-size: 14px; box-shadow: none; width: auto; }
+#root .hub-app .lingo-search input { flex: 1; min-width: 0; border: none !important; background: transparent !important; }
+#root .hub-app .lingo-workspace input[type=checkbox] { width: 17px; height: 17px; min-height: 17px; padding: 0; margin: 0; accent-color: #386d5b; flex: 0 0 auto; }
+#root .hub-app .lingo-selection { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 18px 0; font-size: 12px; color: #75827f; }
+#root .hub-app .lingo-selection > label { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+#root .hub-app .lingo-selection select { max-width: 115px; font-size: 12px; }
+#root .hub-app .lingo-word-row { display: grid; grid-template-columns: 30px minmax(90px, 1fr) minmax(100px, 1.5fr) 85px; gap: 14px; align-items: center; padding: 16px 0; border-top: 1px solid #edf0ed; }
+#root .hub-app .lingo-word-row small { display: block; color: #849087; font-size: 12px; margin-top: 4px; overflow-wrap: anywhere; }
+#root .hub-app .lingo-word-row strong { font-size: 20px; font-weight: 550; overflow-wrap: anywhere; }
+#root .hub-app .lingo-word-meaning { font-size: 14px; overflow-wrap: anywhere; }
+#root .hub-app .lingo-word-check { display: flex; align-items: center; min-height: 44px; }
+#root .hub-app .lingo-word-row select { width: 85px; font-size: 12px; }
+#root .hub-app .lingo-empty-result { text-align: center; padding: 36px 0; color: #75827f; }
+#root .hub-app .lingo-pagination { display: flex; justify-content: center; align-items: center; gap: 18px; margin-top: 16px; font-size: 13px; }
+#root .hub-app .lingo-import { margin-bottom: 28px; }
+#root .hub-app .lingo-import > .lingo-actions { margin: 20px 0; }
+#root .hub-app .lingo-import-fields { display: flex; flex-wrap: wrap; gap: 16px; margin: 20px 0; }
+#root .hub-app .lingo-import-fields label { display: flex; flex: 1; flex-direction: column; gap: 7px; font-size: 12px; color: #75827f; min-width: 180px; }
+#root .hub-app .lingo-table-scroll { overflow: auto; max-height: 360px; }
+#root .hub-app .lingo-table-scroll table { width: 100%; border-collapse: collapse; font-size: 13px; }
+#root .hub-app .lingo-table-scroll caption { text-align: left; padding: 12px 0; font-size: 12px; color: #75827f; }
+#root .hub-app .lingo-table-scroll th, #root .hub-app .lingo-table-scroll td { text-align: left; padding: 10px; min-width: 100px; border-bottom: 1px solid #e5ebe7; white-space: pre-wrap; overflow-wrap: anywhere; }
+#root .hub-app .lingo-table-scroll th { background: #f4f7f4; }
+#root .hub-app .lingo-import-footer { margin-top: 20px; }
+#root .hub-app .lingo-error { padding: 12px 16px; background: #fff2ef; border-radius: 8px; color: #a14939; font-size: 13px; }
+#root .hub-app .lingo-session { max-width: 720px; margin: 0 auto; }
+#root .hub-app .lingo-session-progress { display: flex; justify-content: space-between; margin: 30px 0 10px; color: #75827f; font-size: 13px; }
+#root .hub-app .lingo-session progress { display: block; width: 100%; height: 5px; border: none; border-radius: 5px; accent-color: #52876d; margin-bottom: 28px; }
+#root .hub-app .lingo-session progress::-webkit-progress-bar { background: #e2e9e4; border-radius: 5px; }
+#root .hub-app .lingo-session progress::-webkit-progress-value { background: #52876d; border-radius: 5px; }
+#root .hub-app button.lingo-flashcard { width: 100%; min-height: 360px; display: flex; flex-direction: column; padding: 36px 28px; border: 1px solid #dde6df; border-radius: 20px; background: #fff; box-shadow: 0 10px 32px #2f544509; touch-action: pan-y; user-select: none; transform: translateX(var(--drag)) rotate(var(--rotation)); overflow-wrap: anywhere; }
+#root .hub-app button.lingo-flashcard:hover { background: #fff; transform: translateX(var(--drag)) rotate(var(--rotation)); }
+#root .hub-app .lingo-card-label { color: #91a094; font-size: 12px; letter-spacing: 2px; margin-bottom: 25px; }
+#root .hub-app .lingo-card-word { font-size: clamp(32px, 6vw, 52px); font-weight: 500; line-height: 1.5; }
+#root .hub-app .lingo-card-hint { color: #98a198; font-size: 12px; margin-top: 30px; }
+#root .hub-app .lingo-answer { display: flex; flex-direction: column; gap: 12px; margin-top: 12px; text-align: center; white-space: pre-wrap; }
+#root .hub-app .lingo-answer strong { font-size: 23px; color: #386d5b; }
+#root .hub-app .lingo-reading { font-size: 17px; color: #839087; }
+#root .hub-app .lingo-example { font-size: 16px; margin-top: 12px; }
+#root .hub-app .lingo-judge-actions { display: flex; justify-content: space-between; gap: 16px; margin-top: 22px; }
+#root .hub-app .lingo-judge-actions button { flex: 1; border: 1px solid #e0e6e1; background: #fff; padding: 15px 12px; gap: 18px; }
+#root .hub-app .lingo-judge-actions small { display: block; font-size: 11px; color: #86938a; margin-top: 5px; font-weight: normal; }
+#root .hub-app .lingo-judge-actions button.lingo-known { background: #e8f1ea; border-color: #d5e3d9; color: #386d5b; }
+#root .hub-app .lingo-session-bottom { text-align: center; margin: 20px 0; }
+#root .hub-app .lingo-complete { text-align: center; padding: 70px 20px; }
+#root .hub-app .lingo-complete > svg { color: #52876d; margin-bottom: 16px; }
+#root .hub-app .lingo-complete button { margin-top: 20px; }
+@media (max-width: 800px) {
+  #root .hub-app .lingo-library { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+  #root .hub-app .lingo-decks { display: flex; overflow-x: auto; gap: 8px; padding-bottom: 4px; }
+  #root .hub-app .lingo-decks > .lingo-row { display: none; }
+  #root .hub-app .lingo-decks > button { flex: 0 0 auto; width: auto; max-width: 240px; border: 1px solid #e1e8e2; }
+  #root .hub-app .lingo-panel { padding: 18px; }
+}
+@media (max-width: 520px) {
+  #root .hub-app .lingo-heading { align-items: flex-start; flex-direction: column; }
+  #root .hub-app .lingo-row { flex-wrap: wrap; gap: 8px; }
+  #root .hub-app .lingo-workspace button { min-height: 44px; }
+  #root .hub-app .lingo-stages { gap: 4px; }
+  #root .hub-app .lingo-word-row { grid-template-columns: 24px minmax(0, 1fr) 78px; gap: 8px; }
+  #root .hub-app .lingo-word-meaning { grid-column: 2; grid-row: 2; }
+  #root .hub-app .lingo-word-row > select { grid-column: 3; grid-row: 1 / 3; width: 78px; }
+  #root .hub-app .lingo-judge-actions { gap: 8px; }
+  #root .hub-app .lingo-judge-actions button { gap: 8px; }
+  #root .hub-app button.lingo-flashcard { min-height: 320px; padding: 26px 18px; }
+  #root .hub-app .lingo-selection .lingo-actions { width: 100%; justify-content: space-between; }
+}

@@ -1,0 +1,225 @@
+/* Secondary score tools sit below the schedule. */
+html body #root .hub-app .flow-score {
+  min-width: 0;
+  padding: 8px 0;
+  border-top: 1px solid #e1e6ec;
+}
+html body #root .hub-app .flow-score-content {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+html body #root .hub-app .flow-score-total {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  min-width: 0;
+}
+html body #root .hub-app .flow-score-total h2 {
+  margin: 0;
+  color: #657286 !important;
+  font-size: 14px !important;
+  font-weight: 600;
+  line-height: 22px;
+}
+html body #root .hub-app .flow-score-value {
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 22px;
+  font-variant-numeric: tabular-nums;
+}
+html body #root .hub-app .flow-score-metrics {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  min-width: 0;
+  margin: 0;
+}
+html body #root .hub-app .flow-score-metrics > div {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+html body #root .hub-app .flow-score-metrics dt {
+  color: #687588;
+  font-size: 13px;
+  line-height: 20px;
+}
+html body #root .hub-app .flow-score-metrics dd {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0;
+  font-size: 15px;
+  font-weight: 650;
+  line-height: 20px;
+  font-variant-numeric: tabular-nums;
+}
+html body #root .hub-app .flow-score-carry-tools {
+  display: flex;
+  gap: 0;
+  margin-left: 2px;
+}
+html body #root .hub-app .flow-score-carry-tools button {
+  width: 28px;
+  min-width: 28px;
+  height: 30px;
+  min-height: 30px;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: #64748b;
+  box-shadow: none;
+}
+html body #root .hub-app .flow-score-carry-tools button:hover {
+  background: #eef2f6;
+}
+html body #root .hub-app .flow-score-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+}
+html body #root .hub-app .flow-score-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 30px;
+  padding: 0;
+  color: #58677b;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 20px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+html body #root .hub-app .flow-score-check input {
+  appearance: auto;
+  display: block;
+  width: 17px;
+  min-width: 17px;
+  height: 17px;
+  min-height: 17px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 3px;
+  box-shadow: none;
+  accent-color: #3b8060;
+  cursor: pointer;
+}
+html body #root .hub-app .flow-score-check.is-penalty input {
+  accent-color: #b15757;
+}
+html body #root .hub-app .flow-score-check.is-attempt.is-checked {
+  color: #30744f;
+}
+html body #root .hub-app .flow-score-check.is-penalty.is-checked {
+  color: #a94a4a;
+}
+html body #root .hub-app :is(.flow-score, .flow-weekly-overview) .is-positive { color: #307a56; }
+html body #root .hub-app :is(.flow-score, .flow-weekly-overview) .is-negative { color: #b24f52; }
+html body #root .hub-app :is(.flow-score, .flow-weekly-overview) .is-neutral { color: #536174; }
+html body #root .hub-app .flow-weekly-overview {
+  min-width: 0;
+  padding: 8px 0 0;
+  border-top: 1px solid #e1e6ec;
+}
+html body #root .hub-app .flow-weekly-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+html body #root .hub-app .flow-weekly-heading h2 {
+  margin: 0;
+  color: #657286 !important;
+  font-size: 14px !important;
+  font-weight: 600;
+  line-height: 20px;
+}
+html body #root .hub-app .flow-weekly-heading > span {
+  color: #7a8696;
+  font-size: 11px;
+  line-height: 20px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+html body #root .hub-app .flow-weekly-days {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 3px;
+}
+html body #root .hub-app .flow-weekly-day {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  width: 100%;
+  min-width: 0;
+  height: 60px;
+  min-height: 60px;
+  padding: 4px 1px;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  background: transparent;
+  color: #48566a;
+  box-shadow: none;
+}
+html body #root .hub-app .flow-weekly-day:hover { background: #f1f4f8; }
+html body #root .hub-app .flow-weekly-day[aria-pressed="true"] {
+  border-color: #b0c2d8;
+  background: #edf3f9;
+}
+html body #root .hub-app .flow-weekly-weekday {
+  position: relative;
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 17px;
+}
+html body #root .hub-app .flow-weekly-today-dot {
+  position: absolute;
+  top: 1px;
+  right: -6px;
+  display: none;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #6489b6;
+}
+html body #root .hub-app .flow-weekly-day.is-today .flow-weekly-today-dot { display: block; }
+html body #root .hub-app .flow-weekly-day time {
+  color: #7a8798;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  line-height: 14px;
+}
+html body #root .hub-app .flow-weekly-score {
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: center;
+  font-size: 16px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  line-height: 20px;
+  white-space: nowrap;
+}
+html body #root .hub-app .flow-weekly-status {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #408363;
+  font-size: 9px;
+  line-height: 10px;
+}
+html body #root .hub-app .flow-weekly-status.is-penalty { color: #ae5757; }

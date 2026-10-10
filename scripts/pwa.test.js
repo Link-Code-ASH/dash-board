@@ -64,11 +64,14 @@ test("real sibling HTML, distinct manifests, relative deployment URLs, dev and p
       if (slug) identities.add(identity);
       for (const icon of manifest.icons) assert.equal(new URL(icon.src, manifestUrl).pathname.split("/")[1], "dash-board");
     }
-    assert.equal(identities.size, 6);
+    assert.equal(identities.size, Object.keys(apps).length);
     const worker = await readFile(path.join(dist, "sw.js"), "utf8");
     assert.ok(!worker.includes("__HUB_PWA_BUILD__"));
     const metadata = JSON.parse(worker.match(/const BUILD = (.*);/)[1]);
-    assert.equal(metadata.shells.length, 14);
+    assert.deepEqual(metadata.shells.slice().sort(), [
+      "", "index.html",
+      ...Object.keys(apps).flatMap((slug) => [`${slug}/`, `${slug}/index.html`]),
+    ].sort());
     assert.ok(metadata.files.some((file) => /^assets\/.*\.js$/.test(file)));
     assert.ok(metadata.files.some((file) => /^assets\/.*\.css$/.test(file)));
     assert.ok(!metadata.files.includes("sw.js"));

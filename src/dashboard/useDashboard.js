@@ -1,3 +1,4 @@
+import { normalizeCalendarMarks, changeCalendarText } from "./calendarText.js";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { backupWorkspace, restoreWorkspace } from "../mindfold/repository.js";
 import { accountClient, createAccountData, readAccountData, readAccountRevision, updateAccountData } from "../accountSync.js";
@@ -1388,9 +1389,15 @@ export function useDashboard(selectedDate, setSelectedDate) {
     });
   };
 
-  const updateCalendarNote = (dateKey, value) => {
+  const updateCalendarNote = (dateKey, value, marks) => {
     saveData((draft) => {
       const note = value.replace(/\r\n/g, "\n");
+      const nextMarks = marks === undefined
+        ? changeCalendarText(draft.calendar[dateKey] || "", note, draft.calendarFormats?.[dateKey])
+        : normalizeCalendarMarks(note, marks);
+      draft.calendarFormats ||= {};
+      if (nextMarks.length) draft.calendarFormats[dateKey] = nextMarks;
+      else delete draft.calendarFormats[dateKey];
       if (note) draft.calendar[dateKey] = note;
       else delete draft.calendar[dateKey];
       return draft;

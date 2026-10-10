@@ -18,6 +18,7 @@ import { DashboardProvider, useHubRuntime } from "./hub/context.jsx";
 import { modules } from "./hub/registry.jsx";
 import { navigationStrokeWidth } from "./hub/icons.jsx";
 import { appBase, installedModule, useHubRoute } from "./hub/routing.js";
+import LingoProvider from "./lingo/LingoProvider.jsx";
 
 const SettingsView = React.lazy(() => import("./hub/views/Settings.jsx"));
 
@@ -57,7 +58,10 @@ function HubShell({ route, navigate }) {
   const settings = route.module === "settings";
   const toggleSettings = () =>
     settings
-      ? navigate(lastRoute.current.module, lastRoute.current.section)
+      ? navigate(lastRoute.current.module, lastRoute.current.section, undefined, {
+          month: lastRoute.current.month,
+          week: lastRoute.current.week,
+        })
       : navigate("settings");
   useEffect(() => {
     if (!settings) lastRoute.current = route;
@@ -240,7 +244,9 @@ export default function App() {
   );
   return (
     <DashboardProvider date={route.date} setDate={setDate}>
-      <HubShell route={route} navigate={navigate} />
+      <LingoProvider>
+        <HubShell route={route} navigate={navigate} />
+      </LingoProvider>
     </DashboardProvider>
   );
 }
