@@ -17,6 +17,18 @@ export function sameDashboard(left, right) {
   return [...keys].every((key) => key === "updatedAt" || sameDashboard(left[key], right[key]));
 }
 
+export function mergeAccountSnapshots(snapshot, local, remote) {
+  if (!snapshot?.data || typeof snapshot.data !== "object" || Array.isArray(snapshot.data)
+    || !Number.isSafeInteger(snapshot.revision) || snapshot.revision < 0) {
+    // Without an acknowledged base, an old cache is not evidence of offline edits.
+    return {
+      data: remote,
+      conflicts: sameDashboard(local, remote) ? [] : [{ path: "", kind: "missing-base" }],
+    };
+  }
+  return mergeDashboard(snapshot.data, local, remote);
+}
+
 export function nextEditTimestamp(...states) {
   return new Date(Math.max(Date.now(), ...states.map((state) => (Date.parse(state?.updatedAt) || 0) + 1))).toISOString();
 }

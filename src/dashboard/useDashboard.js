@@ -7,7 +7,7 @@ import { prepareAuthReturn } from "../hub/authReturn.js";
 import { listRecoverySnapshots, readRecoverySnapshot } from "./recovery.js";
 import {
   accountSnapshotKey, pendingSnapshotPrefix, readStoredSnapshot, readRecoverableSnapshot,
-  sameDashboard, nextEditTimestamp, withDashboardLock, stageDashboardSnapshot, flushDashboardSnapshots, mergeStoredDashboard,
+  sameDashboard, mergeAccountSnapshots, nextEditTimestamp, withDashboardLock, stageDashboardSnapshot, flushDashboardSnapshots, mergeStoredDashboard,
 } from "./syncState.js";
 import {
   STORAGE_KEY,
@@ -414,14 +414,16 @@ export function useDashboard(selectedDate, setSelectedDate) {
       if (!preserveAccountDraft(userId, createBackupPayload(local, localImages), "local") || !preserveAccountDraft(userId, row.payload, "remote")) {
         throw new Error("Recovery storage is full; merge stopped without replacing either draft.");
       }
-      const { data: merged, conflicts } = mergeDashboard(lastSyncedSnapshotRef.current?.data, local, remote);
+      const { data: merged, conflicts } = mergeAccountSnapshots(lastSyncedSnapshotRef.current, local, remote);
       if (conflicts.length) updateAccount((current) => ({ ...current, mergeConflicts: [...(current.mergeConflicts || []), ...conflicts] }));
       const normalized = normalizeState({ ...merged, updatedAt: nextEditTimestamp(local, remote) });
       await persistDashboard(normalized);
       if (!isCurrentAccount(userId, generation)) return false;
       rememberAccountSnapshot(userId, remote, row.revision);
       updateAccount((current) => ({ ...current, busy: false, connected: true, cloudAvailable: true,
-        status: conflicts.length ? `Merged changes; ${conflicts.length} conflict(s) kept this device's edits. Both drafts are backed up.` : "Merged changes from another device." }));
+        status: conflicts.some((conflict) => conflict.kind === "missing-base")
+          ? "동기화 기준 기록이 없는 기기입니다. 클라우드 자료를 불러왔고, 기존 기기 자료는 복구 사본에 보존했습니다."
+          : conflicts.length ? `Merged changes; ${conflicts.length} conflict(s) kept this device's edits. Both drafts are backed up.` : "Merged changes from another device." }));
       return true;
     });
   };
@@ -591,6 +593,10 @@ export function useDashboard(selectedDate, setSelectedDate) {
         if (!isCurrentAccount(userId, generation)) return;
         acceptStorageSnapshot(key, shared, storageSnapshotRef.current.data);
         reportStorageConflicts(conflicts);
+        if (!hasAccountChanges()) {
+          updateAccount((current) => ({ ...current, busy: false }));
+          return;
+        }
         const state = dataRef.current;
         const payload = createBackupPayload(state, await getNoteImagesForState(state));
         if (!isCurrentAccount(userId, generation)) return;

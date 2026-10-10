@@ -2,9 +2,9 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { mergeDashboard } from "../src/hub/merge.js";
 import { normalizeState, createBackupPayload, splitBackupPayload } from "../src/dashboard/model.js";
-import { listRecoverySnapshots, readRecoverySnapshot } from "../src/dashboard/recovery.js";
+import { listRecoverySnapshots, readRecoverySnapshot, createRecoveryBundle } from "../src/dashboard/recovery.js";
 import {
-  accountSnapshotKey, readStoredSnapshot, readRecoverableSnapshot, sameDashboard,
+  accountSnapshotKey, readStoredSnapshot, readRecoverableSnapshot, sameDashboard, mergeAccountSnapshots,
   nextEditTimestamp, stageDashboardSnapshot, flushDashboardSnapshots, withDashboardLock,
 } from "../src/dashboard/syncState.js";
 
@@ -82,6 +82,41 @@ test("persisted account base supports three-way offline merge independent of tim
   assert.equal(result.data.days.today[0].score, 3);
   assert.deepEqual(result.conflicts, []);
   assert.equal(readStoredSnapshot(storage, accountSnapshotKey("bob")), null);
+});
+
+test("a cache without an acknowledged base must never overwrite newer cloud content", () => {
+  const local = { memos: { cards: [{ id: "memo", leftText: "old" }] }, calendar: { today: "old" } };
+  const remote = { memos: { cards: [{ id: "memo", leftText: "Claude - latest" }] }, calendar: { today: "latest" } };
+  for (const snapshot of [null, {}, { data: local }, { data: local, revision: null }, { data: [], revision: 1 }]) {
+    const result = mergeAccountSnapshots(snapshot, local, remote);
+    assert.deepEqual(result.data, remote);
+    assert.equal(result.conflicts[0].kind, "missing-base");
+  }
+  const result = mergeAccountSnapshots({ data: local, revision: 1 }, { ...local, days: { today: [{ id: "check", score: 2 }] } }, remote);
+  assert.equal(result.data.memos.cards[0].leftText, "Claude - latest");
+  assert.equal(result.data.days.today[0].score, 2);
+  assert.deepEqual(result.conflicts, []);
+});
+
+test("recovery bundle retains base and pending records without credentials or foreign accounts", () => {
+  const storage = memoryStorage();
+  const baseKey = accountSnapshotKey("alice");
+  const dataKey = "hub-account-data-v1:alice";
+  storage.setItem(baseKey, JSON.stringify({ revision: 7, data: { memo: "Claude" } }));
+  storage.setItem(dataKey, JSON.stringify({ memo: "old" }));
+  stageDashboardSnapshot(storage, dataKey, "window", { memo: "old" }, { memo: "draft" });
+  storage.setItem("hub-account-recovery-v1:alice:1000:remote:uuid", JSON.stringify({ memo: "Claude" }));
+  storage.setItem("hub-account-data-v1:bob", JSON.stringify({ private: true }));
+  storage.setItem("sb-project-auth-token", "secret");
+  storage.setItem("dashboard-sync-pin", "secret");
+  const count = storage.length;
+  const bundle = createRecoveryBundle(storage, "alice", { memo: "current" });
+  assert.equal(bundle.records[baseKey].data.memo, "Claude");
+  assert.equal(bundle.records[`${dataKey}:pending:window`].data.memo, "draft");
+  assert.equal(bundle.records["hub-account-recovery-v1:alice:1000:remote:uuid"].memo, "Claude");
+  assert.equal(Object.keys(bundle.records).length, 4);
+  assert.equal(storage.length, count);
+  assert(!JSON.stringify(bundle).includes("secret"));
 });
 
 test("unknown module backups survive normalization and backup round trips", () => {

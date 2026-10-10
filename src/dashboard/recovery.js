@@ -1,6 +1,22 @@
 import { ACCOUNT_RECOVERY_PREFIX, STORAGE_KEY, accountCacheKey } from "./model.js";
+import { accountSnapshotKey, pendingSnapshotPrefix } from "./syncState.js";
 
 const isRecord = (value) => value !== null && typeof value === "object" && !Array.isArray(value);
+
+export function createRecoveryBundle(storage, userId, current) {
+  const dataKeys = [STORAGE_KEY];
+  if (userId) dataKeys.push(accountCacheKey(userId), accountSnapshotKey(userId));
+  const records = {};
+  for (let index = 0; index < storage.length; index += 1) {
+    const key = storage.key(index);
+    if (!dataKeys.includes(key) && !dataKeys.some((name) => key?.startsWith(pendingSnapshotPrefix(name)))
+      && !describeKey(key, userId)) continue;
+    const raw = storage.getItem(key);
+    try { records[key] = JSON.parse(raw); }
+    catch { records[key] = { damagedRaw: raw }; }
+  }
+  return { kind: "hub-recovery-bundle", version: 1, exportedAt: new Date().toISOString(), current, records };
+}
 
 function describeKey(key, userId) {
   if (typeof key !== "string") return null;

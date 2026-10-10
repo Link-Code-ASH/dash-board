@@ -10,7 +10,8 @@ import {
   SyncPanel,
   SystemPanel,
 } from "../../dashboard/components.jsx";
-import { generateSyncIdValue, SYNC_ID_KEY } from "../../dashboard/model.js";
+import { generateSyncIdValue, SYNC_ID_KEY, downloadTextFile } from "../../dashboard/model.js";
+import { createRecoveryBundle } from "../../dashboard/recovery.js";
 
 export default function Settings({ gate }) {
   const d = useDashboardData();
@@ -98,6 +99,12 @@ export default function Settings({ gate }) {
         isOpen={d.openPanels.system}
         onToggle={() => d.togglePanel("system")}
       />
+      <button className="hub-install-button" onClick={() => downloadTextFile(
+        `hub-recovery-records-${Date.now()}.json`,
+        JSON.stringify(createRecoveryBundle(localStorage, d.account.user?.id, d.data), null, 2),
+      )}>
+        <Download size={17} />복구 기록 전체 저장
+      </button>
       {recoveries.length > 0 && (
         <details className="hub-recoveries">
           <summary>복구 사본 ({recoveries.length})</summary>

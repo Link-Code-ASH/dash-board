@@ -142,7 +142,7 @@ export default function Flow({ route, navigate }) {
             <div className="hub-section-title">
               <h2>
                 <CalendarDays size={18} />
-                일정
+                Schedule
               </h2>
               <button
                 title="전체 달력"
@@ -154,7 +154,9 @@ export default function Flow({ route, navigate }) {
             </div>
             <TwoWeekSchedule route={route} navigate={navigate} />
             <div className="flow-selected-heading">
-              <strong>{d.selectedDate.slice(5).replace("-", "/")} 일정</strong>
+              <strong>
+                {d.selectedDate.slice(5).replace("-", "/")} Schedule
+              </strong>
               <div className="flow-duty-controls">
                 {calendarDutyOptions.map((option) => (
                   <label key={option.key}>
@@ -175,35 +177,37 @@ export default function Flow({ route, navigate }) {
             <ScheduleEditor />
             <ExternalFlowItems date={d.selectedDate} navigate={navigate} />
           </section>
-          <section className="flow-routines">
-            <div className="hub-section-title">
-              <h2>
-                <ScheduleIcon size={18} strokeWidth={navigationStrokeWidth} />
-                오늘 할 일
-              </h2>
-              <button
-                aria-label="Schedule 열기"
-                title="Schedule 열기"
-                onClick={() => navigate("routine")}
-              >
-                <ChevronRight size={18} />
-              </button>
-            </div>
-            <RoutineTasks compact />
-          </section>
-          <section className="flow-markers">
-            <div className="hub-section-title">
-              <h2>
-                <Flag size={18} />
-                Date Marker
-              </h2>
-            </div>
-            <DateMarkerPanel
-              dateMarkers={d.data.dateMarkers}
-              selectedDate={d.selectedDate}
-              updateDateMarker={d.updateDateMarker}
-            />
-          </section>
+          <div className="flow-day-details">
+            <section className="flow-routines">
+              <div className="hub-section-title">
+                <h2>
+                  <ScheduleIcon size={18} strokeWidth={navigationStrokeWidth} />
+                  Today's Tasks
+                </h2>
+                <button
+                  aria-label="Schedule 열기"
+                  title="Schedule 열기"
+                  onClick={() => navigate("routine")}
+                >
+                  <ChevronRight size={18} />
+                </button>
+              </div>
+              <RoutineTasks compact />
+            </section>
+            <section className="flow-markers">
+              <div className="hub-section-title">
+                <h2>
+                  <Flag size={18} />
+                  Date Marker
+                </h2>
+              </div>
+              <DateMarkerPanel
+                dateMarkers={d.data.dateMarkers}
+                selectedDate={d.selectedDate}
+                updateDateMarker={d.updateDateMarker}
+              />
+            </section>
+          </div>
         </div>
         <MemoDesk />
       </div>

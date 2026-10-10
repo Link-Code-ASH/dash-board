@@ -27,13 +27,35 @@ html body #root .hub-app .hub-content-modern :is(h1, h2, h3) {
   gap: 28px;
 }
 #root .hub-app.hub-desktop .flow-overview {
+  container: flow-overview / inline-size;
   gap: 28px;
   padding-bottom: 0;
   border-bottom: 0;
 }
-#root .hub-app.hub-desktop .flow-overview > section + section {
+#root .hub-app.hub-desktop .flow-day-details {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 28px;
   border-top: 1px solid #dde2e8;
   padding-top: 24px;
+}
+#root .hub-app .flow-day-details > section {
+  min-width: 0;
+}
+#root .hub-app.hub-mobile .flow-day-details {
+  display: grid;
+  gap: 28px;
+}
+@container flow-overview (min-width: 740px) {
+  #root .hub-app.hub-desktop .flow-day-details {
+    grid-template-columns: minmax(0, 1.08fr) minmax(0, 1fr);
+    gap: 24px;
+    align-items: start;
+  }
+  #root .hub-app.hub-desktop .flow-markers {
+    padding-left: 24px;
+    border-left: 1px solid #dde2e8;
+  }
 }
 #root .hub-app.hub-desktop .hub-memo-section {
   margin-top: 0;
@@ -55,10 +77,169 @@ html body #root .hub-app .hub-content-modern :is(h1, h2, h3) {
   background: transparent !important;
   box-shadow: none !important;
 }
-html body #root .hub-app.hub-desktop .flow-markers .date-marker-list {
+html body #root .hub-app .flow-markers .date-marker-list {
+  grid-template-columns: minmax(0, 1fr) !important;
   background: transparent !important;
   box-shadow: none !important;
   border: 0 !important;
+}
+html body #root .hub-app .flow-markers .date-marker-panel {
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+html body #root .hub-app.hub-desktop .flow-markers .date-marker {
+  grid-template-columns: minmax(55px, 1fr) 132px 52px !important;
+}
+html body #root .hub-app.hub-desktop .flow-markers .date-marker input {
+  height: 36px !important;
+  min-height: 36px !important;
+}
+html body #root .hub-app.hub-desktop .flow-markers .date-marker-dday {
+  height: 32px !important;
+  min-height: 32px !important;
+}
+
+/* Pastel accents identify sections; document surfaces stay neutral. */
+#root .hub-app .flow-schedule .hub-section-title h2 svg {
+  color: #708cac;
+}
+#root .hub-app .flow-routines .hub-section-title h2 svg {
+  color: #879675;
+}
+#root .hub-app .flow-markers .hub-section-title h2 svg {
+  color: #ab8a95;
+}
+#root .hub-app .hub-task-group {
+  --task-accent: #e4ecf6;
+  --task-heading: #5c7290;
+}
+#root .hub-app .hub-task-group[data-kind="weekly"] {
+  --task-accent: #f2eadc;
+  --task-heading: #8d7455;
+}
+#root .hub-app .hub-task-group[data-kind="edu"] {
+  --task-accent: #e4eee7;
+  --task-heading: #597766;
+}
+#root .hub-app .hub-task-group h3 {
+  padding: 8px 10px;
+  border-radius: 5px;
+  background: var(--task-accent);
+  color: var(--task-heading);
+  font-size: 14px;
+}
+#root .hub-app .hub-task-group h3 span {
+  font-size: 13px;
+  color: #626d7b;
+}
+html
+  body
+  #root
+  .hub-app
+  .flow-markers
+  .date-marker:nth-child(3n + 1)
+  .date-marker-dday {
+  background: #e3eaf5 !important;
+  color: #596e8e !important;
+}
+html
+  body
+  #root
+  .hub-app
+  .flow-markers
+  .date-marker:nth-child(3n + 2)
+  .date-marker-dday {
+  background: #ebe5f1 !important;
+  color: #776887 !important;
+}
+html
+  body
+  #root
+  .hub-app
+  .flow-markers
+  .date-marker:nth-child(3n)
+  .date-marker-dday {
+  background: #e4ece5 !important;
+  color: #5d7966 !important;
+}
+#root .hub-app .hub-memo-cell .memo-title-row {
+  border-bottom: 2px solid
+    color-mix(in srgb, var(--memo-accent) 38%, transparent);
+  padding-bottom: 6px;
+}
+html body #root .hub-app .hub-memo-cell .memo-quick-textarea {
+  background: color-mix(in srgb, var(--memo-accent) 13%, #fafbfc) !important;
+}
+
+#root .hub-app.hub-desktop .flow-week h3 {
+  font-size: 14px;
+}
+#root .hub-app.hub-desktop .flow-fortnight .flow-day-heading small {
+  font-size: 13px;
+}
+#root .hub-app.hub-desktop .flow-fortnight .flow-day-heading strong {
+  font-size: 15px;
+}
+#root .hub-app.hub-desktop .flow-fortnight .flow-day-content {
+  font-size: 14px;
+}
+#root .hub-app.hub-desktop .flow-fortnight .flow-day-duties > span {
+  font-size: 13px;
+}
+#root .hub-app .flow-week-navigation,
+#root .hub-app .flow-selected-heading > strong {
+  font-size: 14px;
+  color: #657082;
+}
+#root .hub-app .hub-task-copy small {
+  font-size: 13px;
+}
+#root .hub-app .hub-empty-inline {
+  font-size: 14px;
+  color: #737e8c;
+}
+#root .hub-app .hub-score-select {
+  font-size: 14px;
+}
+#root .hub-app .hub-task-actions button {
+  font-size: 14px;
+}
+#root .hub-app .hub-task-actions small {
+  font-size: 12px;
+}
+#root .hub-app .hub-memo-number,
+#root .hub-app .hub-memo-tabs button {
+  font-size: 13px;
+}
+html body #root .hub-app .date-marker-dday {
+  font-size: 14px !important;
+}
+
+html body #root .hub-app .hub-memo-toolbar .memo-format-button {
+  width: 34px;
+  height: 34px;
+  min-width: 34px;
+  min-height: 34px;
+  padding: 0;
+  flex: 0 0 34px;
+}
+html body #root .hub-app.hub-mobile .hub-memo-toolbar .memo-format-button {
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  flex-basis: 44px;
+}
+html body #root .hub-app .memo-format-color span {
+  flex: 0 0 14px;
+  width: 14px;
+  min-width: 14px;
+  height: 14px;
+  min-height: 14px;
+  aspect-ratio: 1;
+  border-radius: 50%;
 }
 @container hub-content (min-width: 1500px) {
   #root .hub-app.hub-desktop .flow-layout {
@@ -98,7 +279,7 @@ html body #root .hub-app.hub-desktop .flow-markers .date-marker-list {
 }
 .hub-icon-dialog .hub-symbol-categories button {
   padding: 6px 8px;
-  font-size: 12px;
+  font-size: 13px;
   background: transparent;
   border: 0;
   color: #606b79;
@@ -138,6 +319,7 @@ html body #root .hub-app.hub-desktop .flow-markers .date-marker-list {
 }
 .hub-symbol-colors {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 7px;
   padding-top: 14px;
@@ -145,9 +327,12 @@ html body #root .hub-app.hub-desktop .flow-markers .date-marker-list {
   border-top: 1px solid #e1e5ea;
 }
 .hub-icon-dialog .hub-symbol-colors button {
-  width: 24px;
-  height: 24px;
-  min-width: 24px;
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  min-height: 28px;
+  flex: 0 0 28px;
+  aspect-ratio: 1;
   padding: 0;
   border: 3px solid white;
   border-radius: 50%;
@@ -169,4 +354,13 @@ html body #root .hub-app.hub-desktop .flow-markers .date-marker-list {
 }
 .hub-symbol-picker button {
   cursor: pointer;
+}
+@media (max-width: 600px) {
+  .hub-icon-dialog .hub-symbol-colors button {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    min-height: 36px;
+    flex-basis: 36px;
+  }
 }
