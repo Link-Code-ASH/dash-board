@@ -1,10 +1,10 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { BookOpen, FileText, ListChecks, Printer, RefreshCw, Search, X } from "lucide-react";
+import { BookOpen, FileText, Printer, RefreshCw, Search, X } from "lucide-react";
 import useLab from "./useLab.js";
 import LabMarkdown from "./LabMarkdown.jsx";
 import ItemPaper from "./ItemPaper.jsx";
-import { DIFFICULTIES, distinct, filterItems, filterNotes, groupNotes, isComplete, isPrinciple, kindLabel, REVIEW_STATES, reviewLabel, selectedItems, sortPrinciples, USAGES, usageLabel } from "./filter.js";
+import { DIFFICULTIES, distinct, filterItems, filterNotes, groupNotes, isComplete, isPrinciple, kindLabel, REVIEW_STATES, reviewLabel, selectedItems, USAGES, usageLabel } from "./filter.js";
 import { notePatch, noteValues } from "./editing.js";
 import "./lab.css";
 
@@ -108,35 +108,6 @@ function ItemDetail({ item, items, notes, busy, save, remove, onNote, onItem, de
     </form>
   </section>;
 }
-// One free-form document that Claude reads before anything else. The oldest
-// principle row is the document; the app never adds a second one.
-function PrincipleBoard({ principle, busy, save, create, drafts }) {
-  const key = "principle-board";
-  const cached = drafts.get(key);
-  const [open, setOpen] = useState(true);
-  const [editing, setEditing] = useState(cached?.dirty || false);
-  const [base, setBase] = useState(cached?.base || principle);
-  const [body, setBody] = useState(cached?.body ?? (principle?.body || ""));
-  const [dirty, setDirty] = useState(cached?.dirty || false);
-  const [error, setError] = useState("");
-  useEffect(() => { if (!dirty) { setBase(principle); setBody(principle?.body || ""); } }, [principle, dirty]);
-  useEffect(() => { if (dirty) drafts.set(key, { base, body, dirty }); else drafts.delete(key); }, [drafts, key, base, body, dirty]);
-  const cancel = () => { setBase(principle); setBody(principle?.body || ""); setDirty(false); setEditing(false); setError(""); };
-  const submit = async (event) => {
-    event.preventDefault(); setError("");
-    try {
-      const next = base ? await save(base, { body }) : await create({ kind: "principle", scope: "전 과목", title: "제작 원칙", body });
-      setBase(next); setBody(next.body || ""); setDirty(false); setEditing(false);
-    } catch (failure) { setError(failure.message || "저장하지 못했습니다. 입력 내용은 유지됩니다."); }
-  };
-  const externalChange = dirty && base && principle && base.revision !== principle.revision;
-  return <section className="edu-panel edu-lab-principles" aria-label="제작 원칙">
-    <div className="edu-panel-heading"><div><span className="edu-lab-eyebrow"><ListChecks size={14} /> Claude가 가장 먼저 읽는 글</span><h3>제작 원칙</h3></div><div className="edu-actions">{!editing && <button type="button" className="edu-button" disabled={busy} onClick={() => { setOpen(true); setEditing(true); }}>{principle ? "편집" : "작성"}</button>}<button type="button" className="edu-text-button" aria-expanded={open} onClick={() => setOpen(!open)}>{open ? "접기" : "펼치기"}</button></div></div>
-    {open && <>{externalChange && <p className="edu-lab-notice">바깥에서 원칙이 변경되었습니다. 저장할 때 최신 내용과 비교합니다.</p>}<ErrorNotice>{error}</ErrorNotice>
-      {editing ? <form className="edu-form" onSubmit={submit}><textarea className="edu-lab-principles-input" aria-label="제작 원칙" rows={14} value={body} onChange={(event) => { setBody(event.target.value); setDirty(true); }} disabled={busy} placeholder="문항을 만들 때 지켜야 할 것을 자유롭게 적어 주세요." /><div className="edu-form-footer"><span className="edu-save-hint">{dirty ? "저장하지 않은 변경사항이 있습니다." : "마크다운과 $…$ 수식을 쓸 수 있습니다."}</span><div className="edu-actions"><button type="button" className="edu-button" disabled={busy} onClick={cancel}>취소</button><button className="edu-button edu-primary" disabled={busy || !dirty || !body.trim()}>{busy ? "저장 중…" : "저장"}</button></div></div></form>
-        : principle?.body ? <div className="edu-lab-principles-body"><LabMarkdown>{principle.body}</LabMarkdown></div> : <Empty>아직 제작 원칙이 없습니다. Claude가 문항을 만들 때 가장 먼저 읽을 원칙을 적어 주세요.</Empty>}</>}
-  </section>;
-}
 function PrintPreview({ items, onClose }) {
   const [answers, setAnswers] = useState(false);
   const [title, setTitle] = useState("과학 문항 연구소");
@@ -181,9 +152,8 @@ function PrintPreview({ items, onClose }) {
   </div>, document.body);
 }
 export function LabWorkspace({ lab }) {
-  const { notes: allNotes, items, loading, loaded, error, busy, refresh, updateNote, updateItem, createNote, removeItem } = lab;
+  const { notes: allNotes, items, loading, loaded, error, busy, refresh, updateNote, updateItem, removeItem } = lab;
   const notes = useMemo(() => allNotes.filter((note) => !isPrinciple(note)), [allNotes]);
-  const principle = useMemo(() => sortPrinciples(allNotes)[0] || null, [allNotes]);
   const [tab, setTab] = useState("items");
   const [query, setQuery] = useState("");
   const [kind, setKind] = useState("");
@@ -225,15 +195,13 @@ export function LabWorkspace({ lab }) {
   const toggleItem = (id) => setSelected((ids) => ids.includes(id) ? ids.filter((entry) => entry !== id) : [...ids, id]);
   const openRelated = (id) => {
     setRelationError("");
-    if (principle?.id === id) document.querySelector(".edu-lab-principles")?.scrollIntoView({ behavior: "smooth" });
-    else if (notes.some((note) => note.id === id)) { setTab("notes"); setNoteId(id); }
+    if (notes.some((note) => note.id === id)) { setTab("notes"); setNoteId(id); }
     else if (items.some((item) => item.id === id)) { setTab("items"); setItemId(id); }
     else setRelationError("관련 기록이 없거나 삭제되었습니다.");
   };
   const selectVisible = () => setSelected((ids) => [...new Set([...ids, ...visibleItems.map((item) => item.id)])]);
   return <div className="edu-lab">
     <div className="edu-section-heading"><div><h2>문항 연구소</h2><p>생각을 쌓고, 문항을 다듬고, 수업으로 가져갑니다.</p></div><button type="button" className="edu-button" onClick={() => refresh().catch(() => {})} disabled={loading || busy}><RefreshCw size={16} className={loading ? "edu-lab-spinning" : ""} />{loading ? "불러오는 중…" : "새로고침"}</button></div>
-    {loaded && <PrincipleBoard principle={principle} busy={busy} save={updateNote} create={createNote} drafts={drafts.current.notes} />}
     <div className="edu-lab-tabs" aria-label="연구소 보기"><button type="button" className={tab === "items" ? "active" : ""} aria-pressed={tab === "items"} onClick={() => setTab("items")}><FileText size={17} />문항 <span>{items.length}</span></button><button type="button" className={tab === "notes" ? "active" : ""} aria-pressed={tab === "notes"} onClick={() => setTab("notes")}><BookOpen size={17} />노트 <span>{notes.length}</span></button></div>
     <ErrorNotice>{error || relationError}</ErrorNotice>
     <div className="edu-lab-filters"><SearchBox value={query} onChange={setQuery} />{tab === "notes" ? <><SelectFilter label="종류" value={kind} options={distinct(notes, "kind")} labels={Object.fromEntries(distinct(notes, "kind").map((entry) => [entry, kindLabel(entry)]))} onChange={setKind} /><SelectFilter label="적용 범위" value={scope} options={distinct(notes, "scope")} onChange={setScope} /></> : <><SelectFilter label="과목" value={subject} options={distinct(items, "subject")} onChange={(value) => { setSubject(value); setUnit(""); }} /><SelectFilter label="단원" value={unit} options={distinct(items.filter((item) => !subject || item.subject === subject), "unit")} onChange={setUnit} /><SelectFilter label="난이도" value={difficulty} options={Object.keys(DIFFICULTIES)} onChange={setDifficulty} /><SelectFilter label="상태" value={review} options={[...Object.keys(REVIEW_STATES), "complete"]} labels={{ ...REVIEW_STATES, complete: "완성 (적용 + 활용)" }} onChange={setReview} /><SelectFilter label="쓰임" value={usage} options={Object.keys(USAGES)} labels={USAGES} onChange={setUsage} /></>}</div>
