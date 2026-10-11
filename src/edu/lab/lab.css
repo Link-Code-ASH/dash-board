@@ -102,7 +102,7 @@ html body #root .hub-app .edu-workspace .lab-paper-heading h3, .edu-lab-print-sh
 }
 @media print {
   @page { size: A4; margin: 15mm; }
-  html:has(.edu-lab-print-overlay), body.edu-lab-print-preview-open { overflow: visible !important; height: auto !important; background: #fff !important; }
+  html:has(body.edu-lab-print-preview-open), html body.edu-lab-print-preview-open:has(.edu-lab-print-overlay) { overflow: visible !important; height: auto !important; background: #fff !important; }
   body.edu-lab-print-preview-open > :not(.edu-lab-print-overlay) { display: none !important; }
   .edu-lab-print-overlay { position: static !important; overflow: visible !important; background: #fff !important; height: auto !important; }
   .edu-lab-print-toolbar, .edu-lab-print-error { display: none !important; }
