@@ -98,7 +98,7 @@ function ItemDetail({ item, items, notes, busy, save, remove, onNote, onItem, de
     <ItemPaper item={item} />
     {Array.isArray(item.based_on) && item.based_on.length > 0 && <div className="edu-lab-related"><span>참고한 노트</span>{item.based_on.map((id, index) => <button type="button" className="edu-text-button" key={`${id}:${index}`} onClick={() => onNote(id)}>{notes.find((note) => note.id === id)?.title || id}</button>)}</div>}
     {(item.revised_from || revisions.length > 0) && <div className="edu-lab-related">
-      {item.revised_from && <><span>수정 전 문항</span><button type="button" className="edu-text-button" onClick={() => onItem(item.revised_from)}>{original?.title || item.revised_from}</button></>}
+      {item.revised_from && <><span>수정 전 문항</span>{original ? <button type="button" className="edu-text-button" onClick={() => onItem(original.id)}>{original.title || original.id}</button> : <span>삭제됨</span>}</>}
       {revisions.length > 0 && <><span>수정본</span>{revisions.map((entry) => <button type="button" className="edu-text-button" key={entry.id} onClick={() => onItem(entry.id)}>{entry.title || entry.id}</button>)}</>}
     </div>}
     <form className="edu-form edu-lab-feedback" onSubmit={submit}><h3>애쉬의 검토</h3>

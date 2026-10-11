@@ -119,7 +119,6 @@ html body #root .hub-app .edu-workspace .edu-lab-status.is-feedback { color: #9b
 html body #root .hub-app .edu-workspace .edu-lab-status.is-applied { color: #476fa5; background: #edf3fd; }
 html body #root .hub-app .edu-workspace .edu-lab-status.is-usage-use { color: #3b7b65; background: #edf8f2; }
 html body #root .hub-app .edu-workspace .edu-lab-status.is-usage-revise { color: #9b6838; background: #fff4e8; }
-html body #root .hub-app .edu-workspace .edu-lab-status.is-usage-revised { color: #6a6f9b; background: #f1f1fb; }
 html body #root .hub-app .edu-workspace .edu-lab-status.is-usage-discard { color: #a24b4b; background: #fbeeee; }
 html body #root .hub-app .edu-workspace .edu-lab-status.is-complete { color: #fff; background: #3b7b65; }
 html body #root .hub-app .edu-workspace .edu-lab-attributes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }

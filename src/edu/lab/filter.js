@@ -1,7 +1,7 @@
 export const NOTE_KINDS = { principle: "제작 원칙", idea: "아이디어", method: "풀이법 · 사고방식", feedback: "피드백", rule: "제작 규칙", summary: "요약" };
 export const DIFFICULTIES = { 최상: "최상", 상: "상", 중: "중", 하: "하" };
 export const REVIEW_STATES = { unreviewed: "검토 전", feedback: "피드백 작성", applied: "피드백 적용" };
-export const USAGES = { hold: "보류", use: "활용", revise: "수정 필요", revised: "수정 생성", discard: "폐기" };
+export const USAGES = { hold: "보류", use: "활용", revise: "수정 필요", discard: "폐기" };
 const label = (labels, value) => Object.hasOwn(labels, value) ? labels[value] : value || "미분류";
 export const kindLabel = (kind) => label(NOTE_KINDS, kind);
 export const reviewLabel = (state) => label(REVIEW_STATES, state || "unreviewed");
