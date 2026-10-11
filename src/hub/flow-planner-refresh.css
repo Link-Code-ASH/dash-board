@@ -223,7 +223,7 @@ html body #root .hub-app.hub-app.hub-desktop .planner-date-cell.is-today { backg
 html body #root .hub-app.hub-app.hub-desktop .planner-date-cell.is-selected,
 html body #root .hub-app.hub-app.hub-desktop .planner-date-cell.is-selected.is-today { background: #f5f8fd; box-shadow: inset 0 0 0 2px #b9cce8; }
 html body #root .hub-app.hub-app.hub-desktop .planner-date-heading { min-height: 28px; margin-bottom: 4px; flex-wrap: nowrap; }
-html body #root .hub-app.hub-app.hub-desktop .planner-date-number { min-width: 28px; height: 28px; color: var(--fp-ink); font-size: 14px; font-weight: 700; border-radius: 999px; }
+html body #root .hub-app.hub-app.hub-desktop .planner-date-number { min-width: 28px; height: 28px; padding: 0 4px; color: var(--fp-ink); font-size: 14px; font-weight: 700; border-radius: 999px; }
 html body #root .hub-app.hub-app.hub-desktop .planner-month-grid > :nth-child(7n + 1) .planner-date-number { color: var(--fp-sun); }
 html body #root .hub-app.hub-app.hub-desktop .planner-month-grid > :nth-child(7n) .planner-date-number { color: var(--fp-sat); }
 html body #root .hub-app.hub-app.hub-desktop .planner-date-cell.is-today .planner-date-number { background: var(--fp-accent); color: #fff; }
@@ -254,31 +254,76 @@ html body #root .hub-app.hub-app.hub-desktop .planner-duty-checks input {
   cursor: pointer;
 }
 
-/* Events inside month cells read as chips; edit tools appear on hover/focus. */
+/* Events inside month cells: one quiet line each, led by a dot (time first
+   when set). Edit tools float in on hover/focus so lines never jump. */
+html body #root .hub-app.hub-app.hub-desktop .planner-date-cell .calendar-event-editor { display: flex; flex-direction: column; gap: 1px; }
 html body #root .hub-app.hub-app.hub-desktop .planner-date-cell .calendar-entry {
-  margin-bottom: 4px;
-  padding: 2px 6px 2px 8px;
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 5px;
+  padding: 2px 4px 2px 15px;
   border: 0;
-  border-left: 3px solid #9db5d8;
   border-radius: 6px;
-  background: var(--fp-accent-soft);
+  background: transparent;
+}
+html body #root .hub-app.hub-app.hub-desktop .planner-date-cell .calendar-entry::before {
+  content: "";
+  position: absolute;
+  left: 5px;
+  top: 11px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--fp-accent);
+}
+html body #root .hub-app.hub-app.hub-desktop .planner-date-cell .calendar-entry:is(:hover, :focus-within) { background: #f2f5f9; }
+html body #root .hub-app.hub-app.hub-desktop .planner-date-cell .calendar-entry .calendar-note-editor { flex: 1 1 60px; min-width: 0; }
+html body #root .hub-app.hub-app.hub-desktop .planner-date-cell .calendar-entry :is(.calendar-text-surface, textarea, .calendar-text-mirror) {
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
 }
 html body #root .hub-app.hub-app.hub-desktop .planner-date-cell .calendar-entry .calendar-text-surface :is(textarea, .calendar-text-mirror) {
   min-height: 0 !important;
   padding: 2px 0 !important;
-  color: var(--fp-ink);
-  font-size: 13.5px !important;
+  font-size: 13px !important;
   font-weight: 500;
-  line-height: 1.4 !important;
+  line-height: 1.45 !important;
 }
-html body #root .hub-app.hub-app.hub-desktop .planner-date-cell .calendar-entry-tools { min-height: 0; }
-html body #root .hub-app.hub-app.hub-desktop .planner-date-cell .calendar-entry-tools button { min-width: 22px; min-height: 22px; padding: 2px; }
-html body #root .hub-app.hub-app.hub-desktop .planner-date-cell .calendar-entry.has-time .calendar-entry-time-add span { color: var(--fp-accent); font-weight: 700; }
-html body #root .hub-app.hub-app.hub-desktop .planner-date-cell .calendar-entry-add { min-height: 26px; margin-top: 2px; color: var(--fp-muted); font-size: 12px; }
+html body #root .hub-app.hub-app.hub-desktop .planner-date-cell .calendar-entry .calendar-text-mirror { color: var(--fp-ink); }
+html body #root .hub-app.hub-app.hub-desktop .planner-date-cell .calendar-entry-tools {
+  position: absolute;
+  top: 1px;
+  right: 2px;
+  z-index: 2;
+  min-height: 0;
+  gap: 0;
+  padding: 1px;
+  border-radius: 6px;
+  background: #fff;
+  box-shadow: 0 1px 4px #1d25331f;
+}
+html body #root .hub-app.hub-app.hub-desktop .planner-date-cell .calendar-entry-tools button { min-width: 22px; min-height: 22px; padding: 2px 3px; }
+html body #root .hub-app.hub-app.hub-desktop .planner-date-cell .calendar-entry-tools span { font-size: 11px; }
+/* A set start time stays visible as part of the line. */
+html body #root .hub-app.hub-app.hub-desktop .planner-date-cell .calendar-entry.has-time .calendar-entry-tools {
+  position: static;
+  order: -1;
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+}
+html body #root .hub-app.hub-app.hub-desktop .planner-date-cell .calendar-entry.has-time .calendar-entry-time-add { min-width: 0; padding: 0; }
+html body #root .hub-app.hub-app.hub-desktop .planner-date-cell .calendar-entry.has-time .calendar-entry-time-add svg { display: none; }
+html body #root .hub-app.hub-app.hub-desktop .planner-date-cell .calendar-entry.has-time .calendar-entry-time-add span { color: var(--fp-accent); font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums; }
+html body #root .hub-app.hub-app.hub-desktop .planner-date-cell .calendar-entry.has-time .calendar-entry-tools > button:last-child { position: absolute; top: 1px; right: 2px; background: #fff; box-shadow: 0 1px 4px #1d25331f; }
+html body #root .hub-app.hub-app.hub-desktop .planner-date-cell .calendar-entry-time { top: 26px; }
+html body #root .hub-app.hub-app.hub-desktop .planner-date-cell .calendar-entry-add { align-self: flex-start; min-height: 24px; margin-top: 2px; padding: 2px 6px; color: var(--fp-muted); font-size: 12px; }
 @media (hover: hover) {
   html body #root .hub-app.hub-app.hub-desktop .planner-date-cell .calendar-entry:not(.has-time):not(:hover):not(:focus-within) .calendar-entry-tools { display: none; }
-  html body #root .hub-app.hub-app.hub-desktop .planner-date-cell .calendar-entry.has-time:not(:hover):not(:focus-within) .calendar-entry-tools > :not(.calendar-entry-time-add) { visibility: hidden; }
-  html body #root .hub-app.hub-app.hub-desktop .planner-date-cell .calendar-entry.has-time:not(:hover):not(:focus-within) .calendar-entry-time-add svg { display: none; }
+  html body #root .hub-app.hub-app.hub-desktop .planner-date-cell .calendar-entry.has-time:not(:hover):not(:focus-within) .calendar-entry-tools > button:last-child { display: none; }
   html body #root .hub-app.hub-app.hub-desktop .planner-date-cell:not(:hover):not(:focus-within) .calendar-entry-add { opacity: 0; }
   html body #root .hub-app.hub-app.hub-desktop .planner-date-cell:not(:hover):not(:focus-within) .planner-duty-checks label:not(.is-checked) { opacity: 0; }
 }
@@ -295,8 +340,4 @@ html body #root .hub-app.hub-app.hub-mobile .flow-desk-event-title { font-size: 
 html body #root .hub-app.hub-app.hub-mobile .flow-desk-grid > .flow-desk-day:nth-child(1) header small { color: var(--fp-sun); }
 html body #root .hub-app.hub-app.hub-mobile .flow-desk-grid > .flow-desk-day:nth-child(7) header small { color: var(--fp-sat); }
 html body #root .hub-app.hub-app.hub-mobile .flow-desk-day:has(.flow-desk-empty) .flow-desk-events::before { content: "—"; color: #c3cad4; }
-html body #root .hub-app.hub-app.hub-desktop .planner-date-cell .calendar-entry :is(.calendar-text-surface, textarea, .calendar-text-mirror) {
-  border: 0 !important;
-  background: transparent !important;
-  box-shadow: none !important;
-}
+html body #root .hub-app.hub-app.hub-desktop .planner-date-cell.is-today .planner-date-number { width: 28px; min-height: 28px; height: 28px; padding: 0; }

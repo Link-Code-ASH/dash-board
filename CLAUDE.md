@@ -7,3 +7,4 @@ Personal daily-life dashboard: routines/scores, schedule, memos (Dashboard), a N
 - Commands: `npm run dev`, `npm run build`, `npm test` (node:test, `tests/`).
 - Deploy: pushing to `main` tests, builds and publishes to GitHub Pages (`.github/workflows/deploy.yml`).
 - UI text is a Korean/English mix; the owner communicates in Korean.
+- Codex also works on this repo: follow `AGENTS.md` (pull latest main first, protect stored data).

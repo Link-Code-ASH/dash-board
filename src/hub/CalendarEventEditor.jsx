@@ -41,7 +41,7 @@ export default function CalendarEventEditor({ data, date, onChange, onFocus, com
           </div>}
           <button type="button" title="일정 삭제" aria-label={`${date} 일정 ${index + 1} 삭제`} onClick={() => { if (!item.text.trim() || window.confirm("이 일정을 삭제할까요?")) change((items) => items.filter((entry) => entry.id !== item.id)); }}><Trash2 size={14} /></button>
         </div>
-        <CalendarNoteEditor label={`${date} 일정 ${index + 1} 내용`} value={item.text} marks={item.marks} minimumHeight={34} placeholder="일정"
+        <CalendarNoteEditor label={`${date} 일정 ${index + 1} 내용`} value={item.text} marks={item.marks} minimumHeight={compact ? 20 : 34} placeholder="일정"
           onChange={(text, marks) => update(item.id, { text, marks })} />
       </div>)}
       <button type="button" className="calendar-entry-add" onClick={add} aria-label={`${date} 일정 추가`}><Plus size={15} /><span>일정 추가</span></button>
