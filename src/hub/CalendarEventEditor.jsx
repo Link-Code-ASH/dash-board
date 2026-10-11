@@ -31,7 +31,7 @@ export default function CalendarEventEditor({ data, date, onChange, onFocus, com
   return <div className={`calendar-event-editor${compact ? " is-compact" : ""}`} ref={surface} onFocusCapture={onFocus}
     onBlurCapture={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) setExpandedTime(null); }}>
     {day.unsupported ? <p role="alert">지원하지 않는 일정 버전입니다. 자료를 초기화하지 않았습니다.</p> : <>
-      {day.items.map((item, index) => <div className="calendar-entry" key={item.id} data-entry-id={item.id}>
+      {day.items.map((item, index) => <div className={`calendar-entry${item.time ? " has-time" : ""}`} key={item.id} data-entry-id={item.id}>
         <div className="calendar-entry-tools">
           <button type="button" className="calendar-entry-time-add" title="시작 시간 설정" aria-label={`${date} 일정 ${index + 1} 시작 시간 설정`} aria-expanded={expandedTime === item.id} onClick={() => setExpandedTime(expandedTime === item.id ? null : item.id)}><Clock3 size={14} /><span>{item.time || "시간"}</span></button>
           {expandedTime === item.id && <div className="calendar-entry-time" role="group" aria-label="시작 시간 설정">

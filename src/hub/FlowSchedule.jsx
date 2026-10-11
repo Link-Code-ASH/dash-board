@@ -73,15 +73,15 @@ export default function FlowSchedule({ route, navigate }) {
               {items.map((item) => <div className="flow-desk-event" key={`${item.source?.id || "calendar"}:${item.id}`}>
                 {item.time && <time className="flow-desk-time">{item.time}</time>}
                 <div className="flow-desk-event-title">{item.source ? item.displayTitle || item.title : <CalendarText text={item.text} marks={item.marks} />}</div>
-                <div className="flow-desk-event-source"><span>{item.sourceLabel || item.source?.id}</span>{item.periodStatus && <em>{item.periodStatus}</em>}
+                {item.source && <div className="flow-desk-event-source"><span>{item.sourceLabel || item.source?.id}</span>{item.periodStatus && <em>{item.periodStatus}</em>}
                   {item.source && <button type="button" title="원본 일정 열기" aria-label={`${item.displayTitle || item.title} 원본 열기`} onClick={(event) => open(event, item)}><ExternalLink size={12} /></button>}
                   {item.source?.execute && item.commands?.map((command) => <button type="button" key={command.id} title={command.label} aria-label={`${item.title} ${command.label}`} onClick={(event) => perform(event, () => item.source.execute(item.id, command.id, command.payload))}><Check size={12} /></button>)}
-                </div>
+                </div>}
               </div>)}
-              {!items.length && !duties.length && !saved.unsupported && <span className="flow-desk-empty">No events</span>}
+              {!items.length && !duties.length && !saved.unsupported && <span className="flow-desk-empty">일정 없음</span>}
               {(saved.unsupported || saved.mismatch || saved.recovery.length > 0) && <span className="flow-desk-warning">원본 확인 필요 · Calendar</span>}
             </div>
-            <footer className={`flow-desk-score${penalty ? " is-penalty" : tried ? " is-attempt" : ""}`} aria-label={`${date} 점수 ${formatScore(score)}, ${penalty ? "Carry -2" : tried ? "루틴 시도" : "미체크"}`}>
+            <footer className={`flow-desk-score${penalty ? " is-penalty" : tried ? " is-attempt" : ""}${score > 0 ? " is-plus" : score < 0 ? " is-minus" : " is-zero"}`} aria-label={`${date} 점수 ${formatScore(score)}, ${penalty ? "Carry -2" : tried ? "루틴 시도" : "미체크"}`}>
               <span className="flow-desk-check" aria-hidden="true">{(tried || penalty) && <Check size={12} />}</span><strong>{formatScore(score)}</strong><FlagTriangleRight size={17} aria-hidden="true" />
             </footer>
           </article>;

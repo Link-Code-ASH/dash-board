@@ -1,0 +1,302 @@
+/*
+ * Flow + Planner visual refresh.
+ * Loaded last and scoped with a doubled .hub-app so it wins over the older
+ * layered rules without !important. Section surfaces become cards, content
+ * text gets stronger contrast, and editing chrome stays quiet until needed.
+ */
+#root .hub-app {
+  --fp-surface: #ffffff;
+  --fp-line: #e3e8ef;
+  --fp-line-soft: #edf1f5;
+  --fp-ink: #1d2533;
+  --fp-ink-2: #475467;
+  --fp-muted: #8a94a3;
+  --fp-accent: #3e6fb8;
+  --fp-accent-soft: #eaf1fb;
+  --fp-sun: #c2525f;
+  --fp-sat: #3e6fb8;
+  --fp-plus: #2f8a57;
+  --fp-plus-soft: #e6f4ec;
+  --fp-minus: #c24a57;
+  --fp-minus-soft: #fbeaec;
+  --fp-shadow: 0 1px 2px #1d25330a, 0 4px 14px #1d253308;
+}
+
+/* ---------- Section cards ---------- */
+html body #root .hub-app.hub-app :is(.flow-schedule, .flow-routines, .flow-markers, .flow-view .hub-memo-section) {
+  padding: 20px 22px;
+  border: 1px solid var(--fp-line);
+  border-radius: 14px;
+  background: var(--fp-surface);
+  box-shadow: var(--fp-shadow);
+  backdrop-filter: none;
+}
+html body #root .hub-app.hub-app .flow-support {
+  padding-top: 0;
+  border-top: 0;
+  gap: 20px;
+}
+html body #root .hub-app.hub-app .flow-workspace { gap: 20px; }
+html body #root .hub-app.hub-app.hub-desktop .flow-layout { gap: 20px; }
+html body #root .hub-app.hub-app .flow-view .hub-section-title { margin-bottom: 14px; }
+html body #root .hub-app.hub-app .flow-view :is(.hub-section-title h2, .hub-memo-toolbar h2) {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 17px !important;
+  font-weight: 700;
+  color: var(--fp-ink) !important;
+}
+html body #root .hub-app.hub-app .flow-view .hub-section-title h2 svg {
+  width: 18px;
+  min-width: 18px;
+  height: 18px;
+  min-height: 18px;
+  border-radius: 0;
+}
+
+/* ---------- Flow: two-week schedule ---------- */
+html body #root .hub-app.hub-app .flow-desk-navigation { padding: 0 0 12px; color: var(--fp-ink-2); font-size: 14px; font-weight: 600; }
+html body #root .hub-app.hub-app .flow-desk-navigation button { border-color: var(--fp-line); border-radius: 8px; background: #fff; color: var(--fp-ink-2); }
+html body #root .hub-app.hub-app .flow-desk-weekdays { padding: 8px 0; border-top: 0; border-bottom: 0; color: var(--fp-muted); font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
+html body #root .hub-app.hub-app .flow-desk-weekdays span:first-child { color: var(--fp-sun); }
+html body #root .hub-app.hub-app .flow-desk-weekdays span:last-child { color: var(--fp-sat); }
+html body #root .hub-app.hub-app .flow-desk-viewport { border: 1px solid var(--fp-line); border-radius: 10px; background: #fff; box-shadow: none; }
+html body #root .hub-app.hub-app .flow-desk-week h3 { padding: 7px 12px; border-bottom: 1px solid var(--fp-line-soft); background: #f7f9fb; color: var(--fp-ink-2); font-size: 12px; font-weight: 700; }
+html body #root .hub-app.hub-app .flow-desk-week + .flow-desk-week h3 { border-top: 1px solid var(--fp-line); }
+html body #root .hub-app.hub-app .flow-desk-week h3 small { color: var(--fp-muted); font-weight: 500; }
+html body #root .hub-app.hub-app .flow-desk-day { min-height: 168px; padding: 10px 8px 6px; border-right: 1px solid var(--fp-line-soft); border-bottom: 0; background: #fff; }
+html body #root .hub-app.hub-app .flow-desk-day:hover { background: #f8fafc; }
+html body #root .hub-app.hub-app .flow-desk-day.is-today,
+html body #root .hub-app.hub-app .flow-desk-day.is-selected.is-today { background: #fbfcff; }
+html body #root .hub-app.hub-app .flow-desk-day.is-selected { background: #f5f8fd; box-shadow: inset 0 0 0 2px #b9cce8; }
+html body #root .hub-app.hub-app .flow-desk-day header > button { padding: 0 0 8px; color: var(--fp-ink); font-size: 15px; font-weight: 700; }
+html body #root .hub-app.hub-app .flow-desk-grid > .flow-desk-day:nth-child(1) header time { color: var(--fp-sun); }
+html body #root .hub-app.hub-app .flow-desk-grid > .flow-desk-day:nth-child(7) header time { color: var(--fp-sat); }
+html body #root .hub-app.hub-app .flow-desk-grid > .flow-desk-day.is-today header time {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 9px;
+  border-radius: 999px;
+  background: var(--fp-accent);
+  color: #fff;
+}
+html body #root .hub-app.hub-app .flow-desk-day header i { display: none; }
+html body #root .hub-app.hub-app .flow-desk-events { display: flex; flex-direction: column; gap: 4px; padding-bottom: 8px; }
+html body #root .hub-app.hub-app .flow-desk-event {
+  padding: 5px 7px 5px 8px;
+  border: 0;
+  border-left: 3px solid #9db5d8;
+  border-radius: 6px;
+  background: var(--fp-accent-soft);
+}
+html body #root .hub-app.hub-app .flow-desk-event:last-child { border-bottom: 0; }
+html body #root .hub-app.hub-app .flow-desk-event-title { color: var(--fp-ink); font-size: 13.5px; font-weight: 500; line-height: 1.4; }
+html body #root .hub-app.hub-app .flow-desk-time { margin-bottom: 1px; color: var(--fp-accent); font-size: 12px; font-weight: 700; }
+html body #root .hub-app.hub-app .flow-desk-event-source { margin-top: 3px; }
+html body #root .hub-app.hub-app .flow-desk-duties { padding: 0 0 2px; gap: 4px; }
+html body #root .hub-app.hub-app .flow-desk-duties span { padding: 1px 7px; border-radius: 999px; background: #fff3dc; color: #946312; font-size: 11px; font-weight: 700; }
+html body #root .hub-app.hub-app .flow-desk-empty {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+html body #root .hub-app.hub-app .flow-desk-score { min-height: 26px; border-top: 1px dashed var(--fp-line); color: var(--fp-muted); }
+html body #root .hub-app.hub-app .flow-desk-score strong { font-size: 13px; font-weight: 700; }
+html body #root .hub-app.hub-app .flow-desk-score.is-zero strong { color: #c3cad4; font-weight: 500; }
+html body #root .hub-app.hub-app .flow-desk-score.is-plus strong { color: var(--fp-plus); }
+html body #root .hub-app.hub-app .flow-desk-score.is-minus strong { color: var(--fp-minus); }
+html body #root .hub-app.hub-app .flow-desk-score > svg { width: 14px; height: 14px; color: #c3cad4; }
+html body #root .hub-app.hub-app .flow-desk-check { width: 14px; height: 14px; border-color: #ccd4de; border-radius: 4px; }
+html body #root .hub-app.hub-app .flow-desk-edit { padding-top: 10px; color: var(--fp-muted); font-size: 12px; }
+html body #root .hub-app.hub-app .flow-desk-edit button { color: var(--fp-accent); font-weight: 600; }
+
+/* ---------- Flow: score + today's tasks ---------- */
+html body #root .hub-app.hub-app .flow-score { padding: 4px 0 16px; margin-bottom: 16px; border-bottom: 1px solid var(--fp-line-soft); }
+html body #root .hub-app.hub-app .flow-score-total h2 { color: var(--fp-ink-2) !important; font-weight: 600; }
+html body #root .hub-app.hub-app .flow-score-value { font-size: 34px; font-weight: 800; }
+html body #root .hub-app.hub-app .flow-score .is-neutral { color: var(--fp-ink); }
+html body #root .hub-app.hub-app .flow-score .is-positive { color: var(--fp-plus); }
+html body #root .hub-app.hub-app .flow-score .is-negative { color: var(--fp-minus); }
+html body #root .hub-app.hub-app .flow-score-metrics dt { color: var(--fp-muted); font-weight: 600; }
+html body #root .hub-app.hub-app .flow-score-carry-tools button { border-color: var(--fp-line); border-radius: 6px; background: #fff; }
+html body #root .hub-app.hub-app .flow-score-check { color: var(--fp-ink-2); font-size: 13px; }
+html body #root .hub-app.hub-app .flow-routines .hub-task-group h3 {
+  display: flex;
+  justify-content: space-between;
+  margin: 0 0 4px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+}
+html body #root .hub-app.hub-app .flow-routines .hub-task {
+  border-bottom: 1px solid var(--fp-line-soft);
+}
+html body #root .hub-app.hub-app .flow-routines .hub-task:last-child { border-bottom: 0; }
+html body #root .hub-app.hub-app .flow-routines .hub-task-copy strong { color: var(--fp-ink); font-size: 14.5px; font-weight: 500; }
+html body #root .hub-app.hub-app .flow-routines .hub-task.selected-positive .hub-task-copy strong { color: var(--fp-plus); }
+html body #root .hub-app.hub-app .flow-routines .hub-task.selected-negative .hub-task-copy strong { color: var(--fp-minus); }
+html body #root .hub-app.hub-app .flow-routines .hub-task-actions { gap: 4px; }
+html body #root .hub-app.hub-app .flow-routines .hub-task-actions button {
+  min-width: 46px;
+  height: 28px;
+  padding: 0 7px;
+  border: 1px solid var(--fp-line);
+  border-radius: 7px;
+  background: #fff;
+  color: var(--fp-ink-2);
+  box-shadow: none;
+  font-weight: 700;
+}
+html body #root .hub-app.hub-app .flow-routines .hub-task-actions button small { color: inherit; opacity: .75; font-weight: 600; }
+html body #root .hub-app.hub-app .flow-routines .hub-task-actions .yes:hover { border-color: #a9d3bb; background: var(--fp-plus-soft); color: var(--fp-plus); }
+html body #root .hub-app.hub-app .flow-routines .hub-task-actions .no:hover { border-color: #e8b7bd; background: var(--fp-minus-soft); color: var(--fp-minus); }
+html body #root .hub-app.hub-app .flow-routines .hub-task-actions .yes[aria-pressed="true"] { border-color: var(--fp-plus); background: var(--fp-plus); color: #fff; }
+html body #root .hub-app.hub-app .flow-routines .hub-task-actions .no[aria-pressed="true"] { border-color: var(--fp-minus); background: var(--fp-minus); color: #fff; }
+
+/* ---------- Flow: date markers ---------- */
+html body #root .hub-app.hub-app.hub-desktop .flow-markers { padding: 20px 18px 12px; background: var(--fp-surface); }
+html body #root .hub-app.hub-app .flow-markers .date-marker { border-bottom-color: var(--fp-line-soft) !important; }
+html body #root .hub-app.hub-app .flow-markers .date-marker input { color: var(--fp-ink) !important; font-weight: 500; }
+html body #root .hub-app.hub-app .flow-markers .date-marker:has(.date-marker-dday.empty) { opacity: .5; }
+html body #root .hub-app.hub-app .flow-markers .date-marker:has(.date-marker-dday.empty):is(:hover, :focus-within) { opacity: 1; }
+html body #root .hub-app.hub-app .flow-markers .date-marker-dday {
+  border-radius: 999px !important;
+  background: var(--fp-accent-soft) !important;
+  color: var(--fp-accent) !important;
+  box-shadow: none !important;
+  font-size: 12.5px !important;
+  font-weight: 800 !important;
+}
+html body #root .hub-app.hub-app .flow-markers .date-marker-dday.empty { background: transparent !important; color: #c3cad4 !important; }
+
+/* ---------- Flow: memo desk ---------- */
+html body #root .hub-app.hub-app.hub-desktop { --hub-memo-height: 260px; }
+html body #root .hub-app.hub-app .flow-view .hub-memo-grid { gap: 14px; }
+@container hub-content (min-width: 1000px) {
+  html body #root .hub-app.hub-app .flow-view .hub-memo-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+html body #root .hub-app.hub-app .flow-view .hub-memo-cell {
+  padding: 14px 14px 12px;
+  border: 1px solid var(--fp-line);
+  border-top: 3px solid var(--memo-accent);
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: none;
+}
+html body #root .hub-app.hub-app .flow-view .hub-memo-cell .memo-title-input { color: var(--fp-ink); font-weight: 700; }
+html body #root .hub-app.hub-app .flow-view .hub-memo-cell .memo-large-textarea { color: var(--fp-ink); }
+html body #root .hub-app.hub-app .flow-view .hub-memo-group-title { color: var(--fp-ink); font-weight: 700; }
+
+/* ---------- Planner: routine editors ---------- */
+html body #root .hub-app.hub-app .routine-editor-panel {
+  padding: 20px 22px;
+  border: 1px solid var(--fp-line);
+  border-radius: 14px;
+  background: var(--fp-surface);
+  box-shadow: var(--fp-shadow);
+}
+html body #root .hub-app.hub-app .routine-presets-workspace,
+html body #root .hub-app.hub-app .routine-desktop-workspace { gap: 20px; }
+
+/* ---------- Planner: month calendar ---------- */
+html body #root .hub-app.hub-app .planner-calendar {
+  padding: 18px 20px 20px;
+  border: 1px solid var(--fp-line);
+  border-radius: 14px;
+  background: var(--fp-surface);
+  box-shadow: var(--fp-shadow);
+}
+html body #root .hub-app.hub-app .planner-month-toolbar h2 { color: var(--fp-ink); font-size: 20px; font-weight: 800; }
+html body #root .hub-app.hub-app.hub-desktop .planner-weekdays { border: 0; background: transparent; }
+html body #root .hub-app.hub-app.hub-desktop .planner-weekdays span { color: var(--fp-muted); font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
+html body #root .hub-app.hub-app.hub-desktop .planner-weekdays span:nth-child(1) { color: var(--fp-sun); }
+html body #root .hub-app.hub-app.hub-desktop .planner-weekdays span:nth-child(7) { color: var(--fp-sat); }
+html body #root .hub-app.hub-app.hub-desktop .planner-month-grid { border-color: var(--fp-line); border-radius: 10px; background: var(--fp-line-soft); }
+html body #root .hub-app.hub-app.hub-desktop .planner-date-cell { min-height: 128px; padding: 8px; background: #fff; }
+html body #root .hub-app.hub-app.hub-desktop .planner-date-blank { background: #f8fafb; }
+html body #root .hub-app.hub-app.hub-desktop .planner-date-cell.is-today { background: #fbfcff; }
+html body #root .hub-app.hub-app.hub-desktop .planner-date-cell.is-selected,
+html body #root .hub-app.hub-app.hub-desktop .planner-date-cell.is-selected.is-today { background: #f5f8fd; box-shadow: inset 0 0 0 2px #b9cce8; }
+html body #root .hub-app.hub-app.hub-desktop .planner-date-heading { min-height: 28px; margin-bottom: 4px; flex-wrap: nowrap; }
+html body #root .hub-app.hub-app.hub-desktop .planner-date-number { min-width: 28px; height: 28px; color: var(--fp-ink); font-size: 14px; font-weight: 700; border-radius: 999px; }
+html body #root .hub-app.hub-app.hub-desktop .planner-month-grid > :nth-child(7n + 1) .planner-date-number { color: var(--fp-sun); }
+html body #root .hub-app.hub-app.hub-desktop .planner-month-grid > :nth-child(7n) .planner-date-number { color: var(--fp-sat); }
+html body #root .hub-app.hub-app.hub-desktop .planner-date-cell.is-today .planner-date-number { background: var(--fp-accent); color: #fff; }
+html body #root .hub-app.hub-app.hub-desktop .planner-today-dot { display: none; }
+
+/* Duty flags (방/야/동) as small toggle chips. */
+html body #root .hub-app.hub-app.hub-desktop .planner-duty-checks { gap: 2px; flex-wrap: nowrap; }
+html body #root .hub-app.hub-app.hub-desktop .planner-duty-checks label {
+  position: relative;
+  min-height: 22px;
+  padding: 0 6px;
+  border-radius: 999px;
+  color: #c3cad4;
+  font-size: 11px;
+  font-weight: 700;
+}
+html body #root .hub-app.hub-app.hub-desktop .planner-duty-checks label:hover { background: #f1f4f8; color: var(--fp-ink-2); }
+html body #root .hub-app.hub-app.hub-desktop .planner-duty-checks label.is-checked { background: #fff3dc; color: #946312; }
+html body #root .hub-app.hub-app.hub-desktop .planner-duty-checks label:focus-within { outline: 2px solid var(--fp-accent); outline-offset: 1px; }
+html body #root .hub-app.hub-app.hub-desktop .planner-duty-checks input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+/* Events inside month cells read as chips; edit tools appear on hover/focus. */
+html body #root .hub-app.hub-app.hub-desktop .planner-date-cell .calendar-entry {
+  margin-bottom: 4px;
+  padding: 2px 6px 2px 8px;
+  border: 0;
+  border-left: 3px solid #9db5d8;
+  border-radius: 6px;
+  background: var(--fp-accent-soft);
+}
+html body #root .hub-app.hub-app.hub-desktop .planner-date-cell .calendar-entry .calendar-text-surface :is(textarea, .calendar-text-mirror) {
+  min-height: 0 !important;
+  padding: 2px 0 !important;
+  color: var(--fp-ink);
+  font-size: 13.5px !important;
+  font-weight: 500;
+  line-height: 1.4 !important;
+}
+html body #root .hub-app.hub-app.hub-desktop .planner-date-cell .calendar-entry-tools { min-height: 0; }
+html body #root .hub-app.hub-app.hub-desktop .planner-date-cell .calendar-entry-tools button { min-width: 22px; min-height: 22px; padding: 2px; }
+html body #root .hub-app.hub-app.hub-desktop .planner-date-cell .calendar-entry.has-time .calendar-entry-time-add span { color: var(--fp-accent); font-weight: 700; }
+html body #root .hub-app.hub-app.hub-desktop .planner-date-cell .calendar-entry-add { min-height: 26px; margin-top: 2px; color: var(--fp-muted); font-size: 12px; }
+@media (hover: hover) {
+  html body #root .hub-app.hub-app.hub-desktop .planner-date-cell .calendar-entry:not(.has-time):not(:hover):not(:focus-within) .calendar-entry-tools { display: none; }
+  html body #root .hub-app.hub-app.hub-desktop .planner-date-cell .calendar-entry.has-time:not(:hover):not(:focus-within) .calendar-entry-tools > :not(.calendar-entry-time-add) { visibility: hidden; }
+  html body #root .hub-app.hub-app.hub-desktop .planner-date-cell .calendar-entry.has-time:not(:hover):not(:focus-within) .calendar-entry-time-add svg { display: none; }
+  html body #root .hub-app.hub-app.hub-desktop .planner-date-cell:not(:hover):not(:focus-within) .calendar-entry-add { opacity: 0; }
+  html body #root .hub-app.hub-app.hub-desktop .planner-date-cell:not(:hover):not(:focus-within) .planner-duty-checks label:not(.is-checked) { opacity: 0; }
+}
+
+/* ---------- Mobile ---------- */
+html body #root .hub-app.hub-app.hub-mobile :is(.flow-schedule, .flow-routines, .flow-markers, .flow-view .hub-memo-section, .routine-editor-panel, .planner-calendar) {
+  padding: 16px 14px;
+  border-radius: 12px;
+}
+html body #root .hub-app.hub-app.hub-mobile .flow-desk-day { min-height: 0; padding: 10px; border-bottom: 1px solid var(--fp-line-soft); border-right: 0; }
+html body #root .hub-app.hub-app.hub-mobile .flow-desk-day header time { font-size: 16px; }
+html body #root .hub-app.hub-app.hub-mobile .flow-desk-day.is-today header time { padding: 1px 10px; }
+html body #root .hub-app.hub-app.hub-mobile .flow-desk-event-title { font-size: 15px; }
+html body #root .hub-app.hub-app.hub-mobile .flow-desk-grid > .flow-desk-day:nth-child(1) header small { color: var(--fp-sun); }
+html body #root .hub-app.hub-app.hub-mobile .flow-desk-grid > .flow-desk-day:nth-child(7) header small { color: var(--fp-sat); }
+html body #root .hub-app.hub-app.hub-mobile .flow-desk-day:has(.flow-desk-empty) .flow-desk-events::before { content: "—"; color: #c3cad4; }
+html body #root .hub-app.hub-app.hub-desktop .planner-date-cell .calendar-entry :is(.calendar-text-surface, textarea, .calendar-text-mirror) {
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
