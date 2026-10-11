@@ -1,4 +1,15 @@
 import Papa from "papaparse";
+import { HEADERS } from "./model.js";
+
+const templateUrl = new URL("./templates/japanese-template.xlsx", import.meta.url).href;
+const exampleRows = [
+  ["食べる", "먹다", "たべる", "食 먹을 식", "朝ご飯を食べます。", "あさごはんをたべます。", "아침밥을 먹습니다.", "동사", "N5", "음식;일상"],
+  ["猫", "고양이", "ねこ", "猫 고양이 묘", "猫が窓のそばにいます。", "ねこがまどのそばにいます。", "고양이가 창문 옆에 있습니다.", "명사", "N5", "동물;일상"],
+  ["勉強", "공부", "べんきょう", "勉 힘쓸 면\n強 강할 강", "図書館で日本語を勉強します。", "としょかんでにほんごをべんきょうします。", "도서관에서 일본어를 공부합니다.", "명사;する동사", "N5", "공부;일상"],
+];
+const toCsv = (rows) => `\uFEFF${Papa.unparse(rows, { newline: "\r\n" })}\r\n`;
+export const templateCsv = toCsv([HEADERS]);
+export const exampleCsv = toCsv([HEADERS, ...exampleRows]);
 
 export function parseCsv(text) {
   const result = Papa.parse(text.replace(/^\uFEFF/, ""), { delimiter: ",", skipEmptyLines: false });
@@ -33,6 +44,17 @@ export function download(name, text, type = "text/csv;charset=utf-8") {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-export function downloadTemplate() {
-  download("lingo-japanese-template.csv", '\uFEFF일본어,한국어 뜻,읽는 법,예문,예문 해석\r\n食べる,먹다,たべる,朝ご飯を食べます。,아침밥을 먹습니다.\r\n猫,고양이,ねこ,,\r\n');
+export function downloadTemplate(format = "xlsx") {
+  if (format === "csv") {
+    download("lingo-japanese-template.csv", templateCsv);
+    return;
+  }
+  const link = document.createElement("a");
+  link.href = templateUrl;
+  link.download = "lingo-japanese-template.xlsx";
+  link.click();
+}
+
+export function downloadExample() {
+  download("lingo-japanese-example.csv", exampleCsv);
 }

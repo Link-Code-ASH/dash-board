@@ -19,6 +19,7 @@ import { modules } from "./hub/registry.jsx";
 import { navigationStrokeWidth } from "./hub/icons.jsx";
 import { appBase, installedModule, useHubRoute } from "./hub/routing.js";
 import LingoProvider from "./lingo/LingoProvider.jsx";
+import EduProvider from "./edu/EduProvider.jsx";
 
 const SettingsView = React.lazy(() => import("./hub/views/Settings.jsx"));
 
@@ -245,7 +246,9 @@ export default function App() {
   return (
     <DashboardProvider date={route.date} setDate={setDate}>
       <LingoProvider>
-        <HubShell route={route} navigate={navigate} />
+        <EduProvider>
+          <HubShell route={route} navigate={navigate} />
+        </EduProvider>
       </LingoProvider>
     </DashboardProvider>
   );

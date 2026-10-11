@@ -59,7 +59,7 @@ html body #root .hub-app .stock-page .stock-section-heading { margin-bottom: 18p
 html body #root .hub-app .stock-page .stock-section-heading>div:first-child { min-width: 0; }
 html body #root .hub-app .stock-page .stock-panel { min-width: 0; margin-bottom: 22px; padding: 22px 24px; border: 1px solid var(--stock-line); border-radius: 7px; background: var(--stock-paper); box-shadow: inset 0 1px 0 #fff, 0 3px 8px #3b463c0c; }
 html body #root .hub-app .stock-page .stock-panel h3 { font-size: 16px; font-weight: 600; margin: 0 0 18px; }
-html body #root .hub-app .stock-page .stock-panel .stock-section-heading h3 { margin: 0; }
+html body #root .hub-app .stock-page .stock-panel .stock-section-heading h3 { display: flex; align-items: center; gap: 10px; margin: 0; }
 html body #root .hub-app .stock-page .stock-account-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 22px; max-width: 1400px; align-items: start; }
 html body #root .hub-app .stock-page .stock-account { min-width: 0; }
 html body #root .hub-app .stock-page .stock-account.account-a { border-top: 2px solid #91a3b3; }
@@ -67,6 +67,9 @@ html body #root .hub-app .stock-page .stock-account.account-y { border-top: 2px 
 html body #root .hub-app .stock-page .stock-account-header { display: flex; align-items: center; gap: 12px; min-height: 32px; margin-bottom: 20px; padding-bottom: 14px; border-bottom: 1px solid #dfe3de; }
 html body #root .hub-app .stock-page .stock-account-header h3 { display: flex; align-items: center; gap: 10px; margin: 0; }
 html body #root .hub-app .stock-page .stock-account-header .stock-badge { margin-left: auto; }
+html body #root .hub-app .stock-page .stock-ibs-account { container: stock-ibs-account / inline-size; }
+html body #root .hub-app .stock-page .stock-ibs-account .stock-account-header .stock-badge { margin-left: 0; }
+html body #root .hub-app .stock-page .stock-ibs-account .stock-account-header>button { display: flex; align-items: center; justify-content: center; gap: 6px; min-height: 36px; margin-left: auto; padding: 6px 10px; border: 1px solid #d1d8dc; background: #f7f9fa; color: #53657a; box-shadow: inset 0 1px 0 #fff, 0 1px 2px #34425508; }
 html body #root .hub-app .stock-page .stock-account-label { display: inline-flex; align-items: center; justify-content: center; min-width: 35px; height: 27px; padding: 0 10px; border: 1px solid #c5d0d8; border-radius: 3px; background: #e7edf1; color: #5c7385; font-size: 15px; font-weight: 650; box-shadow: inset 0 1px 0 #ffffffb3; }
 html body #root .hub-app .stock-page .account-y .stock-account-label { border-color: #dac8ce; background: #f0e7ea; color: #8b6e77; }
 html body #root .hub-app .stock-page .stock-badge { padding: 3px 7px; border: 1px solid #d8dfd7; border-radius: 3px; background: #edf1eb; color: #788473; font-size: 11px; font-weight: 500; white-space: nowrap; }
@@ -77,6 +80,22 @@ html body #root .hub-app .stock-page .stock-field>span { display: block; margin-
 html body #root .hub-app .stock-page .stock-field>div { display: flex; align-items: center; gap: 5px; padding: 5px 9px; border: 1px solid #d6dcd4; border-radius: 3px; background: linear-gradient(#f1f3ee,#fafbf7); box-shadow: inset 0 1px 3px #3b463d0b, 0 1px 0 #ffffffb3; }
 html body #root .hub-app .stock-page .stock-field input { width: 100%; min-width: 0; min-height: 32px; padding: 1px 0 !important; border: 0 !important; border-radius: 0 !important; background: transparent !important; color: var(--stock-ink) !important; box-shadow: none !important; font-size: 25px !important; line-height: 1.3 !important; font-weight: 500; }
 html body #root .hub-app .stock-page .stock-field small { color: #8a928b; font-size: 11px; white-space: nowrap; }
+html body #root .hub-app .stock-page .stock-valuation { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-top: 20px; padding-top: 15px; border-top: 1px solid var(--stock-line); }
+html body #root .hub-app .stock-page .stock-valuation>span { margin: 0; }
+html body #root .hub-app .stock-page .stock-valuation>span>small { display: block; margin-top: 4px; font-weight: 400; }
+html body #root .hub-app .stock-page .stock-valuation>div { flex-direction: row; align-items: baseline; padding: 0; border: 0; background: none; box-shadow: none; }
+html body #root .hub-app .stock-page .stock-valuation output { font-size: 24px; font-weight: 500; line-height: 1.5; overflow-wrap: anywhere; }
+html body #root .hub-app .stock-page .stock-share-picker { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; padding-top: 16px; border-top: 1px solid var(--stock-line); }
+html body #root .hub-app .stock-page .stock-share-picker>span { color: var(--stock-muted); font-size: 12px; }
+html body #root .hub-app .stock-page .stock-share-picker>div { display: grid; grid-template-columns: 44px minmax(90px,1fr) 44px; align-items: stretch; width: 210px; margin-left: auto; border: 1px solid #d0d5dc; border-radius: 5px; background: #f3f4f6; box-shadow: inset 0 1px 0 #fff, 0 2px 4px #303a3b0a; }
+html body #root .hub-app .stock-page .stock-share-picker button { display: flex; align-items: center; justify-content: center; min-height: 44px; padding: 0; border: 0; background: transparent; color: #4f5865; }
+html body #root .hub-app .stock-page .stock-share-picker button:hover:not(:disabled) { background: #e7eaf0; color: #283344; }
+html body #root .hub-app .stock-page .stock-share-picker button:disabled { opacity: .4; }
+html body #root .hub-app .stock-page .stock-share-value { position: relative; min-width: 0; border-inline: 1px solid #d9dde3; background: #fcfcfd; }
+html body #root .hub-app .stock-page .stock-share-value>svg { position: absolute; right: 7px; top: 50%; margin-top: -7px; color: #697382; pointer-events: none; }
+html body #root .hub-app .stock-page .stock-share-picker select { appearance: none; color-scheme: light; width: 100%; min-width: 0; min-height: 44px; padding: 8px 22px !important; border: 0 !important; border-radius: 0; background: transparent !important; box-shadow: none !important; font-size: 16px; text-align: center; color: #303b49 !important; }
+html body #root .hub-app .stock-page .stock-share-picker select option { background: #fff; color: #303b49; }
+html body #root .hub-app .stock-page .stock-share-picker :is(button,select):focus-visible { outline: 2px solid #8996a8; outline-offset: -2px; }
 html body #root .hub-app .stock-page .stock-ratio { margin: 20px 0 22px; color: var(--stock-muted); font-size: 12px; }
 html body #root .hub-app .stock-page .stock-ratio>span { display: inline-block; margin-right: 9px; }
 html body #root .hub-app .stock-page .stock-ratio>strong { color: #58685d; font-size: 19px; font-weight: 500; }
@@ -87,7 +106,9 @@ html body #root .hub-app .stock-page .account-a .stock-ratio i { background: #91
 html body #root .hub-app .stock-page .account-y .stock-ratio i { background: #b59ba3; }
 html body #root .hub-app .stock-page .stock-order-columns { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 26px; }
 html body #root .hub-app .stock-page .stock-order-group { min-width: 0; }
-html body #root .hub-app .stock-page .stock-order-group h4 { display: flex; align-items: center; gap: 6px; margin: 0 0 7px; color: #64766a !important; font-size: 12px; font-weight: 500; }
+html body #root .hub-app .stock-page .stock-order-group h4 { display: flex; align-items: center; gap: 6px; margin: 0 0 7px; color: #4d6983 !important; font-size: 14px; font-weight: 500 !important; line-height: 22px; }
+html body #root .hub-app .stock-page .stock-order-group.sell h4 { color: #88685a !important; }
+html body #root .hub-app .stock-page .stock-order-group h4 small { margin-left: auto; color: #7a8690; font-size: 12px; font-weight: 400; }
 html body #root .hub-app .stock-page .stock-order-group h4 span { width: 5px; height: 5px; border-radius: 1px; background: #90a5b6; }
 html body #root .hub-app .stock-page .stock-order-group.sell h4 span { background: #bca491; }
 html body #root .hub-app .stock-page .stock-order { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 5px; padding: 11px 0; border-top: 1px solid #e2e6e0; box-shadow: inset 0 1px 0 #ffffff94; }
@@ -96,6 +117,8 @@ html body #root .hub-app .stock-page .stock-order>div:last-child { margin-left: 
 html body #root .hub-app .stock-page .stock-order strong { font-size: 24px; font-weight: 500; line-height: 1.3; color: var(--stock-ink); white-space: nowrap; }
 html body #root .hub-app .stock-page .stock-order small { color: #8a958c; font-size: 10px; line-height: 1.4; }
 html body #root .hub-app .stock-page .stock-order strong small { margin-left: 2px; color: #8a928b; font-size: 12px; }
+html body #root .hub-app .stock-page .stock-ibs-account .stock-order { align-items: center; flex-wrap: nowrap; }
+html body #root .hub-app .stock-page .stock-no-orders { display: flex; align-items: center; min-height: 64px; margin: 0; border-top: 1px solid #e2e6e0; color: #7a8690; font-size: 13px; }
 html body #root .hub-app .stock-page .stock-empty { padding: 30px 12px; color: var(--stock-muted); font-size: 13px; text-align: center; }
 html body #root .hub-app .stock-page .stock-warning { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 14px; margin-bottom: 18px; border: 1px solid #dfd8c3; border-radius: 4px; background: linear-gradient(#f8f6ee,#f1efdf); color: #8b7b56; font-size: 12px; line-height: 1.7; word-break: keep-all; }
 html body #root .hub-app .stock-page :is(.stock-hint,.stock-footnote) { color: var(--stock-muted); font-size: 12px; line-height: 1.8; word-break: keep-all; }
@@ -141,6 +164,8 @@ html body #root .hub-app .stock-page .stock-row-label.buy { color: #728596; }
 html body #root .hub-app .stock-page .stock-row-label.sell { color: #a48b76; }
 html body #root .hub-app .stock-page .stock-rule-text { display: flex; flex-direction: column; gap: 5px; min-height: 48px; }
 html body #root .hub-app .stock-page .stock-rule-text strong { color: var(--stock-ink); font-size: 15px; font-weight: 500; }
+html body #root .hub-app .stock-page .stock-rule-order { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 6px; }
+html body #root .hub-app .stock-page .stock-rule-order b { color: var(--stock-ink); font-size: 15px; font-weight: 600; white-space: nowrap; }
 html body #root .hub-app .stock-page .stock-rule-text>span { color: #687564; font-size: 13px; line-height: 1.6; }
 html body #root .hub-app .stock-page .stock-rule-text>small { color: var(--stock-muted); font-size: 11px; line-height: 1.6; }
 html body #root .hub-app .stock-page .stock-cell-empty { display: block; color: #b0b8ad; font-size: 13px; padding: 8px 0; }
@@ -156,21 +181,67 @@ html body #root .hub-app .stock-page .stock-rule-details[open]>label { margin-to
 html body #root .hub-app .stock-page .stock-rule-details p { margin: 6px 0 0; font-size: 11px; line-height: 1.7; }
 html body #root .hub-app .stock-page .stock-stage-edit { display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px; }
 html body #root .hub-app .stock-page .stock-stage-edit button,html body #root .hub-app .stock-page button.stock-row-delete { min-height: 28px; padding: 4px 5px; color: #ab8a7d; font-size: 11px; }
+html body #root .hub-app .stock-page .stock-stage-head[draggable=true] { cursor: grab; }
+html body #root .hub-app .stock-page .stock-stage-head[draggable=true]:active { cursor: grabbing; }
+html body #root .hub-app .stock-page .stock-stage-move { display: flex; align-items: center; gap: 6px; margin: 8px 0; }
+html body #root .hub-app .stock-page .stock-stage-move>svg { margin-right: auto; opacity: .7; }
+html body #root .hub-app .stock-page .stock-stage-move button { display: flex; align-items: center; justify-content: center; width: 32px; height: 30px; padding: 0; border: 1px solid #cbd4c4; background: #f5f8f1; }
+html body #root .hub-app .stock-page .stock-stage-move button:disabled { opacity: .35; cursor: default; }
 html body #root .hub-app .stock-page .stock-row-delete { margin-top: 8px; }
 html body #root .hub-app .stock-page .stock-edit-footer { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 10px; padding: 16px 22px; border-top: 1px solid var(--stock-line); background: linear-gradient(#eef2e8,#e7edde); box-shadow: inset 0 1px 0 #ffffffa3; }
 html body #root .hub-app .stock-page .stock-edit-footer>:is(p,span) { flex: 1; margin: 0; color: var(--stock-muted); font-size: 12px; }
-html body #root .hub-app .stock-page .stock-draft-preview { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 14px; padding: 18px 22px; border-top: 1px solid var(--stock-line); background: #eef2e8; }
+html body #root .hub-app .stock-page .stock-draft-preview { display: grid; grid-template-columns: minmax(0,1fr); gap: 14px; padding: 18px 22px; border-top: 1px solid var(--stock-line); background: #eef2e8; }
 html body #root .hub-app .stock-page .stock-draft-preview>div { min-width: 0; padding: 12px; border: 1px solid #d4ddcc; border-radius: 4px; background: var(--stock-paper); font-size: 13px; line-height: 1.7; box-shadow: inset 0 1px 0 #fff, 0 1px 3px #38433908; }
 html body #root .hub-app .stock-page .stock-draft-preview>div>strong { font-size: 13px; font-weight: 600; }
 html body #root .hub-app .stock-page .stock-draft-preview>.account-a { border-left: 2px solid #91a3b3; }
 html body #root .hub-app .stock-page .stock-draft-preview>.account-y { border-left: 2px solid #b59ba3; }
 html body #root .hub-app .stock-page .stock-draft-preview>div>span { display: block; margin-top: 5px; color: #6d7b63; overflow-wrap: anywhere; word-break: keep-all; line-height: 1.8; }
-html body #root .hub-app .stock-page .stock-vr-settings { max-width: 1400px; }
-html body #root .hub-app .stock-page .stock-vr-settings .stock-inputs { max-width: 900px; }
-html body #root .hub-app .stock-page .stock-vr-settings .stock-ratio { margin: 0; }
-html body #root .hub-app .stock-page .stock-vr-settings .stock-ratio>span { display: block; margin-bottom: 8px; }
-html body #root .hub-app .stock-page .stock-vr-settings .stock-ratio>strong { font-size: 23px; }
+html body #root .hub-app .stock-page .stock-strategy-dialog { width: min(1600px,calc(100vw - 48px)); max-width: none; max-height: calc(100dvh - 48px); margin: auto; padding: 0; border: 1px solid #cbd3d8; border-radius: 8px; background: #f7f8f5; color: var(--stock-ink); box-shadow: inset 0 1px 0 #fff, 0 16px 60px #15202a33; }
+html body #root .hub-app .stock-page .stock-strategy-dialog[open] { display: flex; flex-direction: column; }
+html body #root .hub-app .stock-page .stock-strategy-dialog::backdrop { background: #202a365e; backdrop-filter: blur(3px); }
+html body #root .hub-app .stock-page .stock-strategy-dialog-header { display: flex; align-items: center; justify-content: space-between; flex: 0 0 auto; gap: 16px; padding: 18px 24px; border-bottom: 1px solid var(--stock-line); background: linear-gradient(#fafbf9,#f0f3f1); }
+html body #root .hub-app .stock-page .stock-strategy-dialog-header h2 { font-size: 20px !important; line-height: 28px; }
+html body #root .hub-app .stock-page .stock-strategy-dialog-header span { display: block; margin-top: 4px; color: #728079; font-size: 12px; line-height: 18px; }
+html body #root .hub-app .stock-page .stock-strategy-dialog-header>button { display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; padding: 0; border: 1px solid #d4dbd7; background: #f9faf8; }
+html body #root .hub-app .stock-page .stock-strategy-dialog-tabs { display: flex; align-items: center; justify-content: space-between; flex: 0 0 auto; gap: 16px; padding: 14px 24px 0; }
+html body #root .hub-app .stock-page .stock-strategy-dialog-body { min-height: 0; margin-top: 16px; overflow: auto; overscroll-behavior: contain; scrollbar-width: thin; }
+html body #root .hub-app .stock-page .stock-strategy-dialog .stock-matrix-panel { margin: 0; border: 0; border-radius: 0; padding-top: 0; overflow: visible; background: transparent; box-shadow: none; }
+html body #root .hub-app .stock-page .stock-strategy-dialog .stock-edit-footer { position: sticky; bottom: 0; z-index: 4; }
+html body #root .hub-app .stock-page .stock-vr-settings { max-width: 1400px; container: stock-vr-settings / inline-size; }
+html body #root .hub-app .stock-page .stock-vr-setting-groups { display: grid; grid-template-columns: minmax(0,2fr) minmax(0,1fr) minmax(0,2fr); gap: 24px; }
+html body #root .hub-app .stock-page .stock-vr-setting-groups>div { min-width: 0; }
+html body #root .hub-app .stock-page .stock-vr-setting-groups>div+div { padding-left: 24px; border-left: 1px solid var(--stock-line); }
+html body #root .hub-app .stock-page .stock-vr-setting-groups h4 { margin: 0 0 12px; font-size: 14px; font-weight: 600 !important; line-height: 20px; }
+html body #root .hub-app .stock-page .stock-vr-setting-fields { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; }
+html body #root .hub-app .stock-page .stock-vr-limit .stock-vr-setting-fields { grid-template-columns: minmax(0,1fr); }
+html body #root .hub-app .stock-page .stock-vr-setting-fields :is(.stock-field,.stock-setting-value)>span { display: block; margin: 0 0 6px; color: #69757b; font-size: 12px; line-height: 20px; }
+html body #root .hub-app .stock-page .stock-vr-setting-fields :is(.stock-field,.stock-setting-value)>div { display: flex; flex-direction: row; align-items: center; gap: 6px; height: 46px; padding: 0 12px; border: 1px solid #d1d8dc; border-radius: 4px; background: linear-gradient(#f2f4f5,#fcfcfb); box-shadow: inset 0 1px 2px #34425508, 0 1px 0 #fff; }
+html body #root .hub-app .stock-page .stock-vr-setting-fields .stock-setting-value>div { border-color: transparent; border-bottom-color: #dce1e3; background: transparent; box-shadow: none; }
+html body #root .hub-app .stock-page .stock-vr-setting-fields :is(input,strong) { flex: 1; min-width: 0; min-height: 0; margin: 0; padding: 0 !important; color: #344255; font-size: 22px !important; font-weight: 500 !important; line-height: 30px !important; text-align: center; }
+html body #root .hub-app .stock-page .stock-vr-setting-fields small { flex: 0 0 14px; color: #75828d; font-size: 13px; line-height: 30px; }
+html body #root .hub-app .stock-page .stock-vr-setting-fields .stock-field>div:focus-within { border-color: #8899ab; box-shadow: 0 0 0 2px #8899ab1a; }
+html body #root .hub-app .stock-page .stock-vr-settings .stock-edit-footer { margin-top: 18px; padding: 14px 0 0; background: transparent; box-shadow: none; }
+html body #root .hub-app .stock-page .stock-split-meter { display: flex; gap: 2px; height: 4px; margin-top: 9px; border-radius: 2px; overflow: hidden; }
+html body #root .hub-app .stock-page .stock-split-meter i { background: #c9cfd6; }
+html body #root .hub-app .stock-page .stock-split-meter i+i { background: #8e9fb5; }
 html body #root .hub-app .stock-page .stock-vr-account { container: stock-vr-account / inline-size; }
+html body #root .hub-app .stock-page .stock-vr-cycle { --stock-phase-ink: #416b53; --stock-phase-tint: #dae8dd; display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: center; gap: 24px; max-width: 1400px; margin-bottom: 22px; padding: 20px 24px; border: 1px solid #c6d5c9; border-radius: 6px; background: linear-gradient(135deg,#f3f6f2,#e8efe9); box-shadow: inset 0 1px 0 #ffffffa6, 0 2px 4px #3b463c08; }
+html body #root .hub-app .stock-page .stock-vr-cycle.is-rebalance { --stock-phase-ink: #496382; --stock-phase-tint: #dee6f1; border-color: #cbd5e1; background: linear-gradient(135deg,#f4f6f8,#e9eef4); }
+html body #root .hub-app .stock-page .stock-vr-cycle-title { display: grid; gap: 10px; min-width: 0; }
+html body #root .hub-app .stock-page .stock-vr-cycle-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
+html body #root .hub-app .stock-page .stock-vr-phase { padding: 4px 8px; border-radius: 3px; background: var(--stock-phase-tint); color: var(--stock-phase-ink); font-size: 12px; font-weight: 600 !important; line-height: 18px; white-space: nowrap; }
+html body #root .hub-app .stock-page .stock-vr-period { color: #637183; font-size: 13px; line-height: 20px; }
+html body #root .hub-app .stock-page .stock-vr-cycle-title>h2 { display: flex; align-items: center; gap: 10px; margin: 0; font-size: 23px !important; font-weight: 600 !important; line-height: 1.45; word-break: keep-all; }
+html body #root .hub-app .stock-page .stock-vr-cycle-title>h2>svg { flex: 0 0 auto; color: var(--stock-phase-ink); }
+html body #root .hub-app .stock-page .stock-vr-cycle-title>small { color: #6b7683; font-size: 13px; line-height: 20px; }
+html body #root .hub-app .stock-page .stock-vr-week-controls { display: grid; grid-template-columns: 36px 152px 36px 44px; align-items: center; gap: 4px; padding: 4px; border: 1px solid #cbd1d9; border-radius: 6px; background: #f9fafbc9; box-shadow: inset 0 1px 0 #fff, 0 2px 5px #3643570a; }
+html body #root .hub-app .stock-page .stock-vr-week-controls button { display: flex; align-items: center; justify-content: center; width: 100%; min-width: 0; height: 44px; padding: 0; color: #48576b; }
+html body #root .hub-app .stock-page .stock-vr-week-controls button:hover { background: #e8edf3; }
+html body #root .hub-app .stock-page .stock-vr-date { position: relative; display: grid; place-items: center; min-width: 0; height: 44px; padding: 0 22px; border: 1px solid #d3dbe4; border-radius: 4px; background: #fff; box-shadow: inset 0 1px 2px #33425305; cursor: pointer; }
+html body #root .hub-app .stock-page .stock-vr-date>time { color: #344255; font-size: 14px; font-weight: 500 !important; line-height: 20px; white-space: nowrap; }
+html body #root .hub-app .stock-page .stock-vr-date>svg { position: absolute; right: 7px; color: #697c94; pointer-events: none; }
+html body #root .hub-app .stock-page .stock-vr-date>input { position: absolute; inset: 0; color-scheme: light !important; width: 100%; height: 100%; min-width: 0; margin: 0; padding: 0 !important; border: 0 !important; background: transparent !important; box-shadow: none !important; opacity: 0; cursor: pointer; }
+html body #root .hub-app .stock-page .stock-vr-date:has(input:focus-visible) { outline: 2px solid #8996a8; outline-offset: 2px; }
 html body #root .hub-app .stock-page .stock-vr-account>.stock-inputs { grid-template-columns: minmax(0,1fr); }
 html body #root .hub-app .stock-page .stock-vr-conflict { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 14px; margin: 14px 0; }
 html body #root .hub-app .stock-page .stock-vr-conflict>p { grid-column: 1/-1; margin: 0; color: var(--stock-muted); font-size: 12px; }
@@ -178,15 +249,28 @@ html body #root .hub-app .stock-page .stock-vr-conflict button { display: flex; 
 html body #root .hub-app .stock-page .stock-vr-conflict button.account-a { border-left: 2px solid #91a3b3; }
 html body #root .hub-app .stock-page .stock-vr-conflict button.account-y { border-left: 2px solid #b59ba3; }
 html body #root .hub-app .stock-page .stock-vr-result { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 18px; margin: 22px 0; padding-top: 18px; border-top: 1px solid #dfe6d8; }
-html body #root .hub-app .stock-page .stock-vr-answer { margin: 8px 0 10px; color: var(--stock-ink); font-size: 25px; font-weight: 500; line-height: 1.4; overflow-wrap: anywhere; }
+html body #root .hub-app .stock-page .stock-vr-answer { display: flex; align-items: baseline; flex-wrap: wrap; margin: 8px 0 10px; color: var(--stock-ink); font-size: 25px; font-weight: 500; line-height: 1.4; overflow-wrap: anywhere; }
 html body #root .hub-app .stock-page .stock-vr-answer small { display: inline-block; margin-left: 8px; font-size: 12px; font-weight: 400; }
+html body #root .hub-app .stock-page .stock-cash-limit-status { display: inline-flex; padding: 4px 7px; border: 1px solid #d4dbe5; border-radius: 3px; background: #edf1f6; color: #576a83; font-size: 11px; line-height: 1.5; }
 @keyframes stock-spin { to { transform: rotate(360deg); } }
 .stock-spin { animation: stock-spin 1s linear infinite; }
 @container stock-vr-account (min-width: 420px) {
   html body #root .hub-app .stock-page .stock-vr-account>.stock-inputs { grid-template-columns: repeat(2,minmax(0,1fr)); }
 }
+@container stock-ibs-account (max-width: 390px) {
+  html body #root .hub-app .stock-page .stock-ibs-account .stock-order-columns { grid-template-columns: minmax(0,1fr); gap: 22px; }
+}
 @container stock-vr-account (min-width: 620px) {
   html body #root .hub-app .stock-page .stock-vr-account>.stock-inputs { grid-template-columns: repeat(3,minmax(0,1fr)); }
+}
+@container stock-vr-settings (max-width: 850px) {
+  html body #root .hub-app .stock-page .stock-vr-setting-groups { grid-template-columns: minmax(0,1fr); gap: 18px; }
+  html body #root .hub-app .stock-page .stock-vr-setting-groups>div+div { padding: 18px 0 0; border-left: 0; border-top: 1px solid var(--stock-line); }
+  html body #root .hub-app .stock-page .stock-vr-limit .stock-vr-setting-fields { grid-template-columns: repeat(2,minmax(0,1fr)); }
+}
+@media (max-width: 1100px) {
+  html body #root .hub-app .stock-page .stock-vr-cycle { grid-template-columns: minmax(0,1fr); gap: 16px; }
+  html body #root .hub-app .stock-page .stock-vr-week-controls { justify-self: start; }
 }
 @media (max-width: 1000px) and (min-width: 761px) {
   html body #root .hub-app .stock-page .stock-account-grid { gap: 18px; }
@@ -208,6 +292,7 @@ html body #root .hub-app .stock-page .stock-vr-answer small { display: inline-bl
   html body #root .hub-app .stock-page .stock-quote>strong { font-size: 22px; }
   html body #root .hub-app .stock-page :is(.stock-toolbar,.stock-section-heading) { flex-wrap: wrap; gap: 10px; }
   html body #root .hub-app .stock-page .stock-account-grid { grid-template-columns: minmax(0,1fr); gap: 0; }
+  html body #root .hub-app .stock-page .stock-ibs-account .stock-account-header>button { min-height: 44px; }
   html body #root .hub-app .stock-page .stock-panel { padding: 18px; }
   html body #root .hub-app .stock-page .stock-inputs { gap: 10px; }
   html body #root .hub-app .stock-page .stock-field>span { font-size: 11px; }
@@ -224,10 +309,23 @@ html body #root .hub-app .stock-page .stock-vr-answer small { display: inline-bl
   html body #root .hub-app .stock-page .stock-strategy-table :is(th,td):first-child { min-width: 88px; max-width: 88px; width: 88px; padding: 12px 10px; }
   html body #root .hub-app .stock-page .stock-rule-editor :is(input,select),html body #root .hub-app .stock-page .stock-stage-edit input { min-height: 36px; font-size: 13px !important; }
   html body #root .hub-app .stock-page .stock-rule-details summary { min-height: 28px; line-height: 28px; }
+  html body #root .hub-app .stock-page .stock-stage-move button { width: 44px; height: 44px; }
   html body #root .hub-app .stock-page .stock-edit-footer { padding: 15px 16px; }
   html body #root .hub-app .stock-page .stock-edit-footer>:is(p,span) { flex-basis: 100%; }
+  html body #root .hub-app .stock-page .stock-strategy-dialog { width: calc(100vw - 16px); max-height: calc(100dvh - 16px); }
+  html body #root .hub-app .stock-page .stock-strategy-dialog-header { gap: 12px; padding: 12px 16px; }
+  html body #root .hub-app .stock-page .stock-strategy-dialog-tabs { padding: 12px 16px 0; }
+  html body #root .hub-app .stock-page .stock-strategy-dialog :is(.stock-tabs button,.stock-section-heading button) { min-height: 44px; }
   html body #root .hub-app .stock-page .stock-draft-preview { grid-template-columns: minmax(0,1fr); padding: 15px 16px; }
   html body #root .hub-app .stock-page .stock-vr-conflict { grid-template-columns: minmax(0,1fr); }
   html body #root .hub-app .stock-page .stock-vr-account>.stock-inputs { gap: 16px; }
   html body #root .hub-app .stock-page .stock-vr-result { grid-template-columns: minmax(0,1fr); gap: 18px; }
+  html body #root .hub-app .stock-page .stock-vr-cycle { padding: 16px 12px; }
+  html body #root .hub-app .stock-page .stock-vr-cycle-title>h2 { gap: 8px; font-size: 20px !important; }
+  html body #root .hub-app .stock-page .stock-vr-week-controls { grid-template-columns: 44px minmax(0,1fr) 44px 44px; width: 100%; gap: 2px; padding: 3px; }
+  html body #root .hub-app .stock-page .stock-vr-date { padding-inline: 18px; }
+  html body #root .hub-app .stock-page .stock-vr-date>time { font-size: 12px; }
+  html body #root .hub-app .stock-page .stock-vr-date>svg { width: 13px; height: 13px; right: 4px; }
+  html body #root .hub-app .stock-page .stock-vr-settings .stock-edit-footer button { min-height: 44px; }
+  html body #root .hub-app .stock-page .stock-valuation>div { flex-direction: row; align-items: baseline; padding: 0; }
 }

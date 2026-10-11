@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {defaultStages,emptyPosition,calculateIBS,calculateVR,createStock,inspectVRSettings,applyVRSettings,saveSharedVRSettings,updateStockPosition,retireSOXL,getStageHighlight} from '../src/stock/model.js';
+import {defaultStages,emptyPosition,calculateIBS,calculateStageOrders,calculateVR,getVRCycle,createStock,inspectVRSettings,applyVRSettings,saveSharedVRSettings,updateStockPosition,retireSOXL,getStageHighlight} from '../src/stock/model.js';
 import {parseChart} from '../scripts/stock-market.js';
 import {normalizeState,createBackupPayload,splitBackupPayload} from '../src/dashboard/model.js';
 
@@ -83,6 +83,90 @@ test('VR uses KRW cash, last week for contribution and latest close for rebalanc
  assert.ok(calculateVR(p,null,81,1300).error);
 });
 
+test('separate strategy tables calculate each account using the same unrounded rules',()=>{
+ const stage=defaultStages()[0];
+ const a=calculateStageOrders({...emptyPosition(),average:100,held:9,capacity:31},stage);
+ const y=calculateStageOrders({...emptyPosition(),average:200,held:30,capacity:90},stage);
+ assert.deepEqual(a.slice(0,3).map(order=>[order.price,order.quantity]),[[94,1],[100,1],[102.99,2]]);
+ assert.deepEqual(y.slice(0,3).map(order=>[order.price,order.quantity]),[[188,3],[200,3],[205.99,5]]);
+ assert.equal(stage.rules[0].divisor,30);
+});
+
+test('VR holdings independently compute valuation with latest close and exchange rate',()=>{
+ const p={...emptyPosition(),held:999,vrHeld:20,krwCash:600000,fxCash:200000,valuation:123,desired:2};
+ const before=structuredClone(p), result=calculateVR(p,80,75,1300);
+ assert.equal(result.valuation,2080000);
+ assert.equal(result.total,2880000);
+ assert.equal(result.ratio,800000/2880000*100);
+ assert.equal(result.deposit,280000);
+ assert.equal(calculateVR({...p,held:0},80,75,1300).valuation,result.valuation);
+ assert.equal(calculateVR(p,90,75,1300).valuation,2340000);
+ assert.equal(calculateVR(p,80,75,1400).valuation,2240000);
+ assert.deepEqual(p,before);
+ const withoutWeekly=calculateVR(p,80,null,1300);
+ assert.equal(withoutWeekly.valuation,result.valuation);
+ assert.equal(withoutWeekly.action,result.action);
+ assert.equal(withoutWeekly.deposit,null);
+ assert.ok(withoutWeekly.depositError);
+ for(const vrHeld of ['', ' ', null, undefined, false, -1,1.5,'bad']) assert.ok(calculateVR({...p,vrHeld},80,75,1300).error);
+ assert.equal(calculateVR({...p,vrHeld:0},80,75,1300).valuation,0);
+});
+
+test('VR adjustment buys respect the cash budget in whole shares without limiting sells or deposits',()=>{
+ const p={...emptyPosition(),vrHeld:0,krwCash:1000000,upper:5,lower:1,desired:2};
+ const before=structuredClone(p), result=calculateVR(p,100,100,1000);
+ assert.equal(result.action,'매수');
+ assert.equal(result.targetQuantity,10);
+ assert.equal(result.cashUseLimit,75);
+ assert.equal(result.cashBudget,750000);
+ assert.equal(result.quantity,7);
+ assert.equal(result.capped,true);
+ assert.ok(result.quantity*result.price<=result.cashBudget);
+ assert.ok(result.cash-result.quantity*result.price>=result.cash*.25);
+ assert.equal(calculateVR({...p,cashUseLimit:50},100,100,1000).quantity,5);
+ assert.equal(calculateVR({...p,cashUseLimit:0},100,100,1000).quantity,0);
+ const uncapped=calculateVR({...p,cashUseLimit:100},100,100,1000);
+ assert.equal(uncapped.quantity,10);
+ assert.equal(uncapped.capped,false);
+ assert.equal(result.deposit,uncapped.deposit);
+ const expensive=calculateVR({...p,krwCash:90000,lower:25,upper:35},100,100,1000);
+ assert.equal(expensive.quantity,0);
+ assert.equal(expensive.capped,true);
+ const sell=calculateVR({...p,krwCash:0,vrHeld:10,lower:25,upper:35,cashUseLimit:0},100,100,1000);
+ assert.equal(sell.action,'매도');
+ assert.equal(sell.quantity,3);
+ assert.equal(sell.capped,false);
+ for(const cashUseLimit of ['',null,-1,101,'bad']) assert.ok(calculateVR({...p,cashUseLimit},100,100,1000).error);
+ assert.deepEqual(p,before);
+});
+
+test('VR settings supply the new cash cap for legacy data and contribution split remains editable',()=>{
+ const stock=createStock(), asset=stock.assets[0];
+ const position={krwCash:1000000,fxCash:0,valuation:0,desired:1,lower:25,upper:35,invest:70};
+ asset.vr={lower:25,upper:35,invest:70};
+ stock.profiles[0].positions[asset.id]=position;
+ const before=structuredClone(stock);
+ assert.equal(inspectVRSettings(asset,stock.profiles).settings.cashUseLimit,75);
+ assert.equal(applyVRSettings(position,asset).cashUseLimit,75);
+ assert.equal(calculateVR(position,100,100,1000).cashUseLimit,75);
+ const saved=saveSharedVRSettings(stock,asset.id,{lower:25,upper:35,invest:60,cashUseLimit:50});
+ assert.equal(calculateVR(applyVRSettings(position,saved.assets[0]),100,100,1000).deposit,170000);
+ assert.deepEqual(saved.assets[0].vr,{lower:25,upper:35,invest:60,cashUseLimit:50});
+ assert.deepEqual(saved.profiles,before.profiles);
+ assert.deepEqual(stock,before);
+});
+
+test('VR week alternation uses October 5 as contribution anchor including weekends and year boundaries',()=>{
+ assert.deepEqual(getVRCycle('2026-10-05'),{mode:'contribution',start:'2026-10-05',end:'2026-10-09'});
+ assert.deepEqual(getVRCycle('2026-10-11'),getVRCycle('2026-10-05'));
+ assert.deepEqual(getVRCycle('2026-10-12'),{mode:'rebalance',start:'2026-10-12',end:'2026-10-16'});
+ assert.equal(getVRCycle('2026-10-19').mode,'contribution');
+ assert.equal(getVRCycle('2026-09-28').mode,'rebalance');
+ assert.deepEqual(getVRCycle('2027-01-01'),{mode:'contribution',start:'2026-12-28',end:'2027-01-01'});
+ assert.equal(getVRCycle('2027-01-04').mode,'rebalance');
+ assert.equal(getVRCycle('invalid'),null);
+});
+
 test('legacy differing VR settings are detected and keep their original calculations',()=>{
  const stock=createStock(), asset=stock.assets[0], [a,y]=stock.profiles;
  const amounts={krwCash:400000,fxCash:0,valuation:600000};
@@ -91,7 +175,7 @@ test('legacy differing VR settings are detected and keep their original calculat
  const before=structuredClone(stock), inspected=inspectVRSettings(asset,stock.profiles);
  assert.equal(inspected.shared,false);
  assert.equal(inspected.conflict,true);
- assert.deepEqual(inspected.settings,{lower:25,upper:35,invest:70});
+ assert.deepEqual(inspected.settings,{lower:25,upper:35,invest:70,cashUseLimit:75});
  assert.deepEqual(inspected.legacy.map(entry=>entry.profileId),[a.id,y.id]);
  assert.deepEqual(stock.profiles.map(profile=>calculateVR(applyVRSettings(profile.positions[asset.id],asset),100,100,1000).action),['매수','유지']);
  assert.deepEqual(stock,before);
@@ -104,7 +188,7 @@ test('legacy VR numeric strings calculate numerically without changing stored po
  a.positions[asset.id]={...emptyPosition(),krwCash:100000,valuation:900000,lower:'2',upper:'15',invest:'70'};
  y.positions[asset.id]={...emptyPosition(),lower:2,upper:15,invest:70};
  const before=structuredClone(stock), position=applyVRSettings(a.positions[asset.id],asset);
- assert.deepEqual(inspectVRSettings(asset,stock.profiles).settings,{lower:2,upper:15,invest:70});
+ assert.deepEqual(inspectVRSettings(asset,stock.profiles).settings,{lower:2,upper:15,invest:70,cashUseLimit:75});
  assert.equal(inspectVRSettings(asset,stock.profiles).conflict,false);
  const result=calculateVR(position,100,100,1000);
  assert.equal(result.error,undefined);
@@ -118,7 +202,7 @@ test('saving shared VR settings affects both calculations without overwriting le
  const stock=withOtherAsset(), [asset,otherAsset]=stock.assets, [a,y]=stock.profiles;
  a.positions[asset.id]={...emptyPosition(),krwCash:400000,valuation:600000,average:100,held:6,capacity:4};
  y.positions[asset.id]={...emptyPosition(),krwCash:800000,valuation:1200000,upper:45,invest:80,desired:2};
- const before=structuredClone(stock), settings={lower:20,upper:30,invest:50};
+ const before=structuredClone(stock), settings={lower:20,upper:30,invest:50,cashUseLimit:50};
  const saved=saveSharedVRSettings(stock,asset.id,settings), savedAsset=saved.assets[0];
  assert.deepEqual(saved.profiles,before.profiles);
  assert.deepEqual(stock,before);
@@ -127,7 +211,7 @@ test('saving shared VR settings affects both calculations without overwriting le
  assert.deepEqual(savedAsset.stages,asset.stages);
  assert.deepEqual(inspectVRSettings(savedAsset,saved.profiles),{shared:true,conflict:false,settings,legacy:inspectVRSettings(asset,stock.profiles).legacy});
  const positions=saved.profiles.map(profile=>applyVRSettings(profile.positions[asset.id],savedAsset));
- assert.deepEqual(positions.map(position=>({lower:position.lower,upper:position.upper,invest:position.invest})),[settings,settings]);
+ assert.deepEqual(positions.map(position=>({lower:position.lower,upper:position.upper,invest:position.invest,cashUseLimit:position.cashUseLimit})),[settings,settings]);
  assert.equal(positions[0].average,100);
  assert.equal(positions[1].desired,2);
  assert.deepEqual(positions.map(position=>calculateVR(position,100,100,1000).quantity),[1,2]);
@@ -178,9 +262,9 @@ test('parser excludes incomplete regular session and finds previous week on a ho
 });
 test('stock settings survive existing HUB normalization and backup',()=>{
  let stock=createStock();stock.profiles[0].positions[stock.assets[0].id]={...emptyPosition(),held:9};
- stock.profiles[1].positions[stock.assets[0].id]={...emptyPosition(),average:80,held:12,upper:45,invest:80};
+ stock.profiles[1].positions[stock.assets[0].id]={...emptyPosition(),average:80,held:12,upper:45,invest:80,vrHeld:33};
  stock.profiles.push({id:'preserved-extra-profile',name:'기존 추가 계좌',positions:{[stock.assets[0].id]:{...emptyPosition(),held:5,custom:'preserved'}}});
- stock=saveSharedVRSettings(stock,stock.assets[0].id,{lower:20,upper:40,invest:60});
+ stock=saveSharedVRSettings(stock,stock.assets[0].id,{lower:20,upper:40,invest:60,cashUseLimit:45});
  const restored=normalizeState(splitBackupPayload(JSON.parse(JSON.stringify(createBackupPayload(normalizeState({stock}),[],null)))).state);
  assert.deepEqual(restored.stock,stock);
 });

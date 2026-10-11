@@ -28,8 +28,8 @@ export function getStageHighlight(stageId, accounts=[]) {
   const a=matches.some(account=>account.label==='A'), y=matches.some(account=>account.label==='Y');
   return a&&y?'stage-both':a?'stage-a':y?'stage-y':'';
 }
-export function emptyPosition() { return { average:0,held:0,capacity:0,krwCash:0,fxCash:0,valuation:0,desired:1,lower:25,upper:35,invest:70 }; }
-const vrKeys = ['lower','upper','invest'];
+export function emptyPosition() { return { average:0,held:0,capacity:0,krwCash:0,fxCash:0,valuation:0,desired:1,lower:25,upper:35,invest:70,cashUseLimit:75 }; }
+const vrKeys = ['lower','upper','invest','cashUseLimit'];
 const readVRSettings = source => {
   const fallback=emptyPosition();
   return Object.fromEntries(vrKeys.map(key=>{
@@ -56,6 +56,19 @@ export function updateStockPosition(stock, profileId, assetId, patch) {
   if(!stock.assets.some(asset=>asset.id===assetId)||!stock.profiles.some(profile=>profile.id===profileId)) return stock;
   return {...stock,profiles:stock.profiles.map(profile=>profile.id===profileId?{...profile,positions:{...profile.positions,[assetId]:{...emptyPosition(),...profile.positions?.[assetId],...patch}}}:profile)};
 }
+export function calculateStageOrders(position, stage) {
+  const { average, held, capacity } = position;
+  let sold=0,bought=0;
+  return stage.rules.map(r=>{
+    let quantity=r.mode==='remaining'?Number(held)-sold:r.mode==='fixed'?Number(r.divisor):round((r.mode==='held'?Number(held):Number(capacity))/Number(r.divisor));
+    if(r.special==='small-first'&&held<=3) quantity=held>0?1:0;
+    if(r.special==='small-second'&&held<=3) quantity=held>1?1:0;
+    const raw=quantity;
+    quantity=Math.max(0,Math.min(Number.isFinite(quantity)?quantity:0,r.side==='sell'?Number(held)-sold:Number(capacity)-bought));
+    if(r.side==='sell') sold+=quantity; else bought+=quantity;
+    return {...r,quantity,capped:raw!==quantity,price:r.order==='moc'?null:round(round(Number(average)*(1+Number(r.percent)/100),2)+Number(r.offset),2)};
+  });
+}
 export function calculateIBS(position, stages) {
   const {average, held, capacity}=position;
   if (![average,held,capacity].every(n=>Number.isFinite(Number(n))&&Number(n)>=0) || !Number.isInteger(Number(held)) || !Number.isInteger(Number(capacity))) return {error:'평단가와 수량을 확인해 주세요.'};
@@ -66,24 +79,34 @@ export function calculateIBS(position, stages) {
   const ratio=Number(held)+Number(capacity)>0 ? Number(held)/(Number(held)+Number(capacity))*100 : 0;
   // Each boundary belongs to the next stage; 100% stays in the final stage.
   const stage=sorted.find(s=>ratio<s.upper)||sorted.at(-1);
-  let sold=0,bought=0;
-  const orders=stage.rules.map(r=>{
-    let quantity=r.mode==='remaining'?Number(held)-sold:r.mode==='fixed'?Number(r.divisor):round((r.mode==='held'?Number(held):Number(capacity))/Number(r.divisor));
-    if(r.special==='small-first'&&held<=3) quantity=held>0?1:0;
-    if(r.special==='small-second'&&held<=3) quantity=held>1?1:0;
-    const raw=quantity;
-    quantity=Math.max(0,Math.min(Number.isFinite(quantity)?quantity:0,r.side==='sell'?Number(held)-sold:Number(capacity)-bought));
-    if(r.side==='sell') sold+=quantity; else bought+=quantity;
-    return {...r,quantity,capped:raw!==quantity,price:r.order==='moc'?null:round(round(Number(average)*(1+Number(r.percent)/100),2)+Number(r.offset),2)};
-  });
+  const orders=calculateStageOrders(position,stage);
   return {ratio,stage,orders,error:Number(average)<=0?'평단가를 입력해 주세요.':orders.some(r=>r.price!==null&&r.price<=0)?'가격 보정 후 주문 가격이 0 이하입니다. 규칙을 확인해 주세요.':null};
 }
+export function getVRCycle(dateKey) {
+  const date = new Date(`${dateKey}T00:00:00Z`);
+  if (!Number.isFinite(date.getTime())) return null;
+  date.setUTCDate(date.getUTCDate() - (date.getUTCDay() + 6) % 7);
+  const offset = Math.round((date.getTime() - Date.UTC(2026, 9, 5)) / (7 * 86400000));
+  const start = date.toISOString().slice(0, 10);
+  date.setUTCDate(date.getUTCDate() + 4);
+  return { mode: ((offset % 2) + 2) % 2 === 0 ? 'contribution' : 'rebalance', start, end: date.toISOString().slice(0, 10) };
+}
 export function calculateVR(p, close, weeklyClose, fx) {
-  const cash=Number(p.krwCash)+Number(p.fxCash), total=cash+Number(p.valuation);
-  if (![p.krwCash,p.fxCash,p.valuation,p.desired,p.lower,p.upper,p.invest].every(n=>Number.isFinite(Number(n))&&Number(n)>=0)||!(p.lower<p.upper&&p.upper<=100&&p.invest>0&&p.invest<=100)||!Number.isInteger(Number(p.desired))) return {error:'금액, 구매 수량과 비율 범위를 확인해 주세요.'};
-  if (!(close>0&&fx>0&&weeklyClose>0)) return {error:'종가·지난주 종가·환율을 불러오면 계산됩니다.'};
+  const hasQuantity = Object.hasOwn(p, 'vrHeld');
+  const cashUseLimit = p.cashUseLimit === undefined ? 75 : p.cashUseLimit;
+  if (hasQuantity && (!['number','string'].includes(typeof p.vrHeld) || String(p.vrHeld).trim() === '' || !Number.isInteger(Number(p.vrHeld)) || Number(p.vrHeld) < 0)) return {error:'VR 보유 수량은 0 이상의 정수로 입력해 주세요.'};
+  if (!['number','string'].includes(typeof cashUseLimit) || String(cashUseLimit).trim() === '' || !Number.isFinite(Number(cashUseLimit)) || cashUseLimit < 0 || cashUseLimit > 100) return {error:'현금 사용 한도는 0~100%로 입력해 주세요.'};
+  if (![p.krwCash,p.fxCash,...(hasQuantity ? [] : [p.valuation]),p.desired,p.lower,p.upper,p.invest].every(n=>Number.isFinite(Number(n))&&Number(n)>=0)||!(Number(p.lower)<Number(p.upper)&&p.upper<=100&&p.invest>0&&p.invest<=100)||!Number.isInteger(Number(p.desired))) return {error:'금액, 구매 수량과 비율 범위를 확인해 주세요.'};
+  if (!(close>0&&fx>0)) return {error:'종가와 환율을 불러오면 계산됩니다.'};
+  const valuation=hasQuantity?Number(p.vrHeld)*close*fx:Number(p.valuation);
+  const cash=Number(p.krwCash)+Number(p.fxCash), total=cash+valuation;
   const ratio=total>0?cash/total*100:0, price=close*fx;
   const action=total===0?'유지':ratio<p.lower?'매도':ratio>p.upper?'매수':'유지';
-  const quantity=action==='매도'?Math.ceil((p.lower/100*total-cash)/price):action==='매수'?Math.ceil((cash-p.upper/100*total)/price):0;
-  return {cash,total,ratio,action,quantity,deposit:round(weeklyClose*fx/(p.invest/100),-4)*p.desired,price};
+  const targetQuantity=action==='매도'?Math.ceil((p.lower/100*total-cash)/price):action==='매수'?Math.ceil((cash-p.upper/100*total)/price):0;
+  const cashBudget=cash*Number(cashUseLimit)/100;
+  // Whole shares must fit inside this adjustment's cash budget.
+  const quantity=action==='매수'?Math.min(targetQuantity,Math.floor(cashBudget/price)):targetQuantity;
+  const capped=action==='매수'&&quantity<targetQuantity;
+  const deposit=weeklyClose>0?round(weeklyClose*fx/(p.invest/100),-4)*p.desired:null;
+  return {cash,total,valuation,ratio,action,quantity,targetQuantity,cashBudget,cashUseLimit:Number(cashUseLimit),capped,deposit,price,depositError:deposit===null?'지난주 종가를 불러오면 입금액이 계산됩니다.':null};
 }

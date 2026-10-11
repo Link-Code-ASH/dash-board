@@ -7,18 +7,82 @@ moves it to the back. Neither action changes the stored stage.
 ## Import format
 
 The first row is the header. Required columns: `일본어`, `한국어 뜻`.
-Optional columns: `읽는 법`, `예문`, `예문 해석`. Column order is flexible;
+The downloadable format uses these ten columns in order: `일본어`, `한국어 뜻`,
+`읽는 법`, `한자 훈음`, `예문`, `예문 읽는 법`, `예문 해석`, `품사`, `JLPT`, `특성`.
+Only the first two are required. Column order is flexible;
 unrecognized columns are ignored. Blank rows are skipped. Duplicate required or
 optional headers, duplicate Japanese/reading pairs, and missing required cells
 block the entire import. Uploads accept `.xlsx` and UTF-8 `.csv`, at most 10 MB
-and 10,000 nonempty data rows per import. The UI offers a CSV template with examples.
+and 10,000 nonempty data rows per import. The XLSX download has `단어 양식`, `예시`,
+and `작성 안내` tabs; blank CSV and example CSV downloads use the same headers.
+Google Sheets can use the same format or import the downloaded workbook.
+
+`품사` and `특성` accept freeform semicolon-separated tags, trimmed and deduplicated.
+`JLPT` accepts one of N5, N4, N3, N2, N1 or blank; other values block import with
+a row error. `한자 훈음` contains manually entered Korean Hanja meanings/readings,
+such as `食 먹을 식`, with multiple characters separated by in-cell newlines.
+`예문 읽는 법` is the manually entered full Hiragana example reading.
 
 Within one deck, trimmed Japanese + reading identifies a word. Reimport replaces
-content (including clearing optional fields) but preserves IDs and stages.
+content but preserves IDs, stages, and favorites. Old five-column imports remain supported:
+absent new columns preserve stored Hanja, example reading, POS, JLPT, and topics;
+present new columns with blank cells clear that field. The original optional
+reading/example/translation fields retain their previous clearing behavior.
 Missing source words stay in the deck. Changes to spelling or reading create new
 words. New word IDs are derived from the identity pair so concurrent imports on
 two devices do not duplicate the same word. Imported text is rendered as text,
 never HTML. Spreadsheet formulas are not executed.
+
+## Study list and cards
+
+The initial scope is all decks; importing opens the target deck. POS, JLPT, and
+topics each allow multiple selections (OR within a group, AND between groups),
+including uncategorized words. Search and stage constraints also apply. Changing
+scope resets all conditions, selections, and page; changing a condition resets
+selection and page. The result selection creates a temporary study list, without
+copying words or creating saved filter presets. All-deck rows show their source.
+Selection uses `(deck ID, word ID)`, so matching words in different decks remain
+independent. Bulk stage changes validate every source deck before one local write,
+then use the existing per-deck cloud synchronization.
+
+Each word has an independent `favorite` boolean. Legacy words normalize to false;
+imports preserve existing favorites and create new words without a star. The
+sidebar's `즐겨찾기` scope collects original starred words across decks, without
+copying them, and supports the same stage/category/search filters and sessions.
+Individual stars toggle immediately. The bulk star covers the entire current
+filter result, including other pages: a mixed result adds every word; an entirely
+starred result removes every star. These changes validate all source targets
+against the latest decks before one local write, then use ordinary sync/backup.
+Removing words from the favorites scope resets selection and pagination so hidden
+words never enter a subsequent session. The empty result region reserves a small
+baseline height and the Lingo library keeps a stable scroll gutter/alignment.
+
+Both faces share a compact header with POS, JLPT, topic badges, and a stage selector
+at the upper right. The front shows Japanese. The back repeats the Japanese word,
+followed by reading, meaning,
+Korean Hanja entries in a wrapping horizontal row, and the example with Furigana
+and Korean translation directly below. Empty optional fields are hidden.
+Furigana uses the existing full `예문 읽는 법`: Kana anchors align the supplied
+reading to Han runs; uncertain or mismatched alignment shows the complete supplied
+reading above the whole example instead of guessing individual readings.
+Clicking, tapping, or Space flips the card. Arrow keys and buttons provide the
+same actions as horizontal swipes.
+The white surface, frame, shadow, and focus ring are painted on one rotating
+element; both content faces are transparent and turn with it. Rotation stays
+separate from swipe transforms and respects reduced motion. Both faces share the taller face's height
+so flipping keeps their bounds and the judgment buttons aligned. The hidden face
+is inert; focus follows the current face. Long answers use vertical page scrolling.
+The judgment buttons show `알아요` on the left and `다시 볼게요` on the right;
+right swipes/arrow keys still complete a word and left swipes/arrow keys repeat it.
+
+Manually chosen stages remain in the current session draft, including across
+again/undo and the completion screen. Explicit exit or the completion return
+validates and saves all final stage changes with one local write before returning
+to the library. A failed explicit save leaves the session and draft available
+for retry. Ordinary language/module navigation also attempts the draft save;
+the store reports storage failures on that path. Refresh discards the unsaved
+session draft. Account changes dispose the old store and block stale writes.
+Judgments still never change stages automatically.
 
 ## Storage and deployment
 
@@ -45,7 +109,10 @@ The provider mounts with the Hub rather than the Japanese screen, registering
 the `lingo` backup provider even when the screen has never been opened. Restore
 validates all decks first, saves a recovery copy, replaces matching deck IDs and
 adds missing IDs; decks absent from the backup remain untouched. Session queues
-are not backed up or synced. Signed-out data belongs to a separate `local` scope;
+are not backed up or synced. Schema version remains 1: missing new word fields
+normalize to empty strings/arrays (and `favorite: false`) in local decks, sync bases, server responses,
+and backups. Unknown fields remain intact. No database migration is required
+for the new word information. Signed-out data belongs to a separate `local` scope;
 use a Hub backup and restore to move it to an account explicitly.
 
 ## Google Sheets configuration
@@ -86,7 +153,13 @@ References: [GIS token model](https://developers.google.com/identity/oauth2/web/
 Run `npm test` and `npm run build`. `tests/lingo.test.js` covers real XLSX sheets,
 CSV validation, reimport/stage behavior, queue gestures, account separation,
 concurrent devices/tabs, offline retry, CAS races, failed storage, stale account
-responses, and global backup/restore. `supabase/tests/lingo_rls.sql` runs a
+responses, category filters/composite selection keys, atomic cross-deck changes,
+metadata merges/recovery, old format compatibility, and global backup/restore.
+`tests/lingo-import-file.test.js` checks the actual shipped workbook and CSV
+downloads; `tests/lingo-google.test.js` checks Sheets responses and auth isolation.
+`tests/lingo-favorites.test.js` checks legacy normalization, preserved imports,
+all-page atomic changes, offline/backup/merge behavior, and account disposal.
+`supabase/tests/lingo_rls.sql` runs a
 transaction-only owner/foreign/anonymous access and revision smoke test against
 a database with at least one auth user, then rolls back all fixtures.
 

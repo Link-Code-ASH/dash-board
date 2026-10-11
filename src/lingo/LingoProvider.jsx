@@ -47,7 +47,12 @@ function AccountLingo({ userId, loading, children }) {
     void store.sync().catch(() => {});
     return deck;
   };
-  return <Context.Provider value={{ ...snapshot, store, change, userId }}>{children}</Context.Provider>;
+  const changeMany = async (changes) => {
+    const decks = await store.changeMany(changes);
+    void store.sync().catch(() => {});
+    return decks;
+  };
+  return <Context.Provider value={{ ...snapshot, store, change, changeMany, userId }}>{children}</Context.Provider>;
 }
 
 export default function LingoProvider({ children }) {

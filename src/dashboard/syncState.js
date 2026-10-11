@@ -3,6 +3,12 @@ import { mergeDashboard } from "../hub/merge.js";
 export const accountSnapshotKey = (userId) => `hub-account-base-v1:${userId}`;
 export const pendingSnapshotPrefix = (key) => `${key}:pending:`;
 
+export function assertDashboardWriteScope(expectedOwner, { owner, activeOwner, loading, gate, cacheReady }) {
+  if (loading || gate || !cacheReady || expectedOwner !== owner || expectedOwner !== activeOwner) {
+    throw new Error("계정이 변경되었거나 자료를 확인하는 중입니다. 화면을 다시 연 뒤 저장해 주세요.");
+  }
+}
+
 export function readStoredSnapshot(storage, key) {
   const raw = storage.getItem(key);
   return raw ? JSON.parse(raw) : null;

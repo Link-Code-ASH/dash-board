@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { emptyDeck, importWords, inspectRows, setStages, validateBackup, validateDeck } from "../src/lingo/model.js";
+import { HEADERS, emptyDeck, importWords, inspectRows, setStages, validateBackup, validateDeck } from "../src/lingo/model.js";
+import { collectWordEntries, filterWordEntries, UNCATEGORIZED, wordEntryKey } from "../src/lingo/filter.js";
 import { parseCsv, openWordFile } from "../src/lingo/importFile.js";
 import { createSession, judgeCard, swipeDirection, undoCard } from "../src/lingo/session.js";
 import { createLingoStore } from "../src/lingo/store.js";
@@ -225,4 +226,172 @@ test("unsupported remote versions cannot replace the local snapshot", async () =
   const before = copy(storage.data.get("future"));
   await assert.rejects(store.sync(), /지원하지/);
   assert.deepEqual(storage.data.get("future"), before);
+});
+
+const metadataRows = [HEADERS, ["食べる", "먹다", "たべる", "食 먹을 식", "朝ご飯を食べます。", "あさごはんをたべます。", "아침밥을 먹습니다.", " 동사 ; 표현;동사 ", " n5 ", " 음식; 일상;음식 "]];
+const metadataFixture = () => importWords(emptyDeck("식사", "deck-1"), inspectRows(metadataRows), source);
+const legacyDeck = () => {
+  const deck = fixture();
+  for (const word of deck.words) for (const field of ["hanja", "exampleReading", "partsOfSpeech", "jlpt", "topics"]) delete word[field];
+  return deck;
+};
+
+test("extended imports normalize semicolon tags and JLPT, reject invalid levels atomically", () => {
+  const preview = inspectRows(metadataRows);
+  assert.equal(preview.errors.length, 0);
+  const word = preview.words[0];
+  assert.deepEqual(word.partsOfSpeech, ["동사", "표현"]);
+  assert.deepEqual(word.topics, ["음식", "일상"]);
+  assert.equal(word.jlpt, "N5"); assert.equal(word.hanja, "食 먹을 식");
+  assert.equal(word.exampleReading, "あさごはんをたべます。");
+  assert.deepEqual(preview.presentFields, ["japanese", "meaning", "reading", "hanja", "example", "exampleReading", "translation", "partsOfSpeech", "jlpt", "topics"]);
+  const badRow = [...metadataRows[1]]; badRow[8] = "N0";
+  const invalid = inspectRows([HEADERS, metadataRows[1], badRow]);
+  assert.match(invalid.errors.find((error) => error.row === 3).message, /JLPT/);
+  assert.throws(() => importWords(emptyDeck("잘못된 자료", "bad"), invalid, source), /오류/);
+});
+
+test("legacy reimports preserve absent new metadata; present empty columns clear it", () => {
+  const original = setStages(metadataFixture(), [metadataFixture().words[0].id], 5);
+  const imported = importWords(original, inspectRows([rows[0], ["食べる", "먹습니다", "たべる", "", ""]]), source);
+  assert.equal(imported.words[0].id, original.words[0].id);
+  assert.equal(imported.words[0].stage, 5);
+  for (const field of ["hanja", "exampleReading", "partsOfSpeech", "jlpt", "topics"]) assert.deepEqual(imported.words[0][field], original.words[0][field]);
+  assert.equal(imported.words[0].example, ""); assert.equal(imported.words[0].translation, "");
+  const partial = importWords(imported, inspectRows([["일본어", "한국어 뜻", "읽는 법", "품사"], ["食べる", "먹다", "たべる", "동사; 명사"]]), source);
+  assert.deepEqual(partial.words[0].partsOfSpeech, ["동사", "명사"]);
+  assert.equal(partial.words[0].hanja, "食 먹을 식"); assert.equal(partial.words[0].jlpt, "N5");
+  const cleared = importWords(partial, inspectRows([HEADERS, ["食べる", "먹다", "たべる", "", "", "", "", "", "", ""]]), source);
+  for (const field of ["hanja", "exampleReading", "jlpt"]) assert.equal(cleared.words[0][field], "");
+  assert.deepEqual(cleared.words[0].partsOfSpeech, []); assert.deepEqual(cleared.words[0].topics, []);
+  assert.equal(cleared.words[0].id, original.words[0].id); assert.equal(cleared.words[0].stage, 5);
+});
+
+test("version 1 backup normalization preserves legacy values and unknown fields without mutating input", () => {
+  const legacy = legacyDeck(); legacy.words[0].future = { label: "보존" };
+  const before = copy(legacy);
+  const normalized = validateBackup({ version: 1, decks: [legacy] }).decks[0];
+  assert.equal(normalized.version, 1); assert.equal(normalized.words[0].hanja, "");
+  assert.equal(normalized.words[0].exampleReading, ""); assert.equal(normalized.words[0].jlpt, "");
+  assert.deepEqual(normalized.words[0].partsOfSpeech, []); assert.deepEqual(normalized.words[0].topics, []);
+  assert.deepEqual(normalized.words[0].future, { label: "보존" }); assert.deepEqual(legacy, before);
+  assert.throws(() => validateDeck({ ...normalized, words: [{ ...normalized.words[0], topics: [42] }] }), /문자열/);
+  assert.throws(() => validateDeck({ ...normalized, words: [{ ...normalized.words[0], jlpt: "N0" }] }), /JLPT/);
+});
+
+test("cross-deck filters use distinct entry identities, OR within groups and AND between groups", () => {
+  const a = metadataFixture();
+  a.words.push({ ...fixture().words[0], stage: 2, partsOfSpeech: ["명사"], jlpt: "N4", topics: ["동물", "일상"] });
+  const b = { ...fixture(), id: "deck-2", name: "미분류 단어", words: [{ ...fixture().words[0], stage: 4 }] };
+  const entries = collectWordEntries([a, b]);
+  assert.equal(new Set(entries.map((entry) => entry.key)).size, 3);
+  assert.notEqual(entries[1].key, entries[2].key);
+  assert.equal(entries[2].key, wordEntryKey("deck-2", b.words[0].id));
+  assert.equal(entries[0].deckName, "식사"); assert.deepEqual(entries[0].source, source);
+  assert.equal(filterWordEntries(entries).length, 3);
+  assert.deepEqual(filterWordEntries(entries, { partsOfSpeech: ["명사", "동사"], jlpt: ["N5", "N4"], topics: ["음식", "동물"] }).map((entry) => entry.key), entries.slice(0, 2).map((entry) => entry.key));
+  assert.equal(filterWordEntries(entries, { jlpt: ["N4"], topics: ["음식"] }).length, 0);
+  assert.deepEqual(filterWordEntries(entries, { partsOfSpeech: [UNCATEGORIZED], jlpt: [UNCATEGORIZED], topics: [UNCATEGORIZED] }), [entries[2]]);
+  assert.deepEqual(filterWordEntries(entries, { deckIds: ["deck-2"], stages: [4], query: "猫" }), [entries[2]]);
+  assert.deepEqual(filterWordEntries(entries, { query: "먹을 식" }), [entries[0]]);
+  assert.deepEqual(filterWordEntries(entries, { query: "あさごはん" }), [entries[0]]);
+  entries[0].word.partsOfSpeech = ["__uncategorized__"];
+  entries[0].word.topics = ["__uncategorized__"];
+  assert.deepEqual(filterWordEntries(entries, { partsOfSpeech: [UNCATEGORIZED], topics: [UNCATEGORIZED] }), [entries[2]]);
+  assert.deepEqual(filterWordEntries(entries, { partsOfSpeech: ["__uncategorized__"], topics: ["__uncategorized__"] }), [entries[0]]);
+});
+
+test("changeMany validates every deck before one write and preserves all data on failure", async () => {
+  const storage = memoryStorage(); let writes = 0, locks = 0;
+  const write = storage.write;
+  storage.write = async (...args) => { writes++; return write(...args); };
+  const store = createLingoStore("bulk", { storage, cloud: null, lock: async (_owner, run) => { locks++; return run(); } });
+  const decks = await store.changeMany([{ id: "deck-1", transform: fixture }, { id: "deck-2", transform: () => ({ ...fixture(), id: "deck-2" }) }]);
+  assert.equal(writes, 1); assert.equal(locks, 1); assert.equal(decks.length, 2);
+  const before = copy(storage.data.get("bulk")), snapshot = copy(store.getSnapshot().decks);
+  await assert.rejects(store.changeMany([
+    { id: "deck-1", transform: (deck) => ({ ...deck, name: "저장되면 안 됨" }) },
+    { id: "deck-2", transform: (deck) => ({ ...deck, words: [{ ...deck.words[0], stage: 9 }] }) },
+  ]), /단어/);
+  assert.equal(writes, 1); assert.equal(locks, 2);
+  assert.deepEqual(storage.data.get("bulk"), before); assert.deepEqual(store.getSnapshot().decks, snapshot);
+  const changed = await store.changeMany(snapshot.map((deck) => ({ id: deck.id, transform: (current) => setStages(current, [current.words[0].id], 4) })));
+  assert.equal(writes, 2); assert.deepEqual(changed.map((deck) => deck.words[0].stage), [4, 4]);
+  await assert.rejects(store.changeMany([{ id: "deck-1", transform: fixture }, { id: "deck-1", transform: fixture }]), /목록/);
+  assert.equal(writes, 2);
+});
+
+test("legacy local, base and remote snapshots normalize consistently without a cloud migration", async () => {
+  const storage = memoryStorage(), cloud = memoryCloud(), legacy = legacyDeck();
+  storage.data.set("legacy", { version: 1, entries: [{ deck: copy(legacy), base: copy(legacy), revision: 1, dirty: false }], recovery: [] });
+  cloud.rows.set("deck-1", { deck_id: "deck-1", payload: copy(legacy), revision: 1 });
+  const store = makeStore(storage, cloud, "legacy");
+  await store.load(); assert.deepEqual(store.getSnapshot().decks[0].words[0].topics, []);
+  assert.equal(storage.data.get("legacy").entries[0].deck.words[0].hanja, undefined, "loading does not write the old snapshot");
+  await store.sync();
+  assert.equal(storage.data.get("legacy").entries[0].deck.words[0].hanja, "");
+  assert.equal(storage.data.get("legacy").entries[0].base.words[0].exampleReading, "");
+  assert.equal(cloud.rows.get("deck-1").revision, 1);
+  const exported = await store.exportBackup(); assert.equal(exported.version, 1);
+  assert.deepEqual(exported.decks[0].words[0].partsOfSpeech, []);
+});
+
+test("new metadata merges across devices and conflicting tag lists have durable recovery", async () => {
+  const cloud = memoryCloud(), sa = memoryStorage(), sb = memoryStorage();
+  const a = makeStore(sa, cloud, "meta-a"), b = makeStore(sb, cloud, "meta-b");
+  await a.change("deck-1", fixture); await a.sync(); await b.sync();
+  const changeWord = (field, value) => (deck) => ({ ...deck, words: deck.words.map((word, index) => index ? word : { ...word, [field]: value }) });
+  await a.change("deck-1", changeWord("hanja", "猫 고양이 묘"));
+  await b.change("deck-1", changeWord("exampleReading", "ねこがいます。"));
+  await a.sync(); await b.sync(); await a.sync();
+  assert.equal(a.getSnapshot().decks[0].words[0].exampleReading, "ねこがいます。");
+  assert.equal(b.getSnapshot().decks[0].words[0].hanja, "猫 고양이 묘");
+  assert.equal((await b.exportRecovery()).recovery.length, 0);
+  await a.change("deck-1", changeWord("topics", ["동물"]));
+  await b.change("deck-1", changeWord("topics", ["일상"]));
+  await a.sync();
+  const write = cloud.write;
+  cloud.write = async (...args) => {
+    assert.equal(sb.data.get("meta-b").recovery.length, 1);
+    return write(...args);
+  };
+  await b.sync();
+  assert.deepEqual(b.getSnapshot().decks[0].words[0].topics, ["일상"]);
+  const recovery = await b.exportRecovery();
+  assert.deepEqual(recovery.recovery[0].local.words[0].topics, ["일상"]);
+  assert.deepEqual(recovery.recovery[0].remote.words[0].topics, ["동물"]);
+});
+
+test("bulk metadata edits survive offline reloads, account disposal and later reconnection", async () => {
+  const storage = memoryStorage(), cloud = memoryCloud(), store = makeStore(storage, cloud, "meta-offline");
+  const read = cloud.read;
+  cloud.read = async () => { throw new Error("offline"); };
+  await store.changeMany([{ id: "deck-1", transform: metadataFixture }, { id: "deck-2", transform: () => ({ ...metadataFixture(), id: "deck-2" }) }]);
+  await assert.rejects(store.sync(), /offline/);
+  assert.deepEqual(storage.data.get("meta-offline").entries.map((entry) => entry.dirty), [true, true]);
+  store.dispose();
+  await assert.rejects(store.changeMany([{ id: "deck-1", transform: fixture }]), /계정/);
+  const reload = makeStore(storage, null, "meta-offline"), foreign = makeStore(storage, null, "other-owner");
+  await reload.load(); await foreign.load();
+  assert.equal(foreign.getSnapshot().decks.length, 0);
+  assert.deepEqual(reload.getSnapshot().decks.map((deck) => deck.words[0].partsOfSpeech), [["동사", "표현"], ["동사", "표현"]]);
+  assert.equal(reload.getSnapshot().decks[0].words[0].hanja, "食 먹을 식");
+  cloud.read = read;
+  const online = makeStore(storage, cloud, "meta-offline"); await online.sync();
+  assert.equal(cloud.rows.size, 2);
+  assert.deepEqual(storage.data.get("meta-offline").entries.map((entry) => entry.dirty), [false, false]);
+  assert.equal(cloud.rows.get("deck-2").payload.words[0].exampleReading, "あさごはんをたべます。");
+});
+
+test("backup restore round-trips metadata and keeps the previous full snapshot for recovery", async () => {
+  const store = makeStore(memoryStorage(), null, "meta-backup");
+  await store.change("deck-1", metadataFixture);
+  const backup = await store.exportBackup();
+  await store.change("deck-1", (deck) => ({ ...deck, words: deck.words.map((word) => ({ ...word, hanja: "", partsOfSpeech: [], topics: ["変更"], jlpt: "N1", stage: 5 })) }));
+  await store.restoreBackup(backup);
+  assert.deepEqual(store.getSnapshot().decks[0], backup.decks[0]);
+  const recovery = await store.exportRecovery();
+  assert.deepEqual(recovery.recovery[0].decks[0].words[0].topics, ["変更"]);
+  assert.equal(recovery.recovery[0].decks[0].words[0].stage, 5);
+  assert.equal(store.getSnapshot().decks[0].words[0].stage, 1);
 });

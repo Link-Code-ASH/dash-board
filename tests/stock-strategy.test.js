@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { defaultStages, emptyPosition, calculateIBS } from '../src/stock/model.js';
-import { editableStages, ruleAt, rowCount, addRule, addStrategyRow, removeStrategyRow, addStrategyStage, validateStrategy, describeRule } from '../src/stock/strategy.js';
+import { editableStages, ruleAt, rowCount, addRule, addStrategyRow, removeStrategyRow, addStrategyStage, moveStrategyStage, validateStrategy, describeRule } from '../src/stock/strategy.js';
 
 const outcome = result => ({
   ratio: result.ratio,
@@ -114,6 +114,24 @@ test('stage removal requires a final 100% boundary and does not accept an empty 
   assert.ok(validateStrategy(stages.map((stage, index) => index === 1 ? { ...stage, upper: 40 } : stage)));
 });
 
+test('moving an added stage preserves threshold slots, rule identity and saved data', () => {
+  const stages = addStrategyStage(editableStages(defaultStages())), before = structuredClone(stages);
+  const added = stages.at(-1);
+  added.rules = [{ ...stages[0].rules[0], id: 'new-rule' }];
+  const saved = structuredClone(stages), moved = moveStrategyStage(stages, added.id, stages[1].id);
+  assert.equal(moved[1].id, added.id);
+  assert.deepEqual(moved[1].rules, added.rules);
+  assert.deepEqual(moved.map(stage => stage.upper), stages.map(stage => stage.upper));
+  assert.equal(moved.at(-1).upper, 100);
+  assert.equal(validateStrategy(moved), '');
+  assert.deepEqual(stages, saved);
+  assert.equal(moveStrategyStage(stages, 'missing', stages[0].id), stages);
+  assert.equal(moveStrategyStage(stages, added.id, added.id), stages);
+  const restored = moveStrategyStage(moved, added.id, moved.at(-1).id);
+  assert.deepEqual(restored, saved);
+  assert.deepEqual(stages.slice(0, -1), before.slice(0, -1));
+});
+
 test('restored numeric strings remain editable but cleared numeric fields block saving', () => {
   const stages = editableStages(defaultStages()).map(stage => ({
     ...stage,
@@ -150,8 +168,10 @@ test('discarding a modified draft restores saved orders without mutating nested 
 
 test('readable rule descriptions retain MOC and distinguish remaining held shares', () => {
   const stages = defaultStages();
-  assert.deepEqual(describeRule(stages[7].rules[0]), { price: 'MOC', quantity: '보유 수량의 1/8' });
+  assert.deepEqual(describeRule(stages[7].rules[0]), { price: 'MOC', quantity: '보유 수량의 13%' });
   assert.equal(describeRule(stages[0].rules.at(-1)).quantity, '남은 보유 수량 전부');
-  assert.equal(describeRule(stages[0].rules[0]).quantity, '가능 수량의 1/30');
+  assert.equal(describeRule(stages[0].rules[0]).quantity, '가능 수량의 3%');
+  assert.equal(describeRule({ ...stages[0].rules[0], divisor: 16 }).quantity, '가능 수량의 6%');
+  assert.equal(describeRule({ ...stages[0].rules[0], divisor: 3 }).quantity, '가능 수량의 33%');
   assert.equal(describeRule({ ...stages[0].rules[0], mode: 'fixed', divisor: 2 }).quantity, '2주 고정');
 });

@@ -1,0 +1,217 @@
+/* Edu styles stay inside the HUB workspace, including native modal dialogs. */
+html body #root .hub-app .edu-workspace { --edu-ink: #263348; --edu-muted: #758196; --edu-line: #e4e9f0; max-width: 1360px; margin: 0 auto; color: var(--edu-ink); }
+html body #root .hub-app .edu-workspace :is(h1, h2, h3, p) { margin: 0; letter-spacing: 0; }
+html body #root .hub-app .edu-workspace h1 { font-size: 28px; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+html body #root .hub-app .edu-workspace h2 { font-size: 20px; font-weight: 650; }
+html body #root .hub-app .edu-workspace h3 { font-size: 16px; font-weight: 650; }
+html body #root .hub-app .edu-workspace :is(button, input, select, textarea) { font-family: inherit !important; font-size: 14px; box-shadow: none; text-shadow: none; }
+html body #root .hub-app .edu-workspace button { min-height: 36px; border-radius: 7px; letter-spacing: 0; }
+html body #root .hub-app .edu-workspace button:disabled { opacity: .5; cursor: not-allowed; }
+html body #root .hub-app .edu-workspace :is(input, select, textarea) { width: 100%; min-width: 0; margin: 0; padding: 10px 12px; border: 1px solid #dce3ed; border-radius: 7px; color: var(--edu-ink); background: #fff; line-height: 1.45; outline-offset: 2px; }
+html body #root .hub-app .edu-workspace :is(input, textarea)::placeholder { color: #9aa4b2; }
+html body #root .hub-app .edu-workspace textarea { resize: vertical; white-space: pre-wrap; }
+html body #root .hub-app .edu-workspace :is(input, select, textarea):disabled { background: #f7f8fa; }
+html body #root .hub-app .edu-workspace .edu-button { padding: 8px 13px; border: 1px solid #dce3ec; background: #fff; color: #485c74; display: inline-flex; gap: 6px; align-items: center; justify-content: center; font-weight: 550; white-space: nowrap; }
+html body #root .hub-app .edu-workspace .edu-button:hover { background: #f1f5fa; }
+html body #root .hub-app .edu-workspace .edu-primary { background: #3c638f; border-color: #3c638f; color: #fff !important; }
+html body #root .hub-app .edu-workspace .edu-primary:hover { background: #2c527d; }
+html body #root .hub-app .edu-workspace .edu-icon-button { padding: 7px; min-width: 36px; background: #fff; border: 1px solid var(--edu-line); }
+html body #root .hub-app .edu-workspace .edu-text-button { min-height: 30px; padding: 3px 0; color: #547394; font-weight: 500; display: inline-flex; align-items: center; gap: 5px; border: 0; background: transparent; text-align: left; }
+html body #root .hub-app .edu-workspace .edu-text-button:hover { color: #2c527d; background: transparent; text-decoration: underline; }
+html body #root .hub-app .edu-workspace .edu-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+html body #root .hub-app .edu-workspace :is(.edu-page-heading, .edu-section-heading, .edu-detail-heading, .edu-panel-heading, .edu-calendar-heading) { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+html body #root .hub-app .edu-workspace .edu-page-heading { margin-bottom: 24px; }
+html body #root .hub-app .edu-workspace :is(.edu-page-heading, .edu-section-heading, .edu-detail-heading, .edu-panel-heading) p { margin-top: 5px; color: var(--edu-muted); font-size: 13px; line-height: 1.6; }
+html body #root .hub-app .edu-workspace .edu-year-badge { color: #6b7c93; font-size: 12px; border: 1px solid var(--edu-line); border-radius: 6px; background: #fff; padding: 5px 9px; white-space: nowrap; }
+html body #root .hub-app .edu-workspace .edu-navigation { display: flex; gap: 8px; margin-bottom: 26px; border-bottom: 1px solid #dfe5ed; }
+html body #root .hub-app .edu-workspace .edu-navigation button { color: #7b8798; min-height: 45px; border-radius: 0; padding: 10px 12px; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+html body #root .hub-app .edu-workspace .edu-navigation button.active { color: #315b88; font-weight: 650; border-bottom-color: #3c638f; background: transparent; }
+html body #root .hub-app .edu-workspace .edu-section-heading { margin-bottom: 20px; }
+html body #root .hub-app .edu-workspace .edu-heading-count { margin-left: 4px; font-size: 15px; color: #6a7a8d; font-weight: 500; }
+html body #root .hub-app .edu-workspace .edu-filters { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+html body #root .hub-app .edu-workspace .edu-search { flex: 1; min-width: 200px; display: flex; align-items: center; gap: 9px; padding: 0 13px; color: #8e9bae; background: #fff; border: 1px solid #dce3ed; border-radius: 7px; }
+html body #root .hub-app .edu-workspace .edu-search input { border: 0; padding: 11px 0; background: transparent; }
+html body #root .hub-app .edu-workspace .edu-filters > select { width: 130px; min-height: 44px; }
+html body #root .hub-app .edu-workspace .edu-filter-toggle { background: #fff; border: 1px solid #dce3ed; padding: 9px 12px; min-height: 44px; font-size: 13px; }
+html body #root .hub-app .edu-workspace .edu-filter-toggle.active { border-color: #dca748; color: #8e641a; background: #fff7e8; }
+html body #root .hub-app .edu-workspace .edu-filter-toggle > span:last-child { color: #9b752e; }
+html body #root .hub-app .edu-workspace .edu-warning-mark { flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; height: 22px; width: 22px; border-radius: 50%; color: #9a6910; background: #fff0c9; border: 1px solid #f1d890; font-weight: 750; font-size: 15px; line-height: 1; }
+html body #root .hub-app .edu-workspace .edu-results { font-size: 12px; color: #8490a1; margin: 17px 0 10px; }
+html body #root .hub-app .edu-workspace .edu-student-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+html body #root .hub-app .edu-workspace .edu-student-card { min-width: 0; display: flex; align-items: stretch; justify-content: flex-start; flex-direction: column; gap: 0; text-align: left; padding: 20px; background: #fff; border: 1px solid var(--edu-line); border-radius: 10px; color: var(--edu-ink); font-size: 14px; }
+html body #root .hub-app .edu-workspace .edu-student-card:hover { background: #fff; border-color: #b0c1d6; box-shadow: 0 4px 16px #26334808; }
+html body #root .hub-app .edu-workspace .edu-student-card-heading { display: flex; align-items: center; gap: 10px; width: 100%; }
+html body #root .hub-app .edu-workspace .edu-avatar { flex: 0 0 auto; width: 43px; height: 43px; background: #edf3fa; color: #59779c; display: inline-flex; align-items: center; justify-content: center; border-radius: 12px; font-size: 18px; font-weight: 600; }
+html body #root .hub-app .edu-workspace .edu-student-card-identity { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 4px; }
+html body #root .hub-app .edu-workspace .edu-student-card-identity strong { font-size: 17px; font-weight: 650; overflow-wrap: anywhere; }
+html body #root .hub-app .edu-workspace .edu-student-card-identity > span { color: #8c97a5; font-size: 12px; }
+html body #root .hub-app .edu-workspace .edu-card-chevron { color: #b1bbc8; flex-shrink: 0; }
+html body #root .hub-app .edu-workspace .edu-student-school { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 20px 0 16px; color: #5d6c80; }
+html body #root .hub-app .edu-workspace .edu-student-school > span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+html body #root .hub-app .edu-workspace .edu-grade { flex-shrink: 0; font-size: 12px; padding: 3px 8px; border-radius: 5px; background: #f2f5f9; color: #62758f; }
+html body #root .hub-app .edu-workspace .edu-next-consultation { display: flex; align-items: center; gap: 7px; border-top: 1px solid #eff2f6; padding-top: 14px; font-size: 12px; color: #a0a9b6; }
+html body #root .hub-app .edu-workspace .edu-next-consultation.has-next { color: #6380a3; }
+html body #root .hub-app .edu-workspace .edu-next-consultation svg { flex-shrink: 0; }
+html body #root .hub-app .edu-workspace .edu-next-consultation > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+html body #root .hub-app .edu-workspace .edu-panel { background: #fff; border: 1px solid var(--edu-line); border-radius: 10px; min-width: 0; }
+html body #root .hub-app .edu-workspace .edu-students > .edu-panel { margin-top: 18px; }
+html body #root .hub-app .edu-workspace .edu-empty { padding: 48px 24px; text-align: center; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 10px; color: #98a6b8; }
+html body #root .hub-app .edu-workspace .edu-empty strong { color: #52667e; font-size: 16px; font-weight: 600; }
+html body #root .hub-app .edu-workspace .edu-empty p { color: #8996a7; font-size: 13px; max-width: 350px; line-height: 1.7; }
+html body #root .hub-app .edu-workspace .edu-empty button { margin-top: 6px; }
+html body #root .hub-app .edu-workspace .edu-error { color: #a44242; background: #fff3f2; border: 1px solid #f1d7d4; border-radius: 7px; margin: 14px 0; padding: 11px 14px; font-size: 13px; line-height: 1.6; overflow-wrap: anywhere; }
+html body #root .hub-app .edu-workspace .edu-info { margin: -6px 0 18px; color: #738199; font-size: 13px; }
+html body #root .hub-app .edu-workspace .edu-back { margin-bottom: 17px; font-size: 13px; }
+html body #root .hub-app .edu-workspace .edu-detail-heading { margin-bottom: 22px; }
+html body #root .hub-app .edu-workspace .edu-detail-identity { display: flex; align-items: center; gap: 13px; min-width: 0; }
+html body #root .hub-app .edu-workspace .edu-detail-identity h2 { overflow-wrap: anywhere; }
+html body #root .hub-app .edu-workspace .edu-detail-identity .edu-avatar { width: 52px; height: 52px; font-size: 23px; }
+html body #root .hub-app .edu-workspace .edu-promotion-alert { display: flex; align-items: center; gap: 13px; background: #fff9ed; border: 1px solid #f0ddb5; border-radius: 9px; padding: 16px 18px; margin-bottom: 18px; color: #9a752f; }
+html body #root .hub-app .edu-workspace .edu-promotion-alert > div { flex: 1; min-width: 0; }
+html body #root .hub-app .edu-workspace .edu-promotion-alert strong { font-size: 14px; font-weight: 650; }
+html body #root .hub-app .edu-workspace .edu-promotion-alert p { color: #a3895a; font-size: 12px; line-height: 1.7; margin-top: 4px; overflow-wrap: anywhere; }
+html body #root .hub-app .edu-workspace .edu-promotion-alert .edu-button { border-color: #e7d2a7; color: #99722b; }
+html body #root .hub-app .edu-workspace .edu-detail-tabs { display: flex; gap: 14px; border-bottom: 1px solid var(--edu-line); padding: 0 24px; }
+html body #root .hub-app .edu-workspace .edu-detail-tabs button { border-radius: 0; padding: 14px 5px; min-height: 50px; border-bottom: 2px solid transparent; margin-bottom: -1px; color: #8390a2; font-size: 14px; }
+html body #root .hub-app .edu-workspace .edu-detail-tabs button.active { color: #3c638f; border-bottom-color: #3c638f; font-weight: 650; }
+html body #root .hub-app .edu-workspace .edu-tab-count { padding: 0 5px; background: #f0f3f7; border-radius: 4px; font-size: 11px; color: #768ba4; }
+html body #root .hub-app .edu-workspace .edu-detail-panel { padding: 25px; }
+html body #root .hub-app .edu-workspace .edu-detail-panel[hidden] { display: none; }
+html body #root .hub-app .edu-workspace .edu-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+html body #root .hub-app .edu-workspace .edu-field { display: flex; flex-direction: column; align-items: stretch; gap: 7px; min-width: 0; font-size: 13px; color: #536780; }
+html body #root .hub-app .edu-workspace .edu-field > span { font-size: 13px; font-weight: 550; }
+html body #root .hub-app .edu-workspace .edu-field small { font-size: 12px; color: #99a3b2; line-height: 1.6; }
+html body #root .hub-app .edu-workspace .edu-field-wide { grid-column: 1 / -1; }
+html body #root .hub-app .edu-workspace .edu-form-footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 25px; border-top: 1px solid #edf0f5; padding-top: 18px; }
+html body #root .hub-app .edu-workspace .edu-save-hint { font-size: 12px; color: #8a97a9; }
+html body #root .hub-app .edu-workspace .edu-memo { min-height: 280px; line-height: 1.8; padding: 14px; }
+html body #root .hub-app .edu-workspace .edu-dialog { padding: 25px; width: min(620px, calc(100vw - 32px)); max-width: 620px; max-height: calc(100dvh - 48px); margin: auto; border: 1px solid #dce3ed; border-radius: 13px; color: #263348; background: #fff; box-shadow: 0 16px 70px #1c2c4726; overflow: auto; }
+html body #root .hub-app .edu-workspace .edu-dialog::backdrop { background: #15233366; }
+html body #root .hub-app .edu-workspace .edu-dialog-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 25px; }
+html body #root .hub-app .edu-workspace .edu-dialog-heading h2 { font-size: 20px; }
+html body #root .hub-app .edu-workspace .edu-dialog-heading p { font-size: 12px; line-height: 1.6; color: #8a98ab; margin-top: 6px; }
+html body #root .hub-app .edu-workspace .edu-dialog-heading .edu-icon-button { border-color: transparent; }
+html body #root .hub-app .edu-workspace .edu-panel-heading { margin-bottom: 18px; }
+html body #root .hub-app .edu-workspace .edu-appointments { display: flex; flex-direction: column; }
+html body #root .hub-app .edu-workspace .edu-appointment { display: flex; align-items: flex-start; gap: 18px; padding: 18px 0; border-top: 1px solid #edf0f5; min-width: 0; }
+html body #root .hub-app .edu-workspace .edu-appointment:first-child { border-top: 0; padding-top: 0; }
+html body #root .hub-app .edu-workspace .edu-appointment:last-child { padding-bottom: 0; }
+html body #root .hub-app .edu-workspace .edu-appointment-time { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; flex-shrink: 0; width: 74px; }
+html body #root .hub-app .edu-workspace .edu-appointment-time > strong { color: #547394; font-size: 19px; font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1.3; }
+html body #root .hub-app .edu-workspace .edu-appointment-time > span:not(.edu-status) { font-size: 11px; color: #91a0b1; }
+html body #root .hub-app .edu-workspace .edu-status { font-size: 11px; padding: 2px 7px; border-radius: 4px; white-space: nowrap; }
+html body #root .hub-app .edu-workspace .edu-status-scheduled { color: #5b7fab; background: #edf3fb; }
+html body #root .hub-app .edu-workspace .edu-status-completed { color: #5c8876; background: #edf6f1; }
+html body #root .hub-app .edu-workspace .edu-status-cancelled { color: #9ca4af; background: #f1f3f6; }
+html body #root .hub-app .edu-workspace .edu-appointment-body { flex: 1; min-width: 0; }
+html body #root .hub-app .edu-workspace .edu-appointment-body h3 { font-size: 14px; color: #4c5e74; font-weight: 600; overflow-wrap: anywhere; }
+html body #root .hub-app .edu-workspace .edu-appointment-body .edu-text-button { font-size: 12px; line-height: 1.5; white-space: normal; }
+html body #root .hub-app .edu-workspace .edu-appointment-notes { font-size: 13px; margin-top: 8px; white-space: pre-wrap; color: #8794a6; line-height: 1.7; overflow-wrap: anywhere; }
+html body #root .hub-app .edu-workspace .edu-appointment-actions { display: flex; gap: 6px; flex-shrink: 0; }
+html body #root .hub-app .edu-workspace .edu-appointment-actions .edu-button { font-size: 12px; min-height: 32px; padding: 5px 9px; }
+html body #root .hub-app .edu-workspace .edu-complete { color: #608374; border-color: #dce8e1; }
+html body #root .hub-app .edu-workspace .edu-appointment-cancelled .edu-appointment-body h3 { color: #9aa5b3; }
+html body #root .hub-app .edu-workspace .edu-history { list-style: none; padding: 0; margin: 0; }
+html body #root .hub-app .edu-workspace .edu-history > li { padding: 20px 0; border-top: 1px solid #edf0f5; }
+html body #root .hub-app .edu-workspace .edu-history > li:first-child { padding-top: 0; border-top: 0; }
+html body #root .hub-app .edu-workspace .edu-history-heading { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+html body #root .hub-app .edu-workspace .edu-history-heading strong { font-size: 14px; font-weight: 600; color: #4c607c; }
+html body #root .hub-app .edu-workspace .edu-history-heading time { margin-left: auto; font-size: 12px; color: #93a0b0; }
+html body #root .hub-app .edu-workspace .edu-history-actor { font-size: 10px; background: #f1f4f8; color: #8292a7; padding: 2px 6px; border-radius: 4px; }
+html body #root .hub-app .edu-workspace .edu-history-auto { background: #eef3fb; color: #6185b1; }
+html body #root .hub-app .edu-workspace .edu-history-changes { padding: 12px 15px; margin: 12px 0 0; background: #f8fafc; border-radius: 6px; font-size: 12px; }
+html body #root .hub-app .edu-workspace .edu-history-changes > div { display: grid; grid-template-columns: 95px minmax(0, 1fr); gap: 10px; padding: 5px 0; }
+html body #root .hub-app .edu-workspace .edu-history-changes dt { color: #8392a5; }
+html body #root .hub-app .edu-workspace .edu-history-changes dd { display: grid; grid-template-columns: minmax(0, 1fr) 20px minmax(0, 1fr); gap: 10px; color: #5c708c; margin: 0; line-height: 1.7; }
+html body #root .hub-app .edu-workspace .edu-history-changes dd > span:not(.edu-history-arrow) { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 170px; overflow: auto; }
+html body #root .hub-app .edu-workspace .edu-history-before { color: #99a4b3; }
+html body #root .hub-app .edu-workspace .edu-history-arrow { color: #a3afbd; text-align: center; }
+html body #root .hub-app .edu-workspace .edu-history-confirmation { color: #8797ab; font-size: 12px; margin-top: 8px; }
+html body #root .hub-app .edu-workspace .edu-calendar-layout { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(320px, .85fr); gap: 18px; align-items: start; }
+html body #root .hub-app .edu-workspace .edu-calendar-panel { padding: 20px; }
+html body #root .hub-app .edu-workspace .edu-calendar-heading { margin-bottom: 20px; }
+html body #root .hub-app .edu-workspace .edu-calendar-heading > div:first-child { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+html body #root .hub-app .edu-workspace .edu-calendar-heading span { font-size: 11px; color: #8a9aae; }
+html body #root .hub-app .edu-workspace .edu-calendar-heading h3 { font-size: 17px; }
+html body #root .hub-app .edu-workspace .edu-calendar-weekdays { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); text-align: center; font-size: 11px; color: #93a0b2; padding-bottom: 10px; }
+html body #root .hub-app .edu-workspace .edu-calendar-weekdays > :first-child { color: #bc8b87; }
+html body #root .hub-app .edu-workspace .edu-calendar-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); border-left: 1px solid #edf0f4; border-top: 1px solid #edf0f4; }
+html body #root .hub-app .edu-workspace .edu-calendar-day { min-width: 0; min-height: 91px; align-items: stretch; justify-content: flex-start; display: flex; flex-direction: column; gap: 7px; padding: 7px 5px; border: 0; border-radius: 0; border-right: 1px solid #edf0f4; border-bottom: 1px solid #edf0f4; background: #fff; position: relative; }
+html body #root .hub-app .edu-workspace .edu-calendar-day:hover { background: #f5f8fc; }
+html body #root .hub-app .edu-workspace .edu-calendar-day.selected { background: #f0f5fc; box-shadow: inset 0 0 0 1px #9cb6d5; }
+html body #root .hub-app .edu-workspace .edu-calendar-day.outside { background: #fafbfc; }
+html body #root .hub-app .edu-workspace .edu-calendar-number { display: flex; align-items: center; justify-content: center; align-self: flex-start; width: 22px; height: 22px; min-height: 22px; font-size: 11px; color: #76869b; border-radius: 50%; }
+html body #root .hub-app .edu-workspace .edu-calendar-day.outside .edu-calendar-number { color: #c1cad5; }
+html body #root .hub-app .edu-workspace .edu-calendar-day.today .edu-calendar-number { color: #fff; background: #5a7da7; }
+html body #root .hub-app .edu-workspace .edu-calendar-entries { display: flex; flex-direction: column; align-items: stretch; gap: 4px; min-width: 0; }
+html body #root .hub-app .edu-workspace .edu-calendar-entry { min-width: 0; width: 100%; text-align: left; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 9px; color: #8291a7; line-height: 1.4; }
+html body #root .hub-app .edu-workspace .edu-calendar-entry > span { display: inline-block; width: 4px; height: 4px; border-radius: 50%; background: #85a7d1; margin-right: 3px; vertical-align: 2px; }
+html body #root .hub-app .edu-workspace .edu-calendar-entry-completed > span { background: #95b5a4; }
+html body #root .hub-app .edu-workspace .edu-calendar-entry-cancelled { color: #aab4c1; }
+html body #root .hub-app .edu-workspace .edu-calendar-entry-cancelled > span { background: #c6cdd7; }
+html body #root .hub-app .edu-workspace .edu-calendar-more { font-size: 9px; color: #99a7ba; text-align: left; }
+html body #root .hub-app .edu-workspace .edu-calendar-mobile-count { display: none; font-size: 10px; color: #7d97b5; }
+html body #root .hub-app .edu-workspace .edu-calendar-legend { display: flex; align-items: center; gap: 14px; margin-top: 14px; }
+html body #root .hub-app .edu-workspace .edu-calendar-legend > span { color: #99a6b7; font-size: 10px; display: inline-flex; align-items: center; gap: 5px; }
+html body #root .hub-app .edu-workspace .edu-calendar-legend i { width: 5px; height: 5px; border-radius: 50%; background: #85a7d1; }
+html body #root .hub-app .edu-workspace .edu-calendar-legend .completed { background: #95b5a4; }
+html body #root .hub-app .edu-workspace .edu-calendar-legend .cancelled { background: #c6cdd7; }
+html body #root .hub-app .edu-workspace .edu-agenda { padding: 20px; }
+html body #root .hub-app .edu-workspace .edu-agenda .edu-panel-heading { align-items: flex-start; }
+html body #root .hub-app .edu-workspace .edu-agenda input[type="date"] { width: 138px; font-size: 11px; padding: 7px; min-height: 34px; }
+html body #root .hub-app .edu-workspace .edu-agenda .edu-appointment { gap: 12px; flex-wrap: wrap; }
+html body #root .hub-app .edu-workspace .edu-agenda .edu-appointment-actions { margin-left: auto; }
+@media (max-width: 1200px) {
+  html body #root .hub-app .edu-workspace .edu-student-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  html body #root .hub-app .edu-workspace .edu-calendar-layout { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 680px) {
+  html body #root .hub-app .edu-workspace :is(button, input, select) { min-height: 44px; }
+  html body #root .hub-app .edu-workspace .edu-page-heading { margin-bottom: 15px; }
+  html body #root .hub-app .edu-workspace h1 { font-size: 25px; }
+  html body #root .hub-app .edu-workspace .edu-navigation { margin-bottom: 21px; }
+  html body #root .hub-app .edu-workspace .edu-section-heading { align-items: flex-start; gap: 10px; }
+  html body #root .hub-app .edu-workspace .edu-section-heading h2 { font-size: 18px; }
+  html body #root .hub-app .edu-workspace .edu-section-heading p { max-width: 210px; font-size: 12px; }
+  html body #root .hub-app .edu-workspace .edu-student-grid { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+  html body #root .hub-app .edu-workspace .edu-student-card { padding: 17px; }
+  html body #root .hub-app .edu-workspace .edu-filters { gap: 8px; }
+  html body #root .hub-app .edu-workspace .edu-search { flex-basis: 100%; }
+  html body #root .hub-app .edu-workspace .edu-filters > select { flex: 1; width: auto; }
+  html body #root .hub-app .edu-workspace .edu-filter-toggle { padding: 8px 10px; font-size: 12px; }
+  html body #root .hub-app .edu-workspace .edu-form-grid { grid-template-columns: minmax(0, 1fr); gap: 18px; }
+  html body #root .hub-app .edu-workspace .edu-form-footer { flex-direction: column; align-items: stretch; gap: 13px; }
+  html body #root .hub-app .edu-workspace .edu-form-footer > .edu-actions { justify-content: flex-end; }
+  html body #root .hub-app .edu-workspace .edu-detail-heading { align-items: flex-start; flex-wrap: wrap; }
+  html body #root .hub-app .edu-workspace .edu-detail-heading > .edu-button { margin-left: auto; }
+  html body #root .hub-app .edu-workspace .edu-detail-panel { padding: 19px 16px; }
+  html body #root .hub-app .edu-workspace .edu-detail-tabs { padding: 0 10px; gap: 6px; }
+  html body #root .hub-app .edu-workspace .edu-detail-tabs button { flex: 1; font-size: 12px; gap: 4px; padding: 10px 3px; }
+  html body #root .hub-app .edu-workspace .edu-promotion-alert { display: grid; grid-template-columns: 22px minmax(0, 1fr); padding: 15px; align-items: start; gap: 10px; }
+  html body #root .hub-app .edu-workspace .edu-promotion-alert .edu-button { grid-column: 2; justify-self: start; margin-left: 0; }
+  html body #root .hub-app .edu-workspace .edu-dialog { padding: 20px 17px; width: calc(100vw - 24px); max-height: calc(100dvh - 28px); }
+  html body #root .hub-app .edu-workspace .edu-dialog-heading { margin-bottom: 22px; }
+  html body #root .hub-app .edu-workspace .edu-appointment { gap: 10px; flex-wrap: wrap; }
+  html body #root .hub-app .edu-workspace .edu-appointment-time { width: 64px; }
+  html body #root .hub-app .edu-workspace .edu-appointment-actions { width: 100%; justify-content: flex-end; }
+  html body #root .hub-app .edu-workspace .edu-appointment-actions .edu-button { min-height: 44px; padding: 8px 12px; }
+  html body #root .hub-app .edu-workspace .edu-history-heading time { width: 100%; margin-left: 0; font-size: 11px; }
+  html body #root .hub-app .edu-workspace .edu-history-changes { padding: 9px 11px; }
+  html body #root .hub-app .edu-workspace .edu-history-changes > div { grid-template-columns: minmax(0, 1fr); gap: 3px; padding: 7px 0; }
+  html body #root .hub-app .edu-workspace .edu-history-changes dd { gap: 5px; grid-template-columns: minmax(0, 1fr) 15px minmax(0, 1fr); }
+  html body #root .hub-app .edu-workspace :is(.edu-calendar-panel, .edu-agenda) { padding: 16px 12px; }
+  html body #root .hub-app .edu-workspace .edu-calendar-heading { gap: 6px; }
+  html body #root .hub-app .edu-workspace .edu-calendar-heading h3 { font-size: 15px; }
+  html body #root .hub-app .edu-workspace .edu-calendar-heading > div:first-child { gap: 5px; }
+  html body #root .hub-app .edu-workspace .edu-calendar-heading .edu-actions { gap: 3px; flex-wrap: nowrap; }
+  html body #root .hub-app .edu-workspace .edu-calendar-heading .edu-button { padding: 8px; }
+  html body #root .hub-app .edu-workspace .edu-calendar-day { padding: 5px 3px; min-height: 67px; gap: 4px; align-items: center; }
+  html body #root .hub-app .edu-workspace .edu-calendar-number { align-self: center; }
+  html body #root .hub-app .edu-workspace .edu-calendar-entries { display: none; }
+  html body #root .hub-app .edu-workspace .edu-calendar-mobile-count { display: block; }
+  html body #root .hub-app .edu-workspace .edu-agenda input[type="date"] { min-height: 44px; }
+}
+/* Manual mobile display mode also uses larger controls and vertical forms. */
+html body #root .hub-app.hub-mobile .edu-workspace :is(button, input, select) { min-height: 44px; }
+html body #root .hub-app.hub-mobile .edu-workspace .edu-form-grid { grid-template-columns: minmax(0, 1fr); }
+html body #root .hub-app.hub-mobile .edu-workspace .edu-calendar-layout { grid-template-columns: minmax(0, 1fr); }

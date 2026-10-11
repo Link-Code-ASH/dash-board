@@ -1,19 +1,56 @@
-import React, { useEffect, useRef, useState } from "react";
-import { ArrowLeft, ArrowRight, RotateCcw, Check, X } from "lucide-react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { RotateCcw, Check, X } from "lucide-react";
 import { createSession, judgeCard, swipeDirection, undoCard } from "./session.js";
+import { sessionStageChanges } from "./sessionStages.js";
+import { exampleSegments } from "./furigana.js";
 
-export default function Flashcards({ words, onExit }) {
+export default function Flashcards({ words, onExit, onSaveStages = async () => {} }) {
   const [session, setSession] = useState(() => createSession(words));
   const [flipped, setFlipped] = useState(false);
   const [drag, setDrag] = useState(0);
+  const [draftStages, setDraftStages] = useState(() => new Map());
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
   const pointer = useRef(null), moved = useRef(false), card = useRef(null);
+  const draftRef = useRef(draftStages), saveRef = useRef(onSaveStages), wordsRef = useRef(words);
+  const committing = useRef(false), finished = useRef(false), mounted = useRef(false);
+  draftRef.current = draftStages; saveRef.current = onSaveStages;
   const word = session.queue[0];
+  const categories = word && [...(word.partsOfSpeech || []), word.jlpt, ...(word.topics || [])].filter(Boolean).join(", ");
+  const answerLabel = word && [categories, word.japanese, word.reading, word.meaning,
+    word.hanja, word.example, word.exampleReading, word.translation].filter(Boolean).join(". ");
+  const example = useMemo(() => exampleSegments(word?.example || "", word?.exampleReading || ""), [word?.example, word?.exampleReading]);
+  const pendingCount = useMemo(() => sessionStageChanges(words, draftStages).length, [words, draftStages]);
+  const currentStage = word && (draftStages.get(word.id) ?? word.stage);
+  const finish = async () => {
+    if (committing.current) return;
+    committing.current = true; setSaving(true); setError("");
+    try {
+      const changes = sessionStageChanges(wordsRef.current, draftRef.current);
+      if (changes.length) await saveRef.current(changes);
+      finished.current = true;
+      onExit();
+    } catch (e) { if (mounted.current) setError(`단계를 저장하지 못했습니다. ${e.message}`); }
+    finally { committing.current = false; if (mounted.current && !finished.current) setSaving(false); }
+  };
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+      if (finished.current || committing.current) return;
+      const changes = sessionStageChanges(wordsRef.current, draftRef.current);
+      if (!changes.length) return;
+      // Save on ordinary module/language navigation; disposed account stores reject stale work.
+      committing.current = true;
+      Promise.resolve().then(() => saveRef.current(changes)).catch(() => { /* Store exposes storage errors. */ });
+    };
+  }, []);
   const judge = (known) => { setSession((value) => judgeCard(value, known)); setFlipped(false); setDrag(0); };
-  const undo = () => { setSession((value) => undoCard(value)); setFlipped(false); };
-  useEffect(() => { card.current?.focus(); }, []);
+  const undo = () => { setSession((value) => undoCard(value)); setFlipped(false); setDrag(0); };
+  useEffect(() => { card.current?.focus({ preventScroll: true }); }, [flipped, word?.id]);
   useEffect(() => {
     const onKey = (event) => {
-      if (event.repeat || event.altKey || event.ctrlKey || event.metaKey ||
+      if (committing.current || event.repeat || event.altKey || event.ctrlKey || event.metaKey ||
           event.target.closest("input,select,textarea,[contenteditable=true]")) return;
       if (event.code === "Space" && (event.target === card.current || !event.target.closest("button"))) {
         event.preventDefault(); if (word) setFlipped((value) => !value);
@@ -26,12 +63,27 @@ export default function Flashcards({ words, onExit }) {
   }, [word]);
   return <section className="lingo-session" aria-label="플래시카드 학습">
     <div className="lingo-row"><div><p className="lingo-eyebrow">FLASHCARDS</p><h2>나의 속도로, 한 단어씩</h2></div>
-      <button onClick={onExit}><X size={17} />학습 종료</button></div>
+      <button disabled={saving} onClick={finish}><X size={17} />{saving ? "저장 중…" : "학습 종료"}</button></div>
     <div className="lingo-session-progress"><span aria-live="polite">완료 {session.total - session.queue.length} / {session.total}</span><span>남은 단어 {session.queue.length}개</span></div>
     <progress max={session.total || 1} value={session.total - session.queue.length} aria-label="학습 진행률" />
+    {error && <p className="lingo-error" role="alert">{error}</p>}
     {word ? <>
-      <button ref={card} className={`lingo-flashcard ${flipped ? "is-flipped" : ""}`} style={{ "--drag": `${drag}px`, "--rotation": `${drag / 18}deg` }}
-        aria-label={flipped ? `${word.japanese}, ${word.meaning}. 앞면 보기` : `${word.japanese}. 정답 보기`}
+      <div className="lingo-card-stage">
+      <div className={`lingo-card-shell ${drag ? "is-dragging" : ""}`} style={{ "--drag": `${drag}px`, "--rotation": `${drag / 18}deg` }}>
+      <div key={word.id} className={`lingo-card-turn ${flipped ? "is-flipped" : ""}`}>
+      {[false, true].map((back) => <div key={back ? "back" : "front"} className={`lingo-card-face ${back ? "lingo-card-back" : "lingo-card-front"}`} aria-hidden={flipped !== back} inert={flipped !== back}>
+      <CardToolbar word={word} currentStage={currentStage} saving={saving} onStageChange={(event) => {
+          const nextStage = Number(event.target.value);
+          setDraftStages((current) => {
+            const next = new Map(current);
+            if (nextStage === word.stage) next.delete(word.id); else next.set(word.id, nextStage);
+            return next;
+          });
+        }} />
+      <button ref={flipped === back ? card : null} className="lingo-flashcard" disabled={saving}
+        type="button"
+        aria-label={back ? `${answerLabel}. 앞면 보기` : `${categories} ${word.japanese}. 정답 보기`.trim()}
+        aria-pressed={back}
         onClick={(event) => { if (moved.current && event.detail !== 0) { moved.current = false; return; } setFlipped((value) => !value); }}
         onPointerDown={(event) => {
           if (!event.isPrimary || event.button !== 0) return;
@@ -42,7 +94,7 @@ export default function Flashcards({ words, onExit }) {
           const start = pointer.current; if (!start || start.id !== event.pointerId) return;
           const dx = event.clientX - start.x, dy = event.clientY - start.y;
           if (Math.abs(dx) > 10 || Math.abs(dy) > 10) moved.current = true;
-          if (Math.abs(dx) > Math.abs(dy)) setDrag(Math.max(-140, Math.min(140, dx)));
+          setDrag(Math.abs(dx) > Math.abs(dy) ? Math.max(-140, Math.min(140, dx)) : 0);
         }}
         onPointerCancel={() => { pointer.current = null; moved.current = true; setDrag(0); }}
         onPointerUp={(event) => {
@@ -51,20 +103,42 @@ export default function Flashcards({ words, onExit }) {
           const direction = swipeDirection(event.clientX - start.x, event.clientY - start.y);
           if (direction) { moved.current = true; judge(direction === "known"); }
         }}>
-        <span className="lingo-card-label">{flipped ? "뜻 확인" : "日本語"}</span>
-        <span className="lingo-card-word" lang="ja">{word.japanese}</span>
-        {flipped && <span className="lingo-answer">
-          {word.reading && <span className="lingo-reading" lang="ja">{word.reading}</span>}
-          <strong>{word.meaning}</strong>
-          {word.example && <span className="lingo-example" lang="ja">{word.example}</span>}
-          {word.translation && <span className="lingo-muted">{word.translation}</span>}
-        </span>}
-        <span className="lingo-card-hint">{flipped ? "누르면 앞면으로" : "눌러서 뜻 확인 · Space"}</span>
+        {back ? <span className="lingo-answer">
+              <span className="lingo-answer-word" lang="ja">{word.japanese}</span>
+              {word.reading && <span className="lingo-reading" lang="ja">{word.reading}</span>}
+              <strong className="lingo-meaning">{word.meaning}</strong>
+              {word.hanja && <span className="lingo-card-field lingo-hanja"><span className="lingo-card-field-label">한자 훈음</span><span className="lingo-hanja-items">{word.hanja.split(/\r?\n/).map((item) => item.trim()).filter(Boolean).map((item, index) => <span key={index}>{item}</span>)}</span></span>}
+              {(word.example || word.exampleReading || word.translation) && <span className="lingo-card-field lingo-example">
+                {(word.example || word.exampleReading) && <span className="lingo-example-text" lang="ja">{word.example ? example.map((segment, index) => segment.reading ? <ruby key={index}>{segment.text}<rp>(</rp><rt>{segment.reading}</rt><rp>)</rp></ruby> : <React.Fragment key={index}>{segment.text}</React.Fragment>) : word.exampleReading}</span>}
+                {word.translation && <span className="lingo-translation">{word.translation}</span>}
+              </span>}
+            </span> : <span className="lingo-card-front-body"><span className="lingo-card-word" lang="ja">{word.japanese}</span></span>}
       </button>
-      <div className="lingo-judge-actions"><button onClick={() => judge(false)}><ArrowLeft size={20} /><span>다시 볼게요<small>맨 뒤에서 한 번 더</small></span></button>
-        <button className="lingo-known" onClick={() => judge(true)}><span>알아요<small>이번 세션에서 완료</small></span><ArrowRight size={20} /></button></div>
-    </> : <div className="lingo-complete lingo-panel" role="status"><Check size={38} /><h2>모든 단어를 확인했어요</h2><p>{session.total}개 단어 학습 완료</p><button className="lingo-primary" onClick={onExit}>단어장으로 돌아가기</button></div>}
-    <div className="lingo-session-bottom"><button disabled={!session.previous} onClick={undo}><RotateCcw size={16} />마지막 판정 되돌리기</button>
-      <p className="lingo-muted">학습 중에는 단어의 단계가 바뀌지 않아요.</p></div>
+      </div>)}
+      </div>
+      </div>
+      </div>
+      <div className="lingo-judge-actions"><button disabled={saving} className="lingo-known" onClick={() => judge(true)}><Check size={20} /><span>알아요<small>이번 세션에서 완료</small></span></button>
+        <button disabled={saving} onClick={() => judge(false)}><span>다시 볼게요<small>맨 뒤에서 한 번 더</small></span><RotateCcw size={20} /></button></div>
+    </> : <div className="lingo-complete lingo-panel" role="status"><Check size={38} /><h2>모든 단어를 확인했어요</h2><p>{session.total}개 단어 학습 완료</p><button className="lingo-primary" disabled={saving} onClick={finish}>{saving ? "저장 중…" : "단어장으로 돌아가기"}</button></div>}
+    <div className="lingo-session-bottom"><button disabled={saving || !session.previous} onClick={undo}><RotateCcw size={16} />마지막 판정 되돌리기</button>
+      <p className="lingo-muted" aria-live="polite">{pendingCount ? `변경한 단계 ${pendingCount}개 · 학습 종료 시 저장됩니다.` : "단계 변경은 학습 종료 시 저장됩니다."}</p></div>
   </section>;
+}
+
+function CardToolbar({ word, currentStage, saving, onStageChange }) {
+  return <div className="lingo-card-toolbar">
+    <CategoryBadges word={word} />
+    <select className="lingo-card-stage-select" aria-label="이 단어의 단계" value={currentStage} disabled={saving} onChange={onStageChange}>
+      {[1, 2, 3, 4, 5].map((value) => <option key={value} value={value}>{value}단계</option>)}
+    </select>
+  </div>;
+}
+
+function CategoryBadges({ word }) {
+  return <span className="lingo-card-parts" aria-label="단어 카테고리">
+    {(word.partsOfSpeech || []).map((part) => <span key={`part:${part}`} aria-label={`품사: ${part}`}>{part}</span>)}
+    {word.jlpt && <span className="lingo-card-jlpt" aria-label={`JLPT: ${word.jlpt}`}>{word.jlpt}</span>}
+    {(word.topics || []).map((topic) => <span key={`topic:${topic}`} className="lingo-card-topic" aria-label={`특성: ${topic}`}>{topic}</span>)}
+  </span>;
 }

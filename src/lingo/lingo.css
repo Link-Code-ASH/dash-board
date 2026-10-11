@@ -1,4 +1,6 @@
-#root .hub-app .lingo-workspace { max-width: 1180px; margin: 0 auto; padding: 12px 0 40px; color: #283c3a; }
+/* Keep the document width steady as a filtered list gains or loses its scrollbar. */
+html:has(#root .hub-app .lingo-library) { scrollbar-gutter: stable; }
+#root .hub-app .lingo-workspace { width: 100%; min-width: 0; max-width: 1180px; margin: 0 auto; padding: 12px 0 40px; color: #283c3a; }
 #root .hub-app .lingo-workspace h1 { margin: 4px 0 8px; font-size: clamp(25px, 3vw, 34px); line-height: 1.3; letter-spacing: -.8px; }
 #root .hub-app .lingo-workspace h2 { margin: 0; font-size: 19px; line-height: 1.5; }
 #root .hub-app .lingo-workspace p { margin: 8px 0; }
@@ -15,11 +17,17 @@
 #root .hub-app .lingo-empty { text-align: center; padding: 70px 20px; background: linear-gradient(145deg, #f6faf7, white); }
 #root .hub-app .lingo-empty > svg { margin-bottom: 20px; color: #77978a; }
 #root .hub-app .lingo-empty p { line-height: 1.9; margin: 14px 0 24px; }
-#root .hub-app .lingo-library { display: grid; grid-template-columns: 210px minmax(0, 1fr); gap: 24px; align-items: start; }
+#root .hub-app .lingo-library { display: grid; width: 100%; min-width: 0; grid-template-columns: 210px minmax(0, 1fr); gap: 24px; align-items: start; }
+#root .hub-app .lingo-library > * { min-width: 0; }
+#root .hub-app .lingo-words { width: 100%; min-width: 0; }
+#root .hub-app .lingo-words-heading { min-height: 64px; }
+#root .hub-app .lingo-words-heading > div { min-width: 0; }
+#root .hub-app .lingo-words-heading > button { flex: 0 0 auto; }
 #root .hub-app .lingo-decks > .lingo-row { padding: 8px 10px 15px; color: #75827f; font-size: 12px; }
 #root .hub-app .lingo-decks h2 { font-size: 13px; }
 #root .hub-app .lingo-decks > button { display: flex; justify-content: flex-start; width: 100%; text-align: left; gap: 12px; padding: 14px 12px; margin-bottom: 6px; }
 #root .hub-app .lingo-decks > button[aria-current] { background: #e7efea; color: #386d5b; }
+#root .hub-app .lingo-decks > button > svg { flex-shrink: 0; }
 #root .hub-app .lingo-decks > button span { min-width: 0; }
 #root .hub-app .lingo-decks strong { display: block; overflow-wrap: anywhere; font-size: 14px; }
 #root .hub-app .lingo-decks small { display: block; color: #75827f; margin-top: 5px; font-size: 11px; }
@@ -32,16 +40,29 @@
 #root .hub-app .lingo-workspace input:not([type=checkbox]), #root .hub-app .lingo-workspace select { min-height: 40px; border: 1px solid #dce4df; border-radius: 7px; background: white; color: #34453d; padding: 8px 10px; font-size: 14px; box-shadow: none; width: auto; }
 #root .hub-app .lingo-search input { flex: 1; min-width: 0; border: none !important; background: transparent !important; }
 #root .hub-app .lingo-workspace input[type=checkbox] { width: 17px; height: 17px; min-height: 17px; padding: 0; margin: 0; accent-color: #386d5b; flex: 0 0 auto; }
+#root .hub-app .lingo-result-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 36px; margin-top: 12px; color: #75827f; font-size: 12px; }
+#root .hub-app .lingo-result-toolbar > span { min-width: 0; }
+#root .hub-app .lingo-workspace button.lingo-bulk-favorite { flex: 0 0 auto; min-height: 34px; padding: 6px 10px; border: 1px solid #e9dec5; color: #9b722e; background: #fcf9f1; font-size: 12px; white-space: nowrap; }
+#root .hub-app .lingo-workspace button.lingo-bulk-favorite:hover { background: #f8f0dd; }
+#root .hub-app .lingo-bulk-favorite svg { width: 15px; height: 15px; flex-shrink: 0; }
 #root .hub-app .lingo-selection { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 18px 0; font-size: 12px; color: #75827f; }
 #root .hub-app .lingo-selection > label { display: flex; align-items: center; gap: 8px; cursor: pointer; }
 #root .hub-app .lingo-selection select { max-width: 115px; font-size: 12px; }
-#root .hub-app .lingo-word-row { display: grid; grid-template-columns: 30px minmax(90px, 1fr) minmax(100px, 1.5fr) 85px; gap: 14px; align-items: center; padding: 16px 0; border-top: 1px solid #edf0ed; }
+#root .hub-app .lingo-word-results { min-height: 240px; min-width: 0; }
+#root .hub-app .lingo-word-row { display: grid; grid-template-columns: 72px minmax(90px, 1fr) minmax(100px, 1.5fr) 85px; gap: 12px; align-items: center; padding: 16px 0; border-top: 1px solid #edf0ed; }
+#root .hub-app .lingo-word-row > * { min-width: 0; }
 #root .hub-app .lingo-word-row small { display: block; color: #849087; font-size: 12px; margin-top: 4px; overflow-wrap: anywhere; }
 #root .hub-app .lingo-word-row strong { font-size: 20px; font-weight: 550; overflow-wrap: anywhere; }
 #root .hub-app .lingo-word-meaning { font-size: 14px; overflow-wrap: anywhere; }
-#root .hub-app .lingo-word-check { display: flex; align-items: center; min-height: 44px; }
+#root .hub-app .lingo-word-controls { display: flex; align-items: center; gap: 8px; width: 72px; }
+#root .hub-app .lingo-word-check { display: flex; align-items: center; justify-content: center; flex: 0 0 28px; min-height: 44px; cursor: pointer; }
+#root .hub-app .lingo-workspace button.lingo-favorite-toggle { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 36px; width: 36px; min-width: 36px; height: 36px; min-height: 36px; padding: 0; border: 0; background: transparent; color: #a0aaa3; }
+#root .hub-app .lingo-favorite-toggle svg { width: 19px; height: 19px; flex-shrink: 0; }
+#root .hub-app .lingo-workspace button.lingo-favorite-toggle:hover { background: #fcf5e6; color: #b78631; }
+#root .hub-app .lingo-workspace button.lingo-favorite-toggle[aria-pressed=true] { color: #c18b2d; }
+#root .hub-app .lingo-favorite-toggle[aria-pressed=true] svg { fill: currentColor; }
 #root .hub-app .lingo-word-row select { width: 85px; font-size: 12px; }
-#root .hub-app .lingo-empty-result { text-align: center; padding: 36px 0; color: #75827f; }
+#root .hub-app .lingo-word-results > .lingo-empty-result { display: grid; place-items: center; min-height: 240px; margin: 0; padding: 24px 0; text-align: center; color: #75827f; }
 #root .hub-app .lingo-pagination { display: flex; justify-content: center; align-items: center; gap: 18px; margin-top: 16px; font-size: 13px; }
 #root .hub-app .lingo-import { margin-bottom: 28px; }
 #root .hub-app .lingo-import > .lingo-actions { margin: 20px 0; }
@@ -59,15 +80,44 @@
 #root .hub-app .lingo-session progress { display: block; width: 100%; height: 5px; border: none; border-radius: 5px; accent-color: #52876d; margin-bottom: 28px; }
 #root .hub-app .lingo-session progress::-webkit-progress-bar { background: #e2e9e4; border-radius: 5px; }
 #root .hub-app .lingo-session progress::-webkit-progress-value { background: #52876d; border-radius: 5px; }
-#root .hub-app button.lingo-flashcard { width: 100%; min-height: 360px; display: flex; flex-direction: column; padding: 36px 28px; border: 1px solid #dde6df; border-radius: 20px; background: #fff; box-shadow: 0 10px 32px #2f544509; touch-action: pan-y; user-select: none; transform: translateX(var(--drag)) rotate(var(--rotation)); overflow-wrap: anywhere; }
-#root .hub-app button.lingo-flashcard:hover { background: #fff; transform: translateX(var(--drag)) rotate(var(--rotation)); }
-#root .hub-app .lingo-card-label { color: #91a094; font-size: 12px; letter-spacing: 2px; margin-bottom: 25px; }
-#root .hub-app .lingo-card-word { font-size: clamp(32px, 6vw, 52px); font-weight: 500; line-height: 1.5; }
-#root .hub-app .lingo-card-hint { color: #98a198; font-size: 12px; margin-top: 30px; }
-#root .hub-app .lingo-answer { display: flex; flex-direction: column; gap: 12px; margin-top: 12px; text-align: center; white-space: pre-wrap; }
-#root .hub-app .lingo-answer strong { font-size: 23px; color: #386d5b; }
-#root .hub-app .lingo-reading { font-size: 17px; color: #839087; }
-#root .hub-app .lingo-example { font-size: 16px; margin-top: 12px; }
+/* Leave room for projected corners while still containing swipe movement. */
+#root .hub-app .lingo-card-stage { padding: 16px 24px; margin: -16px -24px; overflow-x: clip; overflow-y: visible; }
+#root .hub-app .lingo-card-shell { border-radius: 20px; perspective: 1800px; transform: translateX(var(--drag)) rotate(var(--rotation)); transition: transform 120ms ease-out; }
+#root .hub-app .lingo-card-shell.is-dragging { transition: none; }
+#root .hub-app .lingo-card-turn:focus-within { border-color: #88a395; box-shadow: 0 0 0 1px #88a395, 0 10px 32px #2f544509; }
+#root .hub-app .lingo-card-toolbar { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: start; padding: 22px 26px 0; }
+#root .hub-app .lingo-card-toolbar select.lingo-card-stage-select { min-height: 34px; padding: 5px 8px; font-size: 13px; background: #f7faf7; border-color: #d6e3da; }
+#root .hub-app button.lingo-flashcard { display: flex; flex: 1; flex-direction: column; align-items: stretch; justify-content: flex-start; gap: 0; min-width: 0; width: 100%; min-height: 290px; padding: 26px 30px 30px; border: 0; border-radius: 0 0 20px 20px; background: transparent; box-shadow: none; touch-action: pan-y; user-select: none; text-align: center; overflow-wrap: anywhere; }
+#root .hub-app button.lingo-flashcard:hover { background: transparent; transform: none; }
+#root .hub-app button.lingo-flashcard:focus-visible { outline: none; }
+/* One painted surface carries the frame, focus ring, and both transparent faces. */
+#root .hub-app .lingo-card-turn { display: grid; position: relative; width: 100%; border: 1px solid #dde6df; border-radius: 20px; background: #fff; box-shadow: 0 10px 32px #2f544509; transform: rotateY(0deg); transform-style: preserve-3d; backface-visibility: visible; transition: transform 360ms cubic-bezier(.4,0,.2,1); }
+#root .hub-app .lingo-card-turn.is-flipped { transform: rotateY(180deg); }
+#root .hub-app .lingo-card-face { grid-area: 1 / 1; display: flex; flex-direction: column; align-items: stretch; min-width: 0; width: 100%; background: transparent; backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+#root .hub-app .lingo-card-face[aria-hidden=true] { pointer-events: none; }
+#root .hub-app .lingo-card-front { transform: translateZ(.1px); }
+#root .hub-app .lingo-card-back { transform: rotateY(180deg) translateZ(.1px); }
+#root .hub-app .lingo-card-parts { display: flex; flex-wrap: wrap; align-self: flex-start; justify-content: flex-start; gap: 6px; max-width: 100%; min-width: 0; padding-top: 3px; }
+#root .hub-app .lingo-card-parts > span { padding: 4px 10px; border: 1px solid #dae7df; border-radius: 999px; background: #f0f6f2; color: #567b68; font-size: 12px; font-weight: 600; line-height: 1.4; overflow-wrap: anywhere; }
+#root .hub-app .lingo-card-parts > .lingo-card-jlpt { background: #f7f2e5; border-color: #ebe2c9; color: #8c7744; }
+#root .hub-app .lingo-card-parts > .lingo-card-topic { background: #f5f6f5; border-color: #e6ebe6; color: #7b887e; }
+#root .hub-app .lingo-card-front-body { display: flex; flex: 1; align-items: center; justify-content: center; width: 100%; }
+#root .hub-app .lingo-card-word { font-size: clamp(36px, 6vw, 56px); font-weight: 500; line-height: 1.5; white-space: pre-wrap; }
+#root .hub-app .lingo-answer { display: flex; flex-direction: column; gap: 14px; width: 100%; margin-top: 0; text-align: left; white-space: pre-wrap; }
+#root .hub-app .lingo-answer-word { font-size: 30px; font-weight: 500; line-height: 1.45; text-align: center; color: #283c3a; }
+#root .hub-app .lingo-answer .lingo-meaning { font-size: 26px; font-weight: 650; line-height: 1.5; text-align: center; color: #386d5b; }
+#root .hub-app .lingo-reading { font-size: 20px; line-height: 1.6; text-align: center; color: #6e8278; }
+#root .hub-app .lingo-card-field { display: flex; flex-direction: column; gap: 7px; padding-top: 17px; border-top: 1px solid #edf1ed; font-size: 17px; line-height: 1.75; }
+#root .hub-app .lingo-card-field-label { color: #829289; font-size: 12px; font-weight: 500; line-height: 1.5; }
+#root .hub-app .lingo-hanja { flex-direction: row; align-items: baseline; gap: 14px; color: #4a6256; }
+#root .hub-app .lingo-hanja > .lingo-card-field-label { flex: 0 0 auto; }
+#root .hub-app .lingo-hanja-items { display: flex; flex-wrap: wrap; gap: 4px 18px; }
+#root .hub-app .lingo-hanja-items > span { white-space: normal; }
+#root .hub-app .lingo-example { font-size: 20px; gap: 7px; padding-top: 22px; }
+#root .hub-app .lingo-example-text { line-height: 2.15; overflow-wrap: anywhere; }
+#root .hub-app .lingo-example ruby { ruby-align: center; }
+#root .hub-app .lingo-example rt { font-size: .55em; font-weight: 450; color: #718579; line-height: 1.2; }
+#root .hub-app .lingo-translation { color: #5f7369; font-size: 16px; line-height: 1.7; }
 #root .hub-app .lingo-judge-actions { display: flex; justify-content: space-between; gap: 16px; margin-top: 22px; }
 #root .hub-app .lingo-judge-actions button { flex: 1; border: 1px solid #e0e6e1; background: #fff; padding: 15px 12px; gap: 18px; }
 #root .hub-app .lingo-judge-actions small { display: block; font-size: 11px; color: #86938a; margin-top: 5px; font-weight: normal; }
@@ -87,12 +137,34 @@
   #root .hub-app .lingo-heading { align-items: flex-start; flex-direction: column; }
   #root .hub-app .lingo-row { flex-wrap: wrap; gap: 8px; }
   #root .hub-app .lingo-workspace button { min-height: 44px; }
+  #root .hub-app .lingo-words-heading { flex-wrap: nowrap; }
+  #root .hub-app .lingo-words-heading > button { font-size: 12px; padding-inline: 6px; }
+  #root .hub-app .lingo-workspace button.lingo-bulk-favorite { min-height: 44px; }
   #root .hub-app .lingo-stages { gap: 4px; }
-  #root .hub-app .lingo-word-row { grid-template-columns: 24px minmax(0, 1fr) 78px; gap: 8px; }
+  #root .hub-app .lingo-word-row { grid-template-columns: 72px minmax(0, 1fr) 78px; gap: 8px; }
+  #root .hub-app .lingo-word-controls { grid-column: 1; grid-row: 1 / 3; }
+  #root .hub-app .lingo-word-check { flex-basis: 20px; }
+  #root .hub-app .lingo-workspace button.lingo-favorite-toggle { flex-basis: 44px; width: 44px; min-width: 44px; height: 44px; min-height: 44px; }
   #root .hub-app .lingo-word-meaning { grid-column: 2; grid-row: 2; }
   #root .hub-app .lingo-word-row > select { grid-column: 3; grid-row: 1 / 3; width: 78px; }
   #root .hub-app .lingo-judge-actions { gap: 8px; }
   #root .hub-app .lingo-judge-actions button { gap: 8px; }
-  #root .hub-app button.lingo-flashcard { min-height: 320px; padding: 26px 18px; }
+  #root .hub-app .lingo-card-stage { padding-inline: 18px; margin-inline: -18px; }
+  #root .hub-app .lingo-card-shell, #root .hub-app .lingo-card-turn { border-radius: 16px; }
+  #root .hub-app .lingo-card-toolbar { padding: 18px 18px 0; gap: 8px; }
+  #root .hub-app .lingo-card-toolbar select.lingo-card-stage-select { min-height: 40px; }
+  #root .hub-app .lingo-card-parts > span { padding: 4px 7px; font-size: 11px; }
+  #root .hub-app button.lingo-flashcard { min-height: 260px; padding: 22px 20px 24px; border-radius: 0 0 16px 16px; }
+  #root .hub-app .lingo-answer { gap: 12px; }
+  #root .hub-app .lingo-answer-word { font-size: 28px; }
+  #root .hub-app .lingo-answer .lingo-meaning { font-size: 23px; }
+  #root .hub-app .lingo-card-field { font-size: 16px; }
+  #root .hub-app .lingo-example { font-size: 18px; }
+  #root .hub-app .lingo-hanja { gap: 9px; }
+  #root .hub-app .lingo-hanja-items { gap: 4px 12px; }
+  #root .hub-app .lingo-translation { font-size: 15px; }
   #root .hub-app .lingo-selection .lingo-actions { width: 100%; justify-content: space-between; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #root .hub-app .lingo-card-shell, #root .hub-app .lingo-card-turn { transition: none; }
 }

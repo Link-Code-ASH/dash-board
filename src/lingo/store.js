@@ -21,16 +21,19 @@ export function createLingoStore(owner, { storage, cloud, lock }) {
     ready: true, recoveryCount: record.recovery.length, status });
   const read = async () => {
     check();
-    const record = await storage.read(owner) || blank();
+    const record = clone(await storage.read(owner) || blank());
     check();
     if (record.version !== VERSION || !Array.isArray(record.entries) || !Array.isArray(record.recovery))
       throw new Error("Lingo 저장 형식을 확인할 수 없습니다. 기존 데이터는 보존됩니다.");
-    validateBackup({ version: VERSION, decks: record.entries.map((entry) => entry.deck) });
-    for (const entry of record.entries) {
+    const normalized = validateBackup({ version: VERSION, decks: record.entries.map((entry) => entry.deck) });
+    for (const [index, entry] of record.entries.entries()) {
+      const base = entry.base === null ? null : validateDeck(entry.base);
       if (!Number.isInteger(entry.revision) || entry.revision < 0 || typeof entry.dirty !== "boolean" ||
           (entry.revision > 0 && entry.base === null) ||
-          (entry.base !== null && validateDeck(entry.base).id !== entry.deck.id))
+          (base !== null && base.id !== entry.deck.id))
         throw new Error("Lingo 동기화 기준이 손상되었습니다. 기존 데이터는 보존됩니다.");
+      entry.deck = normalized.decks[index];
+      entry.base = base;
     }
     return clone(record);
   };
@@ -47,16 +50,27 @@ export function createLingoStore(owner, { storage, cloud, lock }) {
       const record = await read();
       publish(record, cloud ? "계정 단어장 연결 중…" : "이 기기에 저장 · 로그인하면 계정 단어장을 사용할 수 있습니다.");
     }),
-    change: (id, transform) => guarded(async () => {
+    change: async (id, transform) => (await api.changeMany([{ id, transform }]))[0],
+    changeMany: (changes) => guarded(async () => {
+      if (!Array.isArray(changes) || changes.some((change) => !change || typeof change.id !== "string" || !change.id || typeof change.transform !== "function") ||
+          new Set(changes.map((change) => change.id)).size !== changes.length)
+        throw new Error("단어장 변경 목록이 올바르지 않습니다.");
+      if (!changes.length) return [];
       const record = await read();
-      const current = record.entries.find((entry) => entry.deck.id === id);
-      const deck = validateDeck(transform(current ? clone(current.deck) : null));
-      if (deck.id !== id) throw new Error("단어장 ID가 변경되었습니다.");
-      if (current) { current.deck = deck; current.dirty = true; }
-      else record.entries.push({ deck, base: null, revision: 0, dirty: true });
+      const decks = changes.map(({ id, transform }) => {
+        const current = record.entries.find((entry) => entry.deck.id === id);
+        const deck = validateDeck(transform(current ? clone(current.deck) : null));
+        if (deck.id !== id) throw new Error("단어장 ID가 변경되었습니다.");
+        return deck;
+      });
+      for (const deck of decks) {
+        const current = record.entries.find((entry) => entry.deck.id === deck.id);
+        if (current) { current.deck = deck; current.dirty = true; }
+        else record.entries.push({ deck, base: null, revision: 0, dirty: true });
+      }
       await save(record);
       publish(record, cloud ? "이 기기에 저장됨 · 계정에 전송 대기" : "이 기기에 저장됨");
-      return deck;
+      return decks;
     }),
     sync: () => guarded(async () => {
       if (!cloud) return;

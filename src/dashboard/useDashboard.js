@@ -9,6 +9,7 @@ import { listRecoverySnapshots, readRecoverySnapshot } from "./recovery.js";
 import {
   accountSnapshotKey, pendingSnapshotPrefix, readStoredSnapshot, readRecoverableSnapshot,
   sameDashboard, mergeAccountSnapshots, nextEditTimestamp, withDashboardLock, stageDashboardSnapshot, flushDashboardSnapshots, mergeStoredDashboard,
+  assertDashboardWriteScope,
 } from "./syncState.js";
 import {
   STORAGE_KEY,
@@ -204,7 +205,20 @@ export function useDashboard(selectedDate, setSelectedDate) {
   }, [activeNoteView, data.noteTabs]);
 
   const saveData = (updater, options = {}) => {
+    const scoped = options.expectedOwner !== undefined;
+    if (scoped) {
+      try {
+        assertDashboardWriteScope(options.expectedOwner, {
+          owner: accountRef.current.user?.id || "local",
+          activeOwner: activeAccountIdRef.current || "local",
+          loading: accountRef.current.loading,
+          gate: accountGate,
+          cacheReady: storageSnapshotRef.current.key === currentStorageKey(),
+        });
+      } catch (error) { return Promise.reject(error); }
+    }
     if (storageSnapshotRef.current.key !== currentStorageKey()) return;
+    const generation = accountGenerationRef.current;
     const current = dataRef.current;
     const previousMindfold = options.captureMindfold
       ? normalizeMindfold(JSON.parse(JSON.stringify(current.mindfold)))
@@ -224,10 +238,15 @@ export function useDashboard(selectedDate, setSelectedDate) {
       mindfoldRedoRef.current = [];
       mindfoldHistoryGroupRef.current = { key: historyGroup, timestamp: now };
     }
-    persistDashboard(normalized);
+    const write = persistDashboard(normalized);
     accountConflictCountRef.current = 0;
     accountRetryPausedRef.current = false;
     if (!options.skipSync) scheduleAutoSync();
+    return scoped ? write.then(() => {
+      if (generation !== accountGenerationRef.current) {
+        throw new Error("저장 중 계정이 변경되었습니다. 현재 계정의 자료를 확인해 주세요.");
+      }
+    }) : write;
   };
 
   const currentStorageKey = () => activeAccountIdRef.current ? accountCacheKey(activeAccountIdRef.current) : STORAGE_KEY;
@@ -289,6 +308,10 @@ export function useDashboard(selectedDate, setSelectedDate) {
           if (generation !== accountGenerationRef.current || key !== currentStorageKey()) return;
           acceptStorageSnapshot(key, saved, next);
           reportStorageConflicts(conflicts);
+          if (accountRef.current.localSaveFailed) {
+            updateAccount((current) => ({ ...current, localSaveFailed: false,
+              status: current.connected ? "이 기기에 저장됨 · 계정에 전송 대기" : "이 기기에 저장됨" }));
+          }
           notifyWindows();
         });
     } catch (error) {
@@ -1689,6 +1712,9 @@ export function useDashboard(selectedDate, setSelectedDate) {
   const effectiveDisplayMode = data.displayMode === "auto" ? (isNarrowViewport ? "mobile" : "desktop") : data.displayMode;
 
   return {
+    accountStorageReady: !account.loading && !accountGate
+      && (account.user?.id || null) === activeAccountIdRef.current
+      && storageSnapshotRef.current.key === currentStorageKey(),
     selectedDate,
     setSelectedDate,
     data,

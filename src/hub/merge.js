@@ -121,6 +121,15 @@ export function mergeDashboard(base, local, remote) {
   }
 
   function merge(before, here, there, path, memoCard = false) {
+    // A grade's reference year and identity describe one anchor. Mixing fields
+    // from two manual corrections can advance a student by the wrong number of years.
+    if (/^\/edu\/students\/@id=.*\/academic$/.test(path)) {
+      if (equal(here, there)) return copy(here);
+      if (equal(here, before)) return copy(there);
+      if (equal(there, before)) return copy(here);
+      report(path, here === undefined || there === undefined ? "delete-edit" : "value", before, here, there);
+      return copy(here);
+    }
     if (record(here) && record(there) && (record(before) || before === undefined)) {
       // Mark offsets belong to their text, not to independently mergeable fields.
       if (memoCard && [before, here, there].every((card) =>

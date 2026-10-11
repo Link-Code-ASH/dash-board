@@ -1,6 +1,7 @@
 import { normalizeCalendarFormats } from "./calendarText.js";
 import React from "react";
 import { normalizeMindfold as normalizeMindfoldV2 } from "../mindfold/model.js";
+import { normalizeEdu } from "../edu/model.js";
 
 export const STORAGE_KEY = "routine-scoreboard-clean-v1";
 
@@ -718,6 +719,7 @@ export function createFallbackState() {
     life: normalizeSchool(),
     noteTabs: normalizeNoteTabs(),
     mindfold: normalizeMindfold(),
+    edu: normalizeEdu(),
     displayMode: "auto",
     updatedAt: new Date().toISOString(),
   };
@@ -759,6 +761,7 @@ export function normalizeState(source) {
     "life",
     "noteTabs",
     "mindfold",
+    "edu",
     "displayMode",
     BACKUP_IMAGES_KEY,
     "updatedAt",
@@ -796,9 +799,17 @@ export function normalizeState(source) {
     noteTabs,
     ...noteSections,
     mindfold: normalizeMindfold(source?.mindfold),
+    edu: normalizeStoredEdu(source?.edu),
     displayMode: normalizeDisplayMode(source?.displayMode),
     updatedAt: source?.updatedAt || new Date().toISOString(),
   };
+}
+
+// An unsupported module must remain in backups and sync snapshots. The Edu
+// provider surfaces validation errors and blocks editing instead of discarding it.
+function normalizeStoredEdu(source) {
+  try { return normalizeEdu(source); }
+  catch { return source; }
 }
 
 export function loadState() {

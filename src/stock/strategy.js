@@ -29,6 +29,16 @@ export function addStrategyStage(stages) {
   if (!(split > lower && split < upper)) return stages;
   return [...ordered.slice(0, -1), { ...last, upper: split }, { id: uid(), name: `${stages.length + 1}단계`, upper, rules: [] }];
 }
+export function moveStrategyStage(stages, fromId, toId) {
+  const ordered = [...stages].sort((a, b) => Number(a.upper) - Number(b.upper));
+  const from = ordered.findIndex(stage => stage.id === fromId), to = ordered.findIndex(stage => stage.id === toId);
+  if (from < 0 || to < 0 || from === to) return stages;
+  const bounds = ordered.map(stage => stage.upper);
+  const [stage] = ordered.splice(from, 1);
+  ordered.splice(to, 0, stage);
+  // Threshold slots stay put; the stage's rules and identity move together.
+  return ordered.map((item, index) => ({ ...item, upper: bounds[index] }));
+}
 const finiteInput = value => (typeof value === 'number' || typeof value === 'string' && value.trim() !== '') && Number.isFinite(Number(value));
 export function validateStrategy(stages) {
   if (!stages.length) return '단계를 하나 이상 추가해 주세요.';
@@ -41,6 +51,6 @@ export function validateStrategy(stages) {
 }
 export function describeRule(rule) {
   const price = rule.order === 'moc' ? 'MOC' : `평단 ${rule.percent >= 0 ? '+' : ''}${rule.percent}%`;
-  const quantity = rule.mode === 'remaining' ? '남은 보유 수량 전부' : rule.mode === 'fixed' ? `${rule.divisor}주 고정` : `${rule.mode === 'held' ? '보유' : '가능'} 수량의 1/${rule.divisor}`;
+  const quantity = rule.mode === 'remaining' ? '남은 보유 수량 전부' : rule.mode === 'fixed' ? `${rule.divisor}주 고정` : `${rule.mode === 'held' ? '보유' : '가능'} 수량의 ${Math.round(100 / Number(rule.divisor))}%`;
   return { price, quantity };
 }
