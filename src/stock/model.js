@@ -1,5 +1,10 @@
 export const uid = () => globalThis.crypto.randomUUID();
-export const round = (n, digits = 0) => Math.sign(n) * Math.round((Math.abs(n) + Number.EPSILON) * 10 ** digits) / 10 ** digits;
+// Scale by a positive power of ten only: 10 ** -4 is inexact on some engines (Node 22), which leaks float noise into rounded results.
+export const round = (n, digits = 0) => {
+  const scale = 10 ** Math.abs(digits);
+  const value = Math.abs(n) + Number.EPSILON;
+  return Math.sign(n) * (digits >= 0 ? Math.round(value * scale) / scale : Math.round(value / scale) * scale);
+};
 export const defaultOrderType = (side, row) => side === 'buy' || row < 2 ? 'loc' : 'limit';
 const rule = (side, percent, divisor, mode = side === 'buy' ? 'capacity' : 'held', offset = 0, special = '') => ({ id: uid(), side, percent, divisor, mode, offset, special, order: mode === 'remaining' ? 'limit' : 'loc' });
 export function defaultStages() {
