@@ -20,6 +20,7 @@ import { navigationStrokeWidth } from "./hub/icons.jsx";
 import { appBase, installedModule, useHubRoute } from "./hub/routing.js";
 import LingoProvider from "./lingo/LingoProvider.jsx";
 import EduProvider from "./edu/EduProvider.jsx";
+import { isModuleLoadError, latestAppUrl } from "./hub/moduleRecovery.js";
 
 const SettingsView = React.lazy(() => import("./hub/views/Settings.jsx"));
 
@@ -29,16 +30,22 @@ class ModuleBoundary extends React.Component {
     return { error };
   }
   render() {
-    if (this.state.error)
+    if (this.state.error) {
+      const moduleLoadFailed = isModuleLoadError(this.state.error);
       return (
         <section className="hub-error" role="alert">
           <h2>화면을 불러오지 못했습니다.</h2>
-          <p>{this.state.error.message}</p>
-          <button onClick={() => this.setState({ error: null })}>
-            다시 시도
+          <p>{moduleLoadFailed
+            ? "연결이 끊겼거나 앱이 업데이트되어 화면 파일을 불러오지 못했습니다. 인터넷 연결을 확인한 뒤 최신 버전으로 다시 열어 주세요."
+            : this.state.error.message}</p>
+          <button onClick={() => moduleLoadFailed
+            ? window.location.replace(latestAppUrl(window.location.href))
+            : this.setState({ error: null })}>
+            {moduleLoadFailed ? "최신 버전으로 다시 열기" : "다시 시도"}
           </button>
         </section>
       );
+    }
     return this.props.children;
   }
 }

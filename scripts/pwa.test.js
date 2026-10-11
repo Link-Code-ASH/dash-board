@@ -160,7 +160,7 @@ test("worker caches only release allowlist; never auth, APIs, mutations or exter
   assert.ok(await worker.intercept("assets/app-12345678.js"));
   assert.ok(await worker.intercept("app-icon-192.png?v=5"));
   assert.equal(worker.requests.length, worker.metadata.precache.length);
-  for (const url of ["api/data", "auth/callback", "rest/v1/data", "assets/unknown-12345678.js", "assets/lazy.js", "hub/?code=secret", "hub/?access_token=secret", "assets/lazy-12345678.js?token=secret", "https://external.test/assets/lazy-12345678.js"]) {
+  for (const url of ["api/data", "auth/callback", "rest/v1/data", "assets/unknown-12345678.js", "assets/lazy.js", "hub/?code=secret", "hub/?access_token=secret", "hub/?hub-reload=42", "?hub-reload=42", "assets/lazy-12345678.js?token=secret", "https://external.test/assets/lazy-12345678.js"]) {
     for (const mode of ["navigate", "cors"]) assert.equal(worker.intercept(url, { mode }), undefined, url);
   }
   assert.equal(worker.intercept("assets/lazy-12345678.js", { method: "POST" }), undefined);
