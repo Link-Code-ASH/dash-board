@@ -126,9 +126,3 @@ html body #root .hub-app .edu-workspace .edu-button.edu-danger { color: #a24b4b;
 @media (max-width: 640px) {
   html body #root .hub-app .edu-workspace .edu-lab-attributes { grid-template-columns: 1fr; }
 }
-html body #root .hub-app .edu-workspace .edu-lab-principles { padding: 22px 26px; margin-bottom: 18px; border-left: 4px solid #315b88; }
-html body #root .hub-app .edu-workspace .edu-lab-principles .edu-panel-heading { margin-bottom: 12px; }
-html body #root .hub-app .edu-workspace .edu-lab-principles .edu-lab-eyebrow { display: inline-flex; align-items: center; gap: 5px; }
-html body #root .hub-app .edu-workspace .edu-lab-principles-body { max-height: 420px; overflow-y: auto; }
-html body #root .hub-app .edu-workspace .edu-lab-principles-input { width: 100%; box-sizing: border-box; min-height: 260px; font: inherit; line-height: 1.6; resize: vertical; }
-@media (max-width: 720px) { html body #root .hub-app .edu-workspace .edu-lab-principles { padding: 18px; } }
