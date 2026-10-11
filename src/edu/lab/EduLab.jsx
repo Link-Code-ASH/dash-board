@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { BookOpen, FileText, ListChecks, Plus, Printer, RefreshCw, Search, X } from "lucide-react";
+import { BookOpen, FileText, ListChecks, Printer, RefreshCw, Search, X } from "lucide-react";
 import useLab from "./useLab.js";
 import LabMarkdown from "./LabMarkdown.jsx";
 import ItemPaper from "./ItemPaper.jsx";
@@ -16,7 +16,7 @@ function SelectFilter({ label, value, options, onChange, labels = {} }) {
 function SearchBox({ value, onChange }) {
   return <label className="edu-search"><Search size={17} /><input aria-label="연구소 검색" type="search" value={value} onChange={(event) => onChange(event.target.value)} placeholder="제목, 본문, 태그 검색" /></label>;
 }
-function NoteDetail({ note, busy, save, remove, onRelated, deleted = false, drafts }) {
+function NoteDetail({ note, busy, save, onRelated, deleted = false, drafts }) {
   const cached = drafts.get(note.id);
   const [editing, setEditing] = useState(cached?.dirty || false);
   const [base, setBase] = useState(cached?.base || note);
@@ -35,13 +35,8 @@ function NoteDetail({ note, busy, save, remove, onRelated, deleted = false, draf
       setBase(next); setValues(noteValues(next)); setDirty(false); setEditing(false); setSaved(true);
     } catch (failure) { setError(failure.message || "저장하지 못했습니다. 입력 내용은 유지됩니다."); }
   };
-  const removeNote = async () => {
-    if (!remove || dirty || deleted || !window.confirm("이 원칙을 삭제할까요?")) return;
-    setError("");
-    try { await remove(note); } catch (failure) { setError(failure.message || "삭제하지 못했습니다."); }
-  };
   return <section className="edu-panel edu-lab-detail" aria-label="노트 본문">
-    <div className="edu-panel-heading"><div><span className="edu-lab-eyebrow">{kindLabel(note.kind)} · {note.scope || "범위 미지정"}</span><h3>{note.title || "제목 없는 노트"}</h3></div><div className="edu-actions">{remove && !editing && <button type="button" className="edu-button edu-danger" disabled={busy || deleted} onClick={removeNote}>삭제</button>}<button type="button" className="edu-button" disabled={busy} onClick={() => setEditing(!editing)}>{editing ? "본문 보기" : isPrinciple(note) ? "편집" : "간단 편집"}</button></div></div>
+    <div className="edu-panel-heading"><div><span className="edu-lab-eyebrow">{kindLabel(note.kind)} · {note.scope || "범위 미지정"}</span><h3>{note.title || "제목 없는 노트"}</h3></div><div className="edu-actions"><button type="button" className="edu-button" disabled={busy} onClick={() => setEditing(!editing)}>{editing ? "본문 보기" : "간단 편집"}</button></div></div>
     {dirty && base.revision !== note.revision && <p className="edu-lab-notice">바깥에서 노트가 변경되었습니다. 저장할 때 최신 내용과 비교합니다. 같은 내용을 함께 수정했다면 입력을 유지하고 저장을 멈춥니다.</p>}
     <ErrorNotice>{error}</ErrorNotice>
     {editing ? <form className="edu-form" onSubmit={submit}><div className="edu-form-grid">
@@ -113,20 +108,33 @@ function ItemDetail({ item, items, notes, busy, save, remove, onNote, onItem, de
     </form>
   </section>;
 }
-function NewPrinciple({ busy, create, onCreated, onCancel }) {
-  const [title, setTitle] = useState("");
-  const [body, setBody] = useState("");
+// One free-form document that Claude reads before anything else. The oldest
+// principle row is the document; the app never adds a second one.
+function PrincipleBoard({ principle, busy, save, create, drafts }) {
+  const key = "principle-board";
+  const cached = drafts.get(key);
+  const [open, setOpen] = useState(true);
+  const [editing, setEditing] = useState(cached?.dirty || false);
+  const [base, setBase] = useState(cached?.base || principle);
+  const [body, setBody] = useState(cached?.body ?? (principle?.body || ""));
+  const [dirty, setDirty] = useState(cached?.dirty || false);
   const [error, setError] = useState("");
+  useEffect(() => { if (!dirty) { setBase(principle); setBody(principle?.body || ""); } }, [principle, dirty]);
+  useEffect(() => { if (dirty) drafts.set(key, { base, body, dirty }); else drafts.delete(key); }, [drafts, key, base, body, dirty]);
+  const cancel = () => { setBase(principle); setBody(principle?.body || ""); setDirty(false); setEditing(false); setError(""); };
   const submit = async (event) => {
     event.preventDefault(); setError("");
-    try { const note = await create({ kind: "principle", scope: "전 과목", title, body }); onCreated(note.id); }
-    catch (failure) { setError(failure.message || "저장하지 못했습니다. 입력 내용은 유지됩니다."); }
+    try {
+      const next = base ? await save(base, { body }) : await create({ kind: "principle", scope: "전 과목", title: "제작 원칙", body });
+      setBase(next); setBody(next.body || ""); setDirty(false); setEditing(false);
+    } catch (failure) { setError(failure.message || "저장하지 못했습니다. 입력 내용은 유지됩니다."); }
   };
-  return <section className="edu-panel edu-lab-detail" aria-label="새 제작 원칙"><div className="edu-panel-heading"><div><span className="edu-lab-eyebrow">제작 원칙</span><h3>새 원칙</h3></div></div>
-    <form className="edu-form" onSubmit={submit}><div className="edu-form-grid">
-      <label className="edu-field edu-field-wide"><span>제목</span><input value={title} onChange={(event) => setTitle(event.target.value)} disabled={busy} placeholder="예: 원본 문장은 고치지 않고 새로 쓴다" /></label>
-      <label className="edu-field edu-field-wide"><span>내용 (마크다운)</span><textarea rows={10} value={body} onChange={(event) => setBody(event.target.value)} disabled={busy} /></label>
-    </div><ErrorNotice>{error}</ErrorNotice><div className="edu-form-footer"><span className="edu-save-hint">Claude는 문항을 만들 때 제작 원칙을 가장 먼저 읽습니다.</span><div className="edu-actions"><button type="button" className="edu-button" disabled={busy} onClick={onCancel}>취소</button><button className="edu-button edu-primary" disabled={busy || (!title.trim() && !body.trim())}>{busy ? "저장 중…" : "원칙 저장"}</button></div></div></form>
+  const externalChange = dirty && base && principle && base.revision !== principle.revision;
+  return <section className="edu-panel edu-lab-principles" aria-label="제작 원칙">
+    <div className="edu-panel-heading"><div><span className="edu-lab-eyebrow"><ListChecks size={14} /> Claude가 가장 먼저 읽는 글</span><h3>제작 원칙</h3></div><div className="edu-actions">{!editing && <button type="button" className="edu-button" disabled={busy} onClick={() => { setOpen(true); setEditing(true); }}>{principle ? "편집" : "작성"}</button>}<button type="button" className="edu-text-button" aria-expanded={open} onClick={() => setOpen(!open)}>{open ? "접기" : "펼치기"}</button></div></div>
+    {open && <>{externalChange && <p className="edu-lab-notice">바깥에서 원칙이 변경되었습니다. 저장할 때 최신 내용과 비교합니다.</p>}<ErrorNotice>{error}</ErrorNotice>
+      {editing ? <form className="edu-form" onSubmit={submit}><textarea className="edu-lab-principles-input" aria-label="제작 원칙" rows={14} value={body} onChange={(event) => { setBody(event.target.value); setDirty(true); }} disabled={busy} placeholder="문항을 만들 때 지켜야 할 것을 자유롭게 적어 주세요." /><div className="edu-form-footer"><span className="edu-save-hint">{dirty ? "저장하지 않은 변경사항이 있습니다." : "마크다운과 $…$ 수식을 쓸 수 있습니다."}</span><div className="edu-actions"><button type="button" className="edu-button" disabled={busy} onClick={cancel}>취소</button><button className="edu-button edu-primary" disabled={busy || !dirty || !body.trim()}>{busy ? "저장 중…" : "저장"}</button></div></div></form>
+        : principle?.body ? <div className="edu-lab-principles-body"><LabMarkdown>{principle.body}</LabMarkdown></div> : <Empty>아직 제작 원칙이 없습니다. Claude가 문항을 만들 때 가장 먼저 읽을 원칙을 적어 주세요.</Empty>}</>}
   </section>;
 }
 function PrintPreview({ items, onClose }) {
@@ -173,9 +181,9 @@ function PrintPreview({ items, onClose }) {
   </div>, document.body);
 }
 export function LabWorkspace({ lab }) {
-  const { notes: allNotes, items, loading, loaded, error, busy, refresh, updateNote, updateItem, createNote, removeNote, removeItem } = lab;
+  const { notes: allNotes, items, loading, loaded, error, busy, refresh, updateNote, updateItem, createNote, removeItem } = lab;
   const notes = useMemo(() => allNotes.filter((note) => !isPrinciple(note)), [allNotes]);
-  const principles = useMemo(() => sortPrinciples(allNotes), [allNotes]);
+  const principle = useMemo(() => sortPrinciples(allNotes)[0] || null, [allNotes]);
   const [tab, setTab] = useState("items");
   const [query, setQuery] = useState("");
   const [kind, setKind] = useState("");
@@ -185,8 +193,6 @@ export function LabWorkspace({ lab }) {
   const [difficulty, setDifficulty] = useState("");
   const [review, setReview] = useState("");
   const [usage, setUsage] = useState("");
-  const [principleId, setPrincipleId] = useState(null);
-  const [creating, setCreating] = useState(false);
   const [noteId, setNoteId] = useState(null);
   const [itemId, setItemId] = useState(null);
   const [selected, setSelected] = useState([]);
@@ -208,7 +214,6 @@ export function LabWorkspace({ lab }) {
   const groups = useMemo(() => groupNotes(visibleNotes), [visibleNotes]);
   const visibleItems = useMemo(() => filterItems(items, { query, subject, unit, difficulty, review, usage }), [items, query, subject, unit, difficulty, review, usage]);
   const printItems = useMemo(() => selectedItems(items, selected), [items, selected]);
-  const livePrinciple = principles.find((note) => note.id === principleId);
   const liveNote = notes.find((note) => note.id === noteId);
   const liveItem = items.find((item) => item.id === itemId);
   // Keep an open editor available for copying its draft if an external writer
@@ -220,7 +225,7 @@ export function LabWorkspace({ lab }) {
   const toggleItem = (id) => setSelected((ids) => ids.includes(id) ? ids.filter((entry) => entry !== id) : [...ids, id]);
   const openRelated = (id) => {
     setRelationError("");
-    if (principles.some((note) => note.id === id)) { setTab("principles"); setCreating(false); setPrincipleId(id); }
+    if (principle?.id === id) document.querySelector(".edu-lab-principles")?.scrollIntoView({ behavior: "smooth" });
     else if (notes.some((note) => note.id === id)) { setTab("notes"); setNoteId(id); }
     else if (items.some((item) => item.id === id)) { setTab("items"); setItemId(id); }
     else setRelationError("관련 기록이 없거나 삭제되었습니다.");
@@ -228,22 +233,18 @@ export function LabWorkspace({ lab }) {
   const selectVisible = () => setSelected((ids) => [...new Set([...ids, ...visibleItems.map((item) => item.id)])]);
   return <div className="edu-lab">
     <div className="edu-section-heading"><div><h2>문항 연구소</h2><p>생각을 쌓고, 문항을 다듬고, 수업으로 가져갑니다.</p></div><button type="button" className="edu-button" onClick={() => refresh().catch(() => {})} disabled={loading || busy}><RefreshCw size={16} className={loading ? "edu-lab-spinning" : ""} />{loading ? "불러오는 중…" : "새로고침"}</button></div>
-    <div className="edu-lab-tabs" aria-label="연구소 보기"><button type="button" className={tab === "items" ? "active" : ""} aria-pressed={tab === "items"} onClick={() => setTab("items")}><FileText size={17} />문항 <span>{items.length}</span></button><button type="button" className={tab === "notes" ? "active" : ""} aria-pressed={tab === "notes"} onClick={() => setTab("notes")}><BookOpen size={17} />노트 <span>{notes.length}</span></button><button type="button" className={tab === "principles" ? "active" : ""} aria-pressed={tab === "principles"} onClick={() => setTab("principles")}><ListChecks size={17} />제작 원칙 <span>{principles.length}</span></button></div>
+    {loaded && <PrincipleBoard principle={principle} busy={busy} save={updateNote} create={createNote} drafts={drafts.current.notes} />}
+    <div className="edu-lab-tabs" aria-label="연구소 보기"><button type="button" className={tab === "items" ? "active" : ""} aria-pressed={tab === "items"} onClick={() => setTab("items")}><FileText size={17} />문항 <span>{items.length}</span></button><button type="button" className={tab === "notes" ? "active" : ""} aria-pressed={tab === "notes"} onClick={() => setTab("notes")}><BookOpen size={17} />노트 <span>{notes.length}</span></button></div>
     <ErrorNotice>{error || relationError}</ErrorNotice>
-    {tab !== "principles" && <div className="edu-lab-filters"><SearchBox value={query} onChange={setQuery} />{tab === "notes" ? <><SelectFilter label="종류" value={kind} options={distinct(notes, "kind")} labels={Object.fromEntries(distinct(notes, "kind").map((entry) => [entry, kindLabel(entry)]))} onChange={setKind} /><SelectFilter label="적용 범위" value={scope} options={distinct(notes, "scope")} onChange={setScope} /></> : <><SelectFilter label="과목" value={subject} options={distinct(items, "subject")} onChange={(value) => { setSubject(value); setUnit(""); }} /><SelectFilter label="단원" value={unit} options={distinct(items.filter((item) => !subject || item.subject === subject), "unit")} onChange={setUnit} /><SelectFilter label="난이도" value={difficulty} options={Object.keys(DIFFICULTIES)} onChange={setDifficulty} /><SelectFilter label="상태" value={review} options={[...Object.keys(REVIEW_STATES), "complete"]} labels={{ ...REVIEW_STATES, complete: "완성 (적용 + 활용)" }} onChange={setReview} /><SelectFilter label="쓰임" value={usage} options={Object.keys(USAGES)} labels={USAGES} onChange={setUsage} /></>}</div>}
+    <div className="edu-lab-filters"><SearchBox value={query} onChange={setQuery} />{tab === "notes" ? <><SelectFilter label="종류" value={kind} options={distinct(notes, "kind")} labels={Object.fromEntries(distinct(notes, "kind").map((entry) => [entry, kindLabel(entry)]))} onChange={setKind} /><SelectFilter label="적용 범위" value={scope} options={distinct(notes, "scope")} onChange={setScope} /></> : <><SelectFilter label="과목" value={subject} options={distinct(items, "subject")} onChange={(value) => { setSubject(value); setUnit(""); }} /><SelectFilter label="단원" value={unit} options={distinct(items.filter((item) => !subject || item.subject === subject), "unit")} onChange={setUnit} /><SelectFilter label="난이도" value={difficulty} options={Object.keys(DIFFICULTIES)} onChange={setDifficulty} /><SelectFilter label="상태" value={review} options={[...Object.keys(REVIEW_STATES), "complete"]} labels={{ ...REVIEW_STATES, complete: "완성 (적용 + 활용)" }} onChange={setReview} /><SelectFilter label="쓰임" value={usage} options={Object.keys(USAGES)} labels={USAGES} onChange={setUsage} /></>}</div>
     <p className="edu-lab-refresh-hint">Claude가 기록한 내용은 새로고침하거나 이 화면으로 돌아오면 불러옵니다.</p>
     {!loaded && loading ? <Empty>노트와 문항을 불러오는 중입니다…</Empty> : <>
       {tab === "items" && <div className="edu-lab-selection"><span>인쇄할 문항 {printItems.length}개 선택</span><div className="edu-actions"><button type="button" className="edu-text-button" onClick={selectVisible} disabled={!visibleItems.length}>현재 목록 모두 선택</button><button type="button" className="edu-text-button" onClick={() => setSelected([])} disabled={!selected.length}>선택 해제</button><button type="button" className="edu-button edu-primary" disabled={!printItems.length} onClick={() => setPrinting(true)}><Printer size={16} />시험지 인쇄</button></div></div>}
-      <div className="edu-lab-layout"><aside className="edu-panel edu-lab-list" aria-label={tab === "items" ? "문항 목록" : tab === "notes" ? "노트 목록" : "제작 원칙 목록"}>
-        {tab === "principles" ? <><button type="button" className="edu-button edu-lab-new" disabled={busy} onClick={() => { setCreating(true); setPrincipleId(null); }}><Plus size={16} />새 원칙</button>{principles.length ? principles.map((note, index) => <button type="button" key={note.id} className={`edu-lab-list-entry${note.id === principleId && !creating ? " active" : ""}`} aria-pressed={note.id === principleId && !creating} onClick={() => { setCreating(false); setPrincipleId(note.id); }}><strong>{index + 1}. {note.title || "제목 없는 원칙"}</strong></button>) : <Empty>아직 제작 원칙이 없습니다. Claude가 문항을 만들 때 가장 먼저 읽을 원칙을 적어 주세요.</Empty>}</> : tab === "notes" ? groups.length ? groups.map((group) => <section className="edu-lab-note-group" key={group.kind}><h3>{kindLabel(group.kind)}</h3>{group.scopes.map((entry) => <div key={entry.scope}><h4>{entry.scope || "범위 미지정"}</h4>{entry.rows.map((note) => <button type="button" key={note.id} className={`edu-lab-list-entry${note.id === noteId ? " active" : ""}`} aria-pressed={note.id === noteId} onClick={() => setNoteId(note.id)}><strong>{note.title || "제목 없는 노트"}</strong><span>{note.source || (Array.isArray(note.tags) ? note.tags.join(" · ") : "") || "본문 보기"}</span></button>)}</div>)}</section>) : <Empty>{notes.length ? "검색 결과가 없습니다." : "아직 노트가 없습니다. Claude가 아이디어와 풀이법을 기록하면 여기에 나타납니다."}</Empty> : visibleItems.length ? visibleItems.map((item) => <div className={`edu-lab-item-entry${item.id === itemId ? " active" : ""}`} key={item.id}><input type="checkbox" aria-label={`${item.title || "제목 없는 문항"} 인쇄 선택`} checked={selected.includes(item.id)} onChange={() => toggleItem(item.id)} /><button type="button" className="edu-lab-list-entry" aria-pressed={item.id === itemId} onClick={() => setItemId(item.id)}><span className="edu-lab-entry-top"><strong>{item.title || "제목 없는 문항"}</strong><ItemBadges item={item} /></span><span>{[item.subject, item.unit, item.difficulty].filter(Boolean).join(" · ") || "과목 · 단원 미지정"}</span></button></div>) : <Empty>{items.length ? "검색 결과가 없습니다." : "아직 문항이 없습니다. Claude가 만든 문항을 여기에서 검토하고 인쇄할 수 있습니다."}</Empty>}
+      <div className="edu-lab-layout"><aside className="edu-panel edu-lab-list" aria-label={tab === "items" ? "문항 목록" : "노트 목록"}>
+        {tab === "notes" ? groups.length ? groups.map((group) => <section className="edu-lab-note-group" key={group.kind}><h3>{kindLabel(group.kind)}</h3>{group.scopes.map((entry) => <div key={entry.scope}><h4>{entry.scope || "범위 미지정"}</h4>{entry.rows.map((note) => <button type="button" key={note.id} className={`edu-lab-list-entry${note.id === noteId ? " active" : ""}`} aria-pressed={note.id === noteId} onClick={() => setNoteId(note.id)}><strong>{note.title || "제목 없는 노트"}</strong><span>{note.source || (Array.isArray(note.tags) ? note.tags.join(" · ") : "") || "본문 보기"}</span></button>)}</div>)}</section>) : <Empty>{notes.length ? "검색 결과가 없습니다." : "아직 노트가 없습니다. Claude가 아이디어와 풀이법을 기록하면 여기에 나타납니다."}</Empty> : visibleItems.length ? visibleItems.map((item) => <div className={`edu-lab-item-entry${item.id === itemId ? " active" : ""}`} key={item.id}><input type="checkbox" aria-label={`${item.title || "제목 없는 문항"} 인쇄 선택`} checked={selected.includes(item.id)} onChange={() => toggleItem(item.id)} /><button type="button" className="edu-lab-list-entry" aria-pressed={item.id === itemId} onClick={() => setItemId(item.id)}><span className="edu-lab-entry-top"><strong>{item.title || "제목 없는 문항"}</strong><ItemBadges item={item} /></span><span>{[item.subject, item.unit, item.difficulty].filter(Boolean).join(" · ") || "과목 · 단원 미지정"}</span></button></div>) : <Empty>{items.length ? "검색 결과가 없습니다." : "아직 문항이 없습니다. Claude가 만든 문항을 여기에서 검토하고 인쇄할 수 있습니다."}</Empty>}
       </aside><div className="edu-lab-detail-area">
         {((tab === "notes" && activeNote && !liveNote) || (tab === "items" && activeItem && !liveItem)) && <p className="edu-lab-notice" role="alert">다른 곳에서 삭제한 기록입니다. 작성 중인 내용을 복사할 수 있도록 편집창을 유지합니다. 저장과 인쇄는 할 수 없습니다.</p>}
-        {tab === "principles" ? creating
-          ? <NewPrinciple busy={busy} create={createNote} onCreated={(id) => { setCreating(false); setPrincipleId(id); }} onCancel={() => setCreating(false)} />
-          : livePrinciple
-            ? <NoteDetail key={livePrinciple.id} note={livePrinciple} busy={busy} save={updateNote} remove={(note) => removeNote(note).then(() => setPrincipleId(null))} onRelated={openRelated} drafts={drafts.current.notes} />
-            : <section className="edu-panel"><Empty>원칙을 선택하거나 새 원칙을 추가해 주세요.</Empty></section>
-          : tab === "notes" ? activeNote
+        {tab === "notes" ? activeNote
           ? <NoteDetail key={activeNote.id} note={activeNote} busy={busy} save={updateNote} onRelated={openRelated} deleted={!liveNote} drafts={drafts.current.notes} />
           : <section className="edu-panel"><Empty>노트를 선택하면 본문과 관련 기록을 볼 수 있습니다.</Empty></section>
           : activeItem
