@@ -122,8 +122,13 @@ html body #root .hub-app .edu-workspace .edu-lab-status.is-usage-revise { color:
 html body #root .hub-app .edu-workspace .edu-lab-status.is-usage-discard { color: #a24b4b; background: #fbeeee; }
 html body #root .hub-app .edu-workspace .edu-lab-status.is-complete { color: #fff; background: #3b7b65; }
 html body #root .hub-app .edu-workspace .edu-lab-attributes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
-html body #root .hub-app .edu-workspace .edu-lab-new { width: 100%; justify-content: center; margin-bottom: 8px; }
 html body #root .hub-app .edu-workspace .edu-button.edu-danger { color: #a24b4b; border-color: #efd3d3; }
 @media (max-width: 640px) {
   html body #root .hub-app .edu-workspace .edu-lab-attributes { grid-template-columns: 1fr; }
 }
+html body #root .hub-app .edu-workspace .edu-lab-principles { padding: 22px 26px; margin-bottom: 18px; border-left: 4px solid #315b88; }
+html body #root .hub-app .edu-workspace .edu-lab-principles .edu-panel-heading { margin-bottom: 12px; }
+html body #root .hub-app .edu-workspace .edu-lab-principles .edu-lab-eyebrow { display: inline-flex; align-items: center; gap: 5px; }
+html body #root .hub-app .edu-workspace .edu-lab-principles-body { max-height: 420px; overflow-y: auto; }
+html body #root .hub-app .edu-workspace .edu-lab-principles-input { width: 100%; box-sizing: border-box; min-height: 260px; font: inherit; line-height: 1.6; resize: vertical; }
+@media (max-width: 720px) { html body #root .hub-app .edu-workspace .edu-lab-principles { padding: 18px; } }
