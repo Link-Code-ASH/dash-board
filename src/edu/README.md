@@ -110,7 +110,7 @@ checks to run outside the sandbox.
 | `figures` | `jsonb`, `[]` | 그림 배열. 각 항목은 `{"svg": "SVG 코드 문자열", "caption": "그림 설명"}`. 두 값 모두 문자열이며 그림이 없으면 `[]`. |
 | `based_on` | `text[]`, `{}` | 제작 시 참고한 같은 계정의 `edu_notes.id` 목록. |
 | `review_state` | `text`, `unreviewed` | 검토 상태. `unreviewed` 검토 전, `feedback` 피드백 작성(애쉬가 의견을 남겨 Claude의 확인을 요청), `applied` 피드백 적용(Claude가 읽고 노트에 기록함). |
-| `usage` | `text`, `hold` | 쓰임. `hold` 보류, `use` 활용, `revise` 수정 필요, `revised` 수정 생성, `discard` 폐기. 상태와 별개이다. |
+| `usage` | `text`, `hold` | 쓰임. `hold` 보류, `use` 활용, `revise` 수정 필요, `discard` 폐기. 상태와 별개이다. |
 | `revised_from` | `text`, `''` | 수정본일 때 원래 문항의 `id`. 원래 문항이 아니면 `''`. |
 | `status` | `text`, `draft` | v1의 옛 칸. 앱은 더 이상 쓰지 않으며, 값은 그대로 둔다. |
 | `feedback` | `text`, `''` | 애쉬가 앱에서 남긴 피드백. Claude는 최신 피드백을 먼저 읽고, 문항 수정 시 이 칸을 임의로 지우지 않는다. |
@@ -130,7 +130,8 @@ Claude는 문항을 만들거나 매일 정기 점검을 할 때 `review_state =
 1. 피드백·쓰임·난이도 판단을 읽고, 배울 점을 `edu_notes`에 기록한다(보통 `kind = 'feedback'` 또는 `rule`).
 2. `usage`에 따라 처리한다.
    - `revise` 수정 필요: 피드백대로 고친 문항을 새 행으로 만든다. 새 행은 `review_state = 'unreviewed'`,
-     `usage = 'hold'`, `revised_from = 원래 id`. 그다음 원래 문항을 `usage = 'revised'`로 바꾼다.
+     `usage = 'hold'`, `revised_from = 원래 id`. 그다음 원래 문항을 `usage = 'discard'`로 바꾼다.
+     원래 문항은 애쉬가 앱에서 지운다. 지워진 원래 문항은 수정본에 "삭제됨"으로 보인다.
    - `discard` 폐기: 행을 지우지 않는다. 삭제는 애쉬가 앱에서 한다.
    - `hold`, `use` 등: 쓰임은 그대로 둔다.
 3. 원래 문항을 `review_state = 'applied'`로 바꾼다. 애쉬의 `feedback` 글은 지우지 않는다.

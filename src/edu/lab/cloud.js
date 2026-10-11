@@ -3,7 +3,7 @@ const NOTE_FIELDS = ["title", "body", "kind", "scope", "tags", "source"];
 const ITEM_FIELDS = ["feedback", "review_state", "usage", "difficulty"];
 const CHOICES = {
   review_state: new Set(["unreviewed", "feedback", "applied"]),
-  usage: new Set(["hold", "use", "revise", "revised", "discard"]),
+  usage: new Set(["hold", "use", "revise", "discard"]),
   difficulty: new Set(["", "최상", "상", "중", "하"]),
 };
 // The app may only create production principles; Claude writes every other note kind.

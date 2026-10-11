@@ -46,7 +46,7 @@ test("exam selection keeps click order across filters and excludes deleted/missi
 test("only applied feedback plus use counts as a finished question; missing values read as defaults", () => {
   assert.equal(isComplete({ review_state: "applied", usage: "use" }), true);
   assert.equal(isComplete({ review_state: "feedback", usage: "use" }), false);
-  assert.equal(isComplete({ review_state: "applied", usage: "revised" }), false);
+  assert.equal(isComplete({ review_state: "applied", usage: "discard" }), false);
   assert.equal(reviewLabel(undefined), "검토 전");
   assert.equal(usageLabel(undefined), "보류");
   assert.deepEqual(filterItems([{ id: "old" }], { review: "unreviewed", usage: "hold" }).map((i) => i.id), ["old"]);
