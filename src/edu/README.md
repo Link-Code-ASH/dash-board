@@ -61,7 +61,7 @@ checks to run outside the sandbox.
 
 애쉬가 문항·생각·피드백을 자유롭게 전달하면 Claude는 노트 종류와 적용 범위를
 정리하여 기록한다. 문항을 만들면 문제, 선택지, 그림, 정답, 해설을 문항 한 행으로
-기록하고 검토가 필요할 때 `status = 'review'`로 둔다. 앱에서는 노트를 검색·수정하고,
+기록하고 `review_state = 'unreviewed'`, `usage = 'hold'`로 둔다. 앱에서는 노트를 검색·수정하고,
 문항을 검토하며 피드백과 상태를 저장하고, 선택한 문항을 시험지로 인쇄한다.
 인쇄 창에서 PDF 저장을 선택할 수 있고 정답·해설 포함 여부를 앱에서 선택한다.
 
@@ -86,7 +86,7 @@ checks to run outside the sandbox.
 
 | 칸 | SQL 형식 / 기본값 | 의미 |
 | --- | --- | --- |
-| `kind` | `text`, `idea` | `idea` 아이디어, `method` 풀이법·사고방식, `feedback` 애쉬의 피드백, `rule` 제작 규칙. 자유 텍스트라 Claude가 새 종류를 추가할 수 있다. |
+| `kind` | `text`, `idea` | `principle` 제작 원칙(애쉬가 앱에서 작성, 가장 먼저 읽음), `idea` 아이디어, `method` 풀이법·사고방식, `feedback` 애쉬의 피드백, `rule` 제작 규칙. 자유 텍스트라 Claude가 새 종류를 추가할 수 있다. |
 | `title` | `text`, `''` | 목록에 표시할 짧은 제목. |
 | `body` | `text`, `''` | 노트 본문. 마크다운과 LaTeX 수식을 사용할 수 있다. |
 | `scope` | `text`, `전 과목` | 적용 범위. 예: `물리학Ⅰ > 역학 > 운동량 보존`. 자유 텍스트. |
@@ -101,7 +101,7 @@ checks to run outside the sandbox.
 | `title` | `text`, `''` | 목록용 제목. 문제 본문은 `stem`에 쓴다. |
 | `subject` | `text`, `''` | 과목. 예: `물리학Ⅰ`. |
 | `unit` | `text`, `''` | 단원. 예: `역학 > 운동량 보존`. |
-| `difficulty` | `text`, `''` | 난도. 예: `중`, `상`, `수능 3점`. 자유 텍스트. |
+| `difficulty` | `text`, `''` | 난이도. `최상`, `상`, `중`, `하` 또는 미정 `''`만 허용한다. Claude가 정하고 애쉬가 바꿀 수 있다. |
 | `question_type` | `text`, `''` | `객관식`, `서술형` 등. 자유 텍스트. |
 | `stem` | `text`, `''` | 문제 본문. 마크다운과 LaTeX 수식. |
 | `choices` | `jsonb`, `[]` | 객관식 선택지를 표시 순서대로 담은 **문자열 배열**. 예: `["1 m/s", "2 m/s"]`. 번호는 앱에서 붙이므로 내용만 쓴다. 서술형은 `[]`. |
@@ -109,7 +109,10 @@ checks to run outside the sandbox.
 | `explanation` | `text`, `''` | 해설. 마크다운과 LaTeX 수식. |
 | `figures` | `jsonb`, `[]` | 그림 배열. 각 항목은 `{"svg": "SVG 코드 문자열", "caption": "그림 설명"}`. 두 값 모두 문자열이며 그림이 없으면 `[]`. |
 | `based_on` | `text[]`, `{}` | 제작 시 참고한 같은 계정의 `edu_notes.id` 목록. |
-| `status` | `text`, `draft` | `draft` 초안, `review` 검토 요청, `revise` 수정 필요, `approved` 확정. 이 네 값만 허용한다. |
+| `review_state` | `text`, `unreviewed` | 검토 상태. `unreviewed` 검토 전, `feedback` 피드백 작성(애쉬가 의견을 남겨 Claude의 확인을 요청), `applied` 피드백 적용(Claude가 읽고 노트에 기록함). |
+| `usage` | `text`, `hold` | 쓰임. `hold` 보류, `use` 활용, `revise` 수정 필요, `revised` 수정 생성, `discard` 폐기. 상태와 별개이다. |
+| `revised_from` | `text`, `''` | 수정본일 때 원래 문항의 `id`. 원래 문항이 아니면 `''`. |
+| `status` | `text`, `draft` | v1의 옛 칸. 앱은 더 이상 쓰지 않으며, 값은 그대로 둔다. |
 | `feedback` | `text`, `''` | 애쉬가 앱에서 남긴 피드백. Claude는 최신 피드백을 먼저 읽고, 문항 수정 시 이 칸을 임의로 지우지 않는다. |
 
 `related`/`based_on`은 간단한 참조 목록이며 DB 외래키로 강제하지 않는다.
@@ -117,6 +120,28 @@ checks to run outside the sandbox.
 연결은 같은 `user_id` 안에서만 해석한다. JSON `extra`의 기존 키는 수정 목적과
 관계없는 값을 보존한다. `choices`의 모든 항목은 문자열, `figures`의 모든 항목은
 `svg`와 `caption` 문자열을 가진 객체여야 한다.
+
+### 문항의 상태와 쓰임 처리 (Claude)
+
+완성된 문항은 `review_state = 'applied'` 그리고 `usage = 'use'`인 문항이다.
+앱에서 애쉬가 피드백, 쓰임, 난이도를 바꿔 저장하면 `review_state`는 `feedback`이 된다.
+Claude는 문항을 만들거나 매일 정기 점검을 할 때 `review_state = 'feedback'`인 문항을 모두 처리한다.
+
+1. 피드백·쓰임·난이도 판단을 읽고, 배울 점을 `edu_notes`에 기록한다(보통 `kind = 'feedback'` 또는 `rule`).
+2. `usage`에 따라 처리한다.
+   - `revise` 수정 필요: 피드백대로 고친 문항을 새 행으로 만든다. 새 행은 `review_state = 'unreviewed'`,
+     `usage = 'hold'`, `revised_from = 원래 id`. 그다음 원래 문항을 `usage = 'revised'`로 바꾼다.
+   - `discard` 폐기: 행을 지우지 않는다. 삭제는 애쉬가 앱에서 한다.
+   - `hold`, `use` 등: 쓰임은 그대로 둔다.
+3. 원래 문항을 `review_state = 'applied'`로 바꾼다. 애쉬의 `feedback` 글은 지우지 않는다.
+
+모든 수정은 아래 revision 규칙을 따른다. 애쉬가 같은 문항을 다시 고치면 다시 `feedback`이 된다.
+
+### 제작 원칙
+
+`edu_notes`의 `kind = 'principle'` 행이다. 앱의 **제작 원칙** 탭에서 애쉬가 추가·수정·삭제하며,
+`created_at` 순서로 표시된다. Claude는 문항을 만들기 전에 모든 원칙을 가장 먼저 읽고 따른다.
+앱이 새로 만들 수 있는 노트는 원칙뿐이고, 다른 종류의 노트는 Claude가 기록한다.
 
 ### 수식과 SVG 작성 규칙
 
@@ -161,7 +186,7 @@ returning id, revision, created_at, updated_at;
 
 insert into public.edu_items
   (user_id, id, title, subject, unit, difficulty, question_type,
-   stem, choices, answer, explanation, figures, based_on, status)
+   stem, choices, answer, explanation, figures, based_on)
 values (
   '00000000-0000-0000-0000-000000000000'::uuid,
   'item-momentum-001', '완전 비탄성 충돌', '물리학Ⅰ', '역학 > 운동량 보존', '중', '객관식',
@@ -170,7 +195,7 @@ values (
 충돌 과정에서 두 물체가 이루는 계에 작용하는 외력은 무시한다.$stem$,
   '["1 m/s", "2 m/s", "3 m/s", "4 m/s", "8 m/s"]'::jsonb,
   '②', $explanation$운동량 보존으로 $m\times4 = 2mv$이므로 $v=2\,\mathrm{m/s}$이다.$explanation$,
-  '[]'::jsonb, array['note-momentum-001'], 'review'
+  '[]'::jsonb, array['note-momentum-001']
 )
 returning id, revision;
 ```
@@ -187,7 +212,7 @@ where user_id = '00000000-0000-0000-0000-000000000000'::uuid
 update public.edu_items
 set stem = $stem$수정된 문제 본문$stem$,
     explanation = $explanation$수정된 해설$explanation$,
-    status = 'review', revision = 4
+    review_state = 'unreviewed', revision = 4
 where user_id = '00000000-0000-0000-0000-000000000000'::uuid
   and id = 'item-momentum-001' and revision = 3 and deleted_at is null
 returning *;
@@ -220,7 +245,7 @@ returning id, revision, deleted_at;
 
 1. HUB가 연결된 Supabase 프로젝트를 연다.
 2. **SQL Editor → New query**를 누른다.
-3. 저장소의 `supabase/edu_lab.sql` 전체 내용을 붙여 넣고 **Run**을 누른다.
+3. 저장소의 `supabase/edu_lab.sql` 전체 내용을 붙여 넣고 **Run**을 누른다. 이어서 `supabase/edu_lab_v2.sql`도 같은 방법으로 실행한다.
 4. Table Editor에서 `edu_notes`, `edu_items` 두 표가 만들어졌는지 확인한다.
 5. HUB에 로그인하여 **Edu → 문항 연구소 → 새로고침**을 누른다.
 

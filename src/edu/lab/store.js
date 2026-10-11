@@ -1,5 +1,5 @@
 import { mergeDashboard } from "../../hub/merge.js";
-import { editableLabFields, labFailure, validateLabPatch } from "./cloud.js";
+import { editableLabFields, labFailure, validateLabPatch, validateNewNote } from "./cloud.js";
 
 const clone = (value) => structuredClone(value);
 const projection = (row, fields) => Object.fromEntries(fields.filter((field) => Object.hasOwn(row, field)).map((field) => [field, clone(row[field])]));
@@ -136,12 +136,67 @@ export function createLabStore(userId, { cloud, controller = new AbortController
       if (active) publish({ busy: pendingWrites > 0 });
     });
   };
+  const write = (work) => {
+    try {
+      check();
+      if (!canWrite()) throw labFailure("LAB_WRITE_BLOCKED", "계정 확인이 끝난 뒤 다시 저장해주세요.");
+    } catch (error) { return Promise.reject(error); }
+    pendingWrites += 1;
+    publish({ busy: true });
+    return enqueue(async () => {
+      try {
+        if (!canWrite()) throw labFailure("LAB_WRITE_BLOCKED", "계정 확인이 끝난 뒤 다시 저장해주세요.");
+        const result = await work();
+        check();
+        publish({ error: "" });
+        return result;
+      } catch (error) {
+        if (active) publish({ error: message(error) });
+        throw error;
+      }
+    }).finally(() => {
+      pendingWrites -= 1;
+      if (active) publish({ busy: pendingWrites > 0 });
+    });
+  };
+  const createNote = (input) => {
+    let note;
+    try { note = validateNewNote(input); } catch (error) { return Promise.reject(error); }
+    return write(async () => {
+      const saved = validateRow(await cloud.insertNote(`principle-${globalThis.crypto.randomUUID()}`, note));
+      check();
+      setRow("edu_notes", saved);
+      return clone(saved);
+    });
+  };
+  // Deleting never retries against a newer row: the person confirms what they saw.
+  const remove = (table, baseRow) => {
+    let base;
+    try { base = clone(validateRow(baseRow)); } catch (error) { return Promise.reject(error); }
+    return write(async () => {
+      try {
+        const saved = await cloud.remove(table, base.id, base.revision);
+        check();
+        setRow(table, null, base.id);
+        return clone(saved);
+      } catch (error) {
+        if (error.code !== "LAB_CAS_MISS") throw error;
+        const latest = await cloud.readRow(table, base.id);
+        check();
+        setRow(table, latest && !latest.deleted_at ? latest : null, base.id);
+        throw labFailure("LAB_CONFLICT", "다른 곳에서 바뀐 기록이라 삭제하지 않았습니다. 최신 내용을 확인한 뒤 다시 삭제해주세요.", { latest: clone(latest) });
+      }
+    });
+  };
   return {
     getSnapshot: () => state,
     subscribe: (listener) => { listeners.add(listener); return () => listeners.delete(listener); },
     refresh,
     updateNote: (base, patch) => update("edu_notes", base, patch),
     updateItem: (base, patch) => update("edu_items", base, patch),
+    createNote,
+    removeNote: (base) => remove("edu_notes", base),
+    removeItem: (base) => remove("edu_items", base),
     dispose: () => { active = false; controller.abort(); listeners.clear(); },
   };
 }

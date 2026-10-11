@@ -5,7 +5,7 @@ import { createLabStore } from "../src/edu/lab/store.js";
 
 const copy = (value) => structuredClone(value);
 const item = (id, user_id = "ash") => ({ id, user_id, revision: 1, deleted_at: null, title: id,
-  status: "review", feedback: "", stem: "Claude의 문제", extra: { untouched: true } });
+  status: "review", review_state: "unreviewed", usage: "hold", difficulty: "", feedback: "", stem: "Claude의 문제", extra: { untouched: true } });
 const note = (id, user_id = "ash") => ({ id, user_id, revision: 1, deleted_at: null, title: id,
   kind: "idea", scope: "전 과목", body: "본문", tags: [], source: "", related: ["item-1"], extra: { untouched: true } });
 const deferred = () => { let resolve; const promise = new Promise((done) => { resolve = done; }); return { promise, resolve }; };
@@ -21,6 +21,7 @@ function fakeClient({ notes = [], items = [], beforeRequest } = {}) {
       const builder = {
         select() { return builder; },
         update(patch) { query.operation = "update"; query.patch = copy(patch); return builder; },
+        insert(row) { query.operation = "insert"; query.patch = copy(row); return builder; },
         eq(field, value) { query.filters[field] = value; return builder; },
         is(field, value) { query.nulls[field] = value; return builder; },
         order(field, options) { query.order = { field, ...options }; return builder; },
@@ -32,6 +33,11 @@ function fakeClient({ notes = [], items = [], beforeRequest } = {}) {
             calls.push(query);
             await beforeRequest?.(query, tables);
             const matches = (row) => Object.entries({ ...query.filters, ...query.nulls }).every(([field, value]) => row[field] === value);
+            if (query.operation === "insert") {
+              const row = { deleted_at: null, created_at: "2026-10-11T00:00:00Z", ...copy(query.patch) };
+              tables[table].push(row);
+              return { data: copy(row), error: null };
+            }
             let rows = tables[table].filter(matches);
             if (query.operation === "update") {
               for (const row of rows) Object.assign(row, copy(query.patch), { updated_at: "2026-10-11T00:00:00Z" });
@@ -105,7 +111,7 @@ test("Feedback PATCH uses owner/id/revision CAS and preserves all external conte
     }
   } });
   await store.refresh();
-  const saved = await store.updateItem(store.getSnapshot().items[0], { feedback: "좋아요", status: "approved" });
+  const saved = await store.updateItem(store.getSnapshot().items[0], { feedback: "좋아요", usage: "use" });
   assert.equal(saved.revision, 3);
   assert.equal(saved.stem, "Claude의 외부 수정");
   assert.deepEqual(saved.extra, { newKey: 10 });
@@ -116,7 +122,7 @@ test("Feedback PATCH uses owner/id/revision CAS and preserves all external conte
     { user_id: "ash", id: "i", revision: 1 }, { user_id: "ash", id: "i", revision: 2 },
   ]);
   assert.deepEqual(writes.map((call) => call.patch), [
-    { feedback: "좋아요", status: "approved", revision: 2 }, { feedback: "좋아요", status: "approved", revision: 3 },
+    { feedback: "좋아요", usage: "use", revision: 2 }, { feedback: "좋아요", usage: "use", revision: 3 },
   ]);
   assert.ok(writes.every((call) => call.nulls.deleted_at === null));
   store.dispose();
@@ -247,7 +253,7 @@ test("Saving an unchanged old editor after refresh cannot replace the latest vis
   const original = copy(store.getSnapshot().items[0]);
   Object.assign(client.tables.edu_items[0], { feedback: "최신 의견", stem: "최신 문제", revision: 2 });
   await store.refresh();
-  const saved = await store.updateItem(original, { feedback: "", status: "review" });
+  const saved = await store.updateItem(original, { feedback: "", review_state: "unreviewed" });
   assert.equal(saved.revision, 2);
   assert.equal(store.getSnapshot().items[0].feedback, "최신 의견");
   assert.equal(store.getSnapshot().items[0].stem, "최신 문제");
@@ -287,5 +293,51 @@ test("Missing SQL tables expose an actionable error without any initialization w
   assert.match(store.getSnapshot().error, /edu_lab\.sql/);
   assert.equal(store.getSnapshot().loaded, false);
   assert.equal(store.getSnapshot().loading, false);
+  store.dispose();
+});
+
+test("Item attributes accept only the agreed difficulty, review state and usage values", async () => {
+  const { client, store } = setup({ items: [item("i")] });
+  await store.refresh();
+  for (const patch of [{ usage: "approved" }, { review_state: "done" }, { difficulty: "어려움" }, { status: "approved" }]) {
+    await assert.rejects(store.updateItem(store.getSnapshot().items[0], patch), (error) => error.code === "LAB_PATCH");
+  }
+  const saved = await store.updateItem(store.getSnapshot().items[0], { difficulty: "최상", usage: "revise", review_state: "feedback", feedback: "조건 추가" });
+  assert.equal(saved.difficulty, "최상");
+  assert.equal(saved.status, "review");
+  assert.deepEqual(client.calls.filter((call) => call.operation === "update").map((call) => call.patch), [
+    { difficulty: "최상", usage: "revise", review_state: "feedback", feedback: "조건 추가", revision: 2 },
+  ]);
+  store.dispose();
+});
+
+test("The app can add principles only, with a generated id, owner and first revision", async () => {
+  const { client, store } = setup();
+  await store.refresh();
+  await assert.rejects(store.createNote({ kind: "idea", title: "x", body: "" }), (error) => error.code === "LAB_PATCH");
+  await assert.rejects(store.createNote({ kind: "principle", title: " ", body: "" }), (error) => error.code === "LAB_PATCH");
+  const saved = await store.createNote({ kind: "principle", title: "원문 금지", body: "아이디어만 빌린다", user_id: "other", id: "x" });
+  assert.match(saved.id, /^principle-[0-9a-f-]{36}$/);
+  assert.equal(saved.user_id, "ash");
+  assert.equal(saved.revision, 1);
+  assert.equal(saved.scope, "전 과목");
+  assert.deepEqual(store.getSnapshot().notes.map((note) => note.id), [saved.id]);
+  assert.equal(client.calls.filter((call) => call.operation === "insert").length, 1);
+  store.dispose();
+});
+
+test("Deleting is a revision-checked soft delete that refuses a row changed elsewhere", async () => {
+  const { client, store } = setup({ items: [item("a"), item("b")] });
+  await store.refresh();
+  const [a, b] = store.getSnapshot().items;
+  await store.removeItem(a);
+  assert.ok(client.tables.edu_items[0].deleted_at);
+  assert.equal(client.tables.edu_items[0].revision, 2);
+  assert.deepEqual(store.getSnapshot().items.map((row) => row.id), ["b"]);
+  Object.assign(client.tables.edu_items[1], { revision: 2, feedback: "새 의견" });
+  await assert.rejects(store.removeItem(b), (error) => error.code === "LAB_CONFLICT");
+  assert.equal(client.tables.edu_items[1].deleted_at, null);
+  assert.equal(store.getSnapshot().items[0].feedback, "새 의견");
+  assert.equal(client.tables.edu_items.length, 2);
   store.dispose();
 });

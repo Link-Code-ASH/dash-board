@@ -53,5 +53,8 @@ export default function useLab() {
     refresh: () => withStore("refresh"),
     updateNote: (base, patch) => withStore("updateNote", base, patch),
     updateItem: (base, patch) => withStore("updateItem", base, patch),
+    createNote: (input) => withStore("createNote", input),
+    removeNote: (base) => withStore("removeNote", base),
+    removeItem: (base) => withStore("removeItem", base),
   };
 }
