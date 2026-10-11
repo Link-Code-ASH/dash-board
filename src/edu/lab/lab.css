@@ -114,3 +114,17 @@ html body #root .hub-app .edu-workspace .lab-paper-heading h3, .edu-lab-print-sh
   .edu-lab-print-sheet .edu-lab-figure img { max-height: 80mm; }
   .edu-lab-print-sheet a { color: #000; text-decoration: none; }
 }
+html body #root .hub-app .edu-workspace .edu-lab-badges { display: inline-flex; gap: 4px; flex: 0 0 auto; }
+html body #root .hub-app .edu-workspace .edu-lab-status.is-feedback { color: #9b6838; background: #fff4e8; }
+html body #root .hub-app .edu-workspace .edu-lab-status.is-applied { color: #476fa5; background: #edf3fd; }
+html body #root .hub-app .edu-workspace .edu-lab-status.is-usage-use { color: #3b7b65; background: #edf8f2; }
+html body #root .hub-app .edu-workspace .edu-lab-status.is-usage-revise { color: #9b6838; background: #fff4e8; }
+html body #root .hub-app .edu-workspace .edu-lab-status.is-usage-revised { color: #6a6f9b; background: #f1f1fb; }
+html body #root .hub-app .edu-workspace .edu-lab-status.is-usage-discard { color: #a24b4b; background: #fbeeee; }
+html body #root .hub-app .edu-workspace .edu-lab-status.is-complete { color: #fff; background: #3b7b65; }
+html body #root .hub-app .edu-workspace .edu-lab-attributes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+html body #root .hub-app .edu-workspace .edu-lab-new { width: 100%; justify-content: center; margin-bottom: 8px; }
+html body #root .hub-app .edu-workspace .edu-button.edu-danger { color: #a24b4b; border-color: #efd3d3; }
+@media (max-width: 640px) {
+  html body #root .hub-app .edu-workspace .edu-lab-attributes { grid-template-columns: 1fr; }
+}
