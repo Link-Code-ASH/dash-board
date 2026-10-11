@@ -138,27 +138,31 @@ export function mergeDashboard(base, local, remote) {
       }
       const result = [];
       const keys = new Set([...Object.keys(before || {}), ...Object.keys(here), ...Object.keys(there)]);
-      const calendarPairs = path === "" && [before, here, there].some((v) => record(field(v, "calendarFormats")))
-        && [before, here, there].every((v) => ["calendar", "calendarFormats"].every((k) => field(v, k) === undefined || record(field(v, k))));
+      const calendarKeys = ["calendar", "calendarFormats", "calendarEntries"];
+      const calendarPairs = path === "" && [before, here, there].some((v) => record(field(v, "calendarFormats")) || record(field(v, "calendarEntries")))
+        && [before, here, there].every((v) => calendarKeys.every((k) => field(v, k) === undefined || record(field(v, k))));
       if (calendarPairs) {
-        keys.delete("calendar"); keys.delete("calendarFormats");
-        const calendar = {}, formats = {};
-        const dates = new Set([before, here, there].flatMap((v) => Object.keys(field(v, "calendar") || {})));
+        calendarKeys.forEach((key) => keys.delete(key));
+        const calendar = {}, formats = {}, entries = {};
+        const dates = new Set([before, here, there].flatMap((v) => calendarKeys.flatMap((key) => Object.keys(field(v, key) || {}))));
         for (const date of dates) {
-          const pair = (v) => ({ text: field(field(v, "calendar"), date), marks: field(field(v, "calendarFormats"), date) });
+          const pair = (v) => ({ text: field(field(v, "calendar"), date), marks: field(field(v, "calendarFormats"), date), entries: field(field(v, "calendarEntries"), date) });
           const [b, l, r] = [before, here, there].map(pair);
           let selected = l;
           if (equal(l, b)) selected = r;
           else if (!equal(l, r) && !equal(r, b)) {
             report(pointer("/calendar", date), "value", b, l, r);
             conflicts[conflicts.length - 1].relatedPaths = [pointer("/calendarFormats", date)];
+            if ([b, l, r].some((v) => v.entries !== undefined)) conflicts[conflicts.length - 1].relatedPaths.push(pointer("/calendarEntries", date));
           }
           if (selected.text !== undefined) {
             calendar[date] = copy(selected.text);
             if (selected.marks !== undefined) formats[date] = copy(selected.marks);
           }
+          if (selected.entries !== undefined) entries[date] = copy(selected.entries);
         }
         result.push(["calendar", calendar], ["calendarFormats", formats]);
+        if ([before, here, there].some((v) => field(v, "calendarEntries") !== undefined)) result.push(["calendarEntries", entries]);
       }
       for (const key of keys) {
         const b = field(before, key);

@@ -1,164 +1,112 @@
-/* Planner is an editing workbench. Execution and score history live in Flow. */
-#root .hub-app .routine-page-toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 16px 24px; margin-bottom: 24px; }
-#root .hub-app .routine-page-toolbar .hub-page-heading { flex: 1; margin: 0; }
-#root .hub-app .routine-page-toolbar .hub-segments { margin: 0; padding: 0; border: 0; }
-#root .hub-app .routine-page-toolbar .hub-segments button { min-height: 44px; font-size: 16px; padding: 8px 14px; }
-#root .hub-app .routine-workspace { display: block; min-width: 0; }
-#root .hub-app .routine-editor-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-bottom: 20px; }
-#root .hub-app .routine-editor-tabs button { display: flex; align-items: center; justify-content: center; gap: 12px; min-height: 72px; padding: 14px; border: 1px solid #dce3eb; border-radius: 10px; background: #ffffffa8; color: #728095; font-size: 23px; font-weight: 600; }
-#root .hub-app .routine-editor-tabs button[aria-pressed="true"] { border-color: #9bb2cf; background: #eaf0f8; color: #2f527e; box-shadow: inset 0 -3px 0 #7693b9; }
-#root .hub-app .routine-editor-tabs button:nth-child(2)[aria-pressed="true"] { border-color: #b8a581; background: #f5efe3; color: #7e6438; box-shadow: inset 0 -3px 0 #bba075; }
-#root .hub-app .routine-editor-tabs button:nth-child(3)[aria-pressed="true"] { border-color: #91b39f; background: #eaf3ed; color: #426f56; box-shadow: inset 0 -3px 0 #83aa92; }
-#root .hub-app .routine-config-editor { min-width: 0; padding: 0 2px; }
-#root .hub-app .routine-editor-actions { display: flex; justify-content: flex-end; margin-bottom: 14px; }
-#root .hub-app .routine-add-button { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 8px 16px; background: #344f72; border: 1px solid #344f72; border-radius: 7px; font-size: 16px; font-weight: 600; color: #fff; }
-#root .hub-app .routine-preset-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 28px; }
-#root .hub-app .routine-preset-row { display: grid; grid-template-columns: 24px 36px minmax(100px, 1fr) 80px 80px 36px; align-items: center; gap: 8px; padding: 12px 0; border-bottom: 1px solid #dce3eb; min-width: 0; }
-html body #root .hub-app .routine-config-editor input { box-sizing: border-box; min-width: 0; width: 100%; height: 44px !important; min-height: 44px !important; margin: 0; padding: 8px !important; font-family: var(--hub-font-body); font-size: 18px !important; line-height: 1.4 !important; color: #273c54 !important; border: 1px solid #d9e1ea !important; border-radius: 6px !important; background: #fff !important; box-shadow: none !important; text-align: left !important; }
-html body #root .hub-app .routine-config-editor input:hover { border-color: #a9bad0 !important; }
-html body #root .hub-app .routine-config-editor input:focus { outline: 2px solid #91aed0 !important; outline-offset: 1px; }
-#root .hub-app .routine-config-editor .hub-item-icon { width: 36px; height: 44px; padding: 0; }
-#root .hub-app .routine-config-editor .routine-name-input { font-weight: 500; }
-html body #root .hub-app .routine-score-field { display: flex; align-items: center; gap: 4px; width: 100%; min-width: 0; padding: 0 6px; box-sizing: border-box; border: 1px solid #d9e4dc; border-radius: 6px; background: #f5faf6; }
-#root .hub-app .routine-score-field > span { font-size: 14px; font-weight: 600; color: #5a8068; }
-html body #root .hub-app .routine-score-field.is-n { border-color: #eadcdd; background: #fbf5f5; }
-#root .hub-app .routine-score-field.is-n > span { color: #a4676b; }
-html body #root .hub-app .routine-config-editor .routine-score-field input { border: 0 !important; background: transparent !important; padding: 7px 0 !important; text-align: center !important; font-variant-numeric: tabular-nums; }
-#root .hub-app .routine-delete-button { display: grid; place-items: center; padding: 0; width: 36px; height: 44px; border: 0; background: transparent; color: #8b97a8; }
-#root .hub-app .routine-delete-button:hover { color: #b6474e; background: #f7e9ea; }
-#root .hub-app .routine-delete-button:disabled { opacity: .25; }
-#root .hub-app .routine-order-controls { display: flex; align-items: center; color: #a8b3c1; min-width: 0; }
-#root .hub-app .routine-order-controls > svg { display: none; }
-#root .hub-app .routine-order-controls > div { display: flex; flex-direction: column; }
-#root .hub-app .routine-order-controls button { display: grid; place-items: center; width: 24px; min-width: 24px; height: 24px; min-height: 24px; padding: 0; border: 0; background: transparent; color: #76889f; }
-#root .hub-app .routine-order-controls button:disabled { opacity: .2; }
-#root .hub-app .routine-order-controls button:hover:not(:disabled) { background: #e2eaf4; color: #38597f; }
-#root .hub-app .routine-weekly-scroll { overflow-x: auto; min-width: 0; border: 1px solid #d9e1ea; border-radius: 10px; background: #fff; }
-#root .hub-app .routine-weekly-grid { display: grid; grid-template-columns: 210px repeat(7, minmax(130px, 1fr)); }
-#root .hub-app :is(.routine-weekday, .routine-weekly-corner) { padding: 14px 12px; font-size: 17px; font-weight: 600; color: #53667d; text-align: center; border-bottom: 1px solid #d9e1ea; background: #f1f4f8; }
-#root .hub-app .routine-weekday.is-selected { background: #e5edf8; color: #325c91; }
-#root .hub-app .routine-category { display: flex; flex-direction: column; gap: 8px; padding: 12px; border-right: 1px solid #dce3eb; border-bottom: 1px solid #dce3eb; background: #f8fafc; }
-#root .hub-app .routine-category-heading { display: flex; align-items: center; gap: 8px; }
-#root .hub-app .routine-category-heading .routine-name-input { min-width: 0; }
-#root .hub-app .routine-category-heading .routine-order-controls { margin-right: auto; }
-#root .hub-app .routine-category-heading .routine-order-controls > svg { display: block; }
-#root .hub-app .routine-category-scores { display: flex; gap: 8px; }
-#root .hub-app .routine-plan-cell { min-width: 0; border-right: 1px solid #e1e7ee; border-bottom: 1px solid #e1e7ee; }
-html body #root .hub-app .routine-config-editor .weekly-schedule-cell { display: flex !important; flex-direction: column; min-height: 100%; box-sizing: border-box; padding: 10px !important; border: 0 !important; border-radius: 0 !important; background: #fff !important; box-shadow: none !important; }
-html body #root .hub-app .routine-config-editor .weekly-schedule-cell.active { background: #f4f7fc !important; }
-html body #root .hub-app .routine-config-editor .weekly-input { padding: 8px !important; font-size: 17px !important; line-height: 1.5 !important; min-height: 100px !important; background: transparent !important; box-shadow: none !important; color: #2d415b !important; }
-html body #root .hub-app .routine-config-editor .weekly-add-divider { margin-top: auto; width: 100% !important; min-height: 32px !important; font-size: 22px !important; background: transparent !important; border: 1px dashed #d7e0eb !important; box-shadow: none !important; color: #7890ae !important; }
-#root .hub-app .routine-subjects { display: grid; grid-template-columns: repeat(7, minmax(100px, 1fr)); gap: 10px; margin-bottom: 22px; overflow-x: auto; padding-bottom: 4px; }
-#root .hub-app .routine-subjects label { display: flex; flex-direction: column; gap: 10px; text-align: center; font-size: 17px; font-weight: 600; color: #62788e; }
-#root .hub-app .routine-subjects label.is-selected { color: #426f56; }
-#root .hub-app .routine-editor-empty { font-size: 18px; color: #6b7e95; text-align: center; padding: 40px 0; }
-@container hub-content (max-width: 1120px) {
-  #root .hub-app .routine-preset-list { grid-template-columns: minmax(0, 1fr); }
+/* Shared workbench surfaces and controls for Daily, Weekly and EDU. */
+#root .hub-app .routine-page-toolbar { display:flex; align-items:center; flex-wrap:wrap; gap:16px 24px; margin-bottom:20px; }
+#root .hub-app .routine-page-toolbar .hub-page-heading { flex:1; margin:0; }
+#root .hub-app .routine-page-toolbar .hub-segments { margin:0; padding:0; border:0; }
+#root .hub-app .routine-page-toolbar .hub-segments button { min-height:44px; font-size:16px; padding:8px 14px; }
+#root .hub-app :is(.routine-workspace,.routine-config-editor) { min-width:0; }
+#root .hub-app .routine-desktop-workspace { display:grid; grid-template-columns:minmax(0,1fr); gap:24px; }
+#root .hub-app .routine-presets-workspace { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:28px; align-items:start; }
+#root .hub-app .routine-editor-panel { min-width:0; width:100%; container:routine-panel / inline-size; padding:0; border:0; border-radius:0; background:transparent; box-shadow:none; }
+#root .hub-app .routine-editor-actions { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:8px 0 12px; margin-bottom:8px; border-bottom:1px solid #dce3eb; }
+#root .hub-app .routine-editor-actions h2 { display:flex; align-items:center; gap:8px; margin:0; font:600 18px/26px var(--hub-font-title); color:#3d5068; }
+html body #root .hub-app .routine-add-button { display:inline-flex; align-items:center; justify-content:center; gap:6px; min-width:36px; min-height:36px; padding:6px 10px !important; border:1px solid #d7e0e9 !important; border-radius:5px !important; background:#f7f9fc !important; color:#667d99 !important; box-shadow:inset 0 1px #fff !important; font-size:14px !important; }
+#root .hub-app :is(.routine-preset-list,.routine-table-heads) { display:grid; grid-template-columns:minmax(0,1fr); }
+#root .hub-app :is(.routine-preset-row,.routine-table-head) { display:grid; grid-template-columns:24px 32px minmax(0,1fr) 72px 72px 28px; align-items:center; gap:8px; min-width:0; }
+#root .hub-app .routine-preset-row { padding:8px 0; min-height:44px; border-bottom:1px solid #e2e7ed; }
+#root .hub-app .routine-table-head { padding:6px 0; color:#8592a3; font-size:13px; }
+#root .hub-app .routine-table-head.is-secondary { display:none; }
+#root .hub-app .routine-table-head span:first-child { grid-column:3; }
+#root .hub-app .routine-table-head span:not(:first-child) { text-align:center; }
+#root .hub-app .routine-table-head span:nth-child(2) { color:#71917e; }
+#root .hub-app .routine-table-head span:nth-child(3) { color:#b27e83; }
+html body #root .hub-app .routine-config-editor input { box-sizing:border-box; min-width:0; width:100%; height:40px !important; min-height:40px !important; margin:0; padding:7px 6px !important; font:400 16px/24px var(--hub-font-body) !important; color:#34445b !important; border:1px solid transparent !important; border-radius:4px !important; background:transparent !important; box-shadow:none !important; text-align:left !important; }
+html body #root .hub-app .routine-config-editor input:hover { border-color:#d8e2ed !important; }
+html body #root .hub-app .routine-config-editor input:focus { outline:2px solid #abc0d8 !important; outline-offset:0; background:#ffffff80 !important; }
+html body #root .hub-app .routine-score-field { display:flex; align-items:center; gap:4px; min-width:0; padding:0 4px; border:1px solid #dbe5df; border-radius:4px; background:#eaf2ed60; }
+#root .hub-app .routine-score-field > span { color:#789383; font-size:12px; }
+html body #root .hub-app .routine-score-field.is-n { border-color:#e9dfe1; background:#f4ebed60; }
+#root .hub-app .routine-score-field.is-n > span { color:#b1878b; }
+html body #root .hub-app .routine-config-editor .routine-score-field input { border:0 !important; background:transparent !important; padding:6px 1px !important; text-align:center !important; font-variant-numeric:tabular-nums; }
+#root .hub-app.hub-desktop .routine-preset-row .routine-score-field > span { display:none; }
+#root .hub-app .routine-config-editor .hub-item-icon { width:32px; min-width:32px; height:40px; padding:0; }
+#root .hub-app .routine-delete-button { display:grid; place-items:center; width:28px; height:40px; min-width:28px; min-height:40px; padding:0; border:0; background:transparent; box-shadow:none; color:#98a4b3; }
+#root .hub-app .routine-delete-button:hover { color:#b56d76; background:#f5ecee; }
+#root .hub-app .routine-delete-button:disabled { opacity:.25; }
+#root .hub-app .routine-order-controls { display:flex; align-items:center; min-width:0; }
+#root .hub-app .routine-order-controls > svg { display:none; }
+#root .hub-app .routine-order-controls > div { display:flex; flex-direction:column; }
+#root .hub-app .routine-order-controls button { display:grid; place-items:center; width:24px; height:22px; min-width:24px; min-height:22px; padding:0; border:0; background:transparent; box-shadow:none; color:#8597af; }
+#root .hub-app .routine-order-controls button:disabled { opacity:.25; }
+#root .hub-app .routine-order-controls button:hover:not(:disabled) { color:#476a95; background:#eaf0f7; }
+#root .hub-app .routine-subjects { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:6px; margin-bottom:12px; min-width:0; }
+#root .hub-app .routine-subjects label { display:flex; flex-direction:column; gap:5px; min-width:0; text-align:center; font-size:13px; color:#8b97a6; }
+#root .hub-app .routine-subjects label.is-selected { color:#628970; }
+html body #root .hub-app .routine-subjects input { border-color:#dce4ea !important; background:#ffffff60 !important; padding:5px !important; font-size:14px !important; text-align:center !important; }
+#root .hub-app .routine-weekly-scroll { min-width:0; overflow-x:auto; }
+#root .hub-app .routine-weekly-grid { display:grid; grid-template-columns:220px repeat(7,minmax(0,1fr)); min-width:0; border-top:1px solid #dce3eb; }
+#root .hub-app :is(.routine-weekday,.routine-weekly-corner) { display:grid; place-items:center; margin:0; padding:12px 8px; border-bottom:1px solid #dce3eb; background:#f0f3f760; color:#748296; font-size:14px; font-weight:500; }
+#root .hub-app .routine-weekday.is-selected { color:#506a89; box-shadow:inset 0 -2px #93a7bf; }
+#root .hub-app .routine-category { display:flex; flex-direction:column; gap:4px; padding:10px; border-right:1px solid #dce3eb; border-bottom:1px solid #dce3eb; background:#f4f6f940; }
+#root .hub-app .routine-category-heading { display:grid; grid-template-columns:32px minmax(0,1fr); gap:6px; align-items:center; }
+#root .hub-app .routine-category-controls { display:grid; grid-template-columns:24px repeat(2,minmax(0,1fr)) 24px; gap:6px; align-items:center; }
+html body #root .hub-app .routine-weekly-editor .routine-category-heading input { font-weight:500 !important; }
+html body #root .hub-app .routine-weekly-editor .routine-category-controls .routine-score-field { padding:0 3px; border:0; background:transparent; }
+html body #root .hub-app .routine-weekly-editor .routine-category-controls .routine-score-field input { height:32px !important; min-height:32px !important; font-size:14px !important; }
+#root .hub-app .routine-category-controls .routine-delete-button { width:24px; min-width:24px; height:32px; min-height:32px; }
+#root .hub-app .routine-plan-cell { min-width:0; border-right:1px solid #e4e9ef; border-bottom:1px solid #dce3eb; }
+#root .hub-app .routine-plan-cell:nth-child(8n) { border-right:0; }
+#root .hub-app .routine-weekly-cell { height:100%; }
+html body #root .hub-app .hub-content-modern .routine-weekly-editor .weekly-schedule-cell { position:relative; display:flex !important; flex-direction:column; align-items:stretch; box-sizing:border-box; min-height:100%; padding:10px 10px 32px !important; border:0 !important; border-radius:0 !important; background:transparent !important; box-shadow:none !important; }
+html body #root .hub-app .hub-content-modern .routine-weekly-editor .weekly-schedule-cell:focus-within { background:#edf2f650 !important; }
+html body #root .hub-app .hub-content-modern .routine-weekly-editor .weekly-input { box-sizing:border-box; width:100%; min-height:40px !important; padding:4px 0 !important; border:0 !important; border-radius:0 !important; background:transparent !important; color:#3d4d65 !important; font:400 16px/24px var(--hub-font-body) !important; resize:none !important; overflow:hidden !important; box-shadow:none !important; }
+html body #root .hub-app .hub-content-modern .routine-weekly-editor .weekly-add-divider { position:absolute; bottom:4px; right:6px; display:grid; place-items:center; margin:0; width:28px !important; min-width:28px !important; height:28px !important; min-height:28px !important; padding:0 !important; border:0 !important; border-radius:4px !important; background:transparent !important; color:#8091a7 !important; font:400 20px/28px var(--hub-font-body) !important; box-shadow:none !important; }
+html body #root .hub-app .hub-content-modern .routine-weekly-editor .weekly-add-divider:hover { background:#e8eef5 !important; }
+html body #root .hub-app .hub-content-modern .routine-weekly-editor .weekly-add-divider::before { display:none; }
+html body #root .hub-app .hub-content-modern .routine-weekly-editor .weekly-item-divider { position:relative; margin:8px 0; border-top:1px solid #e1e7ee; min-height:0; }
+html body #root .hub-app .hub-content-modern .routine-weekly-editor .weekly-item-divider button { position:absolute; top:-10px; right:0; display:grid; place-items:center; width:20px; height:20px; min-width:20px; min-height:20px; padding:0; border:0; border-radius:3px; background:#f3f6f9; box-shadow:none; color:#8395ac; }
+@media (hover:hover) and (pointer:fine) {
+ #root .hub-app .routine-weekly-editor :is(.weekly-add-divider,.weekly-item-divider button,.routine-order-controls,.routine-delete-button) { opacity:0; transition:opacity 120ms ease; }
+ #root .hub-app .routine-category:is(:hover,:focus-within) :is(.routine-order-controls,.routine-delete-button),
+ #root .hub-app .weekly-schedule-cell:is(:hover,:focus-within) .weekly-add-divider,
+ #root .hub-app .routine-weekly-editor .weekly-item-divider:is(:hover,:focus-within) button { opacity:1; }
 }
-@media (max-width: 900px) {
-  #root .hub-app .routine-preset-list { grid-template-columns: minmax(0, 1fr); }
-  #root .hub-app .routine-page-toolbar { gap: 16px; }
+#root .hub-app .routine-editor-empty { padding:30px 0; text-align:center; font-size:16px; color:#8a97a9; }
+#root .hub-app .routine-editor-tabs { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; margin-bottom:14px; }
+#root .hub-app .routine-editor-tabs button { display:flex; align-items:center; justify-content:center; gap:7px; min-height:44px; padding:8px 6px; border:1px solid #dde4eb; border-radius:5px; background:#f6f8fb; color:#8795a8; font-size:15px; }
+#root .hub-app .routine-editor-tabs button[aria-pressed="true"] { background:#e8eff8; border-color:#b8c9de; color:#55779d; }
+@container routine-panel (min-width:800px) {
+ #root .hub-app :is(.routine-preset-list,.routine-table-heads) { grid-template-columns:repeat(2,minmax(0,1fr)); column-gap:24px; }
+ #root .hub-app .routine-table-head.is-secondary { display:grid; }
 }
-@media (max-width: 600px) {
-  #root .hub-app .routine-page-toolbar .hub-page-heading { flex-basis: 100%; }
-  #root .hub-app .routine-page-toolbar .hub-segments { width: 100%; }
-  #root .hub-app .routine-page-toolbar .hub-segments button { flex: 1; }
-  #root .hub-app .routine-editor-tabs { gap: 8px; margin-bottom: 14px; }
-  #root .hub-app .routine-editor-tabs button { min-height: 62px; gap: 7px; padding: 10px 6px; font-size: 20px; }
-  #root .hub-app .routine-editor-tabs button svg { width: 20px; }
-  #root .hub-app .routine-preset-row { grid-template-columns: 24px 36px minmax(0, 1fr) 36px; gap: 8px; padding: 12px 0; }
-  #root .hub-app .routine-preset-row .routine-order-controls { grid-row: 1 / 3; }
-  #root .hub-app .routine-preset-row .hub-item-icon { grid-row: 1; grid-column: 2; }
-  #root .hub-app .routine-preset-row .routine-name-input { grid-row: 1; grid-column: 3; }
-  #root .hub-app .routine-preset-row .routine-delete-button { grid-row: 1; grid-column: 4; }
-  #root .hub-app .routine-preset-row .routine-score-field.is-y { grid-row: 2; grid-column: 2 / 4; width: 90px; }
-  #root .hub-app .routine-preset-row .routine-score-field.is-n { grid-row: 2; grid-column: 3 / 5; width: 90px; margin-left: 52px; }
-  #root .hub-app .routine-weekly-grid { grid-template-columns: 190px repeat(7, 150px); }
+@container hub-content (max-width:850px) {
+ #root .hub-app .routine-presets-workspace { grid-template-columns:minmax(0,1fr); }
 }
-
-html body #root .hub-app .routine-add-button { min-height: 44px !important; padding: 8px 16px !important; background: #344f72 !important; border: 1px solid #344f72 !important; border-radius: 7px !important; color: #fff !important; font-size: 17px !important; box-shadow: none !important; }
-html body #root .hub-app .routine-config-editor .weekly-add-divider { background: transparent !important; border: 1px dashed #d7e0eb !important; }
-
-/* Desktop columns follow the inputs' useful width instead of stretching. */
-html body #root .hub-app.hub-desktop .routine-page-toolbar { margin-bottom: 18px; }
-html body #root .hub-app.hub-desktop .routine-desktop-workspace { display: grid; grid-template-columns: minmax(0, 1fr); justify-items: start; gap: 18px; min-width: 0; }
-html body #root .hub-app.hub-desktop .routine-presets-workspace { display: grid; grid-template-columns: 470px minmax(0, 1fr); width: 100%; max-width: 1440px; gap: 20px; align-items: start; }
-html body #root .hub-app.hub-desktop .routine-editor-panel { box-sizing: border-box; min-width: 0; width: 470px; max-width: 100%; border: 1px solid #dce3eb; border-radius: 12px; padding: 12px; background: #eef3f8; box-shadow: 0 2px 8px #23375006; }
-html body #root .hub-app.hub-desktop .routine-editor-panel[data-kind="edu"] { width: 100%; container: routine-edu / inline-size; border-color: #dbe6df; background: #eff5f1; }
-html body #root .hub-app.hub-desktop .routine-editor-panel[data-kind="weekly"] { width: 100%; max-width: 1440px; }
-html body #root .hub-app.hub-desktop .routine-editor-panel .routine-config-editor { padding: 0; }
-html body #root .hub-app.hub-desktop .routine-editor-panel .routine-editor-actions { align-items: center; justify-content: space-between; margin-bottom: 6px; }
-html body #root .hub-app.hub-desktop .routine-editor-panel h2 { font-size: 19px !important; margin: 0; color: #344b66 !important; }
-html body #root .hub-app.hub-desktop .routine-editor-panel[data-kind="edu"] h2 { color: #476d56 !important; }
-html body #root .hub-app.hub-desktop .routine-editor-panel[data-kind="weekly"] h2 { color: #806a45 !important; }
-html body #root .hub-app.hub-desktop .routine-editor-panel .routine-add-button { display: grid; place-items: center; width: 24px !important; min-width: 24px !important; height: 24px !important; min-height: 24px !important; padding: 0 !important; background: #fff !important; border: 1px solid #d3deeb !important; border-radius: 6px !important; color: #56708f !important; box-shadow: 0 1px 2px #2337500a !important; }
-html body #root .hub-app.hub-desktop .routine-add-label { display: none; }
-html body #root .hub-app.hub-desktop .routine-editor-panel .routine-preset-list { display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; }
-html body #root .hub-app.hub-desktop .routine-editor-panel .routine-preset-row,
-html body #root .hub-app.hub-desktop .routine-table-head { display: grid; grid-template-columns: 18px 24px minmax(0, 1fr) 48px 48px 22px; gap: 4px; }
-html body #root .hub-app.hub-desktop .routine-editor-panel .routine-preset-row { box-sizing: border-box; padding: 3px 6px; min-height: 42px; border: 1px solid #dce5ef; border-radius: 8px; background: #fff; box-shadow: 0 1px 2px #2337500a; }
-html body #root .hub-app.hub-desktop .routine-editor-panel .routine-preset-row:hover { border-color: #c3d2e2; }
-html body #root .hub-app.hub-desktop .routine-editor-panel .routine-preset-row:focus-within { border-color: #a6bdd7; box-shadow: 0 2px 5px #2337500f; }
-html body #root .hub-app.hub-desktop .routine-editor-panel .routine-config-editor input { height: 32px !important; min-height: 32px !important; padding: 4px 5px !important; font-size: 17px !important; border-color: transparent !important; background: transparent !important; }
-html body #root .hub-app.hub-desktop .routine-editor-panel .routine-config-editor input:hover { border-color: #cbd7e5 !important; background: #fff !important; }
-html body #root .hub-app.hub-desktop .routine-editor-panel .routine-config-editor input:focus { background: #fff !important; border-color: #9eb5d1 !important; }
-html body #root .hub-app.hub-desktop .routine-editor-panel .routine-score-field { padding: 0 !important; border: 1px solid #c1d7c8 !important; border-radius: 6px !important; background: #f0f8f2 !important; }
-html body #root .hub-app.hub-desktop .routine-editor-panel .routine-score-field.is-n { border-color: #e3c7cb !important; background: #fcf2f3 !important; }
-html body #root .hub-app.hub-desktop .routine-editor-panel .routine-score-field input { padding: 4px 2px !important; border: 0 !important; background: transparent !important; }
-html body #root .hub-app.hub-desktop .routine-editor-panel .routine-score-field input:hover,
-html body #root .hub-app.hub-desktop .routine-editor-panel .routine-score-field input:focus { background: transparent !important; }
-html body #root .hub-app.hub-desktop .routine-editor-panel .routine-preset-row .routine-score-field > span { display: none; }
-html body #root .hub-app.hub-desktop .routine-table-heads { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; margin-bottom: 4px; }
-html body #root .hub-app.hub-desktop .routine-table-head { box-sizing: border-box; padding: 4px 7px; border: 0; color: #6b7c90; font-size: 13px; }
-html body #root .hub-app.hub-desktop .routine-table-head.is-secondary { display: none; }
-html body #root .hub-app.hub-desktop .routine-table-head span:first-child { grid-column: 3; padding-left: 5px; }
-html body #root .hub-app.hub-desktop .routine-table-head span:nth-child(2) { color: #5a8068; text-align: center; }
-html body #root .hub-app.hub-desktop .routine-table-head span:nth-child(3) { color: #a4676b; text-align: center; }
-html body #root .hub-app.hub-desktop .routine-editor-panel .hub-item-icon { width: 24px; min-width: 24px; height: 32px; padding: 0; }
-html body #root .hub-app.hub-desktop .routine-editor-panel .routine-delete-button { width: 22px; min-width: 22px; height: 32px; min-height: 32px; }
-html body #root .hub-app.hub-desktop .routine-editor-panel .routine-order-controls button { width: 18px; min-width: 18px; height: 16px; min-height: 16px; }
-html body #root .hub-app.hub-desktop .routine-editor-panel :is(.routine-delete-button, .routine-add-button, .hub-item-icon, .routine-order-controls button, .weekly-add-divider, .weekly-item-divider button) { padding: 0 !important; gap: 0 !important; justify-content: center !important; align-items: center !important; }
-html body #root .hub-app.hub-desktop .routine-editor-panel :is(.routine-delete-button, .routine-add-button, .hub-item-icon) > svg { flex: 0 0 auto !important; width: 18px !important; min-width: 18px !important; height: 18px !important; }
-html body #root .hub-app.hub-desktop .routine-editor-panel .routine-order-controls button > svg { flex: 0 0 auto !important; width: 15px !important; min-width: 15px !important; height: 15px !important; }
-html body #root .hub-app.hub-desktop .routine-editor-panel .routine-subjects { grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; margin-bottom: 8px; padding-bottom: 0; }
-html body #root .hub-app.hub-desktop .routine-editor-panel .routine-subjects label { gap: 2px; font-size: 13px; }
-html body #root .hub-app.hub-desktop .routine-editor-panel .routine-subjects input { border: 1px solid #dce4ee !important; height: 28px !important; min-height: 28px !important; padding: 3px !important; font-size: 15px !important; }
-html body #root .hub-app.hub-desktop .routine-editor-panel .routine-weekly-scroll { width: 100%; box-sizing: border-box; border: 0; border-radius: 0; background: transparent; }
-html body #root .hub-app.hub-desktop .routine-editor-panel .routine-weekly-grid { width: 100%; min-width: 1088px; grid-template-columns: 220px repeat(7, minmax(124px, 1fr)); grid-auto-rows: minmax(68px, auto); }
-html body #root .hub-app.hub-desktop .routine-editor-panel :is(.routine-weekday, .routine-weekly-corner) { font-size: 15px; padding: 6px; min-height: 0; align-self: stretch; margin: 0 3px 4px; border: 0; border-radius: 6px; background: #e4ebf3; }
-html body #root .hub-app.hub-desktop .routine-editor-panel .routine-weekday.is-selected { background: #dbe8f8; color: #325c91; }
-html body #root .hub-app.hub-desktop .routine-editor-panel .routine-weekly-grid { grid-template-rows: 34px; }
-html body #root .hub-app.hub-desktop .routine-editor-panel :is(.routine-category, .routine-plan-cell) { box-sizing: border-box; margin: 2px 3px; border: 1px solid #dce5ef; border-radius: 8px; background: #fff; box-shadow: 0 1px 2px #2337500a; }
-html body #root .hub-app.hub-desktop .routine-editor-panel .routine-category { padding: 0 3px; gap: 1px; }
-html body #root .hub-app.hub-desktop .routine-editor-panel .routine-plan-cell:hover,
-html body #root .hub-app.hub-desktop .routine-editor-panel .routine-category:hover { border-color: #c3d2e2; }
-html body #root .hub-app.hub-desktop .routine-editor-panel .routine-plan-cell:has(.active) { border-color: #c7d8ee; background: #f5f8fd; }
-html body #root .hub-app.hub-desktop .routine-editor-panel .routine-plan-cell:focus-within,
-html body #root .hub-app.hub-desktop .routine-editor-panel .routine-category:focus-within { border-color: #a6bdd7; box-shadow: 0 2px 5px #2337500f; }
-html body #root .hub-app.hub-desktop .routine-editor-panel .routine-category-heading { display: grid; grid-template-columns: 18px 24px minmax(0, 1fr) 22px; gap: 3px; height: 32px; }
-html body #root .hub-app.hub-desktop .routine-editor-panel .routine-category-heading .routine-order-controls { margin-right: 0; }
-html body #root .hub-app.hub-desktop .routine-editor-panel .routine-category-heading .routine-order-controls > svg { display: none; }
-html body #root .hub-app.hub-desktop .routine-editor-panel .routine-category-heading input { padding: 3px !important; font-size: 16px !important; }
-html body #root .hub-app.hub-desktop .routine-editor-panel .routine-category-scores { gap: 10px; padding-left: 24px; }
-html body #root .hub-app.hub-desktop .routine-editor-panel .routine-category-scores .routine-score-field { width: 62px; gap: 3px; padding: 0 4px !important; }
-html body #root .hub-app.hub-desktop .routine-editor-panel .routine-category-scores input { height: 26px !important; min-height: 26px !important; font-size: 16px !important; }
-html body #root .hub-app.hub-desktop .routine-weekly-cell { min-height: 100%; }
-html body #root .hub-app.hub-desktop .routine-editor-panel .weekly-input { field-sizing: fixed; min-height: 32px !important; padding: 4px !important; border: 0 !important; border-radius: 0 !important; font-size: 16px !important; line-height: 24px !important; resize: none !important; overflow: hidden !important; }
-html body #root .hub-app.hub-desktop .routine-editor-panel .weekly-schedule-cell { display: grid !important; grid-template-columns: minmax(0, 1fr); align-content: start; align-items: start; min-height: 100%; padding: 3px !important; border-radius: 7px !important; background: transparent !important; }
-html body #root .hub-app.hub-desktop .routine-editor-panel .weekly-input { grid-column: 1; }
-html body #root .hub-app.hub-desktop .routine-editor-panel .weekly-add-divider { grid-column: 1; grid-row: auto; justify-self: end; align-self: start; margin-top: 0; width: 24px !important; min-width: 24px !important; height: 24px !important; min-height: 24px !important; padding: 0 !important; border: 0 !important; background: transparent !important; font-size: 18px !important; line-height: 24px !important; }
-html body #root .hub-app.hub-desktop .routine-editor-panel .weekly-add-divider::before { display: none; }
-html body #root .hub-app.hub-desktop .routine-editor-panel .weekly-item-divider { grid-column: 1 / -1; position: relative; border-top: 1px solid #dce4ee; margin: 2px 0; min-height: 8px; }
-html body #root .hub-app.hub-desktop .routine-editor-panel .weekly-item-divider button { position: absolute; top: -8px; right: 0; padding: 0; width: 16px; min-width: 16px; height: 16px; min-height: 16px; background: #fff; border: 0; box-shadow: none; color: #8291a5; }
-@container routine-edu (min-width: 620px) {
- html body #root .hub-app.hub-desktop .routine-editor-panel[data-kind="edu"] :is(.routine-table-heads, .routine-preset-list) { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 8px; }
- html body #root .hub-app.hub-desktop .routine-editor-panel[data-kind="edu"] :is(.routine-preset-row, .routine-table-head) { grid-template-columns: 18px 24px minmax(0, 1fr) 44px 44px 22px; gap: 3px; }
- html body #root .hub-app.hub-desktop .routine-editor-panel[data-kind="edu"] .routine-preset-row { padding: 3px 4px; }
- html body #root .hub-app.hub-desktop .routine-editor-panel[data-kind="edu"] .routine-table-head { padding: 4px 5px; }
- html body #root .hub-app.hub-desktop .routine-editor-panel[data-kind="edu"] .routine-table-head.is-secondary { display: grid; }
-}
-@container hub-content (max-width: 1140px) {
- html body #root .hub-app.hub-desktop .routine-presets-workspace { grid-template-columns: minmax(0, 1fr); }
-}
-html body #root .hub-app.hub-mobile .routine-category-heading { flex-wrap: wrap; }
-html body #root .hub-app.hub-mobile .routine-category-heading .routine-name-input { order: 2; flex-basis: 100%; }
+#root .hub-app.hub-mobile .routine-page-toolbar .hub-page-heading { flex-basis:100%; }
+#root .hub-app.hub-mobile .routine-page-toolbar .hub-segments { width:100%; }
+#root .hub-app.hub-mobile .routine-page-toolbar .hub-segments button { flex:1; }
+#root .hub-app.hub-mobile .routine-table-heads { display:none; }
+#root .hub-app.hub-mobile .routine-preset-row { grid-template-columns:44px 44px minmax(0,1fr) 44px; gap:6px; padding:12px 0; }
+#root .hub-app.hub-mobile .routine-preset-row .routine-order-controls { grid-row:1 / 3; }
+#root .hub-app.hub-mobile .routine-preset-row .hub-item-icon { grid-column:2; grid-row:1; }
+#root .hub-app.hub-mobile .routine-preset-row .routine-name-input { grid-column:3; grid-row:1; }
+#root .hub-app.hub-mobile .routine-preset-row .routine-delete-button { grid-column:4; grid-row:1; }
+#root .hub-app.hub-mobile .routine-preset-row .routine-score-field { grid-column:2 / 5; grid-row:2; width:calc(50% - 4px); box-sizing:border-box; }
+#root .hub-app.hub-mobile .routine-preset-row .routine-score-field.is-y { justify-self:start; }
+#root .hub-app.hub-mobile .routine-preset-row .routine-score-field.is-n { justify-self:end; }
+html body #root .hub-app.hub-mobile .routine-config-editor input { height:44px !important; min-height:44px !important; }
+#root .hub-app.hub-mobile .routine-config-editor :is(.hub-item-icon,.routine-delete-button,.routine-order-controls button) { min-width:44px; width:44px; height:44px; min-height:44px; }
+#root .hub-app.hub-mobile .routine-weekly-grid { grid-template-columns:220px repeat(7,140px); }
+#root .hub-app.hub-mobile .routine-category-heading { grid-template-columns:44px minmax(0,1fr); gap:6px; }
+#root .hub-app.hub-mobile .routine-category-controls { grid-template-columns:repeat(2,minmax(0,1fr)); }
+#root .hub-app.hub-mobile .routine-category-controls .routine-score-field { grid-row:1; }
+#root .hub-app.hub-mobile .routine-category-controls .routine-order-controls { grid-row:2; }
+#root .hub-app.hub-mobile .routine-category-controls .routine-order-controls > div { flex-direction:row; }
+#root .hub-app.hub-mobile .routine-category-controls .routine-delete-button { grid-row:2; justify-self:end; }
+html body #root .hub-app.hub-mobile .routine-weekly-editor .routine-category-controls .routine-score-field input { height:44px !important; min-height:44px !important; }
+html body #root .hub-app.hub-mobile .hub-content-modern .routine-weekly-editor .weekly-schedule-cell { padding-bottom:48px !important; }
+html body #root .hub-app.hub-mobile .hub-content-modern .routine-weekly-editor .weekly-add-divider { width:44px !important; min-width:44px !important; height:44px !important; min-height:44px !important; opacity:1; }
+html body #root .hub-app.hub-mobile .hub-content-modern .routine-weekly-editor .weekly-item-divider { margin:14px 0; }
+html body #root .hub-app.hub-mobile .hub-content-modern .routine-weekly-editor .weekly-item-divider button { top:-14px; width:28px; height:28px; min-width:28px; min-height:28px; opacity:1; }
+#root .hub-app.hub-mobile .routine-weekly-editor :is(.routine-order-controls,.routine-delete-button) { opacity:1; }
+#root .hub-app.hub-mobile .routine-subjects { grid-template-columns:repeat(2,minmax(0,1fr)); }
+#root .hub-app.hub-mobile .routine-add-button { min-height:44px; }

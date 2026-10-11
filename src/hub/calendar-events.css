@@ -1,0 +1,21 @@
+html body #root .hub-app .calendar-event-editor { min-width: 0; }
+html body #root .hub-app .calendar-entry { position: relative; padding: 6px 0 8px; border-bottom: 1px solid #e1e5e9; }
+html body #root .hub-app .calendar-entry-tools { display: flex; align-items: center; justify-content: space-between; gap: 4px; min-height: 28px; }
+html body #root .hub-app .calendar-entry-tools button { display: inline-flex; align-items: center; justify-content: center; gap: 4px; min-width: 28px; min-height: 28px; padding: 3px; border: 0; background: transparent; color: #7c8593; box-shadow: none; border-radius: 4px; }
+html body #root .hub-app .calendar-entry-tools button:hover { background: #edf0f3; color: #344154; }
+html body #root .hub-app .calendar-entry-tools span { font-size: 12px; }
+html body #root .hub-app .calendar-entry-time { position: absolute; top: 34px; right: 0; z-index: 3; display: flex; align-items: center; gap: 3px; padding: 8px; border: 1px solid #d9e1e9; border-radius: 5px; background: #fafcfd; box-shadow: 0 6px 20px #35485f1a; color: #68768a; }
+html body #root .hub-app .calendar-entry-time input { width: 130px !important; min-width: 130px !important; min-height: 32px !important; height: 32px !important; font: 14px/1.4 var(--hub-font-body) !important; padding: 2px !important; border: 0 !important; background: transparent !important; color: #405268 !important; color-scheme: light; }
+html body #root .hub-app .calendar-entry .calendar-color-toolbar { display: none; flex-wrap: wrap; gap: 3px; }
+html body #root .hub-app .calendar-entry:focus-within .calendar-color-toolbar { display: flex; }
+html body #root .hub-app .calendar-entry .calendar-color-hint { display: none; }
+html body #root .hub-app .calendar-entry .calendar-text-surface { background: transparent; border: 0; box-shadow: none; }
+html body #root .hub-app .calendar-entry .calendar-text-surface :is(textarea, .calendar-text-mirror) { padding: 4px 0 !important; min-height: 34px !important; font-size: 15px !important; line-height: 1.5 !important; }
+html body #root .hub-app .calendar-entry-add { display: inline-flex; align-items: center; justify-content: center; gap: 5px; min-height: 32px; margin-top: 6px; padding: 4px 6px; border: 0; background: transparent; color: #6d7d90; box-shadow: none; font-size: 13px; }
+html body #root .hub-app .calendar-entry-add:hover { color: #2f4b72; background: #eaf0f5; }
+html body #root .hub-app .calendar-entry-recovery { margin: 8px 0; font-size: 13px; color: #956331; overflow-wrap: anywhere; }
+html body #root .hub-app .calendar-entry-recovery p { white-space: pre-wrap; }
+html body #root .hub-app.hub-mobile .calendar-entry-tools button { min-height: 44px; min-width: 44px; }
+html body #root .hub-app.hub-mobile .calendar-entry-time input { width: 145px !important; min-width: 145px !important; min-height: 44px !important; height: 44px !important; font-size: 16px !important; }
+html body #root .hub-app.hub-mobile .calendar-entry-add { min-height: 44px; font-size: 14px; }
+html body #root .hub-app.hub-mobile .calendar-entry .calendar-text-surface :is(textarea, .calendar-text-mirror) { font-size: 16px !important; }

@@ -1,4 +1,5 @@
 import CalendarNoteEditor from "../hub/CalendarNoteEditor.jsx";
+import CalendarEventEditor from "../hub/CalendarEventEditor.jsx";
 import React, { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import MemoEditor, { MemoFormatToolbar } from "../MemoEditor.jsx";
@@ -123,7 +124,7 @@ export function MobileSevenDaySchedule({ calendar, calendarDuties, selectedDate 
           h(
             "div",
             { className: "mobile-seven-day-date" },
-            h("strong", null, index === 0 ? "TODAY" : weekDays[(date.getDay() + 6) % 7].label),
+            h("strong", null, index === 0 ? "TODAY" : weekDays[date.getDay()].label),
             h("span", null, `${compact.month}.${compact.day}`),
           ),
           h(
@@ -186,12 +187,12 @@ export function MobileScorePanel({ carryPenaltyMarked, entryCount, onAdjustCarry
   );
 }
 
-export function MobileCalendarPanel({ calendar, calendarFormats, calendarDuties, selectedDate, setSelectedDate, toggleCalendarDuty, updateCalendarNote }) {
+export function MobileCalendarPanel({ calendar, calendarFormats, calendarEntries, calendarDuties, selectedDate, setSelectedDate, toggleCalendarDuty, updateCalendarNote, updateCalendarEntries }) {
   const selected = new Date(`${selectedDate}T00:00:00`);
   const year = selected.getFullYear();
   const monthIndex = selected.getMonth();
   const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
-  const firstDayIndex = (new Date(year, monthIndex, 1).getDay() + 6) % 7;
+  const firstDayIndex = new Date(year, monthIndex, 1).getDay();
   const cells = [
     ...Array.from({ length: firstDayIndex }, (_, index) => ({ key: `blank-${index}`, blank: true })),
     ...Array.from({ length: daysInMonth }, (_, index) => ({ key: `${year}-${String(monthIndex + 1).padStart(2, "0")}-${String(index + 1).padStart(2, "0")}`, day: index + 1 })),
@@ -242,7 +243,9 @@ export function MobileCalendarPanel({ calendar, calendarFormats, calendarDuties,
           option.label,
         )),
       ),
-      h(CalendarNoteEditor, { key: selectedDate, label: "선택 날짜 일정", value: calendar[selectedDate] || "", marks: calendarFormats?.[selectedDate], onChange: (value, marks) => updateCalendarNote(selectedDate, value, marks) }),
+      updateCalendarEntries
+        ? h(CalendarEventEditor, { key: selectedDate, data: { calendar, calendarFormats, calendarEntries }, date: selectedDate, onChange: updateCalendarEntries })
+        : h(CalendarNoteEditor, { key: selectedDate, label: "선택 날짜 일정", value: calendar[selectedDate] || "", marks: calendarFormats?.[selectedDate], onChange: (value, marks) => updateCalendarNote(selectedDate, value, marks) }),
     ),
   );
 }
@@ -1590,7 +1593,7 @@ export function MonthDays({ calendar, calendarDuties, monthIndex, selectedDate, 
     scrollStartRef.current = null;
   };
   const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
-  const firstDayIndex = (new Date(year, monthIndex, 1).getDay() + 6) % 7;
+  const firstDayIndex = new Date(year, monthIndex, 1).getDay();
   const cells = [
     ...Array.from({ length: firstDayIndex }, (_, index) => ({ key: `blank-start-${monthIndex}-${index}`, type: "blank" })),
     ...Array.from({ length: daysInMonth }, (_, index) => ({ day: index + 1, key: `day-${monthIndex}-${index + 1}`, type: "day" })),

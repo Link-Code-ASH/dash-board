@@ -26,7 +26,7 @@ function memoryStorage() {
 }
 
 test("old Dashboard snapshots get empty Edu; full backups round trip all Edu records", () => {
-  assert.deepEqual(normalizeState({ calendar: { today: "keep" } }).edu, { version: 1, students: [], consultations: [], events: [] });
+  assert.deepEqual(normalizeState({ calendar: { today: "keep" } }).edu, { version: 1, students: [], consultations: [], events: [], admissions: [] });
   let edu = fixture();
   edu = applyEduAction(edu, { type: "memo.save", studentId: edu.students[0].id, memo: "보호자와 학습 계획 상담" }, { now: at });
   const state = normalizeState({ edu, calendar: { today: "keep" } });

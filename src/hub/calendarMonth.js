@@ -13,7 +13,7 @@ export function monthCells(month) {
   const end = new Date(first);
   end.setMonth(end.getMonth() + 1);
   end.setDate(0);
-  const leading = (first.getDay() + 6) % 7;
+  const leading = first.getDay();
   const days = end.getDate();
   return Array.from({ length: Math.ceil((leading + days) / 7) * 7 }, (_, index) => {
     const day = index - leading + 1;

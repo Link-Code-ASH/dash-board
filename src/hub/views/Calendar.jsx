@@ -1,8 +1,8 @@
-import CalendarNoteEditor from "../CalendarNoteEditor.jsx";
+import CalendarEventEditor from "../CalendarEventEditor.jsx";
 import React from "react";
 import { ChevronLeft, ChevronRight, RotateCcw } from "lucide-react";
 import { MobileCalendarPanel } from "../../dashboard/components.jsx";
-import { calendarDutyOptions } from "../../dashboard/model.js";
+import { calendarDutyOptions, weekDays } from "../../dashboard/model.js";
 import { useDashboardData } from "../context.jsx";
 import { monthCells, shiftMonth } from "../calendarMonth.js";
 import { todayKey } from "../routing.js";
@@ -16,6 +16,8 @@ export default function Calendar({ route, navigate }) {
     selectedDate: d.selectedDate,
     toggleCalendarDuty: d.toggleCalendarDuty,
     updateCalendarNote: d.updateCalendarNote,
+    calendarEntries: d.data.calendarEntries,
+    updateCalendarEntries: d.updateCalendarEntries,
   };
   return (
     <div className="flow-calendar">
@@ -28,7 +30,7 @@ export default function Calendar({ route, navigate }) {
   );
 }
 
-function DesktopCalendar({ calendar, calendarFormats, calendarDuties, selectedDate, toggleCalendarDuty, updateCalendarNote, route, navigate }) {
+function DesktopCalendar({ calendar, calendarFormats, calendarEntries, calendarDuties, selectedDate, toggleCalendarDuty, updateCalendarEntries, route, navigate }) {
   const today = todayKey();
   const month = route.month;
   const selectDate = (date) => {
@@ -56,7 +58,7 @@ function DesktopCalendar({ calendar, calendarFormats, calendarDuties, selectedDa
         </div>
       </header>
       <div className="planner-weekdays" aria-hidden="true">
-        {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day) => <span key={day}>{day}</span>)}
+        {weekDays.map((day) => <span key={day.key}>{day.label}</span>)}
       </div>
       <div className="planner-month-grid">
         {monthCells(month).map((date, index) => date ? (
@@ -75,7 +77,7 @@ function DesktopCalendar({ calendar, calendarFormats, calendarDuties, selectedDa
                 ))}
               </div>
             </div>
-            <CalendarNoteEditor compact label={`${date} 일정 입력`} value={calendar[date] || ""} marks={calendarFormats?.[date]} onFocus={() => selectDate(date)} onChange={(value, marks) => updateCalendarNote(date, value, marks)} />
+            <CalendarEventEditor compact data={{ calendar, calendarFormats, calendarEntries }} date={date} onFocus={() => selectDate(date)} onChange={updateCalendarEntries} />
           </article>
         ) : <div className="planner-date-blank" key={`blank-${index}`} aria-hidden="true" />)}
       </div>

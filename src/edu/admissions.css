@@ -1,0 +1,36 @@
+.edu-admissions { min-width: 0; }
+.edu-admissions h2 { display: flex; align-items: center; gap: 8px; }
+.admission-list-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 12px 0; color: #6b7482; font-size: 14px; }
+.admission-list-toolbar label { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+html body #root .hub-app .edu-workspace .admission-list-toolbar input { appearance: auto; flex: 0 0 16px; width: 16px !important; min-width: 16px !important; height: 16px !important; min-height: 16px !important; margin: 0; padding: 0 !important; box-shadow: none; accent-color: #7189a7; }
+.admission-list { border-top: 1px solid #dce2e8; }
+.admission-row { display: grid; grid-template-columns: 220px minmax(0, 1fr) 48px 80px; align-items: center; gap: 20px; padding: 20px 8px; border-bottom: 1px solid #e1e6eb; }
+.admission-date { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; color: #51647a; font-size: 14px; font-variant-numeric: tabular-nums; }
+.admission-date time:not(:first-of-type) { width: 100%; padding-left: 22px; }
+.admission-date > span { display: flex; align-items: center; gap: 5px; width: 100%; padding-left: 22px; }
+.admission-description { min-width: 0; overflow-wrap: anywhere; }
+.admission-description h3 { font-size: 17px; margin: 0 0 5px; color: #2e3b4d; }
+.admission-description p { margin: 0; font-size: 14px; color: #717c8b; }
+.admission-description .admission-notes { margin-top: 8px; white-space: pre-wrap; }
+.admission-status { text-align: center; border-radius: 4px; padding: 5px; font-size: 12px; background: #eff1f4; color: #87909a; }
+.admission-status.is-active { background: #e8f1ec; color: #4a795f; }
+.admission-status.is-upcoming { background: #eaf0f8; color: #5b77a1; }
+.admission-row-actions { display: flex; gap: 4px; }
+.admission-dialog { width: min(600px, calc(100vw - 32px)); max-height: calc(100dvh - 40px); box-sizing: border-box; overflow: auto; }
+.admission-form-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 20px; }
+.admission-form-heading h2 { margin: 0; font-size: 21px; }
+.admission-form-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; border: 0; padding: 0; min-width: 0; }
+.admission-form-fields label { display: flex; flex-direction: column; gap: 7px; font-size: 14px; color: #627186; min-width: 0; }
+html body #root .hub-app .edu-workspace .admission-form-fields :is(input, textarea) { width: 100%; min-height: 42px; box-sizing: border-box; border: 1px solid #d8e0e8 !important; border-radius: 5px !important; padding: 8px 10px !important; background: #f8fafc !important; color: #304154 !important; font: 16px/1.5 var(--hub-font-body) !important; box-shadow: none !important; color-scheme: light; }
+html body #root .hub-app .edu-workspace .admission-form-fields input::-webkit-calendar-picker-indicator { filter: none !important; opacity: .65; }
+.admission-wide { grid-column: 1 / -1; }
+.admission-form-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 22px; }
+@media (max-width: 700px) {
+  .admission-row { grid-template-columns: minmax(0, 1fr) 80px; gap: 10px; }
+  .admission-date, .admission-description { grid-column: 1 / -1; }
+  .admission-date time:not(:first-of-type), .admission-date > span { width: auto; padding-left: 0; }
+  .admission-status { justify-self: start; }
+  .admission-row-actions { justify-self: end; }
+  .admission-form-fields { grid-template-columns: minmax(0, 1fr); }
+  .admission-list-toolbar { align-items: flex-start; flex-wrap: wrap; }
+}

@@ -511,8 +511,8 @@ html body #root .hub-app .memo-format-color span {
   font-weight: 500;
   text-align: center;
 }
-#root .hub-app.hub-desktop :is(.planner-weekdays, .flow-weekday-header) span:nth-child(6) { color: #6d849e; }
-#root .hub-app.hub-desktop :is(.planner-weekdays, .flow-weekday-header) span:nth-child(7) { color: #a1747b; }
+#root .hub-app.hub-desktop :is(.planner-weekdays, .flow-weekday-header) span:nth-child(7) { color: #6d849e; }
+#root .hub-app.hub-desktop :is(.planner-weekdays, .flow-weekday-header) span:nth-child(1) { color: #a1747b; }
 #root .hub-app.hub-desktop .planner-month-grid {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
@@ -657,14 +657,17 @@ html body #root .hub-app .calendar-note-editor.is-compact :is(textarea, .calenda
 /* The schedule uses the full width; supporting tools sit underneath. */
 #root .hub-app .flow-workspace { display: grid; grid-template-columns: minmax(0, 1fr); align-items: start; gap: 22px; min-width: 0; }
 #root .hub-app .flow-workspace > * { min-width: 0; }
-#root .hub-app .flow-support { display: grid; grid-template-columns: minmax(0, 1fr) 320px 280px; align-items: start; gap: 24px; padding-top: 18px; border-top: 1px solid #dce3eb; }
+#root .hub-app .flow-support { display: grid; grid-template-columns: minmax(0, 1fr) 280px; align-items: start; gap: 24px; padding-top: 18px; border-top: 1px solid #dce3eb; }
 #root .hub-app .flow-support > * { min-width: 0; }
-#root .hub-app .flow-reviews { display: flex; flex-direction: column; gap: 12px; }
 #root .hub-app .flow-support .hub-section-title { margin-bottom: 8px; }
 #root .hub-app .flow-support .hub-section-title h2 { font-size: 17px; }
 #root .hub-app .flow-schedule > .hub-section-title h2 { font-size: 24px !important; }
 #root .hub-app.hub-desktop .flow-fortnight .flow-day { min-height: clamp(180px, calc((100dvh - 350px) / 2), 260px); padding: 12px 10px; }
-#root .hub-app.hub-desktop .flow-support .hub-task-groups { display: grid; grid-template-columns: repeat(2, minmax(0, 300px)); align-items: start; gap: 16px; }
+#root .hub-app .flow-routines { container: flow-tasks / inline-size; }
+#root .hub-app.hub-desktop .flow-support .hub-task-groups { display: grid; grid-template-columns: minmax(0, 1fr); align-items: start; gap: 16px; }
+@container flow-tasks (min-width: 680px) {
+  #root .hub-app.hub-desktop .flow-support .hub-task-groups { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
 #root .hub-app .flow-support .hub-task-group h3 { font-size: 15px; padding: 5px 7px; }
 #root .hub-app .flow-support .hub-task-copy strong { font-size: 16px; }
 #root .hub-app .flow-support .hub-task-copy small { font-size: 12px; }
@@ -677,8 +680,7 @@ html body #root .hub-app .calendar-note-editor.is-compact :is(textarea, .calenda
 html body #root .hub-app.hub-desktop .flow-support .date-marker { grid-template-columns: minmax(60px, 1fr) 126px 44px !important; min-height: 34px !important; }
 html body #root .hub-app.hub-desktop .flow-support .date-marker input { font-size: 14px !important; height: 30px !important; min-height: 30px !important; }
 @container hub-content (max-width: 1100px) {
-  #root .hub-app .flow-support { grid-template-columns: minmax(0, 320px) minmax(0, 280px); }
-  #root .hub-app .flow-support .flow-routines { grid-column: 1 / -1; }
+  #root .hub-app .flow-support { grid-template-columns: minmax(0, 1fr) 280px; }
 }
 @container hub-content (max-width: 640px) {
   #root .hub-app .flow-support { grid-template-columns: minmax(0, 1fr); }

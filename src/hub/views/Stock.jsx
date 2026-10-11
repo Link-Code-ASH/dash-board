@@ -2,11 +2,12 @@ import React, { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { RefreshCw, Plus, Minus, Pencil, RotateCcw, X, Check, ChevronLeft, ChevronRight, ChevronDown, CalendarDays, Wallet, SlidersHorizontal, Table2 } from 'lucide-react';
 import { useDashboardData } from '../context.jsx';
 import { appBase, todayKey } from '../routing.js';
-import { createStock, emptyPosition, calculateIBS, calculateVR, getVRCycle, inspectVRSettings, applyVRSettings, saveSharedVRSettings, updateStockPosition, retireSOXL } from '../../stock/model.js';
-import { sides, editableStages, describeRule } from '../../stock/strategy.js';
+import { createStock, emptyPosition, calculateIBS, calculateVR, getVRCycle, inspectVRSettings, applyVRSettings, saveSharedVRSettings, updateStockPosition, retireSOXL, migrateOrderTypes } from '../../stock/model.js';
+import { sides, editableStages, describeRule, orderLabel } from '../../stock/strategy.js';
 import '../../stock/stock.css';
 
 const StrategyTable = lazy(() => import('../../stock/StrategyTable.jsx'));
+const prepareStock = stock => migrateOrderTypes(retireSOXL(stock));
 const number = (n, d = 2) => Number.isFinite(n) ? n.toLocaleString('ko-KR', { maximumFractionDigits: d, minimumFractionDigits: d }) : '—';
 function Field({ label, account = '', ariaLabel, value, onChange, suffix = '', step = 'any', max, scale = 1 }) {
   return <label className="stock-field"><span>{label}</span><div><input aria-label={ariaLabel || `${account ? `${account} ` : ''}${label}`} type="number" min="0" max={max} step={step} value={value === '' ? '' : value / scale} onChange={e => onChange(e.target.value === '' ? '' : Number(e.target.value) * scale)} /><small>{suffix}</small></div></label>;
@@ -47,7 +48,7 @@ function Orders({ result }) {
     return <div key={side} className={`stock-order-group ${side}`}>
       <h4><span />{label} 주문<small>{orders.length}건</small></h4>
       {orders.map(r => <div className="stock-order" key={r.id} title={describeRule(r).price}>
-        <div><small>{r.price === null ? '장 마감 시장가' : '지정가'}</small><strong>{r.price === null ? 'MOC' : `$${number(r.price)}`}</strong></div>
+        <div><small>{orderLabel(r)}</small><strong>{r.price === null ? 'MOC' : `$${number(r.price)}`}</strong></div>
         <div><strong>{number(r.quantity, 0)}<small> 주</small></strong>{r.capped && <small>수량 한도 적용</small>}</div>
       </div>)}
       {!orders.length && <p className="stock-no-orders">{label} 주문 없음</p>}
@@ -68,7 +69,7 @@ function StrategyDialog({ symbol, onClose, children }) {
     return () => panel.close();
   }, []);
   return <dialog ref={dialog} className="stock-strategy-dialog" aria-labelledby="stock-strategy-title" onCancel={e => { e.preventDefault(); onClose(); }}>
-    <header className="stock-strategy-dialog-header"><div><h2 id="stock-strategy-title">{symbol} 매매 전략</h2><span>A·Y 공통 규칙</span></div><button type="button" autoFocus aria-label="전략표 닫기" title="닫기" onClick={onClose}><X size={20} /></button></header>
+    <header className="stock-strategy-dialog-header"><h2 id="stock-strategy-title">{symbol} 전략표</h2><button type="button" autoFocus aria-label="전략표 닫기" title="닫기" onClick={onClose}><X size={20} /></button></header>
     {children}
   </dialog>;
 }
@@ -77,21 +78,21 @@ export default function Stock() {
   const d = useDashboardData();
   const initial = useRef(null); if (!initial.current) initial.current = createStock();
   const savedStock = d.data.stock;
-  const state = retireSOXL(savedStock || initial.current);
+  const state = prepareStock(savedStock || initial.current);
   const [mode, setMode] = useState('ibs'), [assetId, setAssetId] = useState('');
   const [strategyDraft, setStrategyDraft] = useState(null), [vrDraft, setVrDraft] = useState(null), [vrSource, setVrSource] = useState('');
-  const [strategyAccountId, setStrategyAccountId] = useState('');
+  const [strategyOpen, setStrategyOpen] = useState(false);
   const [notice, setNotice] = useState(''), [undo, setUndo] = useState(null);
   const [market, setMarket] = useState(null), [loading, setLoading] = useState(false), [failure, setFailure] = useState('');
   const request = useRef(null);
   const asset = state.assets.find(a => a.id === assetId) || state.assets[0];
   const profiles = state.profiles.slice(0, 2);
-  const update = fn => d.saveData(current => ({ ...current, stock: fn(current.stock || initial.current) }));
+  const update = fn => d.saveData(current => ({ ...current, stock: fn(prepareStock(current.stock || initial.current)) }));
   useEffect(() => {
-    if (savedStock && retireSOXL(savedStock) !== savedStock) update(retireSOXL);
+    if (savedStock && prepareStock(savedStock) !== savedStock) update(prepareStock);
   }, [savedStock]);
   const savePosition = (profileId, patch) => update(s => updateStockPosition(s, profileId, asset.id, patch));
-  const clearDrafts = () => { setStrategyDraft(null); setStrategyAccountId(''); setVrDraft(null); setVrSource(''); };
+  const clearDrafts = () => { setStrategyDraft(null); setStrategyOpen(false); setVrDraft(null); setVrSource(''); };
   const selectAsset = id => { clearDrafts(); setAssetId(id); };
   const selectMode = value => { clearDrafts(); setMode(value); };
   const rememberConfig = () => setUndo({ type: 'config', assetId: asset.id, stages: structuredClone(asset.stages), hasVr: Object.hasOwn(asset, 'vr'), vr: structuredClone(asset.vr) });
@@ -137,11 +138,10 @@ export default function Stock() {
     if (result.ratio === undefined && Number.isFinite(held) && Number.isFinite(capacity) && held >= 0 && capacity >= 0) result.ratio = held + capacity > 0 ? held / (held + capacity) * 100 : 0;
     return { label: index === 0 ? 'A' : 'Y', profile, position, result, vr: calculateVR(vrPosition, quote?.close, quote?.weeklyClose, fx?.close) };
   });
-  const strategyAccount = accounts.find(account => account.profile.id === strategyAccountId);
   const closeStrategy = () => {
     const changed = strategyDraft && JSON.stringify(editableStages(strategyDraft.stages)) !== JSON.stringify(editableStages(asset.stages));
     if (changed && !window.confirm('저장하지 않은 전략 변경사항이 있습니다. 변경사항을 버리고 닫을까요?')) return;
-    setStrategyDraft(null); setStrategyAccountId('');
+    setStrategyDraft(null); setStrategyOpen(false);
   };
   const age = market?.checkedAt ? (Date.now() - new Date(market.checkedAt).getTime()) / 86400000 : 0;
   const marketWarning = failure || (Object.keys(market?.errors || {}).length ? '일부 시세 수집 실패 · 이전 값과 기준일을 확인해 주세요.' : age > 3 ? '시세 업데이트가 지연되고 있습니다. 기준일을 확인해 주세요.' : '');
@@ -151,7 +151,7 @@ export default function Stock() {
   return <div className="stock-page">
     <header className="stock-workspace-header">
       <h1>Stock</h1>
-      <div className="stock-toolbar"><div className="stock-tabs" role="tablist" aria-label="투자 방법">{[['ibs', '무한매수'], ['vr', 'VR']].map(([key, label]) => <button role="tab" aria-selected={mode === key} key={key} onClick={() => selectMode(key)}>{label}</button>)}</div>{undo && <button onClick={restore}><RotateCcw size={14} />되돌리기</button>}</div>
+      <div className="stock-toolbar"><div className="stock-tabs" role="tablist" aria-label="투자 방법">{[['ibs', '무한매수'], ['vr', 'VR']].map(([key, label]) => <button role="tab" aria-selected={mode === key} key={key} onClick={() => selectMode(key)}>{label}</button>)}</div>{mode === 'ibs' && asset && <button type="button" className="stock-strategy-launch" aria-haspopup="dialog" aria-label="전략표 열기" onClick={() => setStrategyOpen(true)}><Table2 size={15} />전략표</button>}{undo && <button onClick={restore}><RotateCcw size={14} />되돌리기</button>}</div>
       <button onClick={refresh} disabled={loading} title={`Yahoo Finance · ${market?.checkedAt ? new Date(market.checkedAt).toLocaleString('ko-KR') : '—'} 수집`}><RefreshCw size={16} className={loading ? 'stock-spin' : ''} />{loading ? '갱신 중' : '새로고침'}</button>
     </header>
     <div className="stock-market-bar"><div className="stock-quotes">{state.assets.map(a => { const q = market?.quotes?.[a.symbol]; return <button className={`stock-quote ${asset?.id === a.id ? 'is-active' : ''}`} key={a.id} onClick={() => selectAsset(a.id)}><span>{a.symbol}</span><strong>{q ? `$${number(q.close)}` : '—'}</strong><small>{q ? `${q.date} 종가` : '종가 연결 대기'}</small></button>; })}<article className="stock-quote stock-fx"><span>USD / KRW</span><strong>{fx ? `₩${number(fx.close)}` : '—'}</strong><small>{fx ? fx.date : '환율 연결 대기'}</small></article></div></div>
@@ -160,19 +160,18 @@ export default function Stock() {
     {asset && accounts.length ? <>
       {mode === 'ibs' ? <>
         <div className="stock-account-grid">{accounts.map(a => <section className={`stock-panel stock-account stock-ibs-account account-${a.label.toLowerCase()}`} key={a.profile.id}>
-          <AccountHeader label={a.label} badge={a.result.stage?.name}><button type="button" aria-haspopup="dialog" aria-label={`${a.label} 전략표 열기`} onClick={() => setStrategyAccountId(a.profile.id)}><Table2 size={15} />전략표</button></AccountHeader>
+          <AccountHeader label={a.label} badge={a.result.stage?.name} />
           <div className="stock-inputs"><Field account={a.label} label="평단가" suffix="USD" value={a.position.average} onChange={average => savePosition(a.profile.id, { average })} /><Field account={a.label} label="보유 수량" suffix="주" step="1" value={a.position.held} onChange={held => savePosition(a.profile.id, { held })} /><Field account={a.label} label="추가 매수 가능" suffix="주" step="1" value={a.position.capacity} onChange={capacity => savePosition(a.profile.id, { capacity })} /></div>
           <Ratio ratio={a.result.ratio} label="현재 보유 비율" />
           <Orders result={a.result} />
         </section>)}</div>
-        {strategyAccount && <StrategyDialog symbol={asset.symbol} onClose={closeStrategy}>
-          <div className="stock-strategy-dialog-tabs"><div className="stock-tabs" role="tablist" aria-label="전략표 계좌">{accounts.map(account => <button key={account.profile.id} type="button" role="tab" aria-selected={account.profile.id === strategyAccountId} onClick={() => setStrategyAccountId(account.profile.id)}>{account.label} 계좌</button>)}</div>{strategyDraft && <span className="stock-badge">미리보기</span>}</div>
-          <div className="stock-strategy-dialog-body"><Suspense fallback={<p className="stock-empty" role="status">전략표를 불러오는 중입니다.</p>}><StrategyTable asset={asset} stages={stages} account={strategyAccount}
+        {strategyOpen && <StrategyDialog symbol={asset.symbol} onClose={closeStrategy}>
+          <div className="stock-strategy-dialog-body"><Suspense fallback={<p className="stock-empty" role="status">전략표를 불러오는 중입니다.</p>}><StrategyTable asset={asset} stages={stages} accounts={accounts}
           draft={strategyDraft}
-          setDraft={next => setStrategyDraft({ assetId: asset.id, profileId: strategyAccount.profile.id, stages: next })}
-          onEdit={() => setStrategyDraft({ assetId: asset.id, profileId: strategyAccount.profile.id, stages: editableStages(asset.stages) })}
+          setDraft={next => setStrategyDraft({ assetId: asset.id, stages: next })}
+          onEdit={() => setStrategyDraft({ assetId: asset.id, stages: editableStages(asset.stages) })}
           onCancel={() => setStrategyDraft(null)}
-          onSave={() => { rememberConfig(); update(s => ({ ...s, assets: s.assets.map(a => a.id === asset.id ? { ...a, stages } : a) })); setStrategyDraft(null); setNotice('공통 매매 규칙을 저장했습니다.'); }} /></Suspense></div>
+          onSave={() => { rememberConfig(); update(s => ({ ...s, assets: s.assets.map(a => a.id === asset.id ? { ...a, stages } : a) })); setStrategyDraft(null); setNotice('전략을 저장했습니다.'); }} /></Suspense></div>
         </StrategyDialog>}
       </> : <>
         <section className={`stock-vr-cycle ${contributionWeek ? 'is-contribution' : 'is-rebalance'}`} aria-label="VR 주간 계획">

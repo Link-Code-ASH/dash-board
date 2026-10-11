@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {defaultStages,emptyPosition,calculateIBS,calculateStageOrders,calculateVR,getVRCycle,createStock,inspectVRSettings,applyVRSettings,saveSharedVRSettings,updateStockPosition,retireSOXL,getStageHighlight} from '../src/stock/model.js';
+import {defaultStages,emptyPosition,calculateIBS,calculateStageOrders,calculateVR,getVRCycle,createStock,inspectVRSettings,applyVRSettings,saveSharedVRSettings,updateStockPosition,retireSOXL,migrateOrderTypes,getStageHighlight} from '../src/stock/model.js';
 import {parseChart} from '../scripts/stock-market.js';
 import {normalizeState,createBackupPayload,splitBackupPayload} from '../src/dashboard/model.js';
 
@@ -16,6 +16,43 @@ test('new Stock state contains only TQQQ with the spreadsheet strategy',()=>{
  assert.equal(stock.assets[0].stages.length,8);
  assert.equal(stock.profiles.length,2);
  assert.equal(retireSOXL(stock),stock);
+ for(const stage of stock.assets[0].stages) {
+  assert.ok(stage.rules.filter(rule=>rule.side==='buy').every(rule=>rule.order==='loc'));
+  assert.deepEqual(stage.rules.filter(rule=>rule.side==='sell').map(rule=>rule.order),['loc','loc','limit']);
+ }
+ assert.equal(migrateOrderTypes(stock),stock);
+});
+
+test('legacy and restored TQQQ order types migrate once without replacing inputs or strategy edits',()=>{
+ const stock=withOtherAsset(), asset=stock.assets[0];
+ delete asset.orderTypesVersion;
+ for(const stage of asset.stages) stage.rules=stage.rules.map(rule=>({...rule,order:'limit'}));
+ asset.stages[7].rules[0].order='moc';
+ asset.stages[0].rules[0].percent=-8;
+ asset.stages[0].rules.at(-1).row=2;
+ asset.stages[0].rules.splice(4,1); // Sparse sell row 2 must not shift the limit order into LOC.
+ asset.vr={lower:20,upper:40,invest:60};
+ stock.profiles[0].positions[asset.id]={...emptyPosition(),average:78.68,held:9,capacity:31};
+ stock.profiles[1].positions[asset.id]={...emptyPosition(),average:100,held:95,capacity:5};
+ const before=structuredClone(stock), migrated=migrateOrderTypes(stock), upgraded=migrated.assets[0];
+ assert.deepEqual(stock,before);
+ assert.equal(migrated.profiles,stock.profiles);
+ assert.equal(migrated.assets[1],stock.assets[1]);
+ assert.equal(upgraded.id,asset.id);
+ assert.equal(upgraded.vr,asset.vr);
+ assert.equal(upgraded.orderTypesVersion,1);
+ const withoutOrder=rule=>{ const {order,...fields}=rule;return fields; };
+ assert.deepEqual(upgraded.stages.map(stage=>({...stage,rules:stage.rules.map(withoutOrder)})),asset.stages.map(stage=>({...stage,rules:stage.rules.map(withoutOrder)})));
+ assert.equal(upgraded.stages[0].rules.at(-1).order,'limit');
+ const result=calculateIBS(stock.profiles[1].positions[asset.id],upgraded.stages);
+ assert.deepEqual(result.orders.map(rule=>[rule.order,rule.price,rule.quantity]),[['loc',100,12],['loc',90,12],['limit',100,71]]);
+ assert.equal(migrateOrderTypes(migrated),migrated);
+ const restored=normalizeState(splitBackupPayload(JSON.parse(JSON.stringify(createBackupPayload(normalizeState({stock:before}),[],null)))).state);
+ assert.deepEqual(migrateOrderTypes(restored.stock),migrated);
+ upgraded.stages[7].rules[0].order='moc'; // A later explicit editor choice survives reload and backup restore.
+ const saved=normalizeState(splitBackupPayload(JSON.parse(JSON.stringify(createBackupPayload(normalizeState({stock:migrated}),[],null)))).state);
+ assert.equal(migrateOrderTypes(saved.stock),saved.stock);
+ assert.equal(saved.stock.assets[0].stages[7].rules[0].order,'moc');
 });
 
 test('IBS matches the spreadsheet example and corrected stage six',()=>{
@@ -36,14 +73,17 @@ test('zero holdings cannot produce a sell and quantity totals never exceed holdi
  assert.ok(calculateIBS({...emptyPosition(),average:1},[]).error);
 });
 
-test('spreadsheet small-lot corrections, remaining quantity and MOC order stay intact',()=>{
+test('spreadsheet small-lot corrections and remaining quantities work with LOC and limit orders',()=>{
  const stages=defaultStages();
  for(const [held,quantities] of [[1,[1,0,0]],[2,[1,1,0]],[3,[1,1,1]]]) {
   const result=calculateIBS({...emptyPosition(),average:100,held,capacity:100},stages);
   assert.deepEqual(result.orders.filter(order=>order.side==='sell').map(order=>order.quantity),quantities);
  }
  const final=calculateIBS({...emptyPosition(),average:100,held:95,capacity:5},stages);
- assert.deepEqual(final.orders.map(order=>[order.order,order.price,order.quantity]),[['moc',null,12],['limit',90,12],['limit',100,71]]);
+ assert.deepEqual(final.orders.map(order=>[order.order,order.price,order.quantity]),[['loc',100,12],['loc',90,12],['limit',100,71]]);
+ const moc=structuredClone(stages);
+ moc[7].rules[0].order='moc';
+ assert.deepEqual(calculateIBS({...emptyPosition(),average:100,held:95,capacity:5},moc).orders.map(order=>[order.price,order.quantity]),[[null,12],[90,12],[100,71]]);
 });
 
 test('two displayed positions stay isolated across edits and asset switches',()=>{

@@ -61,11 +61,11 @@ test("icon changes merge with other icons and calendar edits without deleting co
   assert.equal(result.conflicts.length, 0);
 });
 
-test("Monday-based two-week ranges cross month, leap day and year boundaries", () => {
+test("Sunday-based two-week ranges cross month, leap day and year boundaries", () => {
   for (const [date, start, end] of [
-    ["2026-12-31", "2026-12-28", "2027-01-10"],
-    ["2024-02-29", "2024-02-26", "2024-03-10"],
-    ["2026-10-11", "2026-10-05", "2026-10-18"],
+    ["2026-12-31", "2026-12-27", "2027-01-09"],
+    ["2024-02-29", "2024-02-25", "2024-03-09"],
+    ["2026-10-11", "2026-10-11", "2026-10-24"],
   ]) {
     assert.equal(getWeekStart(date), start);
     assert.equal(addDays(start, 13), end);
@@ -88,9 +88,9 @@ test("date selection retains an explicit displayed week on reload and back navig
     },
   };
   assert.equal(readRoute().date, "2026-10-18");
-  assert.equal(readRoute().week, "2026-10-05");
+  assert.equal(readRoute().week, "2026-10-04");
   window.location.hash = "#/flow/today?date=2027-01-03";
-  assert.equal(readRoute().week, "2026-12-28");
+  assert.equal(readRoute().week, "2027-01-03");
 });
 
 test("calendar routes preserve displayed month independently of selected date", (t) => {
@@ -109,7 +109,7 @@ test("month grids cover leap days and year transitions without changing date key
   const february = monthCells("2024-02");
   assert.equal(february.length % 7, 0);
   assert.equal(february.filter(Boolean).length, 29);
-  assert.equal(february[3], "2024-02-01");
+  assert.equal(february[4], "2024-02-01");
   assert.ok(february.includes("2024-02-29"));
   assert.equal(shiftMonth("2026-12", 1), "2027-01");
   assert.equal(shiftMonth("2027-01", -1), "2026-12");

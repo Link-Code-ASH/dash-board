@@ -8,7 +8,7 @@ export function CalendarText({ text, marks }) {
 
 // A native textarea retains selection, IME and undo behavior. Its inert mirror
 // paints color ranges using exactly the same typography and wrapping.
-export default function CalendarNoteEditor({ value, marks = [], onChange, onFocus, label, placeholder = "일정을 입력하세요", compact = false }) {
+export default function CalendarNoteEditor({ value, marks = [], onChange, onFocus, label, placeholder = "일정을 입력하세요", compact = false, minimumHeight }) {
   const input = useRef(null);
   const [selection, setSelection] = useState({ start: 0, end: 0 });
   useEffect(() => {
@@ -21,13 +21,13 @@ export default function CalendarNoteEditor({ value, marks = [], onChange, onFocu
   }, []);
   useLayoutEffect(() => {
     const node = input.current;
-    const fit = () => { node.style.height = "0px"; node.style.height = `${Math.max(compact ? 112 : 70, node.scrollHeight + 2)}px`; };
+    const fit = () => { node.style.height = "0px"; node.style.height = `${Math.max(minimumHeight ?? (compact ? 112 : 70), node.scrollHeight + 2)}px`; };
     fit();
     let width = node.clientWidth;
     const observer = new ResizeObserver(() => { if (width !== node.clientWidth) { width = node.clientWidth; fit(); } });
     observer.observe(node);
     return () => observer.disconnect();
-  }, [value, compact]);
+  }, [value, compact, minimumHeight]);
   const capture = () => setSelection({ start: input.current.selectionStart, end: input.current.selectionEnd });
   const apply = (type) => {
     const { start, end } = selection;

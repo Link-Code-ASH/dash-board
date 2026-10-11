@@ -67,17 +67,17 @@ function assertTimestamp(value) {
   }
 }
 
-function assertDateKey(value) {
-  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) throw new TypeError('상담 날짜를 확인해 주세요.');
+function assertDateKey(value, label = '상담 날짜') {
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) throw new TypeError(`${label} 입력을 확인해 주세요.`);
   const [year, month, day] = value.split('-').map(Number);
   const date = new Date(`${value}T00:00:00Z`);
   if (year < 1900 || year > 9999 || !Number.isFinite(date.getTime()) || date.getUTCFullYear() !== year || date.getUTCMonth() + 1 !== month || date.getUTCDate() !== day) {
-    throw new TypeError('상담 날짜를 확인해 주세요.');
+    throw new TypeError(`${label} 입력을 확인해 주세요.`);
   }
 }
 
-function assertTime(value) {
-  if (typeof value !== 'string' || !/^([01]\d|2[0-3]):[0-5]\d$/.test(value)) throw new TypeError('상담 시간을 확인해 주세요.');
+function assertTime(value, label = '상담 시간') {
+  if (typeof value !== 'string' || !/^([01]\d|2[0-3]):[0-5]\d$/.test(value)) throw new TypeError(`${label}을 확인해 주세요.`);
 }
 
 function assertStatus(value) {
@@ -99,10 +99,10 @@ export function currentGrade(student, now = new Date()) {
 // Validate the entire envelope before a restore or migration so malformed or
 // future data is never replaced by a seemingly valid empty workspace.
 export function normalizeEdu(source) {
-  if (source === undefined || source === null) return { version: EDU_VERSION, students: [], consultations: [], events: [] };
+  if (source === undefined || source === null) return { version: EDU_VERSION, students: [], consultations: [], events: [], admissions: [] };
   if (!isRecord(source)) throw new TypeError('Edu 데이터 형식을 확인해 주세요.');
   if (source.version !== EDU_VERSION) throw new TypeError(`지원하지 않는 Edu 데이터 버전입니다: ${String(source.version)}`);
-  for (const key of ['students', 'consultations', 'events']) {
+  for (const key of ['students', 'consultations', 'events', ...(source.admissions !== undefined ? ['admissions'] : [])]) {
     if (!Array.isArray(source[key])) throw new TypeError(`Edu ${key} 데이터 형식을 확인해 주세요.`);
     const ids = new Set();
     for (const record of source[key]) {
@@ -113,6 +113,20 @@ export function normalizeEdu(source) {
     }
   }
   const students = new Set(source.students.map((student) => student.id));
+  for (const admission of source.admissions || []) {
+    assertText(admission.title, '입시 일정명', { required: true, max: 200 });
+    assertText(admission.institution, '대학/기관', { max: 200 });
+    assertText(admission.track, '전형', { max: 200 });
+    assertText(admission.notes, '입시 메모');
+    assertDateKey(admission.startDate, '입시 시작일');
+    if (admission.endDate) {
+      assertDateKey(admission.endDate, '입시 종료일');
+      if (admission.endDate < admission.startDate) throw new TypeError('종료일은 시작일보다 빠를 수 없습니다.');
+    }
+    if (admission.time) assertTime(admission.time, '입시 시작 시간');
+    assertTimestamp(admission.createdAt);
+    assertTimestamp(admission.updatedAt);
+  }
   for (const student of source.students) {
     assertText(student.name, '이름', { required: true, max: 100 });
     assertInteger(student.birthYear, 1900, 9999, '출생년도');
@@ -233,6 +247,33 @@ export function applyEduAction(edu, action, { now = new Date(), actor = 'local' 
   if (!isRecord(action)) throw new TypeError('Edu 작업을 확인해 주세요.');
   const source = reconcilePromotions(edu, date);
   const addEvent = (next, event) => ({ ...next, events: [...source.events, { id: uid(), at, actor, ...event }] });
+
+  if (action.type === 'admission.save') {
+    validateCreationId(action);
+    const admissions = source.admissions || [];
+    const previous = action.id !== undefined ? admissions.find((item) => item.id === action.id) : admissions.find((item) => item.id === action.createId);
+    if (action.id !== undefined && !previous) throw new TypeError('입시 일정을 찾을 수 없습니다.');
+    const values = action.values;
+    if (!isRecord(values)) throw new TypeError('입시 정보를 확인해 주세요.');
+    const next = {
+      title: inputText(values.title, '입시 일정명', { required: true, max: 200 }),
+      institution: inputText(values.institution, '대학/기관', { max: 200 }),
+      track: inputText(values.track, '전형', { max: 200 }),
+      startDate: values.startDate, endDate: values.endDate || '', time: values.time || '', notes: values.notes ?? '',
+    };
+    assertDateKey(next.startDate, '입시 시작일');
+    if (next.endDate) { assertDateKey(next.endDate, '입시 종료일'); if (next.endDate < next.startDate) throw new TypeError('종료일은 시작일보다 빠를 수 없습니다.'); }
+    if (next.time) assertTime(next.time, '입시 시작 시간');
+    assertText(next.notes, '입시 메모');
+    const item = { ...previous, ...next, id: previous?.id ?? action.createId ?? uid(), createdAt: previous?.createdAt ?? at, updatedAt: at };
+    return { ...source, admissions: previous ? admissions.map((record) => record.id === item.id ? item : record) : [...admissions, item] };
+  }
+
+  if (action.type === 'admission.delete') {
+    assertId(action.id, '입시 일정 ID');
+    if (!(source.admissions || []).some((item) => item.id === action.id)) throw new TypeError('입시 일정을 찾을 수 없습니다.');
+    return { ...source, admissions: source.admissions.filter((item) => item.id !== action.id) };
+  }
 
   if (action.type === 'student.save') {
     validateCreationId(action);

@@ -1,4 +1,5 @@
 import { normalizeCalendarMarks, changeCalendarText } from "./calendarText.js";
+import { readCalendarEntries, writeCalendarEntries } from "./calendarEntries.js";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { backupWorkspace, restoreWorkspace } from "../mindfold/repository.js";
 import { accountClient, createAccountData, readAccountData, readAccountRevision, updateAccountData } from "../accountSync.js";
@@ -1412,6 +1413,11 @@ export function useDashboard(selectedDate, setSelectedDate) {
     });
   };
 
+  const updateCalendarEntries = (dateKey, change) => saveData((draft) => {
+    const current = readCalendarEntries(draft, dateKey);
+    return writeCalendarEntries(draft, dateKey, typeof change === "function" ? change(current.items) : change);
+  });
+
   const updateCalendarNote = (dateKey, value, marks) => {
     saveData((draft) => {
       const note = value.replace(/\r\n/g, "\n");
@@ -1803,6 +1809,7 @@ export function useDashboard(selectedDate, setSelectedDate) {
     removeCategory,
     updateWeeklyPlan,
     updateCalendarNote,
+    updateCalendarEntries,
     toggleCalendarDuty,
     updateDateMarker,
     updateDisplayMode,

@@ -1,6 +1,7 @@
 export const uid = () => globalThis.crypto.randomUUID();
 export const round = (n, digits = 0) => Math.sign(n) * Math.round((Math.abs(n) + Number.EPSILON) * 10 ** digits) / 10 ** digits;
-const rule = (side, percent, divisor, mode = side === 'buy' ? 'capacity' : 'held', offset = 0, special = '') => ({ id: uid(), side, percent, divisor, mode, offset, special, order: 'limit' });
+export const defaultOrderType = (side, row) => side === 'buy' || row < 2 ? 'loc' : 'limit';
+const rule = (side, percent, divisor, mode = side === 'buy' ? 'capacity' : 'held', offset = 0, special = '') => ({ id: uid(), side, percent, divisor, mode, offset, special, order: mode === 'remaining' ? 'limit' : 'loc' });
 export function defaultStages() {
   const bounds = [40, 45, 50, 55, 60, 70, 90, 100];
   const buys = [[[-6,30],[0,30],[3,20]], [[-2,20],[2,20]], [[0,20]], [[-6,30],[-3,15]], [[-8,30],[-4,15]], [[-10,25],[-5,25]], [[-11,16]], []];
@@ -9,12 +10,28 @@ export function defaultStages() {
     const [p,q,r,d,e] = sells[i];
     const rows = buys[i].map(([pct, div], j) => rule('buy',pct,div,'capacity',j === buys[i].length-1 ? -0.01 : 0));
     rows.push(rule('sell',p,d,'held',0,i===0?'small-first':''),rule('sell',q,e,'held',0,i===0?'small-second':''),rule('sell',r,1,'remaining'));
-    if(i===7) rows[0].order='moc';
     return { id:uid(), name:`${i+1}단계`, upper, rules:rows };
   });
 }
 export function createStock() {
-  return { version:1, assets:[{id:uid(),symbol:'TQQQ',stages:defaultStages()}], profiles:['본인','여자친구'].map(name=>({id:uid(),name,positions:{}})) };
+  return { version:1, assets:[{id:uid(),symbol:'TQQQ',orderTypesVersion:1,stages:defaultStages()}], profiles:['본인','여자친구'].map(name=>({id:uid(),name,positions:{}})) };
+}
+export function migrateOrderTypes(stock) {
+  let changed = false;
+  const assets = stock.assets.map(asset => {
+    if (asset.orderTypesVersion >= 1 || asset.symbol?.trim().toUpperCase() !== 'TQQQ') return asset;
+    changed = true;
+    return { ...asset, orderTypesVersion: 1, stages: asset.stages.map(stage => {
+      const rows = { buy: 0, sell: 0 };
+      return { ...stage, rules: stage.rules.map(rule => {
+        const row = rule.row ?? rows[rule.side];
+        rows[rule.side]++;
+        return { ...rule, order: defaultOrderType(rule.side, row) };
+      }) };
+    }) };
+  });
+  // Apply once, including restored old backups; later editor choices stay intact.
+  return changed ? { ...stock, assets } : stock;
 }
 export function retireSOXL(stock) {
   const retiring=stock.assets.filter(asset=>typeof asset.symbol==='string'&&asset.symbol.trim().toUpperCase()==='SOXL');

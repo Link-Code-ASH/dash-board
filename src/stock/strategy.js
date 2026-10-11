@@ -1,11 +1,12 @@
-import { uid } from './model.js';
+import { uid, defaultOrderType } from './model.js';
 
 export const sides = [['buy', '매수'], ['sell', '매도']];
 export const ruleRow = (stage, rule) => rule.row ?? stage.rules.filter(r => r.side === rule.side).indexOf(rule);
 export const rowCount = (stages, side) => Math.max(0, ...stages.flatMap(stage => stage.rules.filter(r => r.side === side).map(r => ruleRow(stage, r) + 1)));
 export const ruleAt = (stage, side, row) => stage.rules.find(r => r.side === side && ruleRow(stage, r) === row);
 export const editableStages = stages => structuredClone(stages).map(stage => ({ ...stage, rules: stage.rules.map(rule => ({ ...rule, row: ruleRow(stage, rule) })) }));
-export const newRule = (side, row) => ({ id: uid(), side, row, order: 'limit', percent: 0, offset: 0, mode: side === 'buy' ? 'capacity' : 'held', divisor: 30, special: '' });
+export const newRule = (side, row) => ({ id: uid(), side, row, order: defaultOrderType(side, row), percent: 0, offset: 0, mode: side === 'buy' ? 'capacity' : 'held', divisor: 30, special: '' });
+export const orderLabel = rule => `${rule.order === 'loc' ? 'LOC' : rule.order === 'moc' ? 'MOC' : '지정가'} ${rule.side === 'buy' ? '매수' : '매도'}`;
 export function addRule(stage, side, row) {
   const rules = [...stage.rules, newRule(side, row)];
   // The visual row order is also the order used to allocate remaining shares.
@@ -45,12 +46,13 @@ export function validateStrategy(stages) {
   const bounds = stages.map(s => Number(s.upper)).sort((a, b) => a - b);
   if (bounds.some(n => !Number.isFinite(n) || n <= 0 || n > 100) || new Set(bounds).size !== bounds.length || bounds.at(-1) !== 100) return '단계 상한은 서로 다르게 설정하고 마지막 상한은 100%로 맞춰 주세요.';
   for (const stage of stages) for (const rule of stage.rules) {
+    if (!['loc', 'limit', 'moc'].includes(rule.order)) return '주문 방식을 확인해 주세요.';
     if (!finiteInput(rule.percent) || Number(rule.percent) <= -100 || !finiteInput(rule.offset) || !finiteInput(rule.divisor) || (rule.mode === 'fixed' ? Number(rule.divisor) < 0 || !Number.isInteger(Number(rule.divisor)) : Number(rule.divisor) <= 0)) return '비율과 수량 기준을 확인해 주세요. 고정 수량은 0 이상의 정수입니다.';
   }
   return '';
 }
 export function describeRule(rule) {
-  const price = rule.order === 'moc' ? 'MOC' : `평단 ${rule.percent >= 0 ? '+' : ''}${rule.percent}%`;
+  const price = rule.order === 'moc' ? 'MOC' : `평단 ${rule.percent > 0 ? '+' : ''}${rule.percent}%`;
   const quantity = rule.mode === 'remaining' ? '남은 보유 수량 전부' : rule.mode === 'fixed' ? `${rule.divisor}주 고정` : `${rule.mode === 'held' ? '보유' : '가능'} 수량의 ${Math.round(100 / Number(rule.divisor))}%`;
   return { price, quantity };
 }

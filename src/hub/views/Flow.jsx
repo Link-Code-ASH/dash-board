@@ -1,24 +1,20 @@
-import CalendarNoteEditor, { CalendarText } from "../CalendarNoteEditor.jsx";
-import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
+import React, { useEffect } from "react";
 import {
   Plus,
   Trash2,
   CalendarDays,
   Flag,
   ChevronRight,
-  ChevronLeft,
   StickyNote,
 } from "lucide-react";
 import { useDashboardData } from "../context.jsx";
-import { addDays, calendarDutyOptions } from "../../dashboard/model.js";
 import { DateMarkerPanel, MemoArea } from "../../dashboard/components.jsx";
 import { MemoFormatToolbar } from "../../MemoEditor.jsx";
 import { DateHeading, RoutineTasks } from "./shared.jsx";
-import { moduleIds } from "../routing.js";
-import { todayKey } from "../routing.js";
 import ItemIconButton from "../ItemIconButton.jsx";
 import { ScheduleIcon, navigationStrokeWidth } from "../icons.jsx";
-import { FlowScore, WeeklyOverview } from "../FlowSummary.jsx";
+import { FlowScore } from "../FlowSummary.jsx";
+import FlowSchedule from "../FlowSchedule.jsx";
 
 function MemoDesk() {
   const d = useDashboardData();
@@ -155,28 +151,7 @@ export default function Flow({ route, navigate }) {
                 <CalendarDays size={18} />
               </button>
             </div>
-            <TwoWeekSchedule route={route} navigate={navigate} />
-            <div className="flow-selected-heading">
-              <strong>{d.selectedDate.slice(5).replace("-", "/")}</strong>
-              <div className="flow-duty-controls">
-                {calendarDutyOptions.map((option) => (
-                  <label key={option.key}>
-                    <input
-                      type="checkbox"
-                      checked={
-                        !!d.data.calendarDuties[d.selectedDate]?.[option.key]
-                      }
-                      onChange={() =>
-                        d.toggleCalendarDuty(d.selectedDate, option.key)
-                      }
-                    />
-                    {option.label}
-                  </label>
-                ))}
-              </div>
-            </div>
-            <ScheduleEditor />
-            <ExternalFlowItems date={d.selectedDate} navigate={navigate} />
+            <FlowSchedule route={route} navigate={navigate} />
           </section>
           <aside className="flow-support" aria-label="오늘 루틴과 보조 정보">
             <section className="flow-routines">
@@ -193,12 +168,9 @@ export default function Flow({ route, navigate }) {
                   <ChevronRight size={18} />
                 </button>
               </div>
+              <FlowScore />
               <RoutineTasks compact />
             </section>
-            <div className="flow-reviews">
-              <FlowScore />
-              <WeeklyOverview navigate={navigate} />
-            </div>
             <section className="flow-markers">
               <div className="hub-section-title">
                 <h2>
@@ -217,281 +189,5 @@ export default function Flow({ route, navigate }) {
         <MemoDesk />
       </div>
     </div>
-  );
-}
-
-function TwoWeekSchedule({ route, navigate }) {
-  const d = useDashboardData();
-  const week = route.week;
-  const actualToday = todayKey();
-  const content = useRef(null);
-  const viewport = useRef(null);
-  const previousWeek = useRef(week);
-  const requested = useRef({ week, date: d.selectedDate });
-  useLayoutEffect(() => {
-    requested.current = { week, date: d.selectedDate };
-  }, [week, d.selectedDate]);
-  useLayoutEffect(() => {
-    const previous = previousWeek.current;
-    previousWeek.current = week;
-    if (previous === week) return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      viewport.current.style.minHeight = "";
-      return;
-    }
-    const element = content.current;
-    const frame = viewport.current;
-    frame.style.minHeight = `${Math.max(frame.clientHeight, element.scrollHeight)}px`;
-    const animation = element.animate(
-      [
-        {
-          opacity: 0.3,
-          transform: `translateX(${week > previous ? 18 : -18}px)`,
-        },
-        { opacity: 1, transform: "translateX(0)" },
-      ],
-      { duration: 180, easing: "ease-out" },
-    );
-    animation.onfinish = () => {
-      frame.style.minHeight = "";
-    };
-    return () => animation.cancel();
-  }, [week]);
-  const move = (direction) => {
-    viewport.current.style.minHeight = `${viewport.current.clientHeight}px`;
-    const next = {
-      week: addDays(requested.current.week, direction * 7),
-      date: addDays(requested.current.date, direction * 7),
-    };
-    requested.current = next;
-    navigate("flow", "today", next.date, { week: next.week });
-  };
-  return (
-    <div className="flow-fortnight">
-      <div className="flow-week-navigation">
-        <span>
-          {week.replaceAll("-", ".")} –{" "}
-          {addDays(week, 13).slice(5).replace("-", ".")}
-        </span>
-        <div>
-          <button aria-label="이전 주" title="이전 주" onClick={() => move(-1)}>
-            <ChevronLeft size={17} />
-          </button>
-          <button aria-label="다음 주" title="다음 주" onClick={() => move(1)}>
-            <ChevronRight size={17} />
-          </button>
-        </div>
-      </div>
-      <div className="flow-weekday-header" aria-label="요일">
-        {["월 MON", "화 TUE", "수 WED", "목 THU", "금 FRI", "토 SAT", "일 SUN"].map((day) => (
-          <span key={day}>{day}</span>
-        ))}
-      </div>
-      <div className="flow-week-viewport" ref={viewport}>
-        <div ref={content}>
-          {[0, 1].map((row) => (
-            <section
-              className="flow-week"
-              key={row}
-              aria-label={row ? "다음 주 일정" : "이번 주 일정"}
-            >
-              <div className="flow-week-grid">
-                {Array.from({ length: 7 }, (_, column) => {
-                  const date = addDays(week, row * 7 + column);
-                  let offset = 0;
-                  const lines = (d.data.calendar[date] || "").split("\n").map((text) => {
-                    const start = offset; offset += text.length + 1;
-                    return { text, marks: (d.data.calendarFormats?.[date] || []).map((mark) => ({ ...mark, start: mark.start - start, end: mark.end - start })) };
-                  }).filter((line) => line.text.trim());
-                  const duties = calendarDutyOptions.filter(
-                    (option) => d.data.calendarDuties[date]?.[option.key],
-                  );
-                  return (
-                    <button
-                      type="button"
-                      className={`flow-day ${date === actualToday ? "is-today" : ""}`}
-                      key={date}
-                      aria-pressed={date === d.selectedDate}
-                      aria-label={`${date} 일정 선택`}
-                      onClick={() => navigate("flow", "today", date, { week })}
-                    >
-                      <span className="flow-day-heading">
-                        <small>
-                          {
-                            ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"][
-                              column
-                            ]
-                          }
-                        </small>
-                        <strong>
-                          {Number(date.slice(5, 7))}/{Number(date.slice(8))}
-                        </strong>
-                        {date === actualToday && (
-                          <span className="flow-today-dot" title="오늘" />
-                        )}
-                      </span>
-                      <span className="flow-day-content">
-                        {duties.length > 0 && (
-                          <span className="flow-day-duties">
-                            {duties.map((option) => (
-                              <span key={option.key}>{option.label}</span>
-                            ))}
-                          </span>
-                        )}
-                        {lines.map((line, i) => (
-                          <span className="flow-day-event" key={i}>
-                            <CalendarText text={line.text} marks={line.marks} />
-                          </span>
-                        ))}
-                        {!lines.length && !duties.length && (
-                          <span className="flow-day-empty">—</span>
-                        )}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            </section>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function ScheduleEditor() {
-  const d = useDashboardData();
-  return <CalendarNoteEditor key={d.selectedDate} label="선택 날짜 일정"
-    value={d.data.calendar[d.selectedDate] || ""} marks={d.data.calendarFormats?.[d.selectedDate]}
-    onChange={(value, marks) => d.updateCalendarNote(d.selectedDate, value, marks)} />;
-}
-
-function ExternalFlowItems({ date, navigate }) {
-  const [items, setItems] = useState([]);
-  const [error, setError] = useState("");
-  useEffect(() => {
-    let cancelled = false;
-    let cleanup = () => {};
-    import("../moduleRegistry.js")
-      .then(async (registry) => {
-        let unsubscribers = [];
-        let generation = 0;
-        const connect = () => {
-          unsubscribers.forEach((unsubscribe) => unsubscribe());
-          const sources = registry.getFlowSources();
-          let subscriptionFailed = false;
-          const refresh = async () => {
-            const current = ++generation;
-            const results = await Promise.allSettled(
-              sources.map(async (source) => {
-                const sourceItems = await source.getItems(date);
-                if (
-                  !Array.isArray(sourceItems) ||
-                  sourceItems.some(
-                    (item) =>
-                      !item ||
-                      typeof item.id !== "string" ||
-                      typeof item.title !== "string",
-                  )
-                )
-                  throw new Error("Invalid Flow items");
-                return { source, items: sourceItems };
-              }),
-            );
-            if (cancelled || current !== generation) return;
-            setError(
-              results.some((result) => result.status === "rejected")
-                ? "일부 연결된 일정을 불러오지 못했습니다."
-                : subscriptionFailed
-                  ? "일부 연결된 일정의 변경 알림을 받지 못했습니다."
-                  : "",
-            );
-            setItems(
-              results
-                .filter((result) => result.status === "fulfilled")
-                .flatMap((result) =>
-                  result.value.items.map((item) => ({
-                    ...item,
-                    source: result.value.source,
-                  })),
-                ),
-            );
-          };
-          unsubscribers = sources.flatMap((source) => {
-            try {
-              return [source.subscribe(refresh)];
-            } catch {
-              subscriptionFailed = true;
-              return [];
-            }
-          });
-          refresh();
-        };
-        const unsubscribeRegistry = registry.subscribeFlowSources(connect);
-        cleanup = () => {
-          unsubscribeRegistry();
-          unsubscribers.forEach((unsubscribe) => unsubscribe());
-        };
-        if (cancelled) cleanup();
-        else connect();
-      })
-      .catch(() => {
-        if (!cancelled) setError("연결된 일정을 불러오지 못했습니다.");
-      });
-    return () => {
-      cancelled = true;
-      cleanup();
-    };
-  }, [date]);
-  const perform = async (action) => {
-    try {
-      await action();
-      setError("");
-    } catch {
-      setError("변경하지 못했습니다. 다시 시도해주세요.");
-    }
-  };
-  return (
-    <>
-      {error && <p role="status">{error}</p>}
-      {items.length > 0 && (
-        <div className="flow-external-items">
-          {items.map((item) => (
-            <div key={`${item.source.id}:${item.id}`}>
-              <button
-                onClick={() =>
-                  perform(async () => {
-                    const target = await item.source.openTarget(item.id);
-                    if (!moduleIds.includes(target?.moduleId))
-                      throw new Error("Invalid module target");
-                    navigate(target.moduleId, target.section);
-                  })
-                }
-              >
-                {item.title}
-                <ChevronRight size={16} />
-              </button>
-              {item.source.execute &&
-                item.commands?.map((command) => (
-                  <button
-                    key={command.id}
-                    onClick={() =>
-                      perform(() =>
-                        item.source.execute(
-                          item.id,
-                          command.id,
-                          command.payload,
-                        ),
-                      )
-                    }
-                  >
-                    {command.label}
-                  </button>
-                ))}
-            </div>
-          ))}
-        </div>
-      )}
-    </>
   );
 }

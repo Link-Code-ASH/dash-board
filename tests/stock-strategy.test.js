@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { defaultStages, emptyPosition, calculateIBS } from '../src/stock/model.js';
-import { editableStages, ruleAt, rowCount, addRule, addStrategyRow, removeStrategyRow, addStrategyStage, moveStrategyStage, validateStrategy, describeRule } from '../src/stock/strategy.js';
+import { editableStages, ruleAt, rowCount, newRule, addRule, addStrategyRow, removeStrategyRow, addStrategyStage, moveStrategyStage, validateStrategy, describeRule, orderLabel } from '../src/stock/strategy.js';
 
 const outcome = result => ({
   ratio: result.ratio,
@@ -23,7 +23,20 @@ test('opening and saving the sheet editor preserves every seeded stage calculati
   assert.equal(ruleAt(draft[0], 'buy', 2).offset, -0.01);
   assert.equal(ruleAt(draft[0], 'sell', 0).special, 'small-first');
   assert.equal(ruleAt(draft[0], 'sell', 1).special, 'small-second');
-  assert.equal(ruleAt(draft[7], 'sell', 0).order, 'moc');
+  assert.equal(ruleAt(draft[7], 'sell', 0).order, 'loc');
+});
+
+test('new cells support LOC buys, LOC sell rows one and two, and limit sell row three', () => {
+  for (const row of [0, 1, 2, 3]) assert.equal(newRule('buy', row).order, 'loc');
+  assert.deepEqual([0, 1, 2].map(row => newRule('sell', row).order), ['loc', 'loc', 'limit']);
+  assert.equal(orderLabel(newRule('buy', 2)), 'LOC 매수');
+  assert.equal(orderLabel(newRule('sell', 0)), 'LOC 매도');
+  assert.equal(orderLabel(newRule('sell', 2)), '지정가 매도');
+  const draft = editableStages(defaultStages());
+  draft[0].rules[0].order = 'invalid';
+  assert.ok(validateStrategy(draft));
+  draft[0].rules[0].order = 'moc';
+  assert.equal(validateStrategy(draft), '');
 });
 
 test('a deleted cell stays a sparse slot and adding it back does not move later rules', () => {
@@ -168,7 +181,8 @@ test('discarding a modified draft restores saved orders without mutating nested 
 
 test('readable rule descriptions retain MOC and distinguish remaining held shares', () => {
   const stages = defaultStages();
-  assert.deepEqual(describeRule(stages[7].rules[0]), { price: 'MOC', quantity: '보유 수량의 13%' });
+  assert.deepEqual(describeRule(stages[7].rules[0]), { price: '평단 0%', quantity: '보유 수량의 13%' });
+  assert.deepEqual(describeRule({ ...stages[7].rules[0], order: 'moc' }), { price: 'MOC', quantity: '보유 수량의 13%' });
   assert.equal(describeRule(stages[0].rules.at(-1)).quantity, '남은 보유 수량 전부');
   assert.equal(describeRule(stages[0].rules[0]).quantity, '가능 수량의 3%');
   assert.equal(describeRule({ ...stages[0].rules[0], divisor: 16 }).quantity, '가능 수량의 6%');

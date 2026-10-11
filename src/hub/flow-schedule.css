@@ -1,0 +1,51 @@
+html body #root .hub-app .flow-desk-calendar { min-width: 0; }
+html body #root .hub-app .flow-desk-navigation { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 2px 0 14px; color: #657285; font-size: 14px; }
+html body #root .hub-app .flow-desk-navigation > div { display: flex; gap: 6px; }
+html body #root .hub-app .flow-desk-navigation button { display: grid; place-items: center; width: 34px; height: 34px; padding: 0; border: 1px solid #d9e1e9; border-radius: 5px; background: #fafcfd; box-shadow: 0 1px 2px #30435b0a; color: #55687f; }
+html body #root .hub-app .flow-desk-weekdays { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); padding: 12px 0; border-top: 1px solid #dce2e8; border-bottom: 1px solid #dce2e8; color: #657286; text-align: center; font-size: 14px; font-weight: 600; }
+html body #root .hub-app .flow-desk-weekdays span:first-child { color: #a8757c; }
+html body #root .hub-app .flow-desk-weekdays span:last-child { color: #718ba8; }
+html body #root .hub-app .flow-desk-viewport { overflow: clip; min-width: 0; background: #fbfcfd70; box-shadow: 0 6px 16px #24385005, inset 0 1px #fff; }
+html body #root .hub-app .flow-desk-week h3 { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0; padding: 9px 10px; border-bottom: 1px solid #e0e5eb; font: 500 13px/20px var(--hub-font-body); color: #68798e; background: #edf2f655; }
+html body #root .hub-app .flow-desk-week h3 small { font-size: 12px; color: #8b95a3; }
+html body #root .hub-app .flow-desk-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); }
+html body #root .hub-app .flow-desk-day { display: flex; flex-direction: column; min-width: 0; min-height: 190px; padding: 12px 9px 8px; border-right: 1px solid #e1e5eb; border-bottom: 1px solid #dce2e8; background: #fcfdfc70; cursor: pointer; }
+html body #root .hub-app .flow-desk-day:last-child { border-right: 0; }
+html body #root .hub-app .flow-desk-day:hover { background: #f1f5f870; }
+html body #root .hub-app .flow-desk-day.is-today { background: #f6f2e7b8; }
+html body #root .hub-app .flow-desk-day.is-selected { background: #edf2f8b8; box-shadow: inset 0 3px #88a0bd; }
+html body #root .hub-app .flow-desk-day.is-selected.is-today { background: #f5f2eab8; }
+html body #root .hub-app .flow-desk-day header > button { display: flex; align-items: center; gap: 5px; width: 100%; min-width: 0; padding: 0 0 10px; border: 0; background: transparent; box-shadow: none; color: #384b64; font: 600 17px/22px var(--hub-font-title); }
+html body #root .hub-app .flow-desk-day header small { display: none; }
+html body #root .hub-app .flow-desk-day header i { width: 5px; height: 5px; border-radius: 50%; margin-left: auto; background: #beac71; }
+html body #root .hub-app .flow-desk-events { flex: 1; min-width: 0; padding-bottom: 12px; }
+html body #root .hub-app .flow-desk-event { padding: 8px 0; border-bottom: 1px solid #dbe2e980; }
+html body #root .hub-app .flow-desk-event:last-child { border-bottom: 0; }
+html body #root .hub-app .flow-desk-event-title { font-size: 15px; line-height: 1.55; color: #36445a; overflow-wrap: anywhere; white-space: pre-wrap; }
+html body #root .hub-app .flow-desk-time { display: block; margin-bottom: 3px; font-size: 13px; color: #697c94; font-variant-numeric: tabular-nums; }
+html body #root .hub-app .flow-desk-event-source { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin-top: 5px; color: #8b97a5; font-size: 11px; }
+html body #root .hub-app .flow-desk-event-source em { font-size: 11px; font-style: normal; color: #78917e; }
+html body #root .hub-app .flow-desk-event-source button { display: grid; place-items: center; width: 22px; height: 22px; padding: 0; background: transparent; border: 0; box-shadow: none; color: #7185a0; }
+html body #root .hub-app .flow-desk-duties { display: flex; flex-wrap: nowrap; align-items: center; gap: 5px; padding: 2px 0 8px; }
+html body #root .hub-app .flow-desk-duties span { padding: 2px 5px; font-size: 12px; background: #e6edf370; color: #647b94; border-radius: 3px; }
+html body #root .hub-app .flow-desk-empty { display: block; padding-top: 9px; color: #a2abb6; font-size: 12px; }
+html body #root .hub-app .flow-desk-score { display: flex; align-items: center; justify-content: space-between; gap: 5px; min-height: 28px; border-top: 1px solid #dce3ea; color: #8b98a8; }
+html body #root .hub-app .flow-desk-score strong { font-size: 15px; font-weight: 600; line-height: 22px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+html body #root .hub-app .flow-desk-check { display: grid; place-items: center; box-sizing: border-box; width: 16px; height: 16px; border: 1px solid #bac6d3; border-radius: 3px; }
+html body #root .hub-app .flow-desk-score.is-attempt { color: #5b8c70; }
+html body #root .hub-app .flow-desk-score.is-penalty { color: #b4777c; }
+html body #root .hub-app .flow-desk-score.is-attempt .flow-desk-check { background: #e4efe8; border-color: #9db8a7; }
+html body #root .hub-app .flow-desk-score.is-penalty .flow-desk-check { background: #f4e8ea; border-color: #c5a3a6; }
+html body #root .hub-app .flow-desk-edit { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-top: 12px; color: #8491a2; font-size: 13px; }
+html body #root .hub-app .flow-desk-edit button { display: inline-flex; align-items: center; gap: 6px; padding: 6px 8px; border: 0; background: transparent; color: #5a7597; font-size: 13px; box-shadow: none; }
+html body #root .hub-app .flow-desk-warning { font-size: 12px; color: #9c7042; }
+html body #root .hub-app.hub-mobile .flow-desk-weekdays { display: none; }
+html body #root .hub-app.hub-mobile .flow-desk-navigation { font-size: 12px; }
+html body #root .hub-app.hub-mobile .flow-desk-navigation button { width: 44px; height: 44px; }
+html body #root .hub-app.hub-mobile .flow-desk-grid { grid-template-columns: minmax(0, 1fr); }
+html body #root .hub-app.hub-mobile .flow-desk-day { display: grid; grid-template-columns: 66px minmax(0, 1fr); min-height: 100px; border-right: 0; gap: 8px; padding: 12px 8px; }
+html body #root .hub-app.hub-mobile .flow-desk-day header > button { flex-direction: column; align-items: flex-start; min-height: 44px; padding: 0; }
+html body #root .hub-app.hub-mobile .flow-desk-day header small { display: block; font: 400 12px/18px var(--hub-font-body); color: #8c98a8; }
+html body #root .hub-app.hub-mobile .flow-desk-score { grid-column: 2; }
+html body #root .hub-app.hub-mobile .flow-desk-event-source button { width: 44px; height: 44px; }
+html body #root .hub-app.hub-mobile .flow-desk-edit button { min-height: 44px; }

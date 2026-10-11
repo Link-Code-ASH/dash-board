@@ -33,13 +33,13 @@ export const h = React.createElement;
 
 
 export const weekDays = [
+  { key: "sun", label: "Sun", full: "Sunday" },
   { key: "mon", label: "Mon", full: "Monday" },
   { key: "tue", label: "Tue", full: "Tuesday" },
   { key: "wed", label: "Wed", full: "Wednesday" },
   { key: "thu", label: "Thu", full: "Thursday" },
   { key: "fri", label: "Fri", full: "Friday" },
   { key: "sat", label: "Sat", full: "Saturday" },
-  { key: "sun", label: "Sun", full: "Sunday" },
 ];
 
 export const monthNames = [
@@ -1021,7 +1021,7 @@ export function formatDDay(fromDateKey, toDateKeyValue) {
 
 export function getWeekStart(dateKey) {
   const date = new Date(`${dateKey}T00:00:00`);
-  return addDays(dateKey, -((date.getDay() + 6) % 7));
+  return addDays(dateKey, -date.getDay());
 }
 
 export function formatCompactDate(dateKey) {
@@ -1060,7 +1060,7 @@ export function getWeeklyPlanEntry(rawValue, dateKey) {
 
 export function getWeekdayKey(dateKey) {
   const date = new Date(`${dateKey}T00:00:00`);
-  return weekDays[(date.getDay() + 6) % 7].key;
+  return weekDays[date.getDay()].key;
 }
 
 export function getWeekdayMeta(dateKey) {

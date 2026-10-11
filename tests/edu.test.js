@@ -240,7 +240,7 @@ test('invalid profile, date, time, status and targets are rejected without alter
 });
 
 test('normalization migrates missing Edu and backup round trips preserve unknown fields and histories', () => {
-  assert.deepEqual(normalizeEdu(), { version: 1, students: [], consultations: [], events: [] });
+  assert.deepEqual(normalizeEdu(), { version: 1, students: [], consultations: [], events: [], admissions: [] });
   assert.deepEqual(normalizeEdu(null), normalizeEdu());
   let edu = create();
   edu = applyEduAction(edu, { type: 'memo.save', studentId: edu.students[0].id, memo: '기록' }, options);

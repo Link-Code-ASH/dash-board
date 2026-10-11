@@ -34,8 +34,8 @@ test("Edu Flow lists only the selected day's booked consultations in time order"
   const { source, getEdu } = harness();
   const before = structuredClone(getEdu());
   assert.deepEqual(source.getItems("2026-10-11"), [
-    { id: "early", title: "09:30 · 박바다 · 진학 상담", commands: [{ id: "complete", label: "상담 완료" }] },
-    { id: "later", title: "17:00 · 김하늘 · 학습 상담", commands: [{ id: "complete", label: "상담 완료" }] },
+    { id: "early", title: "09:30 · 박바다 · 진학 상담", displayTitle: "박바다 · 진학 상담", time: "09:30", kind: "consultation", sourceLabel: "Edu · 상담", commands: [{ id: "complete", label: "상담 완료" }] },
+    { id: "later", title: "17:00 · 김하늘 · 학습 상담", displayTitle: "김하늘 · 학습 상담", time: "17:00", kind: "consultation", sourceLabel: "Edu · 상담", commands: [{ id: "complete", label: "상담 완료" }] },
   ]);
   assert.deepEqual(source.getItems("2026-10-13"), []);
   assert.deepEqual(getEdu(), before, "Flow reads must not reorder the underlying consultation list");
