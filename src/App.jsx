@@ -20,7 +20,7 @@ import { navigationStrokeWidth } from "./hub/icons.jsx";
 import { appBase, installedModule, useHubRoute } from "./hub/routing.js";
 import LingoProvider from "./lingo/LingoProvider.jsx";
 import EduProvider from "./edu/EduProvider.jsx";
-import { isModuleLoadError, latestAppUrl } from "./hub/moduleRecovery.js";
+import { claimAutomaticRecovery, isModuleLoadError, openLatestApp } from "./hub/moduleRecovery.js";
 
 const SettingsView = React.lazy(() => import("./hub/views/Settings.jsx"));
 
@@ -28,6 +28,10 @@ class ModuleBoundary extends React.Component {
   state = { error: null };
   static getDerivedStateFromError(error) {
     return { error };
+  }
+  componentDidCatch(error) {
+    // Nothing on this screen rendered, so reopening cannot discard an edit.
+    if (isModuleLoadError(error) && navigator.onLine !== false && claimAutomaticRecovery(() => window.sessionStorage)) openLatestApp();
   }
   render() {
     if (this.state.error) {
@@ -39,7 +43,7 @@ class ModuleBoundary extends React.Component {
             ? "연결이 끊겼거나 앱이 업데이트되어 화면 파일을 불러오지 못했습니다. 인터넷 연결을 확인한 뒤 최신 버전으로 다시 열어 주세요."
             : this.state.error.message}</p>
           <button onClick={() => moduleLoadFailed
-            ? window.location.replace(latestAppUrl(window.location.href))
+            ? openLatestApp()
             : this.setState({ error: null })}>
             {moduleLoadFailed ? "최신 버전으로 다시 열기" : "다시 시도"}
           </button>

@@ -175,7 +175,8 @@ test("worker caches only release allowlist; never auth, APIs, mutations or exter
   assert.ok(!worker.stores.has("hub-pwa:/dash-board/:old"));
   assert.ok(worker.stores.has("hub-pwa:/another-repo/:old"));
   assert.ok(worker.stores.has("user-data"));
-  assert.doesNotMatch(workerTemplate, /skipWaiting|clients\.claim/);
+  assert.doesNotMatch(workerTemplate, /clients\.claim/);
+  assert.equal(workerTemplate.match(/skipWaiting/g)?.length, 1, "only the explicit recovery message may skip waiting");
 });
 
 test("lazy assets cache only on first use and survive while a new release waits", async () => {
@@ -292,4 +293,20 @@ test("PWA registration and install hook match the parent integration contract", 
   vm.runInContext(code, serverContext);
   assert.equal(await serverContext.PwaTest.registerPwa(), null);
   assert.equal(serverContext.PwaTest.useInstallPrompt().installed, false);
+});
+
+test("worker skips waiting only when the page asks to recover a broken release", async () => {
+  const listeners = {};
+  let skipped = 0;
+  const metadata = { version: "test", files: [], precache: [], runtime: [], shells: [] };
+  vm.runInNewContext(workerTemplate.replace('"__HUB_PWA_BUILD__"', JSON.stringify(metadata)), {
+    self: { registration: { scope: "https://example.test/dash-board/" }, addEventListener: (name, fn) => { listeners[name] = fn; }, skipWaiting: async () => { skipped += 1; } },
+    URL, Request,
+  });
+  const send = (data, origin = "https://example.test") => listeners.message({ data, origin, waitUntil: (value) => value });
+  send({ type: "other" });
+  send({ type: "HUB_ACTIVATE_RELEASE" }, "https://evil.test");
+  assert.equal(skipped, 0);
+  send({ type: "HUB_ACTIVATE_RELEASE" });
+  assert.equal(skipped, 1);
 });
