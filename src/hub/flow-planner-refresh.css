@@ -403,26 +403,52 @@ html body #root .hub-app.hub-app .routine-view .hub-segments button { border: 0;
 html body #root .hub-app.hub-app .routine-view .hub-segments button[aria-current="page"] { background: #fff; color: var(--fp-ink); box-shadow: 0 1px 2px #1d25331a; }
 
 /* ---------- Screen sizes ----------
-   Monitor (wide content area): Schedule gets most of the width with Date
-   Marker beside it; Today's Tasks and Memo share the row below.
-   Laptop: the stacked layout, with shorter day cells so tasks start sooner.
-   Phone: single column (hub-mobile rules). */
-html body #root .hub-app.hub-app.hub-desktop .flow-desk-day { min-height: 136px; }
+   One grid, three widths. The schedule always leads; Date Marker is last.
+   Narrow / phone: 1 column (schedule, tasks, memo, markers).
+   Laptop (content >= 900px): 2 columns, schedule on top, tasks | memo.
+   Monitor (content >= 1500px): schedule + memo on the left, tasks and
+   Date Marker in a right-hand column. */
+html body #root .hub-app.hub-app .flow-layout { display: grid; grid-template-columns: minmax(0, 1fr); grid-template-areas: "schedule" "tasks" "memo" "markers"; align-items: start; gap: 20px; }
+html body #root .hub-app.hub-app :is(.flow-workspace, .flow-support) { display: contents; }
+html body #root .hub-app.hub-app .flow-schedule { grid-area: schedule; }
+html body #root .hub-app.hub-app .flow-routines { grid-area: tasks; }
+html body #root .hub-app.hub-app .flow-markers { grid-area: markers; }
+html body #root .hub-app.hub-app .flow-layout > .hub-memo-section { grid-area: memo; }
+html body #root .hub-app.hub-app.hub-desktop .flow-desk-day { min-height: 128px; }
+html body #root .hub-app.hub-app.hub-desktop .flow-view { --hub-memo-height: 190px; }
+@container hub-content (min-width: 900px) {
+  html body #root .hub-app.hub-app.hub-desktop .flow-layout {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-areas: "schedule schedule" "tasks memo" "markers memo";
+    grid-template-rows: auto auto 1fr;
+  }
+  html body #root .hub-app.hub-app.hub-desktop .flow-view .hub-memo-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
 @container hub-content (min-width: 1500px) {
   html body #root .hub-app.hub-app.hub-desktop .flow-layout {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    grid-template-areas: "schedule schedule schedule markers" "tasks tasks memo memo";
-    align-items: start;
-    gap: 20px;
+    grid-template-columns: minmax(0, 1fr) minmax(360px, 400px);
+    grid-template-areas: "schedule tasks" "memo tasks" "memo markers";
+    grid-template-rows: auto auto 1fr;
   }
-  html body #root .hub-app.hub-app.hub-desktop :is(.flow-workspace, .flow-support) { display: contents; }
-  html body #root .hub-app.hub-app.hub-desktop .flow-schedule { grid-area: schedule; }
-  html body #root .hub-app.hub-app.hub-desktop .flow-markers { grid-area: markers; align-self: stretch; }
-  html body #root .hub-app.hub-app.hub-desktop .flow-routines { grid-area: tasks; }
-  html body #root .hub-app.hub-app.hub-desktop .flow-layout > .hub-memo-section { grid-area: memo; padding-left: 22px; border-left: 1px solid var(--fp-line); }
-  html body #root .hub-app.hub-app.hub-desktop .flow-view .hub-memo-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  html body #root .hub-app.hub-app.hub-desktop .flow-desk-day { min-height: 150px; }
+  html body #root .hub-app.hub-app.hub-desktop .flow-view .hub-memo-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
+
+/* Fold toggles (Date Marker, Planner panels). */
+html body #root .hub-app.hub-app .hub-panel-toggle { display: grid; place-items: center; width: 32px; min-width: 32px; height: 32px; min-height: 32px; padding: 0; border: 1px solid var(--fp-line); border-radius: 8px; background: #fff; color: var(--fp-ink-2); box-shadow: none; }
+html body #root .hub-app.hub-app .hub-panel-toggle:hover { background: var(--fp-accent-soft); color: var(--fp-accent); }
+html body #root .hub-app.hub-app .hub-panel-toggle svg { transition: transform 140ms ease; }
+html body #root .hub-app.hub-app .hub-panel-toggle[aria-expanded="false"] svg { transform: rotate(-90deg); }
+
+/* Date Marker folded: a quiet line of D-day chips. */
+html body #root .hub-app.hub-app .flow-markers.is-collapsed { padding-top: 14px; padding-bottom: 14px; }
+html body #root .hub-app.hub-app .flow-markers.is-collapsed .hub-section-title { margin-bottom: 10px; }
+html body #root .hub-app.hub-app .flow-markers .hub-section-title h2 { font-size: 15px !important; color: var(--fp-ink-2) !important; }
+html body #root .hub-app.hub-app .flow-marker-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
+html body #root .hub-app.hub-app .flow-marker-chips li { display: inline-flex; align-items: center; gap: 6px; min-height: 28px; padding: 2px 4px 2px 10px; border-radius: 999px; background: var(--fp-line-soft); color: var(--fp-ink-2); font-size: 13px; font-weight: 600; }
+html body #root .hub-app.hub-app .flow-marker-chips li b { padding: 2px 8px; border-radius: 999px; background: #fff; color: var(--fp-ink); font-size: 12px; font-weight: 800; }
+html body #root .hub-app.hub-app .flow-marker-chips li.is-empty { padding: 0; background: transparent; }
+html body #root .hub-app.hub-app .flow-marker-chips li.is-empty button { display: inline-flex; align-items: center; gap: 4px; min-height: 28px; padding: 2px 10px; border: 1px dashed var(--fp-line); border-radius: 999px; background: #fff; color: var(--fp-muted); font-size: 13px; box-shadow: none; }
+
 /* Phone: drop the empty score row so each day is one compact line. */
 html body #root .hub-app.hub-app.hub-mobile .flow-desk-score.is-zero:not(.is-attempt):not(.is-penalty) { display: none; }
 html body #root .hub-app.hub-app.hub-mobile .flow-desk-events { padding-bottom: 0; }
@@ -450,3 +476,42 @@ html body #root .hub-app.hub-app.hub-mobile .mobile-duty-buttons button { border
 html body #root .hub-app.hub-app.hub-mobile .mobile-duty-buttons button span { display: none !important; }
 html body #root .hub-app.hub-app.hub-mobile .mobile-duty-buttons button.active { border-color: transparent !important; background: #fff3dc !important; color: #946312 !important; }
 html body #root .hub-app.hub-app.hub-mobile .mobile-calendar-editor .calendar-entry { padding: 6px 10px; border: 0; border-left: 3px solid #9db5d8; border-radius: 8px; background: var(--fp-accent-soft); margin-bottom: 6px; }
+
+/* ---------- Planner routines: Daily | Weekly ----------
+   Monitor: Daily beside Weekly. Laptop: stacked, Daily as a two-column
+   list. Each panel folds from its header; a folded panel gives its width
+   back to the other. */
+html body #root .hub-app.hub-app .routine-desktop-workspace { gap: 20px; align-items: start; }
+html body #root .hub-app.hub-app .routine-editor-panel { padding: 16px 20px 18px; border: 1px solid var(--fp-line); border-radius: 14px; background: #fff; box-shadow: var(--fp-shadow); }
+html body #root .hub-app.hub-app .routine-editor-actions { padding: 0 0 12px; margin-bottom: 4px; border-bottom-color: var(--fp-line-soft); }
+html body #root .hub-app.hub-app .routine-editor-actions h2 { font-size: 17px; font-weight: 700; color: var(--fp-ink); }
+html body #root .hub-app.hub-app .routine-editor-actions h2 small { margin-left: 2px; padding: 1px 8px; border-radius: 999px; background: var(--fp-line-soft); color: var(--fp-muted); font-size: 12px; font-weight: 700; }
+html body #root .hub-app.hub-app .routine-editor-tools { display: inline-flex; align-items: center; gap: 6px; }
+html body #root .hub-app.hub-app .routine-add-button { min-height: 32px; border-radius: 8px !important; }
+html body #root .hub-app.hub-app .routine-editor-panel.is-collapsed { padding-bottom: 4px; }
+html body #root .hub-app.hub-app .routine-editor-panel.is-collapsed .routine-editor-actions { border-bottom: 0; margin-bottom: 0; }
+html body #root .hub-app.hub-app .routine-editor-panel.is-collapsed .routine-config-editor > :not(.routine-editor-actions) { display: none; }
+html body #root .hub-app.hub-app .routine-editor-panel.is-collapsed .routine-add-button { display: none; }
+/* Compact Daily rows. */
+html body #root .hub-app.hub-app.hub-desktop .routine-preset-row { min-height: 40px; padding: 3px 0; border-bottom-color: var(--fp-line-soft); grid-template-columns: 24px 30px minmax(0, 1fr) 58px 58px 28px; }
+html body #root .hub-app.hub-app.hub-desktop .routine-table-head { grid-template-columns: 24px 30px minmax(0, 1fr) 58px 58px 28px; padding: 4px 0; font-size: 12px; }
+html body #root .hub-app.hub-app.hub-desktop .routine-config-editor input { height: 34px !important; min-height: 34px !important; font-size: 15px !important; }
+html body #root .hub-app.hub-app.hub-desktop .routine-preset-row :is(.hub-item-icon, .routine-delete-button) { height: 34px; min-height: 34px; }
+@container hub-content (min-width: 1500px) {
+  html body #root .hub-app.hub-app.hub-desktop .routine-desktop-workspace { grid-template-columns: minmax(380px, 460px) minmax(0, 1fr); }
+  html body #root .hub-app.hub-app.hub-desktop .routine-desktop-workspace:has(> .is-collapsed) { grid-template-columns: minmax(0, 1fr); }
+  html body #root .hub-app.hub-app.hub-desktop .routine-editor-panel[data-kind="daily"] :is(.routine-preset-list, .routine-table-heads) { grid-template-columns: minmax(0, 1fr); }
+  html body #root .hub-app.hub-app.hub-desktop .routine-editor-panel[data-kind="daily"] .routine-table-head.is-secondary { display: none; }
+  html body #root .hub-app.hub-app.hub-desktop .routine-weekly-grid { grid-template-columns: 180px repeat(7, minmax(0, 1fr)); }
+}
+html body #root .hub-app.hub-app .routine-editor-tabs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+/* Phone: shorter memo boxes (they scroll inside) and one-line Daily rows. */
+html body #root .hub-app.hub-app.hub-mobile .flow-view { --hub-memo-height: 170px; }
+html body #root .hub-app.hub-app.hub-mobile .routine-preset-row { grid-template-columns: 28px 36px minmax(0, 1fr) 52px 52px 36px; gap: 4px; padding: 6px 0; }
+html body #root .hub-app.hub-app.hub-mobile .routine-preset-row :is(.routine-order-controls, .hub-item-icon, .routine-name-input, .routine-score-field, .routine-delete-button) { grid-row: auto; grid-column: auto; width: auto; justify-self: stretch; }
+html body #root .hub-app.hub-app.hub-mobile .routine-preset-row .routine-score-field { padding: 0 2px; }
+html body #root .hub-app.hub-app.hub-mobile .routine-preset-row .routine-score-field > span { display: none; }
+html body #root .hub-app.hub-app.hub-mobile .routine-preset-row .routine-order-controls button { width: 28px; min-width: 28px; height: 20px; min-height: 20px; }
+html body #root .hub-app.hub-app.hub-mobile .routine-preset-row :is(.hub-item-icon, .routine-delete-button) { width: 36px; min-width: 36px; height: 40px; min-height: 40px; }
+html body #root .hub-app.hub-app.hub-mobile .routine-preset-row input { height: 40px !important; min-height: 40px !important; }

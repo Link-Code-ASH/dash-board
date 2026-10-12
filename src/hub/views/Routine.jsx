@@ -1,16 +1,23 @@
 import React, { useState } from "react";
-import { CalendarDays, Repeat2, CalendarRange, GraduationCap } from "lucide-react";
+import { CalendarDays, Repeat2, CalendarRange } from "lucide-react";
 import { ScheduleIcon, navigationStrokeWidth } from "../icons.jsx";
 import Calendar from "./Calendar.jsx";
-import { DateHeading } from "./shared.jsx";
+import { DateHeading, PanelToggle, usePanelOpen } from "./shared.jsx";
 import RoutineEditor from "../RoutineEditor.jsx";
 import { useDashboardData } from "../context.jsx";
 
 const editors = [
   { id: "daily", label: "Daily", Icon: Repeat2 },
   { id: "weekly", label: "Weekly", Icon: CalendarRange },
-  { id: "edu", label: "EDU", Icon: GraduationCap },
 ];
+
+// EDU routines stay in the saved data; Planner just no longer shows them.
+function EditorPanel({ kind, label }) {
+  const [open, toggle] = usePanelOpen(`planner-${kind}`);
+  return <section className={`routine-editor-panel ${open ? "" : "is-collapsed"}`} data-kind={kind}>
+    <RoutineEditor kind={kind} heading toggle={<PanelToggle open={open} onToggle={toggle} label={label} />} />
+  </section>;
+}
 
 export default function Routine({ route, navigate }) {
   const d = useDashboardData();
@@ -30,11 +37,8 @@ export default function Routine({ route, navigate }) {
       </nav>
     </div>
     {calendar ? <Calendar route={route} navigate={navigate} /> : desktop ? <div className="routine-desktop-workspace">
-      <div className="routine-presets-workspace">
-        <section className="routine-editor-panel" data-kind="daily"><RoutineEditor kind="daily" heading /></section>
-        <section className="routine-editor-panel" data-kind="edu"><RoutineEditor kind="edu" heading /></section>
-      </div>
-      <section className="routine-editor-panel" data-kind="weekly"><RoutineEditor kind="weekly" heading /></section>
+      <EditorPanel kind="daily" label="Daily" />
+      <EditorPanel kind="weekly" label="Weekly" />
     </div> : <section className="routine-workspace" aria-label="루틴 편집">
       <nav className="routine-editor-tabs" aria-label="편집할 루틴">
         {editors.map(({ id, label, Icon }) => <button key={id} type="button"

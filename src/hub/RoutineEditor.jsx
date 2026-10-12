@@ -49,7 +49,7 @@ function dragProps(key, move) {
   };
 }
 
-function PresetEditor({ kind, heading }) {
+function PresetEditor({ kind, heading, toggle }) {
   const d = useDashboardData();
   const edu = kind === "edu";
   const title = edu ? "EDU" : "Daily";
@@ -61,7 +61,7 @@ function PresetEditor({ kind, heading }) {
   const update = (index, field, value) => edu ? d.updateSchoolPreset(presets[index].key, field, value) : d.updatePreset(index, field, value);
   const remove = (index) => edu ? d.removeSchoolPreset(presets[index].key) : d.removePreset(index);
   return <div className="routine-config-editor" ref={root} aria-label={`${title} 편집`}>
-    <div className="routine-editor-actions">{heading && <h2><Icon size={18} />{title}</h2>}<button className="routine-add-button" type="button" aria-label={`${title} 항목 추가`} title="항목 추가" onClick={add}><Plus size={17} /><span className="routine-add-label">항목 추가</span></button></div>
+    <div className="routine-editor-actions">{heading && <h2><Icon size={18} />{title}<small>{presets.length}</small></h2>}<span className="routine-editor-tools"><button className="routine-add-button" type="button" aria-label={`${title} 항목 추가`} title="항목 추가" onClick={add}><Plus size={17} /><span className="routine-add-label">항목 추가</span></button>{toggle}</span></div>
     {edu && <div className="routine-subjects" aria-label="요일별 과목">
       {weekDays.map((day) => <label key={day.key} className={getWeekdayKey(d.selectedDate) === day.key ? "is-selected" : ""}>
         <span>{day.label}</span><input aria-label={`EDU ${day.full} 과목`} placeholder="과목" maxLength={80}
@@ -110,13 +110,13 @@ function AutoSizeWeeklyCell({ value, ...props }) {
   return <div className="routine-weekly-cell" ref={root}><WeeklyScheduleCell value={value} {...props} /></div>;
 }
 
-function WeeklyEditor({ heading }) {
+function WeeklyEditor({ heading, toggle }) {
   const d = useDashboardData();
   const categories = d.data.categories;
   const root = useNewItemFocus(categories);
   const selectedWeekday = getWeekdayKey(d.selectedDate);
   return <div className="routine-config-editor routine-weekly-editor" ref={root} aria-label="Weekly 편집">
-    <div className="routine-editor-actions">{heading && <h2><CalendarRange size={18} />Weekly</h2>}<button className="routine-add-button" type="button" aria-label="Weekly 카테고리 추가" title="카테고리 추가" onClick={d.addCategory}><Plus size={17} /><span className="routine-add-label">카테고리 추가</span></button></div>
+    <div className="routine-editor-actions">{heading && <h2><CalendarRange size={18} />Weekly<small>{categories.length}</small></h2>}<span className="routine-editor-tools"><button className="routine-add-button" type="button" aria-label="Weekly 카테고리 추가" title="카테고리 추가" onClick={d.addCategory}><Plus size={17} /><span className="routine-add-label">카테고리 추가</span></button>{toggle}</span></div>
     <div className="routine-weekly-scroll" tabIndex={0} aria-label="요일별 계획 표">
       <div className="routine-weekly-grid">
         <div className="routine-weekly-corner">카테고리</div>
@@ -144,6 +144,6 @@ function WeeklyEditor({ heading }) {
   </div>;
 }
 
-export default function RoutineEditor({ kind, heading = false }) {
-  return kind === "weekly" ? <WeeklyEditor heading={heading} /> : <PresetEditor key={kind} kind={kind} heading={heading} />;
+export default function RoutineEditor({ kind, heading = false, toggle = null }) {
+  return kind === "weekly" ? <WeeklyEditor heading={heading} toggle={toggle} /> : <PresetEditor key={kind} kind={kind} heading={heading} toggle={toggle} />;
 }

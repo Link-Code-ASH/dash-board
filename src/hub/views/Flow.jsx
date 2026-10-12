@@ -10,7 +10,8 @@ import {
 import { useDashboardData } from "../context.jsx";
 import { DateMarkerPanel, MemoArea } from "../../dashboard/components.jsx";
 import { MemoFormatToolbar } from "../../MemoEditor.jsx";
-import { DateHeading, RoutineTasks } from "./shared.jsx";
+import { DateHeading, PanelToggle, RoutineTasks, usePanelOpen } from "./shared.jsx";
+import { formatDDay, normalizeDateMarkers } from "../../dashboard/model.js";
 import ItemIconButton from "../ItemIconButton.jsx";
 import { ScheduleIcon, navigationStrokeWidth } from "../icons.jsx";
 import { FlowScore } from "../FlowSummary.jsx";
@@ -122,6 +123,49 @@ function MemoDesk() {
   );
 }
 
+// Folded, Date Marker is one line of D-day chips; unfolded, the full editor.
+function DateMarkers() {
+  const d = useDashboardData();
+  const [open, toggle] = usePanelOpen("flow-markers", false);
+  const filled = normalizeDateMarkers(d.data.dateMarkers).filter(
+    (marker) => marker.text.trim() || marker.date,
+  );
+  return (
+    <section className={`flow-markers ${open ? "" : "is-collapsed"}`}>
+      <div className="hub-section-title">
+        <h2>
+          <Flag size={18} />
+          Date Marker
+        </h2>
+        <PanelToggle open={open} onToggle={toggle} label="Date Marker" />
+      </div>
+      {open ? (
+        <DateMarkerPanel
+          dateMarkers={d.data.dateMarkers}
+          selectedDate={d.selectedDate}
+          updateDateMarker={d.updateDateMarker}
+        />
+      ) : (
+        <ul className="flow-marker-chips">
+          {filled.map((marker, index) => (
+            <li key={index}>
+              <span>{marker.text || "Marker"}</span>
+              {marker.date && <b>{formatDDay(marker.date, d.selectedDate)}</b>}
+            </li>
+          ))}
+          {!filled.length && (
+            <li className="is-empty">
+              <button type="button" onClick={toggle}>
+                <Plus size={14} /> 추가
+              </button>
+            </li>
+          )}
+        </ul>
+      )}
+    </section>
+  );
+}
+
 export default function Flow({ route, navigate }) {
   const d = useDashboardData();
   useEffect(() => {
@@ -171,19 +215,7 @@ export default function Flow({ route, navigate }) {
               <FlowScore />
               <RoutineTasks compact />
             </section>
-            <section className="flow-markers">
-              <div className="hub-section-title">
-                <h2>
-                  <Flag size={18} />
-                  Date Marker
-                </h2>
-              </div>
-              <DateMarkerPanel
-                dateMarkers={d.data.dateMarkers}
-                selectedDate={d.selectedDate}
-                updateDateMarker={d.updateDateMarker}
-              />
-            </section>
+            <DateMarkers />
           </aside>
         </div>
         <MemoDesk />

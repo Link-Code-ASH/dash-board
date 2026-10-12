@@ -1,5 +1,5 @@
-import React from "react";
-import { ChevronLeft, ChevronRight, RotateCcw } from "lucide-react";
+import React, { useState } from "react";
+import { ChevronDown, ChevronLeft, ChevronRight, RotateCcw } from "lucide-react";
 import { useDashboardData } from "../context.jsx";
 import { todayKey } from "../routing.js";
 import ItemIconButton from "../ItemIconButton.jsx";
@@ -12,6 +12,48 @@ import {
   createPresetPlanCard,
   getCategoryScoreRange,
 } from "../../dashboard/components.jsx";
+
+// Which panels are folded is a per-device view preference, so it lives in
+// localStorage and never touches the synced dashboard data.
+const panelStorageKey = "hub-panels-open-v1";
+
+function readPanels() {
+  try {
+    return JSON.parse(localStorage.getItem(panelStorageKey) || "{}") || {};
+  } catch {
+    return {};
+  }
+}
+
+export function usePanelOpen(id, initial = true) {
+  const [open, setOpen] = useState(() => readPanels()[id] ?? initial);
+  const toggle = () =>
+    setOpen((value) => {
+      try {
+        localStorage.setItem(
+          panelStorageKey,
+          JSON.stringify({ ...readPanels(), [id]: !value }),
+        );
+      } catch {}
+      return !value;
+    });
+  return [open, toggle];
+}
+
+export function PanelToggle({ open, onToggle, label }) {
+  return (
+    <button
+      type="button"
+      className="hub-panel-toggle"
+      aria-expanded={open}
+      aria-label={`${label} ${open ? "접기" : "펼치기"}`}
+      title={open ? "접기" : "펼치기"}
+      onClick={onToggle}
+    >
+      <ChevronDown size={18} />
+    </button>
+  );
+}
 
 export function DateHeading({ title }) {
   const d = useDashboardData();
@@ -105,7 +147,6 @@ export function RoutineTasks({ compact = false }) {
       };
     })
     .filter((card) => card.scheduled || card.selectedChoice);
-  const subject = d.data.schoolSubjects[d.weekday.key]?.trim();
   const groups = [
     {
       id: "daily",
@@ -113,11 +154,6 @@ export function RoutineTasks({ compact = false }) {
       cards: presetCards(d.data.presets, "Daily", "daily"),
     },
     { id: "weekly", title: "Weekly", cards: weeklyCards },
-    {
-      id: "edu",
-      title: subject ? `EDU · ${subject}` : "EDU",
-      cards: presetCards(d.data.schoolPresets, "Edu", "school"),
-    },
   ];
   return (
     <div className={`hub-task-groups ${compact ? "is-compact" : ""}`}>
