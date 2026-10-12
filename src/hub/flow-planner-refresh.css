@@ -426,3 +426,27 @@ html body #root .hub-app.hub-app.hub-desktop .flow-desk-day { min-height: 136px;
 /* Phone: drop the empty score row so each day is one compact line. */
 html body #root .hub-app.hub-app.hub-mobile .flow-desk-score.is-zero:not(.is-attempt):not(.is-penalty) { display: none; }
 html body #root .hub-app.hub-app.hub-mobile .flow-desk-events { padding-bottom: 0; }
+
+/* ---------- Planner per screen ---------- */
+/* Laptop: shorter month cells so the whole month sits closer to one screen. */
+html body #root .hub-app.hub-app.hub-desktop .planner-date-cell { min-height: 112px; }
+@container hub-content (min-width: 1500px) {
+  html body #root .hub-app.hub-app.hub-desktop .planner-date-cell { min-height: 132px; }
+}
+/* Phone month calendar: weekend colours, a filled selected day, accent dots. */
+html body #root .hub-app.hub-app.hub-mobile .mobile-calendar-card { border: 1px solid var(--fp-line) !important; border-radius: 14px !important; background: #fff !important; box-shadow: var(--fp-shadow) !important; }
+html body #root .hub-app.hub-app.hub-mobile .mobile-calendar-heading strong { color: var(--fp-ink) !important; font-weight: 800 !important; }
+html body #root .hub-app.hub-app.hub-mobile .mobile-calendar-weekdays span { font-weight: 800 !important; color: var(--fp-muted) !important; }
+html body #root .hub-app.hub-app.hub-mobile .mobile-calendar-weekdays span:first-child,
+html body #root .hub-app.hub-app.hub-mobile .mobile-calendar-grid > :nth-child(7n + 1) b { color: var(--fp-sun) !important; }
+html body #root .hub-app.hub-app.hub-mobile .mobile-calendar-weekdays span:last-child,
+html body #root .hub-app.hub-app.hub-mobile .mobile-calendar-grid > :nth-child(7n) b { color: var(--fp-sat) !important; }
+html body #root .hub-app.hub-app.hub-mobile .mobile-calendar-grid button { border: 0 !important; background: transparent !important; box-shadow: none !important; }
+html body #root .hub-app.hub-app.hub-mobile .mobile-calendar-grid button b { display: inline-grid; place-items: center; min-width: 34px; height: 34px; border-radius: 999px; font-weight: 700; color: var(--fp-ink); }
+html body #root .hub-app.hub-app.hub-mobile .mobile-calendar-grid button.selected b { background: var(--fp-accent); color: #fff !important; }
+html body #root .hub-app.hub-app.hub-mobile .mobile-calendar-grid button.has-entry i { background: var(--fp-accent) !important; }
+html body #root .hub-app.hub-app.hub-mobile .mobile-calendar-editor-heading strong { color: var(--fp-ink) !important; font-weight: 800 !important; }
+html body #root .hub-app.hub-app.hub-mobile .mobile-duty-buttons button { border: 1px solid var(--fp-line) !important; border-radius: 999px !important; background: #fff !important; color: var(--fp-ink-2) !important; font-weight: 700 !important; box-shadow: none !important; }
+html body #root .hub-app.hub-app.hub-mobile .mobile-duty-buttons button span { display: none !important; }
+html body #root .hub-app.hub-app.hub-mobile .mobile-duty-buttons button.active { border-color: transparent !important; background: #fff3dc !important; color: #946312 !important; }
+html body #root .hub-app.hub-app.hub-mobile .mobile-calendar-editor .calendar-entry { padding: 6px 10px; border: 0; border-left: 3px solid #9db5d8; border-radius: 8px; background: var(--fp-accent-soft); margin-bottom: 6px; }
