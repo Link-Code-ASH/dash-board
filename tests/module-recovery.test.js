@@ -27,3 +27,32 @@ test("fresh navigation retains deployment path and selected module while bypassi
     assert.notEqual(fresh.href, current);
   }
 });
+
+test("automatic recovery runs at most once a minute and never throws on blocked storage", async () => {
+  const { claimAutomaticRecovery } = await import("../src/hub/moduleRecovery.js");
+  const values = new Map();
+  const storage = { getItem: (key) => values.get(key) ?? null, setItem: (key, value) => values.set(key, value) };
+  assert.equal(claimAutomaticRecovery(() => storage, 1_000_000), true);
+  assert.equal(claimAutomaticRecovery(() => storage, 1_030_000), false);
+  assert.equal(claimAutomaticRecovery(() => storage, 1_061_000), true);
+  assert.equal(claimAutomaticRecovery(() => { throw new Error("blocked"); }), false);
+});
+
+test("a waiting release is told to take over and recovery waits for the new controller", async () => {
+  const { activateLatestRelease } = await import("../src/hub/moduleRecovery.js");
+  const messages = [];
+  const handlers = {};
+  const waiting = { state: "installed", postMessage: (message) => { messages.push(message); handlers.controllerchange(); }, addEventListener() {} };
+  const serviceWorker = {
+    getRegistration: async () => ({ update: async () => {}, waiting }),
+    addEventListener: (name, fn) => { handlers[name] = fn; },
+  };
+  assert.equal(await activateLatestRelease(serviceWorker), true);
+  assert.deepEqual(messages, [{ type: "HUB_ACTIVATE_RELEASE" }]);
+
+  const idle = { getRegistration: async () => ({ update: async () => { throw new Error("offline"); } }), addEventListener() {} };
+  assert.equal(await activateLatestRelease(idle), false);
+  assert.equal(await activateLatestRelease(undefined), false);
+  const stuck = { getRegistration: async () => ({ update: async () => {}, waiting: { state: "installed", postMessage() {}, addEventListener() {} } }), addEventListener() {} };
+  assert.equal(await activateLatestRelease(stuck, 10), false);
+});

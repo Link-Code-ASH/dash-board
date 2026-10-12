@@ -45,6 +45,15 @@ self.addEventListener("activate", (event) => {
   })());
 });
 
+// Only the page's module-load recovery asks for this: the old release's lazy
+// files are already gone from the server, so waiting for every window to close
+// would keep reopening a broken app.
+self.addEventListener("message", (event) => {
+  if (typeof BUILD === "string" || event.data?.type !== "HUB_ACTIVATE_RELEASE") return;
+  if (new URL(event.origin || ROOT.origin).origin !== ROOT.origin) return;
+  event.waitUntil?.(self.skipWaiting());
+});
+
 self.addEventListener("fetch", (event) => {
   const request = event.request;
   const url = new URL(request.url);
