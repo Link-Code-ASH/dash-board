@@ -341,3 +341,63 @@ html body #root .hub-app.hub-app.hub-mobile .flow-desk-grid > .flow-desk-day:nth
 html body #root .hub-app.hub-app.hub-mobile .flow-desk-grid > .flow-desk-day:nth-child(7) header small { color: var(--fp-sat); }
 html body #root .hub-app.hub-app.hub-mobile .flow-desk-day:has(.flow-desk-empty) .flow-desk-events::before { content: "—"; color: #c3cad4; }
 html body #root .hub-app.hub-app.hub-desktop .planner-date-cell.is-today .planner-date-number { width: 28px; min-height: 28px; height: 28px; padding: 0; }
+
+/* ---------- v2 polish (same layout, clearer hierarchy) ---------- */
+/* Page heading: the date leads, the module name sits above it. */
+html body #root .hub-app.hub-app :is(.flow-view, .routine-view) .hub-page-heading { margin-bottom: 20px; align-items: flex-end; }
+html body #root .hub-app.hub-app :is(.flow-view, .routine-view) .hub-page-heading > div:first-child { display: flex; flex-direction: column; }
+html body #root .hub-app.hub-app :is(.flow-view, .routine-view) .hub-page-heading h1 { font-size: 12px !important; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--fp-accent); line-height: 1.4; }
+html body #root .hub-app.hub-app :is(.flow-view, .routine-view) .hub-page-heading p { margin: 2px 0 0; font-size: 28px; font-weight: 800; letter-spacing: -.02em; line-height: 1.2; color: var(--fp-ink); }
+html body #root .hub-app.hub-app :is(.flow-view, .routine-view) .hub-date-controls { border-color: var(--fp-line); border-radius: 10px; background: #fff; }
+html body #root .hub-app.hub-app :is(.flow-view, .routine-view) .hub-date-controls button:last-child { background: var(--fp-ink); color: #fff; border-radius: 7px; }
+html body #root .hub-app.hub-app.hub-mobile :is(.flow-view, .routine-view) .hub-page-heading p { font-size: 24px; }
+
+/* Schedule: time sits inline, and empty score rows step back. */
+html body #root .hub-app.hub-app .flow-desk-time { display: inline; margin: 0 5px 0 0; }
+html body #root .hub-app.hub-app .flow-desk-event-title { display: inline; }
+html body #root .hub-app.hub-app .flow-desk-score.is-zero:not(.is-attempt):not(.is-penalty) { opacity: .35; }
+html body #root .hub-app.hub-app .flow-desk-day:hover .flow-desk-score { opacity: 1; }
+
+/* Score block reads like a summary card. */
+html body #root .hub-app.hub-app .flow-score { padding: 14px 16px; margin-bottom: 14px; border: 1px solid var(--fp-line-soft); border-radius: 12px; background: #fafbfc; }
+html body #root .hub-app.hub-app .flow-score-value { font-size: 40px; line-height: 44px; letter-spacing: -.03em; }
+html body #root .hub-app.hub-app .flow-score-check {
+  min-height: 30px;
+  padding: 0 12px;
+  border: 1px solid var(--fp-line);
+  border-radius: 999px;
+  background: #fff;
+  font-weight: 700;
+}
+html body #root .hub-app.hub-app .flow-score-check input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+html body #root .hub-app.hub-app .flow-score-check:focus-within { outline: 2px solid var(--fp-accent); outline-offset: 1px; }
+html body #root .hub-app.hub-app .flow-score-check.is-attempt.is-checked { border-color: var(--fp-plus); background: var(--fp-plus-soft); color: var(--fp-plus); }
+html body #root .hub-app.hub-app .flow-score-check.is-penalty.is-checked { border-color: var(--fp-minus); background: var(--fp-minus-soft); color: var(--fp-minus); }
+html body #root .hub-app.hub-app .flow-score-check.is-checked span::before { content: "✓ "; }
+html body #root .hub-app.hub-app .flow-score-check span { display: inline !important; }
+
+/* Routine rows: Y/N as one segmented control. */
+html body #root .hub-app.hub-app .flow-routines .hub-task-actions { gap: 0; padding: 2px; border-radius: 9px; background: #f1f3f6; }
+html body #root .hub-app.hub-app .flow-routines .hub-task-actions button { height: 26px; border: 0; background: transparent; }
+html body #root .hub-app.hub-app .flow-routines .hub-task-actions button:hover { border: 0; }
+html body #root .hub-app.hub-app .flow-routines .hub-task.selected-negative .hub-task-copy strong { text-decoration: line-through; text-decoration-thickness: 1px; }
+html body #root .hub-app.hub-app .flow-routines .hub-task.selected-positive .hub-task-copy strong,
+html body #root .hub-app.hub-app .flow-routines .hub-task.selected-negative .hub-task-copy strong { font-weight: 600; }
+html body #root .hub-app.hub-app .flow-routines .hub-task-group h3 { background: transparent; padding: 4px 2px 8px; border-bottom: 2px solid var(--task-accent); border-radius: 0; color: var(--fp-ink); font-size: 14px; }
+html body #root .hub-app.hub-app .flow-routines .hub-task-group h3 span { color: var(--fp-muted); font-weight: 700; }
+
+/* Date markers: nearest D-day pops. */
+html body #root .hub-app.hub-app .flow-markers .date-marker:first-child .date-marker-dday:not(.empty) { background: var(--fp-minus-soft) !important; color: var(--fp-minus) !important; }
+html body #root .hub-app.hub-app .flow-markers .date-marker-dday { font-size: 13px !important; }
+
+/* Memo tabs: dark active pill. */
+html body #root .hub-app.hub-app .flow-view .hub-memo-tabs button { min-width: 34px; height: 30px; border: 0; border-radius: 8px; background: #f1f3f6; color: var(--fp-ink-2); font-weight: 700; box-shadow: none; }
+html body #root .hub-app.hub-app .flow-view .hub-memo-tabs button[aria-pressed="true"] { background: var(--fp-ink); color: #fff; }
+html body #root .hub-app.hub-app .flow-view .hub-memo-cell { border-top-width: 1px; }
+html body #root .hub-app.hub-app .flow-view .hub-memo-cell::before { content: ""; position: absolute; left: 14px; top: -1px; width: 28px; height: 3px; border-radius: 0 0 3px 3px; background: var(--memo-accent); }
+html body #root .hub-app.hub-app .flow-view .hub-memo-cell .memo-quick-textarea { background: #f6f7f9 !important; border-color: transparent !important; }
+
+/* Planner: segmented Routine/Calendar switch. */
+html body #root .hub-app.hub-app .routine-view .hub-segments { padding: 3px; border-radius: 10px; background: #eceff3; gap: 2px; }
+html body #root .hub-app.hub-app .routine-view .hub-segments button { border: 0; border-radius: 8px; background: transparent; box-shadow: none; color: var(--fp-ink-2); font-weight: 700; }
+html body #root .hub-app.hub-app .routine-view .hub-segments button[aria-current="page"] { background: #fff; color: var(--fp-ink); box-shadow: 0 1px 2px #1d25331a; }
