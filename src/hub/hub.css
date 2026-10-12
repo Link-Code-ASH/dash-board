@@ -2187,3 +2187,22 @@ html body #root .hub-app .hub-recovery-row > div {
   display: flex;
   gap: 6px;
 }
+/* The hub reuses legacy mobile styles via .effective-display-mobile, whose
+   100dvh + overflow:hidden lock (responsive.css) left no scroll container.
+   Let the page scroll; the fixed bottom nav keeps its reserved space. */
+html:has(.hub-app.hub-mobile),
+body:has(.hub-app.hub-mobile),
+body:has(.hub-app.hub-mobile) #root {
+  height: auto !important;
+  min-height: 100% !important;
+  overflow: visible !important;
+}
+#root .hub-app.hub-mobile.effective-display-mobile {
+  height: auto !important;
+  min-height: 100dvh !important;
+  overflow: visible !important;
+  padding-bottom: calc(72px + env(safe-area-inset-bottom)) !important;
+}
+#root .hub-app.hub-mobile.hub-standalone.effective-display-mobile {
+  padding-bottom: 6px !important;
+}
