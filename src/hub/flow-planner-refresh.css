@@ -401,3 +401,28 @@ html body #root .hub-app.hub-app .flow-view .hub-memo-cell .memo-quick-textarea 
 html body #root .hub-app.hub-app .routine-view .hub-segments { padding: 3px; border-radius: 10px; background: #eceff3; gap: 2px; }
 html body #root .hub-app.hub-app .routine-view .hub-segments button { border: 0; border-radius: 8px; background: transparent; box-shadow: none; color: var(--fp-ink-2); font-weight: 700; }
 html body #root .hub-app.hub-app .routine-view .hub-segments button[aria-current="page"] { background: #fff; color: var(--fp-ink); box-shadow: 0 1px 2px #1d25331a; }
+
+/* ---------- Screen sizes ----------
+   Monitor (wide content area): Schedule gets most of the width with Date
+   Marker beside it; Today's Tasks and Memo share the row below.
+   Laptop: the stacked layout, with shorter day cells so tasks start sooner.
+   Phone: single column (hub-mobile rules). */
+html body #root .hub-app.hub-app.hub-desktop .flow-desk-day { min-height: 136px; }
+@container hub-content (min-width: 1500px) {
+  html body #root .hub-app.hub-app.hub-desktop .flow-layout {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-areas: "schedule schedule schedule markers" "tasks tasks memo memo";
+    align-items: start;
+    gap: 20px;
+  }
+  html body #root .hub-app.hub-app.hub-desktop :is(.flow-workspace, .flow-support) { display: contents; }
+  html body #root .hub-app.hub-app.hub-desktop .flow-schedule { grid-area: schedule; }
+  html body #root .hub-app.hub-app.hub-desktop .flow-markers { grid-area: markers; align-self: stretch; }
+  html body #root .hub-app.hub-app.hub-desktop .flow-routines { grid-area: tasks; }
+  html body #root .hub-app.hub-app.hub-desktop .flow-layout > .hub-memo-section { grid-area: memo; padding-left: 22px; border-left: 1px solid var(--fp-line); }
+  html body #root .hub-app.hub-app.hub-desktop .flow-view .hub-memo-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  html body #root .hub-app.hub-app.hub-desktop .flow-desk-day { min-height: 150px; }
+}
+/* Phone: drop the empty score row so each day is one compact line. */
+html body #root .hub-app.hub-app.hub-mobile .flow-desk-score.is-zero:not(.is-attempt):not(.is-penalty) { display: none; }
+html body #root .hub-app.hub-app.hub-mobile .flow-desk-events { padding-bottom: 0; }
