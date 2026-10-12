@@ -2,8 +2,7 @@ import React, { useLayoutEffect, useRef } from "react";
 import { Plus, Trash2, GripVertical, ChevronUp, ChevronDown, Repeat2, CalendarRange, GraduationCap } from "lucide-react";
 import { useDashboardData } from "./context.jsx";
 import ItemIconButton from "./ItemIconButton.jsx";
-import { WeeklyScheduleCell } from "../dashboard/components.jsx";
-import { weekDays, getWeekdayKey } from "../dashboard/model.js";
+import { weekDays, getWeekdayKey, getWeekSerial, getWeeklyPlanItems, encodeWeeklyPlanItems } from "../dashboard/model.js";
 
 function ScoreInput({ value, choice, label, onChange }) {
   return <label className={`routine-score-field is-${choice.toLowerCase()}`}>
@@ -86,28 +85,47 @@ function PresetEditor({ kind, heading, toggle }) {
   </div>;
 }
 
-function AutoSizeWeeklyCell({ value, ...props }) {
-  const root = useRef(null);
+// One weekday's plan. Several entries rotate week by week (the same rule
+// getWeeklyPlanEntry uses), so the entry that applies this week is marked.
+function WeeklyDay({ day, label, value, today, onChange, selectedDate }) {
+  const items = getWeeklyPlanItems(value);
+  const filled = items.map((item) => item.trim()).filter(Boolean);
+  const current = filled.length > 1 ? ((getWeekSerial(selectedDate) % filled.length) + filled.length) % filled.length : -1;
+  const refs = useRef([]);
   useLayoutEffect(() => {
-    const node = root.current;
-    if (!node) return;
-    const resize = () => {
-      for (const input of node.querySelectorAll(".weekly-input")) {
-        input.style.setProperty("height", "0px", "important");
-        input.style.setProperty("height", `${Math.max(32, input.scrollHeight)}px`, "important");
-      }
-    };
-    resize();
-    let width = node.getBoundingClientRect().width;
-    const observer = new ResizeObserver(([entry]) => {
-      if (entry.contentRect.width === width) return;
-      width = entry.contentRect.width;
-      resize();
-    });
-    observer.observe(node);
-    return () => observer.disconnect();
+    for (const node of refs.current) {
+      if (!node) continue;
+      node.style.height = "0px";
+      node.style.height = `${node.scrollHeight}px`;
+    }
   }, [value]);
-  return <div className="routine-weekly-cell" ref={root}><WeeklyScheduleCell value={value} {...props} /></div>;
+  const save = (next, focus = -1) => {
+    onChange(encodeWeeklyPlanItems(next));
+    if (focus >= 0) requestAnimationFrame(() => refs.current[focus]?.focus());
+  };
+  const update = (index, text) => save(items.map((item, i) => i === index ? text : item));
+  // Removing an extra entry folds its text into the one above, so nothing typed is lost.
+  const merge = (index) => {
+    const next = [...items];
+    const [removed] = next.splice(index, 1);
+    next[index - 1] = [next[index - 1], removed].filter(Boolean).join("\n");
+    save(next, index - 1);
+  };
+  let filledIndex = -1;
+  return <div className={`wk-day ${today ? "is-today" : ""} ${filled.length ? "" : "is-empty"}`} role="group" aria-label={`${label} ${day.full}`}>
+    <span className="wk-day-name">{day.label}{today && <em>오늘</em>}</span>
+    {items.map((item, index) => {
+      if (item.trim()) filledIndex += 1;
+      const isCurrent = item.trim() && filledIndex === current;
+      return <div className={`wk-entry ${isCurrent ? "is-current" : ""}`} key={index}>
+        {filled.length > 1 && item.trim() && <b className="wk-turn" title={isCurrent ? "이번 주에 나오는 항목" : "다른 주에 나오는 항목"}>{filledIndex + 1}</b>}
+        <textarea ref={(node) => { refs.current[index] = node; }} rows={1} maxLength={180} placeholder="+ 할 일" aria-label={`${label} ${day.full} ${index + 1}`}
+          value={item} onChange={(e) => update(index, e.target.value)} onKeyDown={(e) => e.stopPropagation()} />
+        {index > 0 && <button type="button" className="wk-entry-remove" aria-label="이 항목 합치기" title="위 항목과 합치기" onClick={() => merge(index)}>×</button>}
+      </div>;
+    })}
+    {filled.length > 0 && <button type="button" className="wk-rotate-add" title="주마다 번갈아 나올 항목 추가" onClick={() => save([...items, ""], items.length)}>+ 번갈아</button>}
+  </div>;
 }
 
 function WeeklyEditor({ heading, toggle }) {
@@ -115,31 +133,26 @@ function WeeklyEditor({ heading, toggle }) {
   const categories = d.data.categories;
   const root = useNewItemFocus(categories);
   const selectedWeekday = getWeekdayKey(d.selectedDate);
-  return <div className="routine-config-editor routine-weekly-editor" ref={root} aria-label="Weekly 편집">
+  return <div className="routine-config-editor routine-weekly-editor wk-editor" ref={root} aria-label="Weekly 편집">
     <div className="routine-editor-actions">{heading && <h2><CalendarRange size={18} />Weekly<small>{categories.length}</small></h2>}<span className="routine-editor-tools"><button className="routine-add-button" type="button" aria-label="Weekly 카테고리 추가" title="카테고리 추가" onClick={d.addCategory}><Plus size={17} /><span className="routine-add-label">카테고리 추가</span></button>{toggle}</span></div>
-    <div className="routine-weekly-scroll" tabIndex={0} aria-label="요일별 계획 표">
-      <div className="routine-weekly-grid">
-        <div className="routine-weekly-corner">카테고리</div>
-        {weekDays.map((day) => <div className={`routine-weekday ${selectedWeekday === day.key ? "is-selected" : ""}`} key={day.key}>{day.label}</div>)}
-        {categories.flatMap((category, index) => [
-          <div key={category.key} className="routine-category" data-item-key={category.key} {...dragProps(category.key, d.moveCategory)}>
-            <div className="routine-category-heading">
-              <ItemIconButton itemKey={`weekly:${category.key}`} label={category.label || "카테고리"} />
-              <input className="routine-name-input" aria-label={`카테고리 이름 ${index + 1}`} maxLength={24} value={category.label} onChange={(e) => d.updateCategory(category.key, "label", e.target.value)} />
-            </div>
-            <div className="routine-category-controls">
-              <OrderControl index={index} items={categories} onMove={d.moveCategory} label={category.label || "카테고리"} />
-              <ScoreInput choice="Y" label={category.label} value={category.yScore} onChange={(value) => d.updateCategory(category.key, "yScore", value)} />
-              <ScoreInput choice="N" label={category.label} value={category.nScore} onChange={(value) => d.updateCategory(category.key, "nScore", value)} />
-              <button type="button" className="routine-delete-button" disabled={categories.length <= 1} aria-label={`${category.label} 카테고리 삭제`} onClick={() => d.removeCategory(category.key)}><Trash2 size={17} /></button>
-            </div>
-          </div>,
-          ...weekDays.map((day) => <div className="routine-plan-cell" key={`${category.key}-${day.key}`} role="group" aria-label={`${category.label} ${day.full} 계획`}>
-            <AutoSizeWeeklyCell active={selectedWeekday === day.key} label={`${category.label} ${day.full} 계획`} placeholder="" value={d.data.weeklyPlan[category.key]?.[day.key] || ""}
-              onChange={(value) => d.updateWeeklyPlan(category.key, day.key, value)} />
-          </div>),
-        ])}
-      </div>
+    <p className="wk-guide">요일 칸에 할 일을 적으면 그 요일 <b>오늘 할 일</b>에 나와요. 했으면 <span className="is-y">Y 점수</span>, 못 했으면 <span className="is-n">N 점수</span>가 붙어요. 한 칸에 여러 개를 넣으면 주마다 번갈아 나와요.</p>
+    <div className="wk-list">
+      {categories.map((category, index) => <article className="wk-cat" key={category.key} data-item-key={category.key} {...dragProps(category.key, d.moveCategory)}>
+        <header className="wk-cat-head">
+          <ItemIconButton itemKey={`weekly:${category.key}`} label={category.label || "카테고리"} />
+          <input className="wk-cat-name" aria-label={`카테고리 이름 ${index + 1}`} placeholder="카테고리 이름" maxLength={24} value={category.label} onChange={(e) => d.updateCategory(category.key, "label", e.target.value)} />
+          <label className="wk-score is-y"><span>했으면</span><input aria-label={`${category.label} Y 점수`} inputMode="text" value={category.yScore} onChange={(e) => d.updateCategory(category.key, "yScore", e.target.value)} /></label>
+          <label className="wk-score is-n"><span>못 했으면</span><input aria-label={`${category.label} N 점수`} inputMode="numeric" value={category.nScore} onChange={(e) => d.updateCategory(category.key, "nScore", e.target.value)} /></label>
+          <span className="wk-cat-tools">
+            <OrderControl index={index} items={categories} onMove={d.moveCategory} label={category.label || "카테고리"} />
+            <button type="button" className="routine-delete-button" disabled={categories.length <= 1} aria-label={`${category.label} 카테고리 삭제`} onClick={() => d.removeCategory(category.key)}><Trash2 size={16} /></button>
+          </span>
+        </header>
+        <div className="wk-days">
+          {weekDays.map((day) => <WeeklyDay key={day.key} day={day} label={category.label} today={selectedWeekday === day.key} selectedDate={d.selectedDate}
+            value={d.data.weeklyPlan[category.key]?.[day.key] || ""} onChange={(value) => d.updateWeeklyPlan(category.key, day.key, value)} />)}
+        </div>
+      </article>)}
     </div>
   </div>;
 }
