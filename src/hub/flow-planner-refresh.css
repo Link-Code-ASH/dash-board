@@ -590,3 +590,20 @@ html body #root .hub-app.hub-app.hub-mobile .wk-cat-head .wk-cat-tools { grid-ar
 html body #root .hub-app.hub-app.hub-mobile .wk-cat-head .wk-score { grid-row: 2; justify-self: start; }
 html body #root .hub-app.hub-app.hub-mobile .wk-cat-head .wk-score.is-y { grid-column: 1 / 3; }
 html body #root .hub-app.hub-app.hub-mobile .wk-cat-head .wk-score.is-n { grid-column: 2 / 4; justify-self: end; }
+
+/* ---------- Flow schedule: score as a corner pill ----------
+   The day score moves from a footer row on every day to a small pill beside
+   the date, shown only when there is something to show (a score, a routine
+   attempt or a carry penalty). Empty days stay blank. */
+html body #root .hub-app.hub-app.hub-desktop .flow-desk-day { position: relative; min-height: 104px; padding-bottom: 8px; }
+html body #root .hub-app.hub-app.hub-desktop .flow-desk-empty { display: none; }
+html body #root .hub-app.hub-app.hub-desktop .flow-desk-score { position: absolute; top: 9px; right: 6px; min-height: 0; height: 22px; padding: 0 7px; gap: 3px; border: 0; border-radius: 999px; background: var(--fp-line-soft); opacity: 1; }
+html body #root .hub-app.hub-app.hub-desktop .flow-desk-score > svg { display: none; }
+html body #root .hub-app.hub-app.hub-desktop .flow-desk-score strong { font-size: 12px; font-weight: 800; line-height: 22px; }
+html body #root .hub-app.hub-app.hub-desktop .flow-desk-score.is-plus { background: var(--fp-plus-soft); }
+html body #root .hub-app.hub-app.hub-desktop .flow-desk-score.is-minus { background: var(--fp-minus-soft); }
+html body #root .hub-app.hub-app.hub-desktop .flow-desk-score .flow-desk-check { width: auto; height: auto; border: 0; background: transparent !important; }
+html body #root .hub-app.hub-app.hub-desktop .flow-desk-score:not(.is-attempt):not(.is-penalty) .flow-desk-check { display: none; }
+html body #root .hub-app.hub-app.hub-desktop .flow-desk-score.is-zero:not(.is-attempt):not(.is-penalty) { display: none; }
+html body #root .hub-app.hub-app.hub-desktop .flow-desk-score.is-zero strong { color: var(--fp-muted); }
+html body #root .hub-app.hub-app.hub-desktop .flow-desk-day header > button { justify-content: flex-start; padding-left: 4px; }
