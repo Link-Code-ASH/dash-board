@@ -610,7 +610,7 @@ html body #root .hub-app.hub-app.hub-desktop .flow-desk-day header > button { ju
 
 /* ---------- Today's Tasks ----------
    Score card: the total on the left, Plus/Minus on the right, and one quiet
-   footer line for 루틴 시도, Carry −2 and the carry stepper.
+   footer line for the green and red checks and the carry stepper.
    Groups: a thin progress bar under each heading.
    Tasks: Y/N as a two-part switch; a chosen row gets a coloured edge. */
 html body #root .hub-app.hub-app .flow-score { display: grid; gap: 12px; padding: 14px 16px 12px; }
@@ -697,3 +697,27 @@ html body #root .hub-app.hub-app.hub-mobile .flow-desk-score.is-plus { backgroun
 html body #root .hub-app.hub-app.hub-mobile .flow-desk-score.is-minus { background: var(--fp-minus-soft); }
 html body #root .hub-app.hub-app.hub-mobile .flow-desk-score .flow-desk-check { width: auto; height: auto; border: 0; background: transparent !important; }
 html body #root .hub-app.hub-app.hub-mobile .flow-desk-score:not(.is-attempt):not(.is-penalty) .flow-desk-check { display: none; }
+
+/* ---------- Green / red checks ----------
+   Score card: two square check buttons (green; red = −2), solid when on.
+   Schedule: the check is its own round mark, separate from the day score,
+   so a day can end in minus and still carry a green check. */
+html body #root .hub-app.hub-app .flow-score-foot .flow-score-check { position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 2px; width: auto; min-width: 36px; height: 36px; min-height: 36px; padding: 0 8px; border: 1.5px solid var(--fp-line); border-radius: 10px; background: #fff; color: #c3cad4; cursor: pointer; }
+html body #root .hub-app.hub-app .flow-score-foot .flow-score-check small { font-size: 12px; font-weight: 800; }
+html body #root .hub-app.hub-app .flow-score-foot .flow-score-check.is-attempt:hover { border-color: var(--fp-plus); color: var(--fp-plus); }
+html body #root .hub-app.hub-app .flow-score-foot .flow-score-check.is-penalty:hover { border-color: var(--fp-minus); color: var(--fp-minus); }
+html body #root .hub-app.hub-app .flow-score-foot .flow-score-check.is-attempt.is-checked { border-color: var(--fp-plus); background: var(--fp-plus); color: #fff; box-shadow: 0 2px 8px #2f8a5733; }
+html body #root .hub-app.hub-app .flow-score-foot .flow-score-check.is-penalty.is-checked { border-color: var(--fp-minus); background: var(--fp-minus); color: #fff; box-shadow: 0 2px 8px #c24a5733; }
+html body #root .hub-app.hub-app .flow-score-foot .flow-score-check span::before { content: none; }
+
+html body #root .hub-app.hub-app .flow-desk-score { display: inline-flex; align-items: center; gap: 4px; padding: 0 !important; background: transparent !important; }
+html body #root .hub-app.hub-app .flow-desk-mark { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 999px; color: #fff; }
+html body #root .hub-app.hub-app .flow-desk-mark.is-green { background: var(--fp-plus); box-shadow: 0 0 0 2px var(--fp-plus-soft); }
+html body #root .hub-app.hub-app .flow-desk-mark.is-red { background: var(--fp-minus); box-shadow: 0 0 0 2px var(--fp-minus-soft); }
+html body #root .hub-app.hub-app .flow-desk-score strong { display: inline-flex; align-items: center; height: 22px; padding: 0 7px; border-radius: 999px; background: var(--fp-line-soft); font-size: 12px; font-weight: 800; }
+html body #root .hub-app.hub-app .flow-desk-score.is-plus strong { background: var(--fp-plus-soft); color: var(--fp-plus); }
+html body #root .hub-app.hub-app .flow-desk-score.is-minus strong { background: var(--fp-minus-soft); color: var(--fp-minus); }
+html body #root .hub-app.hub-app .flow-desk-time { margin: 0 0 0 5px; }
+html body #root .hub-app.hub-app .flow-score-foot .flow-score-check { min-width: 40px; height: 40px; min-height: 40px; }
+html body #root .hub-app.hub-app .flow-score-foot .flow-score-check.is-attempt:not(.is-checked) { border-color: #b9dcc7; background: var(--fp-plus-soft); color: #7fb796; }
+html body #root .hub-app.hub-app .flow-score-foot .flow-score-check.is-penalty:not(.is-checked) { border-color: #edc3c8; background: var(--fp-minus-soft); color: #d58f98; }

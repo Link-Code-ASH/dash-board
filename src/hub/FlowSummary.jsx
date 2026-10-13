@@ -1,5 +1,5 @@
 import React from "react";
-import { Minus, Plus, RotateCcw } from "lucide-react";
+import { Check, Minus, Plus, RotateCcw } from "lucide-react";
 import { useDashboardData } from "./context.jsx";
 import { formatScore } from "../dashboard/model.js";
 import "./flow-summary.css";
@@ -30,13 +30,14 @@ export function FlowScore() {
         </dl>
       </div>
       <div className="flow-score-foot">
-        <label className={`flow-score-check is-attempt ${d.routineTried ? "is-checked" : ""}`}>
-          <input type="checkbox" checked={d.routineTried} onChange={d.toggleRoutineAttempt} aria-label="선택 날짜 루틴 시도" />
-          <span>루틴 시도</span>
+        <label className={`flow-score-check is-attempt ${d.routineTried ? "is-checked" : ""}`} title="초록 체크">
+          <input type="checkbox" checked={d.routineTried} onChange={d.toggleRoutineAttempt} aria-label="선택 날짜 초록 체크" />
+          <Check size={18} strokeWidth={3} aria-hidden="true" />
         </label>
-        <label className={`flow-score-check is-penalty ${d.carryPenaltyMarked ? "is-checked" : ""}`}>
-          <input type="checkbox" checked={d.carryPenaltyMarked} onChange={d.toggleCarryPenalty} aria-label="선택 날짜 Carry -2 적용" />
-          <span>Carry −2</span>
+        <label className={`flow-score-check is-penalty ${d.carryPenaltyMarked ? "is-checked" : ""}`} title="빨간 체크 (−2)">
+          <input type="checkbox" checked={d.carryPenaltyMarked} onChange={d.toggleCarryPenalty} aria-label="선택 날짜 빨간 체크, −2점" />
+          <Check size={18} strokeWidth={3} aria-hidden="true" />
+          <small>−2</small>
         </label>
         <div className="flow-score-carry">
           <span>Carry</span>

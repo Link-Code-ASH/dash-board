@@ -1,5 +1,5 @@
 import React, { useLayoutEffect, useRef, useState } from "react";
-import { CalendarRange, Check, ChevronLeft, ChevronRight, Clock3, ExternalLink, FlagTriangleRight, GraduationCap, Moon, Pencil, RotateCcw, School, Users } from "lucide-react";
+import { CalendarRange, Check, ChevronLeft, ChevronRight, Clock3, ExternalLink, GraduationCap, Moon, Pencil, RotateCcw, School, Users } from "lucide-react";
 import { addDays, calendarDutyOptions, formatScore, getWeekStart, weekDays } from "../dashboard/model.js";
 import { readCalendarEntries, sortCalendarItems } from "../dashboard/calendarEntries.js";
 import { CalendarText } from "./CalendarNoteEditor.jsx";
@@ -63,7 +63,6 @@ export default function FlowSchedule({ route, navigate }) {
       <div className="flow-desk-range">
         <CalendarRange size={18} aria-hidden="true" />
         <time dateTime={week}>{longDate(week)} – {longDate(addDays(week, 13), week.slice(5, 7) !== addDays(week, 13).slice(5, 7))}</time>
-        <span className={`flow-desk-range-tag${offset === 0 ? " is-current" : ""}`}>{weekName(offset)} + {weekName(offset + 1)}</span>
       </div>
       <div>
       {offset !== 0 && <button type="button" className="flow-desk-back" title="이번 주로" onClick={() => navigate("flow", "today", actualToday, { week: currentWeek })}><RotateCcw size={14} /><span>이번 주</span></button>}
@@ -86,9 +85,9 @@ export default function FlowSchedule({ route, navigate }) {
             <div className="flow-desk-events">
               {!!duties.length && <div className="flow-desk-duties">{duties.map((option) => { const Icon = dutyIcons[option.key]; return <span key={option.key} data-duty={option.key}>{Icon && <Icon size={12} aria-hidden="true" />}{option.label}</span>; })}</div>}
               {items.map((item) => <div className="flow-desk-event" data-source={item.source?.id || "calendar"} key={`${item.source?.id || "calendar"}:${item.id}`}>
-                {item.time && <time className="flow-desk-time"><Clock3 size={11} aria-hidden="true" />{item.time}</time>}
                 {item.source?.id === "edu" && <GraduationCap className="flow-desk-source-icon" size={13} aria-label="Edu" />}
                 <div className="flow-desk-event-title">{item.source ? item.displayTitle || item.title : <CalendarText text={item.text} marks={item.marks} />}</div>
+                {item.time && <time className="flow-desk-time"><Clock3 size={11} aria-hidden="true" />{item.time}</time>}
                 {item.source && <div className="flow-desk-event-source"><span>{item.sourceLabel || item.source?.id}</span>{item.periodStatus && <em>{item.periodStatus}</em>}
                   {item.source && <button type="button" title="원본 일정 열기" aria-label={`${item.displayTitle || item.title} 원본 열기`} onClick={(event) => open(event, item)}><ExternalLink size={12} /></button>}
                   {item.source?.execute && item.commands?.map((command) => <button type="button" key={command.id} title={command.label} aria-label={`${item.title} ${command.label}`} onClick={(event) => perform(event, () => item.source.execute(item.id, command.id, command.payload))}><Check size={12} /></button>)}
@@ -97,8 +96,9 @@ export default function FlowSchedule({ route, navigate }) {
               {!items.length && !duties.length && !saved.unsupported && <span className="flow-desk-empty">일정 없음</span>}
               {(saved.unsupported || saved.mismatch || saved.recovery.length > 0) && <span className="flow-desk-warning">원본 확인 필요 · Calendar</span>}
             </div>
-            <footer className={`flow-desk-score${penalty ? " is-penalty" : tried ? " is-attempt" : ""}${score > 0 ? " is-plus" : score < 0 ? " is-minus" : " is-zero"}`} aria-label={`${date} 점수 ${formatScore(score)}, ${penalty ? "Carry -2" : tried ? "루틴 시도" : "미체크"}`}>
-              <span className="flow-desk-check" aria-hidden="true">{(tried || penalty) && <Check size={12} />}</span><strong>{formatScore(score)}</strong><FlagTriangleRight size={17} aria-hidden="true" />
+            <footer className={`flow-desk-score${penalty ? " is-penalty" : tried ? " is-attempt" : ""}${score > 0 ? " is-plus" : score < 0 ? " is-minus" : " is-zero"}`} aria-label={`${date} 점수 ${formatScore(score)}, ${penalty ? "빨간 체크" : tried ? "초록 체크" : "체크 없음"}`}>
+              {(tried || penalty) && <span className={`flow-desk-mark ${penalty ? "is-red" : "is-green"}`} aria-hidden="true"><Check size={13} strokeWidth={3.2} /></span>}
+              {score !== 0 && <strong>{formatScore(score)}</strong>}
             </footer>
           </article>;
         })}</div>
