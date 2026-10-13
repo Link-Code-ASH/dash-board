@@ -607,3 +607,50 @@ html body #root .hub-app.hub-app.hub-desktop .flow-desk-score:not(.is-attempt):n
 html body #root .hub-app.hub-app.hub-desktop .flow-desk-score.is-zero:not(.is-attempt):not(.is-penalty) { display: none; }
 html body #root .hub-app.hub-app.hub-desktop .flow-desk-score.is-zero strong { color: var(--fp-muted); }
 html body #root .hub-app.hub-app.hub-desktop .flow-desk-day header > button { justify-content: flex-start; padding-left: 4px; }
+
+/* ---------- Today's Tasks ----------
+   Score card: the total on the left, Plus/Minus on the right, and one quiet
+   footer line for 루틴 시도, Carry −2 and the carry stepper.
+   Groups: a thin progress bar under each heading.
+   Tasks: Y/N as a two-part switch; a chosen row gets a coloured edge. */
+html body #root .hub-app.hub-app .flow-score { display: grid; gap: 12px; padding: 14px 16px 12px; }
+html body #root .hub-app.hub-app .flow-score-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; }
+html body #root .hub-app.hub-app .flow-score-total { flex-direction: column; align-items: flex-start; gap: 0; }
+html body #root .hub-app.hub-app .flow-score-total h2 { font-size: 12px !important; font-weight: 700; letter-spacing: .02em; color: var(--fp-muted) !important; }
+html body #root .hub-app.hub-app .flow-score-value { font-size: 40px; line-height: 44px; }
+html body #root .hub-app.hub-app .flow-score-split { display: flex; gap: 6px; margin: 0 0 4px; }
+html body #root .hub-app.hub-app .flow-score-split > div { display: grid; justify-items: center; min-width: 58px; padding: 5px 10px; border-radius: 10px; background: #fff; border: 1px solid var(--fp-line-soft); }
+html body #root .hub-app.hub-app .flow-score-split dt { color: var(--fp-muted); font-size: 11px; font-weight: 700; line-height: 16px; }
+html body #root .hub-app.hub-app .flow-score-split dd { margin: 0; font-size: 17px; font-weight: 800; line-height: 22px; font-variant-numeric: tabular-nums; }
+html body #root .hub-app.hub-app .flow-score-foot { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; padding-top: 10px; border-top: 1px dashed var(--fp-line); }
+html body #root .hub-app.hub-app .flow-score-foot .flow-score-check { min-height: 28px; height: 28px; padding: 0 10px; font-size: 12px; font-weight: 700; }
+html body #root .hub-app.hub-app .flow-score-carry { display: inline-flex; align-items: center; gap: 6px; margin-left: auto; color: var(--fp-muted); font-size: 12px; font-weight: 700; }
+html body #root .hub-app.hub-app .flow-score-carry strong { color: var(--fp-ink); font-size: 14px; font-weight: 800; font-variant-numeric: tabular-nums; }
+html body #root .hub-app.hub-app .flow-score-carry-tools { gap: 0; margin-left: 2px; padding: 1px; border: 1px solid var(--fp-line); border-radius: 8px; background: #fff; }
+html body #root .hub-app.hub-app .flow-score-carry-tools button { width: 24px; min-width: 24px; height: 24px; min-height: 24px; border: 0; border-radius: 6px; background: transparent; box-shadow: none; color: var(--fp-ink-2); }
+html body #root .hub-app.hub-app .flow-score-carry-tools button:hover { background: var(--fp-accent-soft); color: var(--fp-accent); }
+html body #root .hub-app.hub-app.hub-mobile .flow-score-carry-tools button { width: 36px; min-width: 36px; height: 32px; min-height: 32px; }
+@container hub-content (max-width: 750px) {
+  html body #root .hub-app.hub-app .flow-score-foot .flow-score-check span { display: inline !important; }
+}
+
+html body #root .hub-app.hub-app .flow-routines .hub-task-group h3 { position: relative; border-bottom: 0; padding-bottom: 10px; }
+html body #root .hub-app.hub-app .flow-routines .hub-task-group h3::after { content: ""; position: absolute; left: 2px; right: 2px; bottom: 2px; height: 4px; border-radius: 999px; background: linear-gradient(90deg, var(--fp-plus) var(--done, 0%), var(--fp-line-soft) var(--done, 0%)); }
+html body #root .hub-app.hub-app .flow-routines .hub-task-groups .hub-task { position: relative; min-height: 44px; padding: 4px 4px 4px 8px; border: 0 !important; border-radius: 10px; transition: background 120ms ease; }
+html body #root .hub-app.hub-app .flow-routines .hub-task + .hub-task { margin-top: 2px; }
+html body #root .hub-app.hub-app .flow-routines .hub-task:hover { background: #f7f9fb; }
+html body #root .hub-app.hub-app .flow-routines .hub-task.selected-positive { background: var(--fp-plus-soft); box-shadow: inset 3px 0 var(--fp-plus); }
+html body #root .hub-app.hub-app .flow-routines .hub-task.selected-negative { background: var(--fp-minus-soft); box-shadow: inset 3px 0 var(--fp-minus); }
+html body #root .hub-app.hub-app .flow-routines .hub-task.selected-negative .hub-task-copy strong { text-decoration: none; }
+html body #root .hub-app.hub-app .flow-routines .hub-task-actions { gap: 2px; padding: 2px; border: 1px solid var(--fp-line); border-radius: 10px; background: #fff; }
+html body #root .hub-app.hub-app .flow-routines .hub-task-actions button { display: inline-flex; align-items: center; justify-content: center; gap: 4px; min-width: 52px; height: 30px; min-height: 30px; padding: 0 8px; border-radius: 8px; font-size: 13px; font-weight: 800; color: var(--fp-muted); }
+html body #root .hub-app.hub-app .flow-routines .hub-task-actions button small { font-size: 12px; font-weight: 700; opacity: 1; }
+html body #root .hub-app.hub-app .flow-routines .hub-task-actions .yes { color: var(--fp-plus); }
+html body #root .hub-app.hub-app .flow-routines .hub-task-actions .no { color: var(--fp-minus); }
+html body #root .hub-app.hub-app .flow-routines .hub-task-actions .yes:hover { background: var(--fp-plus-soft); }
+html body #root .hub-app.hub-app .flow-routines .hub-task-actions .no:hover { background: var(--fp-minus-soft); }
+html body #root .hub-app.hub-app .flow-routines .hub-task-actions .yes[aria-pressed="true"] { background: var(--fp-plus); color: #fff; }
+html body #root .hub-app.hub-app .flow-routines .hub-task-actions .no[aria-pressed="true"] { background: var(--fp-minus); color: #fff; }
+html body #root .hub-app.hub-app .flow-routines .hub-task:is(.selected-positive, .selected-negative) .hub-task-actions button:not([aria-pressed="true"]) { opacity: .45; }
+html body #root .hub-app.hub-app .flow-routines .hub-score-select { height: 30px; min-height: 30px; border: 0; border-radius: 8px; font-weight: 800; color: var(--fp-plus); background: transparent; }
+html body #root .hub-app.hub-app .flow-routines .hub-score-select.is-selected { background: var(--fp-plus); color: #fff; }

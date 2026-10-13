@@ -160,7 +160,11 @@ export function RoutineTasks({ compact = false }) {
       {!groups.some((group) => group.cards.length) && <p className="hub-empty-inline">Planner에서 루틴을 추가해주세요.</p>}
       {groups.filter((group) => group.cards.length).map((group) => (
         <section className="hub-task-group" data-kind={group.id} key={group.id}>
-          <h3>
+          <h3
+            style={{
+              "--done": `${(group.cards.filter((card) => card.selectedChoice).length / group.cards.length) * 100}%`,
+            }}
+          >
             {group.title}
             <span>
               {group.cards.filter((card) => card.selectedChoice).length}/
