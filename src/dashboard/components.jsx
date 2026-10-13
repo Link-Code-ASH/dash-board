@@ -1,5 +1,5 @@
 import CalendarNoteEditor from "../hub/CalendarNoteEditor.jsx";
-import CalendarEventEditor from "../hub/CalendarEventEditor.jsx";
+import CalendarEventEditor, { TimePicker } from "../hub/CalendarEventEditor.jsx";
 import React, { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import MemoEditor, { MemoFormatToolbar } from "../MemoEditor.jsx";
@@ -202,7 +202,6 @@ export function MobileCalendarPanel({ calendar, calendarFormats, calendarEntries
     const next = new Date(year, monthIndex + offset, 1);
     setSelectedDate(toDateKey(next));
   };
-  const selectedDuties = calendarDuties?.[selectedDate] || {};
   return h(
     "section",
     { className: "mobile-glass-card mobile-calendar-card", "aria-label": "Mobile calendar" },
@@ -233,16 +232,6 @@ export function MobileCalendarPanel({ calendar, calendarFormats, calendarEntries
       "div",
       { className: "mobile-calendar-editor" },
       h("div", { className: "mobile-calendar-editor-heading" }, h("strong", null, formatDayLabel(selectedDate)), h("span", null, "일정 편집")),
-      h(
-        "div",
-        { className: "mobile-duty-buttons" },
-        calendarDutyOptions.map((option) => h(
-          "button",
-          { className: selectedDuties[option.key] ? "active" : "", type: "button", key: option.key, "aria-pressed": String(Boolean(selectedDuties[option.key])), onClick: () => toggleCalendarDuty(selectedDate, option.key) },
-          h("span", { "aria-hidden": "true" }, selectedDuties[option.key] ? "✓" : ""),
-          option.label,
-        )),
-      ),
       updateCalendarEntries
         ? h(CalendarEventEditor, { key: selectedDate, data: { calendar, calendarFormats, calendarEntries }, date: selectedDate, onChange: updateCalendarEntries })
         : h(CalendarNoteEditor, { key: selectedDate, label: "선택 날짜 일정", value: calendar[selectedDate] || "", marks: calendarFormats?.[selectedDate], onChange: (value, marks) => updateCalendarNote(selectedDate, value, marks) }),
@@ -1064,6 +1053,7 @@ export function DateMarkerPanel({ dateMarkers, selectedDate, updateDateMarker })
             onClick: (event) => event.currentTarget.showPicker?.(),
             onChange: (event) => updateDateMarker(index, "date", event.target.value),
           }),
+          h(TimePicker, { label: `Marker ${index + 1}`, value: marker.time, onChange: (time) => updateDateMarker(index, "time", time) }),
           h("span", { className: `date-marker-dday ${marker.date ? "" : "empty"}` }, formatDDay(marker.date, selectedDate)),
         ),
       ),

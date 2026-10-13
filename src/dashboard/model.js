@@ -179,6 +179,7 @@ export function normalizeDateMarkers(markers) {
   return Array.from({ length: 8 }, (_, index) => ({
     text: markers?.[index]?.text || "",
     date: markers?.[index]?.date || "",
+    time: /^([01]\d|2[0-3]):[0-5]\d$/.test(markers?.[index]?.time || "") ? markers[index].time : "",
   }));
 }
 

@@ -9,7 +9,7 @@ const tenMinutes = ["00", "10", "20", "30", "40", "50"];
 
 // Hour and minute pickers in 10-minute steps. A saved time that is not on a
 // 10-minute mark (from before) stays selectable so it is shown as it is.
-function TimePicker({ label, value, onChange }) {
+export function TimePicker({ label, value, onChange }) {
   const [hour, minute] = value ? value.split(":") : ["", ""];
   const minutes = minute && !tenMinutes.includes(minute) ? [...tenMinutes, minute].sort() : tenMinutes;
   return <span className="calendar-time-picker">

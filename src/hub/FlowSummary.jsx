@@ -37,7 +37,6 @@ export function FlowScore() {
         <label className={`flow-score-check is-penalty ${d.carryPenaltyMarked ? "is-checked" : ""}`} title="빨간 체크 (−2)">
           <input type="checkbox" checked={d.carryPenaltyMarked} onChange={d.toggleCarryPenalty} aria-label="선택 날짜 빨간 체크, −2점" />
           <Check size={18} strokeWidth={3} aria-hidden="true" />
-          <small>−2</small>
         </label>
         <div className="flow-score-carry">
           <span>Carry</span>

@@ -150,6 +150,7 @@ function DateMarkers() {
           {filled.map((marker, index) => (
             <li key={index}>
               <span>{marker.text || "Marker"}</span>
+              {marker.time && <small>{marker.time}</small>}
               {marker.date && <b>{formatDDay(marker.date, d.selectedDate)}</b>}
             </li>
           ))}

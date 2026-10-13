@@ -2,7 +2,7 @@ import CalendarEventEditor from "../CalendarEventEditor.jsx";
 import React from "react";
 import { ChevronLeft, ChevronRight, RotateCcw } from "lucide-react";
 import { MobileCalendarPanel } from "../../dashboard/components.jsx";
-import { calendarDutyOptions, weekDays } from "../../dashboard/model.js";
+import { weekDays } from "../../dashboard/model.js";
 import { useDashboardData } from "../context.jsx";
 import { monthCells, shiftMonth } from "../calendarMonth.js";
 import { todayKey } from "../routing.js";
@@ -68,14 +68,6 @@ function DesktopCalendar({ calendar, calendarFormats, calendarEntries, calendarD
                 {Number(date.slice(8))}
                 {date === today && <span className="planner-today-dot" aria-label="오늘" />}
               </button>
-              <div className="planner-duty-checks">
-                {calendarDutyOptions.map((option) => (
-                  <label key={option.key} className={calendarDuties[date]?.[option.key] ? "is-checked" : ""}>
-                    <input type="checkbox" aria-label={`${date} ${option.label}`} checked={!!calendarDuties[date]?.[option.key]} onChange={() => toggleCalendarDuty(date, option.key)} />
-                    <span>{option.label}</span>
-                  </label>
-                ))}
-              </div>
             </div>
             <CalendarEventEditor compact data={{ calendar, calendarFormats, calendarEntries }} date={date} onFocus={() => selectDate(date)} onChange={updateCalendarEntries} />
           </article>

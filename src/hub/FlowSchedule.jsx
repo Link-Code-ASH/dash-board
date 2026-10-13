@@ -1,6 +1,6 @@
-import React, { useLayoutEffect, useRef, useState } from "react";
-import { CalendarRange, Check, ChevronLeft, ChevronRight, Clock3, ExternalLink, GraduationCap, Moon, Pencil, RotateCcw, School, Users } from "lucide-react";
-import { addDays, calendarDutyOptions, formatScore, getWeekStart, weekDays } from "../dashboard/model.js";
+import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { CalendarRange, Check, ChevronLeft, ChevronRight, Clock3, ExternalLink, Flag, GraduationCap, Pencil, RotateCcw } from "lucide-react";
+import { addDays, formatScore, getWeekStart, normalizeDateMarkers, weekDays } from "../dashboard/model.js";
 import { readCalendarEntries, sortCalendarItems } from "../dashboard/calendarEntries.js";
 import { CalendarText } from "./CalendarNoteEditor.jsx";
 import { useDashboardData } from "./context.jsx";
@@ -14,7 +14,6 @@ const longDate = (date, withMonth = true) =>
   `${withMonth ? `${Number(date.slice(5, 7))}월 ` : ""}${Number(date.slice(8))}일 (${koWeekday[new Date(`${date}T12:00:00`).getDay()]})`;
 const weekGap = (from, to) => Math.round((new Date(`${to}T12:00:00`) - new Date(`${from}T12:00:00`)) / 604800000);
 const weekName = (offset) => offset === 0 ? "이번 주" : offset === 1 ? "다음 주" : offset === -1 ? "지난주" : offset > 0 ? `${offset}주 뒤` : `${-offset}주 전`;
-const dutyIcons = { afterSchool: School, nightStudy: Moon, clubActivity: Users };
 
 export default function FlowSchedule({ route, navigate }) {
   const d = useDashboardData();
@@ -24,6 +23,15 @@ export default function FlowSchedule({ route, navigate }) {
   const offset = weekGap(currentWeek, week);
   const external = useFlowCalendar(week, d.account.user?.id || "local");
   const [actionError, setActionError] = useState("");
+  // Date Marker flags: hover shows the note; a tap opens it until the next tap elsewhere.
+  const [openMarker, setOpenMarker] = useState("");
+  useEffect(() => {
+    if (!openMarker) return;
+    const close = (event) => { if (!event.target.closest?.(".flow-desk-marker")) setOpenMarker(""); };
+    document.addEventListener("pointerdown", close);
+    return () => document.removeEventListener("pointerdown", close);
+  }, [openMarker]);
+  const markers = normalizeDateMarkers(d.data.dateMarkers).filter((marker) => marker.date);
   const content = useRef(null), viewport = useRef(null), previousWeek = useRef(week);
   const requested = useRef({ week, date: d.selectedDate });
   useLayoutEffect(() => { requested.current = { week, date: d.selectedDate }; }, [week, d.selectedDate]);
@@ -76,14 +84,19 @@ export default function FlowSchedule({ route, navigate }) {
         <div className="flow-desk-grid">{weekDays.map((day, column) => {
           const date = addDays(week, row * 7 + column);
           const items = itemsFor(date);
-          const duties = calendarDutyOptions.filter((option) => d.data.calendarDuties[date]?.[option.key]);
+          const dayMarkers = markers.filter((marker) => marker.date === date);
           const penalty = !!d.data.carryPenalties?.[date], tried = !penalty && !!d.data.routineAttempts?.[date];
           const score = d.getDayTotal(date);
           const saved = readCalendarEntries(d.data, date);
           return <article key={date} className={`flow-desk-day${date === actualToday ? " is-today" : ""}${date === d.selectedDate ? " is-selected" : ""}`} onClick={() => navigate("flow", "today", date, { week })}>
-            <header><button type="button" aria-label={`${date} 일정 선택`} aria-pressed={date === d.selectedDate} aria-current={date === actualToday ? "date" : undefined}><small>{day.label}</small><time dateTime={date}>{shortDate(date)}</time>{date === actualToday && <em className="flow-desk-today">오늘</em>}</button></header>
+            <header><button type="button" aria-label={`${date} 일정 선택`} aria-pressed={date === d.selectedDate} aria-current={date === actualToday ? "date" : undefined}><small>{day.label}</small><time dateTime={date}>{shortDate(date)}</time>{date === actualToday && <em className="flow-desk-today">오늘</em>}</button>
+              {dayMarkers.map((marker, index) => { const key = `${date}:${index}`; return <button type="button" key={key} className={`flow-desk-marker${openMarker === key ? " is-open" : ""}${column > 3 ? " is-end" : ""}`}
+                aria-label={`Date Marker ${marker.text || ""} ${marker.time || ""}`} aria-expanded={openMarker === key}
+                onClick={(event) => { event.stopPropagation(); setOpenMarker(openMarker === key ? "" : key); }}>
+                <Flag size={13} aria-hidden="true" />
+                <span className="flow-desk-marker-tip" role="tooltip"><b>{marker.text || "Date Marker"}</b>{marker.time && <time><Clock3 size={11} aria-hidden="true" />{marker.time}</time>}</span>
+              </button>; })}</header>
             <div className="flow-desk-events">
-              {!!duties.length && <div className="flow-desk-duties">{duties.map((option) => { const Icon = dutyIcons[option.key]; return <span key={option.key} data-duty={option.key}>{Icon && <Icon size={12} aria-hidden="true" />}{option.label}</span>; })}</div>}
               {items.map((item) => <div className="flow-desk-event" data-source={item.source?.id || "calendar"} key={`${item.source?.id || "calendar"}:${item.id}`}>
                 {item.source?.id === "edu" && <GraduationCap className="flow-desk-source-icon" size={13} aria-label="Edu" />}
                 <div className="flow-desk-event-title">{item.source ? item.displayTitle || item.title : <CalendarText text={item.text} marks={item.marks} />}</div>
@@ -93,7 +106,7 @@ export default function FlowSchedule({ route, navigate }) {
                   {item.source?.execute && item.commands?.map((command) => <button type="button" key={command.id} title={command.label} aria-label={`${item.title} ${command.label}`} onClick={(event) => perform(event, () => item.source.execute(item.id, command.id, command.payload))}><Check size={12} /></button>)}
                 </div>}
               </div>)}
-              {!items.length && !duties.length && !saved.unsupported && <span className="flow-desk-empty">일정 없음</span>}
+              {!items.length && !saved.unsupported && <span className="flow-desk-empty">일정 없음</span>}
               {(saved.unsupported || saved.mismatch || saved.recovery.length > 0) && <span className="flow-desk-warning">원본 확인 필요 · Calendar</span>}
             </div>
             <footer className={`flow-desk-score${penalty ? " is-penalty" : tried ? " is-attempt" : ""}${score > 0 ? " is-plus" : score < 0 ? " is-minus" : " is-zero"}`} aria-label={`${date} 점수 ${formatScore(score)}, ${penalty ? "빨간 체크" : tried ? "초록 체크" : "체크 없음"}`}>

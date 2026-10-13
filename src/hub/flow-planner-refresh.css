@@ -721,3 +721,32 @@ html body #root .hub-app.hub-app .flow-desk-time { margin: 0 0 0 5px; }
 html body #root .hub-app.hub-app .flow-score-foot .flow-score-check { min-width: 40px; height: 40px; min-height: 40px; }
 html body #root .hub-app.hub-app .flow-score-foot .flow-score-check.is-attempt:not(.is-checked) { border-color: #b9dcc7; background: var(--fp-plus-soft); color: #7fb796; }
 html body #root .hub-app.hub-app .flow-score-foot .flow-score-check.is-penalty:not(.is-checked) { border-color: #edc3c8; background: var(--fp-minus-soft); color: #d58f98; }
+
+/* ---------- Date Marker on the schedule ----------
+   A flag beside the date; hovering or tapping it shows the marker's note
+   and time in a small bubble. */
+html body #root .hub-app.hub-app .flow-desk-day header { display: flex; align-items: flex-start; gap: 4px; }
+html body #root .hub-app.hub-app .flow-desk-day header > button:first-child { flex: 1 1 auto; width: auto; min-width: 0; }
+html body #root .hub-app.hub-app .flow-desk-marker { position: relative; display: grid; place-items: center; flex: none; width: 24px; min-width: 24px; height: 24px; min-height: 24px; padding: 0; border: 0; border-radius: 7px; background: #fdecee; color: var(--fp-minus); box-shadow: none; cursor: pointer; }
+html body #root .hub-app.hub-app.hub-desktop .flow-desk-day:has(.flow-desk-score .flow-desk-mark, .flow-desk-score strong) .flow-desk-marker:last-of-type { margin-right: 74px; }
+html body #root .hub-app.hub-app .flow-desk-marker-tip { position: absolute; top: calc(100% + 6px); left: -6px; z-index: 20; display: none; min-width: 120px; max-width: 220px; padding: 8px 10px; border-radius: 10px; background: var(--fp-ink); color: #fff; box-shadow: 0 8px 24px #1d253333; text-align: left; white-space: normal; }
+html body #root .hub-app.hub-app .flow-desk-marker.is-end .flow-desk-marker-tip { left: auto; right: -6px; }
+html body #root .hub-app.hub-app .flow-desk-marker-tip b { display: block; font-size: 13px; font-weight: 700; line-height: 1.4; }
+html body #root .hub-app.hub-app .flow-desk-marker-tip time { display: inline-flex; align-items: center; gap: 4px; margin-top: 3px; color: #c9d6ea; font-size: 12px; font-weight: 700; }
+html body #root .hub-app.hub-app .flow-desk-marker.is-open .flow-desk-marker-tip { display: block; }
+@media (hover: hover) { html body #root .hub-app.hub-app .flow-desk-marker:hover .flow-desk-marker-tip { display: block; } }
+html body #root .hub-app.hub-app .flow-desk-viewport, html body #root .hub-app.hub-app .flow-desk-week, html body #root .hub-app.hub-app .flow-desk-grid { overflow: visible; }
+html body #root .hub-app.hub-app.hub-mobile .flow-desk-day header { flex-direction: column; }
+/* Date Marker editor rows: name + D-day on top, date + time below. */
+html body #root .hub-app.hub-app.hub-app .flow-markers .date-marker { display: grid !important; grid-template-columns: minmax(0, 1fr) auto !important; grid-template-areas: "text dday" "date time"; gap: 4px 8px; padding: 6px 0; min-height: 0 !important; }
+html body #root .hub-app.hub-app.hub-app .flow-markers .date-marker-text { grid-area: text; }
+html body #root .hub-app.hub-app.hub-app .flow-markers .date-marker-date { grid-area: date; }
+html body #root .hub-app.hub-app.hub-app .flow-markers .calendar-time-picker { grid-area: time; }
+html body #root .hub-app.hub-app.hub-app .flow-markers .date-marker-dday { grid-area: dday; justify-self: end; }
+html body #root .hub-app.hub-app .flow-marker-chips li small { color: var(--fp-muted); font-size: 11px; font-weight: 700; }
+html body #root .hub-app.hub-app.hub-app .flow-markers .date-marker-text { grid-column: 1 !important; grid-row: 1 !important; text-align: left !important; font-weight: 600 !important; }
+html body #root .hub-app.hub-app.hub-app .flow-markers .date-marker-dday { grid-column: 2 !important; grid-row: 1 !important; min-width: 56px; }
+html body #root .hub-app.hub-app.hub-app .flow-markers .date-marker-date { grid-column: 1 !important; grid-row: 2 !important; text-align: left !important; }
+html body #root .hub-app.hub-app.hub-app .flow-markers .calendar-time-picker { grid-column: 2 !important; grid-row: 2 !important; }
+html body #root .hub-app.hub-app.hub-app .flow-markers .calendar-time-picker select { height: 30px; min-height: 30px; font-size: 13px; }
+html body #root .hub-app.hub-app.hub-mobile .flow-desk-marker { align-self: flex-start; width: 28px !important; min-width: 28px !important; height: 28px !important; min-height: 28px !important; margin-top: 4px; }
