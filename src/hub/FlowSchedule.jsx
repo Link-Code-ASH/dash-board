@@ -1,5 +1,5 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { CalendarRange, Check, ChevronLeft, ChevronRight, Clock3, ExternalLink, Flag, GraduationCap, Pencil, RotateCcw } from "lucide-react";
+import { CalendarRange, Check, ChevronLeft, ChevronRight, Clock3, ExternalLink, GraduationCap, Star, Pencil, RotateCcw } from "lucide-react";
 import { addDays, formatScore, getWeekStart, normalizeDateMarkers, weekDays } from "../dashboard/model.js";
 import { readCalendarEntries, sortCalendarItems } from "../dashboard/calendarEntries.js";
 import { CalendarText } from "./CalendarNoteEditor.jsx";
@@ -93,7 +93,7 @@ export default function FlowSchedule({ route, navigate }) {
               {dayMarkers.map((marker, index) => { const key = `${date}:${index}`; return <button type="button" key={key} className={`flow-desk-marker${openMarker === key ? " is-open" : ""}${column > 3 ? " is-end" : ""}`}
                 aria-label={`Date Marker ${marker.text || ""} ${marker.time || ""}`} aria-expanded={openMarker === key}
                 onClick={(event) => { event.stopPropagation(); setOpenMarker(openMarker === key ? "" : key); }}>
-                <Flag size={13} aria-hidden="true" />
+                <Star size={13} fill="currentColor" strokeWidth={1.5} aria-hidden="true" />
                 <span className="flow-desk-marker-tip" role="tooltip"><b>{marker.text || "Date Marker"}</b>{marker.time && <time><Clock3 size={11} aria-hidden="true" />{marker.time}</time>}</span>
               </button>; })}</header>
             <div className="flow-desk-events">

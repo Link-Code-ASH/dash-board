@@ -3,7 +3,7 @@ import {
   Plus,
   Trash2,
   CalendarDays,
-  Flag,
+  Star,
   ChevronRight,
   StickyNote,
 } from "lucide-react";
@@ -134,7 +134,7 @@ function DateMarkers() {
     <section className={`flow-markers ${open ? "" : "is-collapsed"}`}>
       <div className="hub-section-title">
         <h2>
-          <Flag size={18} />
+          <Star size={18} />
           Date Marker
         </h2>
         <PanelToggle open={open} onToggle={toggle} label="Date Marker" />
