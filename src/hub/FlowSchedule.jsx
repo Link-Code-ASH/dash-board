@@ -89,14 +89,15 @@ export default function FlowSchedule({ route, navigate }) {
           const score = d.getDayTotal(date);
           const saved = readCalendarEntries(d.data, date);
           return <article key={date} className={`flow-desk-day${date === actualToday ? " is-today" : ""}${date === d.selectedDate ? " is-selected" : ""}`} onClick={() => navigate("flow", "today", date, { week })}>
-            <header><button type="button" aria-label={`${date} 일정 선택`} aria-pressed={date === d.selectedDate} aria-current={date === actualToday ? "date" : undefined}><small>{day.label}</small><time dateTime={date}>{shortDate(date)}</time>{date === actualToday && <em className="flow-desk-today">오늘</em>}</button>
-              {dayMarkers.map((marker, index) => { const key = `${date}:${index}`; return <button type="button" key={key} className={`flow-desk-marker${openMarker === key ? " is-open" : ""}${column > 3 ? " is-end" : ""}`}
-                aria-label={`Date Marker ${marker.text || ""} ${marker.time || ""}`} aria-expanded={openMarker === key}
-                onClick={(event) => { event.stopPropagation(); setOpenMarker(openMarker === key ? "" : key); }}>
-                <Star size={13} fill="currentColor" strokeWidth={1.5} aria-hidden="true" />
-                <span className="flow-desk-marker-tip" role="tooltip"><b>{marker.text || "Date Marker"}</b>{marker.time && <time><Clock3 size={11} aria-hidden="true" />{marker.time}</time>}</span>
-              </button>; })}</header>
+            <header><button type="button" aria-label={`${date} 일정 선택`} aria-pressed={date === d.selectedDate} aria-current={date === actualToday ? "date" : undefined}><small>{day.label}</small><time dateTime={date}>{shortDate(date)}</time>{date === actualToday && <em className="flow-desk-today">오늘</em>}</button></header>
             <div className="flow-desk-events">
+              {dayMarkers.length > 0 && <div className="flow-desk-markers">
+              {dayMarkers.map((marker, index) => { const key = `${date}:${index}`; return <button type="button" key={key} className={`flow-desk-marker${openMarker === key ? " is-open" : ""}${column > 3 ? " is-end" : ""}`}
+                  aria-label={`Date Marker ${marker.text || ""} ${marker.time || ""}`} aria-expanded={openMarker === key}
+                  onClick={(event) => { event.stopPropagation(); setOpenMarker(openMarker === key ? "" : key); }}>
+                  <Star size={13} fill="currentColor" strokeWidth={1.5} aria-hidden="true" />
+                  <span className="flow-desk-marker-tip" role="tooltip"><b>{marker.text || "Date Marker"}</b>{marker.time && <time><Clock3 size={11} aria-hidden="true" />{marker.time}</time>}</span>
+                </button>; })}</div>}
               {items.map((item) => <div className="flow-desk-event" data-source={item.source?.id || "calendar"} key={`${item.source?.id || "calendar"}:${item.id}`}>
                 {item.source?.id === "edu" && <GraduationCap className="flow-desk-source-icon" size={13} aria-label="Edu" />}
                 <div className="flow-desk-event-title">{item.source ? item.displayTitle || item.title : <CalendarText text={item.text} marks={item.marks} />}</div>

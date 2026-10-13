@@ -767,4 +767,16 @@ html body #root .hub-app.hub-app .flow-desk-day header > button:first-child { pa
 html body #root .hub-app.hub-app .flow-desk-day header { margin-bottom: 8px; min-height: 26px; }
 html body #root .hub-app.hub-app.hub-mobile .flow-desk-marker { align-self: flex-start; width: 26px !important; min-width: 26px !important; height: 26px !important; min-height: 26px !important; border-radius: 999px; }
 
-html body #root .hub-app.hub-app .flow-desk-marker svg { color:#fff; fill:#fff; stroke:#fff; }
+html body #root .hub-app.hub-app .flow-desk-marker > svg { color:#fff; fill:#fff; stroke:#fff; }
+
+/* Date Marker star: its own centred row in the day tile */
+html body #root .hub-app.hub-app .flow-desk-markers { display: flex; justify-content: center; align-items: center; gap: 6px; padding: 3px 0 2px; }
+html body #root .hub-app.hub-app.hub-desktop .flow-desk-day:has(.flow-desk-score .flow-desk-mark, .flow-desk-score strong) .flow-desk-marker:last-of-type { margin-right: 0; }
+html body #root .hub-app.hub-app.hub-mobile .flow-desk-marker { align-self: center; margin-top: 0; }
+html body #root .hub-app.hub-app .flow-desk-marker-tip, html body #root .hub-app.hub-app .flow-desk-marker.is-end .flow-desk-marker-tip { left: 50%; right: auto; transform: translateX(-50%); }
+html body #root .hub-app.hub-app .flow-desk-marker.is-end .flow-desk-marker-tip { left: auto; right: -24px; transform: none; }
+
+/* Time: no second background, just a thin divider after the title */
+html body #root .hub-app.hub-app .flow-desk-time { height: 14px; padding: 0 0 0 7px; border-radius: 0; background: transparent; border-left: 1.5px solid color-mix(in srgb, currentColor 35%, transparent); line-height: 14px; font-size: 12px; font-weight: 700; }
+html body #root .hub-app.hub-app.hub-mobile .flow-desk-day:has(.flow-desk-markers) .flow-desk-events::before { content: none; }
+html body #root .hub-app.hub-app .flow-desk-marker-tip svg { fill: none; }
