@@ -4,6 +4,26 @@ import CalendarNoteEditor, { CalendarText } from "./CalendarNoteEditor.jsx";
 import { legacyCalendarItems, readCalendarEntries } from "../dashboard/calendarEntries.js";
 import "./calendar-events.css";
 
+const hours = Array.from({ length: 24 }, (_, hour) => String(hour).padStart(2, "0"));
+const tenMinutes = ["00", "10", "20", "30", "40", "50"];
+
+// Hour and minute pickers in 10-minute steps. A saved time that is not on a
+// 10-minute mark (from before) stays selectable so it is shown as it is.
+function TimePicker({ label, value, onChange }) {
+  const [hour, minute] = value ? value.split(":") : ["", ""];
+  const minutes = minute && !tenMinutes.includes(minute) ? [...tenMinutes, minute].sort() : tenMinutes;
+  return <span className="calendar-time-picker">
+    <select aria-label={`${label} 시`} value={hour} onChange={(e) => onChange(e.target.value ? `${e.target.value}:${minute || "00"}` : "")}>
+      <option value="">시</option>
+      {hours.map((h) => <option key={h} value={h}>{h}시</option>)}
+    </select>
+    <select aria-label={`${label} 분`} value={minute} disabled={!hour} onChange={(e) => onChange(`${hour}:${e.target.value}`)}>
+      {!hour && <option value="">분</option>}
+      {minutes.map((m) => <option key={m} value={m}>{m}분</option>)}
+    </select>
+  </span>;
+}
+
 export default function CalendarEventEditor({ data, date, onChange, onFocus, compact = false }) {
   const day = readCalendarEntries(data, date);
   const [expandedTime, setExpandedTime] = useState(null);
@@ -35,7 +55,7 @@ export default function CalendarEventEditor({ data, date, onChange, onFocus, com
         <div className="calendar-entry-tools">
           <button type="button" className="calendar-entry-time-add" title="시작 시간 설정" aria-label={`${date} 일정 ${index + 1} 시작 시간 설정`} aria-expanded={expandedTime === item.id} onClick={() => setExpandedTime(expandedTime === item.id ? null : item.id)}><Clock3 size={14} /><span>{item.time || "시간"}</span></button>
           {expandedTime === item.id && <div className="calendar-entry-time" role="group" aria-label="시작 시간 설정">
-            <input type="time" aria-label={`${date} 일정 ${index + 1} 시작 시간`} value={item.time} onChange={(e) => update(item.id, { time: e.target.value })} />
+            <TimePicker label={`${date} 일정 ${index + 1} 시작 시간`} value={item.time} onChange={(time) => update(item.id, { time })} />
             <button type="button" aria-label="시작 시간 제거" title="시작 시간 제거" onClick={() => { update(item.id, { time: "" }); setExpandedTime(null); }}><Trash2 size={14} /></button>
             <button type="button" aria-label="시간 설정 닫기" title="닫기" onClick={() => setExpandedTime(null)}><X size={14} /></button>
           </div>}

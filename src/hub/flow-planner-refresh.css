@@ -654,3 +654,46 @@ html body #root .hub-app.hub-app .flow-routines .hub-task-actions .no[aria-press
 html body #root .hub-app.hub-app .flow-routines .hub-task:is(.selected-positive, .selected-negative) .hub-task-actions button:not([aria-pressed="true"]) { opacity: .45; }
 html body #root .hub-app.hub-app .flow-routines .hub-score-select { height: 30px; min-height: 30px; border: 0; border-radius: 8px; font-weight: 800; color: var(--fp-plus); background: transparent; }
 html body #root .hub-app.hub-app .flow-routines .hub-score-select.is-selected { background: var(--fp-plus); color: #fff; }
+
+/* ---------- Flow schedule, round 2 ----------
+   Range header: "10월 11일 (일) – 24일 (토)" with a tag naming the weeks
+   (이번 주 + 다음 주, or 2주 뒤 + 3주 뒤 after moving) and a way back.
+   Week rows are named the same way. Icons carry the small facts: clock for
+   a time, school/moon/people for 방/야/동 duties, a cap for Edu items.
+   Events are soft rounded tiles; Edu items are tinted amber. */
+html body #root .hub-app.hub-app .flow-desk-navigation { align-items: center; padding: 0 0 14px; }
+html body #root .hub-app.hub-app .flow-desk-range { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; min-width: 0; color: var(--fp-accent); }
+html body #root .hub-app.hub-app .flow-desk-range time { color: var(--fp-ink); font-size: 17px; font-weight: 800; letter-spacing: -.01em; }
+html body #root .hub-app.hub-app .flow-desk-range-tag { padding: 3px 10px; border-radius: 999px; background: #fff3dc; color: #946312; font-size: 12px; font-weight: 800; }
+html body #root .hub-app.hub-app .flow-desk-range-tag.is-current { background: var(--fp-accent-soft); color: var(--fp-accent); }
+html body #root .hub-app.hub-app .flow-desk-navigation .flow-desk-back { display: inline-flex; gap: 5px; width: auto; padding: 0 12px; font-size: 13px; font-weight: 700; color: var(--fp-accent); }
+html body #root .hub-app.hub-app .flow-desk-week h3 { padding: 7px 12px; }
+html body #root .hub-app.hub-app .flow-desk-week h3 span { display: inline-flex; align-items: center; gap: 6px; color: var(--fp-ink); font-size: 13px; font-weight: 800; }
+html body #root .hub-app.hub-app .flow-desk-week h3.is-current span::before { content: ""; width: 7px; height: 7px; border-radius: 999px; background: var(--fp-accent); }
+html body #root .hub-app.hub-app .flow-desk-week h3 small { font-size: 12px; font-weight: 600; }
+html body #root .hub-app.hub-app .flow-desk-today { margin-left: 2px; padding: 1px 6px; border-radius: 999px; background: var(--fp-accent-soft); color: var(--fp-accent); font-size: 10px; font-style: normal; font-weight: 800; }
+html body #root .hub-app.hub-app .flow-desk-duties span { display: inline-flex; align-items: center; gap: 3px; padding: 1px 7px 1px 5px; }
+html body #root .hub-app.hub-app .flow-desk-duties span[data-duty="nightStudy"] { background: #ecebfb; color: #4d47a8; }
+html body #root .hub-app.hub-app .flow-desk-duties span[data-duty="clubActivity"] { background: #e4f4f1; color: #237565; }
+html body #root .hub-app.hub-app .flow-desk-events { gap: 5px; }
+html body #root .hub-app.hub-app .flow-desk-event { padding: 5px 8px; border: 1px solid #dfe8f5; border-left: 1px solid #dfe8f5; border-radius: 8px; background: #f1f6fd; }
+html body #root .hub-app.hub-app .flow-desk-event:last-child { border-bottom: 1px solid #dfe8f5; }
+html body #root .hub-app.hub-app .flow-desk-event[data-source="edu"] { border-color: #f1e2c4; background: #fdf6e9; }
+html body #root .hub-app.hub-app .flow-desk-event-title { font-size: 13px; font-weight: 600; line-height: 1.45; }
+html body #root .hub-app.hub-app .flow-desk-time { display: inline-flex; align-items: center; gap: 3px; margin: 0 5px 0 0; padding: 0 5px; border-radius: 5px; background: #fff; color: var(--fp-accent); font-size: 11.5px; font-weight: 800; vertical-align: 1px; }
+html body #root .hub-app.hub-app .flow-desk-source-icon { margin-right: 4px; color: #b07a1d; vertical-align: -2px; }
+html body #root .hub-app.hub-app .flow-desk-event-source { font-size: 11px; }
+/* 10-minute time picker in the calendar entry editor. */
+html body #root .hub-app .calendar-time-picker { display: inline-flex; gap: 4px; }
+html body #root .hub-app .calendar-time-picker select { height: 32px; min-height: 32px; padding: 0 6px; border: 1px solid var(--fp-line, #dfe5ec); border-radius: 6px; background: #fff; color: #33445b; font-size: 14px; }
+html body #root .hub-app.hub-mobile .calendar-time-picker select { height: 44px; min-height: 44px; font-size: 16px; }
+/* Phone: the same score pill, under the date in the left column. */
+html body #root .hub-app.hub-app.hub-mobile .flow-desk-day { min-height: 0; grid-template-rows: auto 1fr; row-gap: 4px; }
+html body #root .hub-app.hub-app.hub-mobile .flow-desk-events { grid-column: 2; grid-row: 1 / span 2; }
+html body #root .hub-app.hub-app.hub-mobile .flow-desk-score { grid-column: 1; grid-row: 2; justify-self: start; align-self: start; min-height: 0; height: 22px; padding: 0 7px; gap: 3px; border: 0; border-radius: 999px; background: var(--fp-line-soft); }
+html body #root .hub-app.hub-app.hub-mobile .flow-desk-score > svg { display: none; }
+html body #root .hub-app.hub-app.hub-mobile .flow-desk-score strong { font-size: 12px; font-weight: 800; line-height: 22px; }
+html body #root .hub-app.hub-app.hub-mobile .flow-desk-score.is-plus { background: var(--fp-plus-soft); }
+html body #root .hub-app.hub-app.hub-mobile .flow-desk-score.is-minus { background: var(--fp-minus-soft); }
+html body #root .hub-app.hub-app.hub-mobile .flow-desk-score .flow-desk-check { width: auto; height: auto; border: 0; background: transparent !important; }
+html body #root .hub-app.hub-app.hub-mobile .flow-desk-score:not(.is-attempt):not(.is-penalty) .flow-desk-check { display: none; }

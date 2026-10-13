@@ -1,6 +1,6 @@
 import React, { useLayoutEffect, useRef, useState } from "react";
-import { Check, ChevronLeft, ChevronRight, ExternalLink, FlagTriangleRight, Pencil } from "lucide-react";
-import { addDays, calendarDutyOptions, formatScore, weekDays } from "../dashboard/model.js";
+import { CalendarRange, Check, ChevronLeft, ChevronRight, Clock3, ExternalLink, FlagTriangleRight, GraduationCap, Moon, Pencil, RotateCcw, School, Users } from "lucide-react";
+import { addDays, calendarDutyOptions, formatScore, getWeekStart, weekDays } from "../dashboard/model.js";
 import { readCalendarEntries, sortCalendarItems } from "../dashboard/calendarEntries.js";
 import { CalendarText } from "./CalendarNoteEditor.jsx";
 import { useDashboardData } from "./context.jsx";
@@ -9,11 +9,19 @@ import useFlowCalendar from "./useFlowCalendar.js";
 import "./flow-schedule.css";
 
 const shortDate = (date) => `${Number(date.slice(5, 7))}/${Number(date.slice(8))}`;
+const koWeekday = ["일", "월", "화", "수", "목", "금", "토"];
+const longDate = (date, withMonth = true) =>
+  `${withMonth ? `${Number(date.slice(5, 7))}월 ` : ""}${Number(date.slice(8))}일 (${koWeekday[new Date(`${date}T12:00:00`).getDay()]})`;
+const weekGap = (from, to) => Math.round((new Date(`${to}T12:00:00`) - new Date(`${from}T12:00:00`)) / 604800000);
+const weekName = (offset) => offset === 0 ? "이번 주" : offset === 1 ? "다음 주" : offset === -1 ? "지난주" : offset > 0 ? `${offset}주 뒤` : `${-offset}주 전`;
+const dutyIcons = { afterSchool: School, nightStudy: Moon, clubActivity: Users };
 
 export default function FlowSchedule({ route, navigate }) {
   const d = useDashboardData();
   const week = route.week;
   const actualToday = todayKey();
+  const currentWeek = getWeekStart(actualToday);
+  const offset = weekGap(currentWeek, week);
   const external = useFlowCalendar(week, d.account.user?.id || "local");
   const [actionError, setActionError] = useState("");
   const content = useRef(null), viewport = useRef(null), previousWeek = useRef(week);
@@ -51,14 +59,21 @@ export default function FlowSchedule({ route, navigate }) {
     ...(external.byDate[date] || []).map((item) => ({ ...item, time: item.time || "" })),
   ]);
   return <div className="flow-desk-calendar">
-    <div className="flow-desk-navigation"><time dateTime={week}>{week.replaceAll("-", ".")} — {addDays(week, 13).slice(5).replace("-", ".")}</time><div>
+    <div className="flow-desk-navigation">
+      <div className="flow-desk-range">
+        <CalendarRange size={18} aria-hidden="true" />
+        <time dateTime={week}>{longDate(week)} – {longDate(addDays(week, 13), week.slice(5, 7) !== addDays(week, 13).slice(5, 7))}</time>
+        <span className={`flow-desk-range-tag${offset === 0 ? " is-current" : ""}`}>{weekName(offset)} + {weekName(offset + 1)}</span>
+      </div>
+      <div>
+      {offset !== 0 && <button type="button" className="flow-desk-back" title="이번 주로" onClick={() => navigate("flow", "today", actualToday, { week: currentWeek })}><RotateCcw size={14} /><span>이번 주</span></button>}
       <button type="button" title="이전 주" aria-label="이전 주" onClick={() => move(-1)}><ChevronLeft size={18} /></button>
       <button type="button" title="다음 주" aria-label="다음 주" onClick={() => move(1)}><ChevronRight size={18} /></button>
     </div></div>
     <div className="flow-desk-weekdays" aria-hidden="true">{weekDays.map((day) => <span key={day.key}>{day.label}</span>)}</div>
     <div className="flow-desk-viewport" ref={viewport}><div ref={content}>
       {[0, 1].map((row) => <section className="flow-desk-week" key={row} aria-label={row ? "다음 주 일정" : "이번 주 일정"}>
-        <h3>{row ? "Next week" : "This week"}<small>{shortDate(addDays(week, row * 7))} – {shortDate(addDays(week, row * 7 + 6))}</small></h3>
+        <h3 className={offset + row === 0 ? "is-current" : ""}><span>{weekName(offset + row)}</span><small>{shortDate(addDays(week, row * 7))} – {shortDate(addDays(week, row * 7 + 6))}</small></h3>
         <div className="flow-desk-grid">{weekDays.map((day, column) => {
           const date = addDays(week, row * 7 + column);
           const items = itemsFor(date);
@@ -67,11 +82,12 @@ export default function FlowSchedule({ route, navigate }) {
           const score = d.getDayTotal(date);
           const saved = readCalendarEntries(d.data, date);
           return <article key={date} className={`flow-desk-day${date === actualToday ? " is-today" : ""}${date === d.selectedDate ? " is-selected" : ""}`} onClick={() => navigate("flow", "today", date, { week })}>
-            <header><button type="button" aria-label={`${date} 일정 선택`} aria-pressed={date === d.selectedDate} aria-current={date === actualToday ? "date" : undefined}><small>{day.label}</small><time dateTime={date}>{shortDate(date)}</time>{date === actualToday && <i title="오늘" />}</button></header>
+            <header><button type="button" aria-label={`${date} 일정 선택`} aria-pressed={date === d.selectedDate} aria-current={date === actualToday ? "date" : undefined}><small>{day.label}</small><time dateTime={date}>{shortDate(date)}</time>{date === actualToday && <em className="flow-desk-today">오늘</em>}</button></header>
             <div className="flow-desk-events">
-              {!!duties.length && <div className="flow-desk-duties">{duties.map((option) => <span key={option.key}>{option.label}</span>)}</div>}
-              {items.map((item) => <div className="flow-desk-event" key={`${item.source?.id || "calendar"}:${item.id}`}>
-                {item.time && <time className="flow-desk-time">{item.time}</time>}
+              {!!duties.length && <div className="flow-desk-duties">{duties.map((option) => { const Icon = dutyIcons[option.key]; return <span key={option.key} data-duty={option.key}>{Icon && <Icon size={12} aria-hidden="true" />}{option.label}</span>; })}</div>}
+              {items.map((item) => <div className="flow-desk-event" data-source={item.source?.id || "calendar"} key={`${item.source?.id || "calendar"}:${item.id}`}>
+                {item.time && <time className="flow-desk-time"><Clock3 size={11} aria-hidden="true" />{item.time}</time>}
+                {item.source?.id === "edu" && <GraduationCap className="flow-desk-source-icon" size={13} aria-label="Edu" />}
                 <div className="flow-desk-event-title">{item.source ? item.displayTitle || item.title : <CalendarText text={item.text} marks={item.marks} />}</div>
                 {item.source && <div className="flow-desk-event-source"><span>{item.sourceLabel || item.source?.id}</span>{item.periodStatus && <em>{item.periodStatus}</em>}
                   {item.source && <button type="button" title="원본 일정 열기" aria-label={`${item.displayTitle || item.title} 원본 열기`} onClick={(event) => open(event, item)}><ExternalLink size={12} /></button>}
