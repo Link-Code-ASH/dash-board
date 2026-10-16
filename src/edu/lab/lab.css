@@ -126,3 +126,9 @@ html body #root .hub-app .edu-workspace .edu-button.edu-danger { color: #a24b4b;
 @media (max-width: 640px) {
   html body #root .hub-app .edu-workspace .edu-lab-attributes { grid-template-columns: 1fr; }
 }
+html body #root .hub-app .edu-workspace .edu-lab-logs .edu-lab-logs-hint { margin: 0 0 16px; color: #758196; font-size: 13px; }
+html body #root .hub-app .edu-workspace .edu-lab-logs ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+html body #root .hub-app .edu-workspace .edu-lab-logs li { display: grid; gap: 6px; padding: 14px 16px; border: 1px solid #e3e9f1; border-radius: 12px; background: #fbfcfe; }
+html body #root .hub-app .edu-workspace .edu-lab-logs time { color: #8490a1; font-size: 12px; }
+html body #root .hub-app .edu-workspace .edu-lab-logs strong { color: #26364d; font-size: 15px; }
+html body #root .hub-app .edu-workspace .edu-lab-logs .edu-lab-markdown :is(p, ul, ol) { margin: 0 0 6px; font-size: 14px; }

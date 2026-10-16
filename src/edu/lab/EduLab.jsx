@@ -1,9 +1,10 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { BookOpen, FileText, Printer, RefreshCw, Search, X } from "lucide-react";
+import { BookOpen, FileText, History, Printer, RefreshCw, Search, X } from "lucide-react";
 import useLab from "./useLab.js";
 import LabMarkdown from "./LabMarkdown.jsx";
 import ItemPaper from "./ItemPaper.jsx";
+import LabLogs from "./LabLogs.jsx";
 import { DIFFICULTIES, distinct, filterItems, filterNotes, groupNotes, isComplete, isPrinciple, kindLabel, REVIEW_STATES, reviewLabel, selectedItems, USAGES, usageLabel } from "./filter.js";
 import { notePatch, noteValues } from "./editing.js";
 import "./lab.css";
@@ -152,7 +153,8 @@ function PrintPreview({ items, onClose }) {
   </div>, document.body);
 }
 export function LabWorkspace({ lab }) {
-  const { notes: allNotes, items, loading, loaded, error, busy, refresh, updateNote, updateItem, removeItem } = lab;
+  const { notes: allNotes, items, loading, loaded, error, busy, refresh, updateNote, updateItem, removeItem, userId } = lab;
+  const [logVersion, setLogVersion] = useState(0);
   const notes = useMemo(() => allNotes.filter((note) => !isPrinciple(note)), [allNotes]);
   const [tab, setTab] = useState("items");
   const [query, setQuery] = useState("");
@@ -201,10 +203,10 @@ export function LabWorkspace({ lab }) {
   };
   const selectVisible = () => setSelected((ids) => [...new Set([...ids, ...visibleItems.map((item) => item.id)])]);
   return <div className="edu-lab">
-    <div className="edu-section-heading"><div><h2>문항 연구소</h2><p>생각을 쌓고, 문항을 다듬고, 수업으로 가져갑니다.</p></div><button type="button" className="edu-button" onClick={() => refresh().catch(() => {})} disabled={loading || busy}><RefreshCw size={16} className={loading ? "edu-lab-spinning" : ""} />{loading ? "불러오는 중…" : "새로고침"}</button></div>
-    <div className="edu-lab-tabs" aria-label="연구소 보기"><button type="button" className={tab === "items" ? "active" : ""} aria-pressed={tab === "items"} onClick={() => setTab("items")}><FileText size={17} />문항 <span>{items.length}</span></button><button type="button" className={tab === "notes" ? "active" : ""} aria-pressed={tab === "notes"} onClick={() => setTab("notes")}><BookOpen size={17} />노트 <span>{notes.length}</span></button></div>
+    <div className="edu-section-heading"><div><h2>문항 연구소</h2><p>생각을 쌓고, 문항을 다듬고, 수업으로 가져갑니다.</p></div><button type="button" className="edu-button" onClick={() => { setLogVersion((value) => value + 1); refresh().catch(() => {}); }} disabled={loading || busy}><RefreshCw size={16} className={loading ? "edu-lab-spinning" : ""} />{loading ? "불러오는 중…" : "새로고침"}</button></div>
+    <div className="edu-lab-tabs" aria-label="연구소 보기"><button type="button" className={tab === "items" ? "active" : ""} aria-pressed={tab === "items"} onClick={() => setTab("items")}><FileText size={17} />문항 <span>{items.length}</span></button><button type="button" className={tab === "notes" ? "active" : ""} aria-pressed={tab === "notes"} onClick={() => setTab("notes")}><BookOpen size={17} />노트 <span>{notes.length}</span></button><button type="button" className={tab === "logs" ? "active" : ""} aria-pressed={tab === "logs"} onClick={() => setTab("logs")}><History size={17} />작업 기록</button></div>
     <ErrorNotice>{error || relationError}</ErrorNotice>
-    <div className="edu-lab-filters"><SearchBox value={query} onChange={setQuery} />{tab === "notes" ? <><SelectFilter label="종류" value={kind} options={distinct(notes, "kind")} labels={Object.fromEntries(distinct(notes, "kind").map((entry) => [entry, kindLabel(entry)]))} onChange={setKind} /><SelectFilter label="적용 범위" value={scope} options={distinct(notes, "scope")} onChange={setScope} /></> : <><SelectFilter label="과목" value={subject} options={distinct(items, "subject")} onChange={(value) => { setSubject(value); setUnit(""); }} /><SelectFilter label="단원" value={unit} options={distinct(items.filter((item) => !subject || item.subject === subject), "unit")} onChange={setUnit} /><SelectFilter label="난이도" value={difficulty} options={Object.keys(DIFFICULTIES)} onChange={setDifficulty} /><SelectFilter label="상태" value={review} options={[...Object.keys(REVIEW_STATES), "complete"]} labels={{ ...REVIEW_STATES, complete: "완성 (적용 + 활용)" }} onChange={setReview} /><SelectFilter label="쓰임" value={usage} options={Object.keys(USAGES)} labels={USAGES} onChange={setUsage} /></>}</div>
+    {tab === "logs" ? <LabLogs userId={userId} version={logVersion} /> : <><div className="edu-lab-filters"><SearchBox value={query} onChange={setQuery} />{tab === "notes" ? <><SelectFilter label="종류" value={kind} options={distinct(notes, "kind")} labels={Object.fromEntries(distinct(notes, "kind").map((entry) => [entry, kindLabel(entry)]))} onChange={setKind} /><SelectFilter label="적용 범위" value={scope} options={distinct(notes, "scope")} onChange={setScope} /></> : <><SelectFilter label="과목" value={subject} options={distinct(items, "subject")} onChange={(value) => { setSubject(value); setUnit(""); }} /><SelectFilter label="단원" value={unit} options={distinct(items.filter((item) => !subject || item.subject === subject), "unit")} onChange={setUnit} /><SelectFilter label="난이도" value={difficulty} options={Object.keys(DIFFICULTIES)} onChange={setDifficulty} /><SelectFilter label="상태" value={review} options={[...Object.keys(REVIEW_STATES), "complete"]} labels={{ ...REVIEW_STATES, complete: "완성 (적용 + 활용)" }} onChange={setReview} /><SelectFilter label="쓰임" value={usage} options={Object.keys(USAGES)} labels={USAGES} onChange={setUsage} /></>}</div>
     <p className="edu-lab-refresh-hint">Claude가 기록한 내용은 새로고침하거나 이 화면으로 돌아오면 불러옵니다.</p>
     {!loaded && loading ? <Empty>노트와 문항을 불러오는 중입니다…</Empty> : <>
       {tab === "items" && <div className="edu-lab-selection"><span>인쇄할 문항 {printItems.length}개 선택</span><div className="edu-actions"><button type="button" className="edu-text-button" onClick={selectVisible} disabled={!visibleItems.length}>현재 목록 모두 선택</button><button type="button" className="edu-text-button" onClick={() => setSelected([])} disabled={!selected.length}>선택 해제</button><button type="button" className="edu-button edu-primary" disabled={!printItems.length} onClick={() => setPrinting(true)}><Printer size={16} />시험지 인쇄</button></div></div>}
@@ -219,6 +221,7 @@ export function LabWorkspace({ lab }) {
             ? <ItemDetail key={activeItem.id} item={activeItem} items={items} notes={allNotes} busy={busy} save={updateItem} remove={(item) => removeItem(item).then(() => { setItemId(null); setSelected((ids) => ids.filter((id) => id !== item.id)); })} onNote={openRelated} onItem={openRelated} deleted={!liveItem} drafts={drafts.current.items} />
             : <section className="edu-panel"><Empty>문항을 선택해 문제를 보고 피드백을 남겨 주세요.</Empty></section>}
       </div></div>
+    </>}
     </>}
     {printing && <PrintPreview items={printItems} onClose={closePrint} />}
   </div>;

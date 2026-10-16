@@ -125,7 +125,7 @@ checks to run outside the sandbox.
 
 완성된 문항은 `review_state = 'applied'` 그리고 `usage = 'use'`인 문항이다.
 앱에서 애쉬가 피드백, 쓰임, 난이도를 바꿔 저장하면 `review_state`는 `feedback`이 된다.
-Claude는 문항을 만들거나 매일 정기 점검을 할 때 `review_state = 'feedback'`인 문항을 모두 처리한다.
+Claude는 문항을 만들거나 정기 점검(3일마다)을 할 때 `review_state = 'feedback'`인 문항을 모두 처리한다.
 
 1. 피드백·쓰임·난이도 판단을 읽고, 배울 점을 `edu_notes`에 기록한다(보통 `kind = 'feedback'` 또는 `rule`).
 2. `usage`에 따라 처리한다.
@@ -137,6 +137,28 @@ Claude는 문항을 만들거나 매일 정기 점검을 할 때 `review_state =
 3. 원래 문항을 `review_state = 'applied'`로 바꾼다. 애쉬의 `feedback` 글은 지우지 않는다.
 
 모든 수정은 아래 revision 규칙을 따른다. 애쉬가 같은 문항을 다시 고치면 다시 `feedback`이 된다.
+
+### 작업 기록 (정기 점검)
+
+Claude의 정기 점검(3일마다 새벽 4시, 한국 시간)은 실행할 때마다 `public.edu_lab_logs`에 한 행을 남긴다.
+처리할 문항이 없어도 "처리할 문항 없음"으로 남긴다. 앱의 **문항 연구소 → 작업 기록** 탭이 최신 순으로 읽기만 한다.
+테이블은 `supabase/edu_lab_logs.sql`로 만든다. 앱(`authenticated`)은 읽기만, 서비스 권한은 읽기/추가만 할 수 있고 수정·삭제는 없다.
+
+| 칸 | SQL 형식 / 기본값 | 의미 |
+| --- | --- | --- |
+| `id` | `text`, 필수 | 예: `log-20261019-0400`. 실행 날짜와 시각으로 만든다. |
+| `user_id` | `uuid`, 필수 | 애쉬의 UUID. |
+| `ran_at` | `timestamptz`, `now()` | 점검한 시각. |
+| `title` | `text`, `''` | 한 줄 요약. 예: `피드백 2개 처리`, `처리할 문항 없음`. |
+| `body` | `text`, `''` | 짧은 마크다운 목록: 처리한 문항, 새로 만든 수정본, 추가한 노트, 원칙 변경. |
+| `extra` | `jsonb`, `{}` | 필요하면 숫자 등 추가 정보. |
+
+```sql
+insert into public.edu_lab_logs (user_id, id, title, body)
+values ('00000000-0000-0000-0000-000000000000'::uuid, 'log-20261019-0400', '피드백 1개 처리',
+  $body$- 완전 비탄성 충돌: 수정본 item-momentum-002 생성, 원래 문항 폐기
+- 노트 추가: 충돌 전후의 계를 분명히 제시$body$);
+```
 
 ### 제작 원칙
 
