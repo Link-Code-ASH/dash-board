@@ -1,4 +1,5 @@
 /* Edu styles stay inside the HUB workspace, including native modal dialogs. */
+html:has(.hub-app .edu-workspace) { scrollbar-gutter: stable; }
 html body #root .hub-app .edu-workspace { --edu-ink: #263348; --edu-muted: #758196; --edu-line: #e4e9f0; max-width: 1360px; margin: 0 auto; color: var(--edu-ink); }
 html body #root .hub-app .edu-workspace :is(h1, h2, h3, p) { margin: 0; letter-spacing: 0; }
 html body #root .hub-app .edu-workspace h1 { font-size: 28px; font-weight: 700; display: flex; align-items: center; gap: 10px; }
