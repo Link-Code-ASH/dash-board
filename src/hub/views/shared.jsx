@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { ChevronDown, ChevronLeft, ChevronRight, RotateCcw } from "lucide-react";
 import { useDashboardData } from "../context.jsx";
 import { todayKey } from "../routing.js";
@@ -99,6 +99,49 @@ export function DateHeading({ title }) {
   );
 }
 
+// Y score range ("1-3"): the Y button opens a small box of score chips on
+// hover (or tap on touch screens); picking the chosen score again clears it.
+function ScorePicker({ label, range, selected, onPick }) {
+  const [open, setOpen] = useState(false);
+  const root = useRef(null);
+  useEffect(() => {
+    if (!open) return undefined;
+    const close = (event) => { if (!root.current?.contains(event.target)) setOpen(false); };
+    document.addEventListener("pointerdown", close);
+    return () => document.removeEventListener("pointerdown", close);
+  }, [open]);
+  const first = range[0];
+  const last = range[range.length - 1];
+  return (
+    <div className={`hub-score-picker${open ? " is-open" : ""}`} ref={root}>
+      <button
+        type="button"
+        className="yes"
+        aria-pressed={Boolean(selected)}
+        aria-haspopup="true"
+        aria-expanded={open}
+        aria-label={`${label} Y 점수 선택`}
+        onClick={() => setOpen((value) => !value)}
+      >
+        <span>Y</span>
+        <small>{selected ? formatScore(selected) : `${first}~${last}`}</small>
+      </button>
+      <div className="hub-score-pop" role="group" aria-label={`${label} Y 점수`}>
+        {range.map((score) => (
+          <button
+            type="button"
+            key={score}
+            aria-pressed={String(score) === selected}
+            onClick={() => { onPick(String(score)); setOpen(false); }}
+          >
+            {formatScore(score)}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function RoutineTasks({ compact = false }) {
   const d = useDashboardData();
   const presetCards = (presets, section, prefix) =>
@@ -191,35 +234,12 @@ export function RoutineTasks({ compact = false }) {
                     aria-label={`${card.value || card.label} 점수`}
                   >
                     {card.scoreRange ? (
-                      <select
-                        className={`hub-score-select ${card.selectedChoice && card.selectedChoice !== "N" ? "is-selected" : ""}`}
-                        aria-label={`${card.value || card.label} Y 점수 선택`}
-                        value={
-                          card.scoreRange.some(
-                            (score) => String(score) === card.selectedChoice,
-                          )
-                            ? card.selectedChoice
-                            : ""
-                        }
-                        onChange={(event) => {
-                          if (event.target.value)
-                            card.onToggle(event.target.value);
-                          else if (
-                            card.selectedChoice &&
-                            card.selectedChoice !== "N"
-                          )
-                            card.onToggle(card.selectedChoice);
-                        }}
-                      >
-                        <option value="">
-                          Y {card.scoreRange[0]}~{card.scoreRange[card.scoreRange.length - 1]}
-                        </option>
-                        {card.scoreRange.map((score) => (
-                          <option key={score} value={score}>
-                            Y {formatScore(score)}
-                          </option>
-                        ))}
-                      </select>
+                      <ScorePicker
+                        label={card.value || card.label}
+                        range={card.scoreRange}
+                        selected={card.selectedChoice && card.selectedChoice !== "N" ? card.selectedChoice : ""}
+                        onPick={card.onToggle}
+                      />
                     ) : (
                       ["Y"].map((choice) => (
                         <button

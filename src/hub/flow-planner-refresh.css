@@ -86,7 +86,6 @@ html body #root .hub-app.hub-app .flow-desk-events { display: flex; flex-directi
 html body #root .hub-app.hub-app .flow-desk-event {
   padding: 5px 7px 5px 8px;
   border: 0;
-  border-left: 3px solid #9db5d8;
   border-radius: 6px;
   background: var(--fp-accent-soft);
 }
@@ -271,13 +270,13 @@ html body #root .hub-app.hub-app.hub-desktop .planner-date-cell .calendar-entry 
 html body #root .hub-app.hub-app.hub-desktop .planner-date-cell .calendar-entry::before {
   content: "";
   position: absolute;
-  /* short dark bar instead of a blue dot */
-  left: 6px;
-  top: 7px;
-  width: 3px;
-  height: 14px;
-  border-radius: 2px;
-  background: #3d4756;
+  /* small dark dot instead of the old blue one */
+  left: 5px;
+  top: 11px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #2f3845;
 }
 html body #root .hub-app.hub-app.hub-desktop .planner-date-cell .calendar-entry:is(:hover, :focus-within) { background: #f2f5f9; }
 html body #root .hub-app.hub-app.hub-desktop .planner-date-cell .calendar-entry .calendar-note-editor { flex: 1 1 60px; min-width: 0; }
@@ -476,7 +475,7 @@ html body #root .hub-app.hub-app.hub-mobile .mobile-calendar-editor-heading stro
 html body #root .hub-app.hub-app.hub-mobile .mobile-duty-buttons button { border: 1px solid var(--fp-line) !important; border-radius: 999px !important; background: #fff !important; color: var(--fp-ink-2) !important; font-weight: 700 !important; box-shadow: none !important; }
 html body #root .hub-app.hub-app.hub-mobile .mobile-duty-buttons button span { display: none !important; }
 html body #root .hub-app.hub-app.hub-mobile .mobile-duty-buttons button.active { border-color: transparent !important; background: #fff3dc !important; color: #946312 !important; }
-html body #root .hub-app.hub-app.hub-mobile .mobile-calendar-editor .calendar-entry { padding: 6px 10px; border: 0; border-left: 3px solid #9db5d8; border-radius: 8px; background: var(--fp-accent-soft); margin-bottom: 6px; }
+html body #root .hub-app.hub-app.hub-mobile .mobile-calendar-editor .calendar-entry { padding: 6px 10px; border: 0; border-radius: 8px; background: var(--fp-accent-soft); margin-bottom: 6px; }
 
 /* ---------- Planner routines: Daily | Weekly ----------
    Monitor: Daily beside Weekly. Laptop: stacked, Daily as a two-column
@@ -618,8 +617,8 @@ html body #root .hub-app.hub-app .flow-routines .hub-task-group h3::after { cont
 html body #root .hub-app.hub-app .flow-routines .hub-task-groups .hub-task { position: relative; min-height: 44px; padding: 4px 4px 4px 8px; border: 0 !important; border-radius: 10px; transition: background 120ms ease; }
 html body #root .hub-app.hub-app .flow-routines .hub-task + .hub-task { margin-top: 2px; }
 html body #root .hub-app.hub-app .flow-routines .hub-task:hover { background: #f7f9fb; }
-html body #root .hub-app.hub-app .flow-routines .hub-task.selected-positive { background: var(--fp-plus-soft); box-shadow: inset 3px 0 var(--fp-plus); }
-html body #root .hub-app.hub-app .flow-routines .hub-task.selected-negative { background: var(--fp-minus-soft); box-shadow: inset 3px 0 var(--fp-minus); }
+html body #root .hub-app.hub-app .flow-routines .hub-task.selected-positive { background: var(--fp-plus-soft); box-shadow: none; }
+html body #root .hub-app.hub-app .flow-routines .hub-task.selected-negative { background: var(--fp-minus-soft); box-shadow: none; }
 html body #root .hub-app.hub-app .flow-routines .hub-task.selected-negative .hub-task-copy strong { text-decoration: none; }
 html body #root .hub-app.hub-app .flow-routines .hub-task-actions { gap: 2px; padding: 2px; border: 1px solid var(--fp-line); border-radius: 10px; background: #fff; }
 html body #root .hub-app.hub-app .flow-routines .hub-task-actions button { display: inline-flex; align-items: center; justify-content: center; gap: 4px; min-width: 52px; height: 30px; min-height: 30px; padding: 0 8px; border-radius: 8px; font-size: 13px; font-weight: 800; color: var(--fp-muted); }
@@ -852,7 +851,16 @@ html body #root .hub-app.hub-app .wk-cat-row :is(.routine-order-controls, .routi
 html body #root .hub-app.hub-app .wk-cat-row .routine-delete-button:disabled { opacity: .3; }
 html body #root .hub-app.hub-app.hub-app .routine-table-heads.wk-table-heads { grid-template-columns: minmax(0, 1fr); }
 html body #root .hub-app.hub-app.hub-mobile .routine-table-heads.wk-table-heads { display: none; }
-/* Y score range (e.g. "1-3"): a dropdown that reads like the Y button beside N. */
-html body #root .hub-app.hub-app .flow-routines .hub-task-actions .hub-score-select { width: auto; min-width: 58px; height: 26px; min-height: 26px; padding: 0 18px 0 8px; border: 0 !important; border-radius: 7px; background-color: transparent !important; background-image: none !important; box-shadow: none !important; color: var(--fp-plus); font-size: 12px; font-weight: 800; text-align: center; text-align-last: center; cursor: pointer; }
-html body #root .hub-app.hub-app .flow-routines .hub-task-actions .hub-score-select:hover { background-color: var(--fp-plus-soft) !important; }
-html body #root .hub-app.hub-app .flow-routines .hub-task-actions .hub-score-select.is-selected { background-color: var(--fp-plus) !important; color: #fff; }
+/* Y score range (e.g. "1-3"): the Y button shows the range (or the picked
+   score); hovering it (tapping on touch screens) opens a small card of score
+   chips just below. */
+html body #root .hub-app.hub-app .hub-score-picker { position: relative; display: inline-flex; }
+html body #root .hub-app.hub-app .hub-score-pop { position: absolute; top: calc(100% + 8px); right: -4px; z-index: 30; display: flex; gap: 4px; padding: 6px; border: 1px solid var(--fp-line); border-radius: 12px; background: #fff; box-shadow: 0 10px 28px #1d253324, 0 2px 6px #1d253314; opacity: 0; visibility: hidden; transform: translateY(-4px); transition: opacity 140ms ease, transform 140ms ease, visibility 0s linear 140ms; }
+html body #root .hub-app.hub-app .hub-score-pop::before { content: ""; position: absolute; left: 0; right: 0; top: -10px; height: 10px; }
+html body #root .hub-app.hub-app .hub-score-pop::after { content: ""; position: absolute; top: -5px; right: 22px; width: 8px; height: 8px; border-top: 1px solid var(--fp-line); border-left: 1px solid var(--fp-line); background: #fff; transform: rotate(45deg); }
+@media (hover: hover) { html body #root .hub-app.hub-app .hub-score-picker:hover .hub-score-pop { opacity: 1; visibility: visible; transform: none; transition-delay: 0s; } }
+html body #root .hub-app.hub-app .hub-score-picker.is-open .hub-score-pop { opacity: 1; visibility: visible; transform: none; transition-delay: 0s; }
+html body #root .hub-app.hub-app .flow-routines .hub-task-actions .hub-score-pop button { display: grid; place-items: center; width: auto; min-width: 38px; height: 32px; min-height: 32px; padding: 0 8px; border: 1px solid #cfe6d8 !important; border-radius: 8px; background: var(--fp-plus-soft) !important; color: var(--fp-plus) !important; font-size: 13px; font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; box-shadow: none; }
+html body #root .hub-app.hub-app .flow-routines .hub-task-actions .hub-score-pop button:hover { border-color: var(--fp-plus) !important; }
+html body #root .hub-app.hub-app .flow-routines .hub-task-actions .hub-score-pop button[aria-pressed="true"] { border-color: var(--fp-plus) !important; background: var(--fp-plus) !important; color: #fff !important; }
+html body #root .hub-app.hub-app.hub-mobile .flow-routines .hub-task-actions .hub-score-pop button { min-width: 44px; height: 40px; min-height: 40px; }
