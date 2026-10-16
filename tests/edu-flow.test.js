@@ -30,10 +30,11 @@ function harness(save = async () => {}) {
   return { source, listeners, getEdu: () => edu, replace: (next) => { edu = next; for (const listener of listeners) listener(); } };
 }
 
-test("Edu Flow lists only the selected day's booked consultations in time order", () => {
+test("Edu Flow lists the selected day's booked and completed consultations in time order", () => {
   const { source, getEdu } = harness();
   const before = structuredClone(getEdu());
   assert.deepEqual(source.getItems("2026-10-11"), [
+    { id: "done", title: "07:00 · 김하늘 · 완료", displayTitle: "김하늘 · 완료", time: "07:00", kind: "consultation", sourceLabel: "Edu · 상담", completed: true, statusLabel: "완료" },
     { id: "early", title: "09:30 · 박바다 · 진학 상담", displayTitle: "박바다 · 진학 상담", time: "09:30", kind: "consultation", sourceLabel: "Edu · 상담" },
     { id: "later", title: "17:00 · 김하늘 · 학습 상담", displayTitle: "김하늘 · 학습 상담", time: "17:00", kind: "consultation", sourceLabel: "Edu · 상담" },
   ]);
@@ -55,10 +56,10 @@ test("Edu Flow reads latest data and subscription teardown stops updates", () =>
   let notified = 0;
   const unsubscribe = source.subscribe(() => { notified += 1; });
   const next = structuredClone(getEdu());
-  next.consultations[1].status = "completed";
+  next.consultations[1].status = "cancelled";
   replace(next);
   assert.equal(notified, 1);
-  assert.deepEqual(source.getItems("2026-10-11").map((item) => item.id), ["later"]);
+  assert.deepEqual(source.getItems("2026-10-11").map((item) => item.id), ["done", "later"]);
   unsubscribe();
   unsubscribe();
   replace(next);
