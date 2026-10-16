@@ -369,3 +369,48 @@ html body #root .hub-app .stock-page .stock-range-boundary { position: relative;
 html body #root .hub-app .stock-page .stock-range-boundary button { position: absolute; top: calc(100% + 6px); left: 50%; margin: 0; transform: translateX(-50%); z-index: 1; }
 html body #root .hub-app .stock-page .stock-range-bar > p { margin: 6px 0 0; color: var(--stock-muted); font-size: 12.5px; line-height: 1.6; }
 html body #root .hub-app .stock-page .stock-range-bar > p b { color: var(--stock-ink); }
+
+/* ---------- Strategy table: full window, own scroll area ----------
+   The dialog fills the window; the table gets all remaining height and scrolls
+   inside itself, so the sideways scrollbar sits at the bottom of the screen,
+   the stage header row stays on top and the order column stays on the left.
+   Round buttons on both sides page through the stages. */
+html body #root .hub-app .stock-page .stock-strategy-dialog { width: calc(100vw - 24px); height: calc(100dvh - 24px); max-height: none; }
+html body #root .hub-app .stock-page .stock-strategy-dialog-header { padding: 12px 20px; }
+html body #root .hub-app .stock-page .stock-strategy-dialog-body { display: flex; flex: 1 1 auto; flex-direction: column; min-height: 0; margin-top: 12px; overflow: hidden; }
+html body #root .hub-app .stock-page .stock-strategy-dialog .stock-matrix-panel { display: flex; flex: 1 1 auto; flex-direction: column; min-height: 0; margin: 0; padding-bottom: 0; }
+html body #root .hub-app .stock-page .stock-strategy-dialog .stock-matrix-panel > * { flex: none; }
+html body #root .hub-app .stock-page .stock-strategy-dialog .stock-matrix-panel > .stock-section-heading { margin-bottom: 6px; }
+html body #root .hub-app .stock-page .stock-strategy-dialog .stock-matrix-panel > .stock-strategy-guide { margin-bottom: 10px; font-size: 14px; }
+html body #root .hub-app .stock-page .stock-strategy-dialog .stock-matrix-panel > .stock-matrix-actions { margin-bottom: 8px; }
+html body #root .hub-app .stock-page .stock-strategy-dialog .stock-range-bar { margin: 0 22px 12px; }
+html body #root .hub-app .stock-page .stock-strategy-dialog .stock-table-shell { position: relative; display: flex; flex: 1 1 auto; min-height: 160px; }
+html body #root .hub-app .stock-page .stock-strategy-dialog .stock-table-wrap { flex: 1 1 auto; min-height: 0; overflow: auto; overscroll-behavior: contain; scrollbar-width: auto; }
+html body #root .hub-app .stock-page .stock-strategy-dialog .stock-strategy-table thead th { position: sticky; top: 0; z-index: 2; }
+html body #root .hub-app .stock-page .stock-strategy-dialog .stock-strategy-table thead th:first-child { left: 0; z-index: 4; }
+html body #root .hub-app .stock-page .stock-strategy-dialog .stock-edit-footer { position: static; }
+html body #root .hub-app .stock-page .stock-strategy-dialog .stock-draft-preview { margin-top: 0; }
+html body #root .hub-app .stock-page .stock-table-page { position: absolute; top: 50%; z-index: 6; display: grid; place-items: center; width: 44px; height: 44px; min-height: 44px; padding: 0; border: 1px solid #c5cfc8; border-radius: 999px; background: #ffffffe8; color: var(--stock-ink); box-shadow: 0 4px 14px #2c3d3122; transform: translateY(-50%); cursor: pointer; line-height: 0; }
+html body #root .hub-app .stock-page .stock-table-page:hover { border-color: var(--stock-accent); background: #fff; }
+html body #root .hub-app .stock-page .stock-table-page.is-prev { left: 140px; }
+html body #root .hub-app .stock-page .stock-table-page.is-next { right: 18px; }
+html body #root .hub-app .stock-page .stock-strategy-table .is-flash { box-shadow: inset 0 0 0 2px var(--stock-accent) !important; transition: box-shadow 200ms ease; }
+html body #root .hub-app .stock-page .stock-range-jump { display: flex; flex-direction: column; align-items: center; gap: 2px; width: 100%; min-height: 0; height: auto; margin: 0; padding: 0; border: 0; background: transparent; color: inherit; box-shadow: none; cursor: pointer; }
+html body #root .hub-app .stock-page .stock-range-bar button.stock-range-jump { height: auto; margin: 0; padding: 0; border: 0; background: transparent; }
+html body #root .hub-app .stock-page .stock-range-bar button.stock-range-jump:hover strong { text-decoration: underline; text-underline-offset: 3px; }
+html body #root .hub-app .stock-page .stock-range-bar button.stock-range-jump span { color: var(--stock-muted); font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+html body #root .hub-app .stock-page .stock-range-bar button.stock-range-jump strong { color: var(--stock-ink); font-size: 13px; font-weight: 700; }
+@media (max-width: 760px) {
+  html body #root .hub-app .stock-page .stock-strategy-dialog { width: 100vw; height: 100dvh; border-radius: 0; }
+  html body #root .hub-app .stock-page .stock-strategy-dialog .stock-range-bar { margin: 0 12px 10px; }
+  html body #root .hub-app .stock-page .stock-table-page.is-prev { left: 120px; }
+  html body #root .hub-app .stock-page .stock-table-page.is-next { right: 8px; }
+}
+/* Short screens while editing: the table keeps at least ~60% of the window
+   and the editing tools above it scroll away; save/cancel stay at the bottom. */
+html body #root .hub-app .stock-page .stock-strategy-dialog-body { overflow-y: auto; }
+html body #root .hub-app .stock-page .stock-strategy-dialog .stock-table-shell { min-height: max(300px, 60dvh); }
+html body #root .hub-app .stock-page .stock-strategy-dialog .stock-edit-footer { position: sticky; bottom: 0; z-index: 7; padding-top: 10px; padding-bottom: 10px; }
+html body #root .hub-app .stock-page .stock-strategy-dialog .stock-draft-preview { padding-top: 10px; padding-bottom: 10px; }
+html body #root .hub-app .stock-page .stock-strategy-dialog .stock-draft-preview > div { padding: 8px 12px; }
+html body #root .hub-app .stock-page .stock-strategy-dialog .stock-range-bar.is-editing > p { margin-top: 0; }

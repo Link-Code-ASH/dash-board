@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { ArrowLeft, ArrowRight, Check, GripVertical, Merge, Pencil, Plus, Scissors, Trash2 } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { ArrowLeft, ArrowRight, Check, ChevronLeft, ChevronRight, GripVertical, Merge, Pencil, Plus, Scissors, Trash2 } from 'lucide-react';
 import { defaultStages } from './model.js';
 import { sides, ruleAt, rowCount, editableStages, addRule, addStrategyRow, removeStrategyRow, addStrategyStage, moveStrategyStage, splitStrategyStage, mergeStrategyStage, validateStrategy, describeRule, orderLabel } from './strategy.js';
 
@@ -34,7 +34,7 @@ const formatBound = value => Number.isFinite(Number(value)) ? String(Number(valu
 // The holding-ratio ranges as one 0~100% bar. While editing, each range can be
 // cut in half and each boundary removed, so stages are added or taken out where
 // they belong instead of only at the end.
-function RangeBar({ sorted, editing, onSplit, onMerge }) {
+function RangeBar({ sorted, editing, onSplit, onMerge, onJump }) {
   return <div className={`stock-range-bar ${editing ? 'is-editing' : ''}`} aria-label="보유 비율 구간">
     <div className="stock-range-track">{sorted.map((stage, index) => {
       const lower = Number(sorted[index - 1]?.upper || 0), upper = Number(stage.upper);
@@ -44,19 +44,46 @@ function RangeBar({ sorted, editing, onSplit, onMerge }) {
           {editing && <button type="button" title={`${sorted[index - 1].name}와 ${stage.name} 합치기`} aria-label={`${formatBound(lower)}% 경계 없애고 ${sorted[index - 1].name}와 ${stage.name} 합치기`} onClick={() => onMerge(sorted[index - 1].id)}><Merge size={12} />합치기</button>}
         </div>}
         <div className={`stock-range-segment${index % 2 ? ' is-alt' : ''}`} style={{ flexGrow: width || 1 }}>
-          <strong>{stage.name}</strong>
-          <span>{formatBound(lower)}~{formatBound(upper)}%</span>
+          <button type="button" className="stock-range-jump" title={`${stage.name} 열로 이동`} onClick={() => onJump(stage.id)}><strong>{stage.name}</strong><span>{formatBound(lower)}~{formatBound(upper)}%</span></button>
           {editing && <button type="button" title={`${stage.name}을 반으로 나누기`} aria-label={`${stage.name} 구간 반으로 나누기`} disabled={!(upper - lower > 0.02)} onClick={() => onSplit(stage.id)}><Scissors size={12} />나누기</button>}
         </div>
       </React.Fragment>;
     })}</div>
-    {editing && <p>구간을 <b>나누기</b>하면 같은 주문을 가진 두 단계가 생기고, 경계의 <b>합치기</b>를 누르면 두 단계가 하나로 합쳐져요(왼쪽 단계의 주문을 써요). 경계 숫자는 아래 표의 보유 비율 칸에서 고칠 수 있어요.</p>}
+    {editing ? <p>구간을 <b>나누기</b>하면 같은 주문을 가진 두 단계가 생기고, 경계의 <b>합치기</b>를 누르면 두 단계가 하나로 합쳐져요(왼쪽 단계의 주문을 써요). 경계 숫자는 아래 표의 보유 비율 칸에서 고칠 수 있어요.</p> : <p>단계 이름을 누르면 표가 그 단계로 이동해요.</p>}
   </div>;
 }
 
 export default function StrategyTable({ asset, stages, draft, setDraft, accounts, onSave, onCancel, onEdit }) {
   const editing = !!draft;
   const [draggedStage, setDraggedStage] = useState('');
+  const [flash, setFlash] = useState('');
+  const wrap = useRef(null);
+  const [edges, setEdges] = useState({ start: true, end: true });
+  const measure = () => {
+    const box = wrap.current;
+    if (!box) return;
+    const next = { start: box.scrollLeft <= 2, end: box.scrollLeft + box.clientWidth >= box.scrollWidth - 2 };
+    setEdges(current => current.start === next.start && current.end === next.end ? current : next);
+  };
+  useEffect(() => {
+    measure();
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  });
+  // Bring a stage's column next to the sticky order column, then mark it briefly.
+  const jumpTo = id => {
+    const box = wrap.current, cell = box?.querySelector(`[data-stage="${id}"]`), sticky = box?.querySelector('thead th');
+    if (!box || !cell) return;
+    box.scrollTo({ left: Math.max(0, cell.offsetLeft - (sticky?.offsetWidth || 0)), behavior: 'smooth' });
+    setFlash(id); window.setTimeout(() => setFlash(current => current === id ? '' : current), 1200);
+  };
+  const page = direction => {
+    const box = wrap.current;
+    if (!box) return;
+    const column = box.querySelector('thead th + th')?.offsetWidth || 212, sticky = box.querySelector('thead th')?.offsetWidth || 0;
+    const step = Math.max(column, Math.floor((box.clientWidth - sticky) / column) * column);
+    box.scrollBy({ left: direction * step, behavior: 'smooth' });
+  };
   const strategyError = validateStrategy(stages);
   const error = editing ? strategyError : '';
   const sorted = [...stages].sort((a, b) => Number(a.upper) - Number(b.upper));
@@ -78,12 +105,12 @@ export default function StrategyTable({ asset, stages, draft, setDraft, accounts
     </div>
     <p className="stock-strategy-guide">보유 비율에 맞는 단계의 열을 확인하세요. 각 행이 하나의 주문입니다.</p>
     {editing && <div className="stock-matrix-actions">{!stages.length && <button onClick={() => setDraft(addStrategyStage(stages))}><Plus size={13} />단계 추가</button>}{sides.map(([side, label]) => <button key={side} onClick={() => setDraft(addStrategyRow(stages, side))}><Plus size={13} />{label} 행 추가</button>)}<button onClick={() => setDraft(editableStages(defaultStages()))}>TQQQ 시트 규칙 불러오기</button></div>}
-    {!!stages.length && <RangeBar sorted={sorted} editing={editing} onSplit={id => setDraft(splitStrategyStage(stages, id))} onMerge={id => setDraft(mergeStrategyStage(stages, id))} />}
-    {!stages.length ? <div className="stock-empty"><p>이 종목의 전략을 설정해 주세요.</p>{!editing && <button onClick={onEdit}>전략 만들기</button>}</div> : <div className="stock-table-wrap"><table className="stock-strategy-table"><thead><tr>
+    {!!stages.length && <RangeBar sorted={sorted} editing={editing} onJump={jumpTo} onSplit={id => setDraft(splitStrategyStage(stages, id))} onMerge={id => setDraft(mergeStrategyStage(stages, id))} />}
+    {!stages.length ? <div className="stock-empty"><p>이 종목의 전략을 설정해 주세요.</p>{!editing && <button onClick={onEdit}>전략 만들기</button>}</div> : <div className="stock-table-shell">{!edges.start && <button type="button" className="stock-table-page is-prev" aria-label="앞 단계 보기" title="앞 단계 보기" onClick={() => page(-1)}><ChevronLeft size={22} /></button>}{!edges.end && <button type="button" className="stock-table-page is-next" aria-label="뒤 단계 보기" title="뒤 단계 보기" onClick={() => page(1)}><ChevronRight size={22} /></button>}<div className="stock-table-wrap" ref={wrap} onScroll={measure}><table className="stock-strategy-table"><thead><tr>
       <th scope="col">주문</th>
       {sorted.map((stage, index) => {
         const lower = sorted[index - 1]?.upper || 0;
-        return <th scope="col" key={stage.id}>
+        return <th scope="col" key={stage.id} data-stage={stage.id} className={flash === stage.id ? 'is-flash' : ''}>
           <div className="stock-stage-head" draggable={editing}
             onDragStart={e => {
               if (e.target.closest('input, button, select')) { e.preventDefault(); return; }
@@ -104,9 +131,9 @@ export default function StrategyTable({ asset, stages, draft, setDraft, accounts
       <th scope="row" className={`stock-row-label ${side}`}><strong>{label}</strong><span>주문 {row + 1}</span>{editing && <button className="stock-row-delete" aria-label={`${label} ${row + 1}행 삭제`} onClick={() => setDraft(removeStrategyRow(stages, side, row))}><Trash2 size={15} /></button>}</th>
       {sorted.map(stage => {
         const rule = ruleAt(stage, side, row), cellLabel = `${asset.symbol} ${stage.name} ${label} ${row + 1}`;
-        return <td key={stage.id}><RuleCell label={cellLabel} rule={rule} editing={editing} onChange={patch => changeRule(stage, rule, patch)} onAdd={() => changeStage(stage.id, { rules: addRule(stage, side, row).rules })} onRemove={() => changeStage(stage.id, { rules: stage.rules.filter(r => r.id !== rule.id) })} /></td>;
+        return <td key={stage.id} className={flash === stage.id ? 'is-flash' : ''}><RuleCell label={cellLabel} rule={rule} editing={editing} onChange={patch => changeRule(stage, rule, patch)} onAdd={() => changeStage(stage.id, { rules: addRule(stage, side, row).rules })} onRemove={() => changeStage(stage.id, { rules: stage.rules.filter(r => r.id !== rule.id) })} /></td>;
       })}
-    </tr>))}</tbody></table></div>}
+    </tr>))}</tbody></table></div></div>}
     {editing && <><div className="stock-draft-preview" aria-label="전략 변경 미리보기">{accounts.map(account => <div key={account.label} className={`account-${account.label.toLowerCase()}`}><strong>{account.label} · {account.result.stage?.name || '단계 미정'}</strong>{account.result.error ? <span>{account.result.error}</span> : sides.map(([side, label]) => <span key={side}>{label} {account.result.orders.filter(r => r.side === side && r.quantity > 0).map(r => `${orderLabel(r)} ${priceLabel(r.price)} · ${r.quantity}주`).join(' / ') || '—'}</span>)}</div>)}</div><div className="stock-edit-footer">{error && <span role="status">{error}</span>}<button onClick={onCancel}>취소</button><button className="stock-primary" disabled={!!error} onClick={onSave}><Check size={14} />저장</button></div></>}
   </section>;
 }
