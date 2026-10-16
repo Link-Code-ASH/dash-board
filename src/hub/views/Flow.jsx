@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Plus,
   Trash2,
@@ -6,9 +6,13 @@ import {
   Star,
   ChevronRight,
   StickyNote,
+  GripVertical,
+  ArrowUp,
+  ArrowDown,
 } from "lucide-react";
 import { useDashboardData } from "../context.jsx";
-import { DateMarkerPanel, MemoArea } from "../../dashboard/components.jsx";
+import { MemoArea } from "../../dashboard/components.jsx";
+import { TimePicker } from "../CalendarEventEditor.jsx";
 import { MemoFormatToolbar } from "../../MemoEditor.jsx";
 import { DateHeading, PanelToggle, RoutineTasks, usePanelOpen } from "./shared.jsx";
 import { formatDDay, normalizeDateMarkers } from "../../dashboard/model.js";
@@ -124,12 +128,151 @@ function MemoDesk() {
 }
 
 // Folded, Date Marker is one line of D-day chips; unfolded, the full editor.
+const markerWeekdays = ["일", "월", "화", "수", "목", "금", "토"];
+
+function markerDateLabel(date) {
+  if (!date) return "";
+  const [, month, day] = date.split("-").map(Number);
+  return `${month}/${day} (${markerWeekdays[new Date(`${date}T12:00:00`).getDay()]})`;
+}
+
+function markerTone(dday) {
+  if (dday === "D-Day") return "is-today";
+  if (dday.startsWith("D-")) return "is-upcoming";
+  if (dday.startsWith("D+")) return "is-past";
+  return "is-empty";
+}
+
+const isFilledMarker = (marker) => Boolean(marker.text.trim() || marker.date || marker.time);
+
+function DateMarkerEditor({ markers, onClose }) {
+  const d = useDashboardData();
+  const [editing, setEditing] = useState(-1);
+  const [dragFrom, setDragFrom] = useState(-1);
+  const [dragOver, setDragOver] = useState(-1);
+  const [armed, setArmed] = useState(-1);
+  const focusIndex = useRef(-1);
+  const list = useRef(null);
+  const rows = markers
+    .map((marker, index) => ({ ...marker, index }))
+    .filter((marker) => isFilledMarker(marker) || marker.index === editing);
+  const filledCount = markers.filter(isFilledMarker).length;
+  useEffect(() => {
+    if (focusIndex.current < 0) return;
+    list.current?.querySelector(`[data-marker="${focusIndex.current}"] .mk-text`)?.focus();
+    focusIndex.current = -1;
+  });
+  const add = () => {
+    const empty = markers.findIndex((marker) => !isFilledMarker(marker));
+    if (empty < 0) return;
+    let lastFilled = -1;
+    markers.forEach((marker, index) => { if (isFilledMarker(marker)) lastFilled = index; });
+    const target = empty < lastFilled ? lastFilled : empty;
+    if (target !== empty) d.moveDateMarker(empty, target);
+    focusIndex.current = target;
+    setEditing(target);
+  };
+  const move = (from, to) => {
+    if (to < 0 || to >= rows.length) return;
+    const target = rows[to].index;
+    d.moveDateMarker(from, target);
+    if (editing === from) setEditing(target);
+  };
+  const endDrag = () => { setDragFrom(-1); setDragOver(-1); setArmed(-1); };
+  return (
+    <ol className="mk-list" ref={list}>
+      {rows.map((marker, position) => {
+        const dday = formatDDay(marker.date, d.selectedDate);
+        const isEditing = editing === marker.index;
+        return (
+          <li
+            key={marker.index}
+            data-marker={marker.index}
+            className={`mk-row${isEditing ? " is-editing" : ""}${dragFrom === marker.index ? " is-dragging" : ""}${dragOver === marker.index && dragFrom !== marker.index ? (dragFrom > marker.index ? " is-drop-before" : " is-drop-after") : ""}`}
+            draggable={armed === marker.index}
+            onDragStart={(event) => { setDragFrom(marker.index); event.dataTransfer.effectAllowed = "move"; event.dataTransfer.setData("text/plain", String(marker.index)); }}
+            onDragOver={(event) => { if (dragFrom < 0) return; event.preventDefault(); if (dragOver !== marker.index) setDragOver(marker.index); }}
+            onDrop={(event) => { event.preventDefault(); if (dragFrom >= 0 && dragFrom !== marker.index) d.moveDateMarker(dragFrom, marker.index); endDrag(); }}
+            onDragEnd={endDrag}
+          >
+            <span
+              className="mk-grip"
+              title="끌어서 순서 바꾸기"
+              aria-hidden="true"
+              onPointerDown={() => setArmed(marker.index)}
+              onPointerUp={() => setArmed(-1)}
+            >
+              <GripVertical size={14} />
+            </span>
+            <span className={`mk-dday ${markerTone(dday)}`}>{marker.date ? dday : "D"}</span>
+            <input
+              className="mk-text"
+              type="text"
+              maxLength={36}
+              placeholder="이름"
+              aria-label={`Marker ${position + 1} 이름`}
+              value={marker.text}
+              onChange={(event) => d.updateDateMarker(marker.index, "text", event.target.value)}
+            />
+            <button
+              type="button"
+              className={`mk-when${marker.date ? "" : " is-empty"}`}
+              aria-expanded={isEditing}
+              title="날짜·시간 편집"
+              onClick={() => setEditing(isEditing ? -1 : marker.index)}
+            >
+              {marker.date ? <span>{markerDateLabel(marker.date)}</span> : <span>날짜</span>}
+              {marker.time && <small>{marker.time}</small>}
+            </button>
+            {isEditing && (
+              <div className="mk-edit">
+                <input
+                  className="mk-date"
+                  type="date"
+                  aria-label={`Marker ${position + 1} 날짜`}
+                  value={marker.date}
+                  onClick={(event) => event.currentTarget.showPicker?.()}
+                  onChange={(event) => d.updateDateMarker(marker.index, "date", event.target.value)}
+                />
+                <TimePicker
+                  label={`Marker ${position + 1}`}
+                  value={marker.time}
+                  onChange={(time) => d.updateDateMarker(marker.index, "time", time)}
+                />
+                <span className="mk-edit-tools">
+                  <button type="button" title="위로" aria-label="위로 옮기기" disabled={position === 0} onClick={() => move(marker.index, position - 1)}>
+                    <ArrowUp size={14} />
+                  </button>
+                  <button type="button" title="아래로" aria-label="아래로 옮기기" disabled={position === rows.length - 1} onClick={() => move(marker.index, position + 1)}>
+                    <ArrowDown size={14} />
+                  </button>
+                  <button type="button" className="is-danger" title="삭제" aria-label="Marker 삭제" onClick={() => { d.removeDateMarker(marker.index); setEditing(-1); }}>
+                    <Trash2 size={14} />
+                  </button>
+                </span>
+              </div>
+            )}
+          </li>
+        );
+      })}
+      <li className="mk-foot">
+        {filledCount < markers.length && (
+          <button type="button" className="mk-add" onClick={add}>
+            <Plus size={14} /> Marker 추가
+          </button>
+        )}
+        <span className="mk-count">{filledCount}/{markers.length}</span>
+        <button type="button" className="mk-done" onClick={onClose}>완료</button>
+      </li>
+    </ol>
+  );
+}
+
 function DateMarkers() {
   const d = useDashboardData();
   const [open, toggle] = usePanelOpen("flow-markers", false);
-  const filled = normalizeDateMarkers(d.data.dateMarkers).filter(
-    (marker) => marker.text.trim() || marker.date,
-  );
+  const markers = normalizeDateMarkers(d.data.dateMarkers);
+  const filled = markers.filter((marker) => marker.text.trim() || marker.date);
   return (
     <section className={`flow-markers ${open ? "" : "is-collapsed"}`}>
       <div className="hub-section-title">
@@ -140,11 +283,7 @@ function DateMarkers() {
         <PanelToggle open={open} onToggle={toggle} label="Date Marker" />
       </div>
       {open ? (
-        <DateMarkerPanel
-          dateMarkers={d.data.dateMarkers}
-          selectedDate={d.selectedDate}
-          updateDateMarker={d.updateDateMarker}
-        />
+        <DateMarkerEditor markers={markers} onClose={toggle} />
       ) : (
         <ul className="flow-marker-chips">
           {filled.map((marker, index) => (

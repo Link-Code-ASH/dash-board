@@ -135,18 +135,20 @@ function WeeklyEditor({ heading, toggle }) {
   const selectedWeekday = getWeekdayKey(d.selectedDate);
   return <div className="routine-config-editor routine-weekly-editor wk-editor" ref={root} aria-label="Weekly 편집">
     <div className="routine-editor-actions">{heading && <h2><CalendarRange size={18} />Weekly<small>{categories.length}</small></h2>}<span className="routine-editor-tools"><button className="routine-add-button" type="button" aria-label="Weekly 카테고리 추가" title="카테고리 추가" onClick={d.addCategory}><Plus size={17} /><span className="routine-add-label">카테고리 추가</span></button>{toggle}</span></div>
-    <p className="wk-guide">요일 칸에 할 일을 적으면 그 요일 <b>오늘 할 일</b>에 나와요. 했으면 <span className="is-y">Y 점수</span>, 못 했으면 <span className="is-n">N 점수</span>가 붙어요. 한 칸에 여러 개를 넣으면 주마다 번갈아 나와요.</p>
+    <p className="wk-guide">요일 칸에 적은 할 일은 그 요일 <b>Today's Tasks</b>에 나와요. 한 칸에 여러 개를 넣으면 주마다 번갈아 나와요.</p>
+    <div className="routine-table-heads wk-table-heads" aria-hidden="true">
+      <div className="routine-table-head"><span>항목</span><span>Y</span><span>N</span></div>
+    </div>
     <div className="wk-list">
       {categories.map((category, index) => <article className="wk-cat" key={category.key} data-item-key={category.key} {...dragProps(category.key, d.moveCategory)}>
-        <header className="wk-cat-head">
+        {/* Same row layout as a Daily item: order, icon, name, Y, N, delete. */}
+        <header className="routine-preset-row wk-cat-row">
+          <OrderControl index={index} items={categories} onMove={d.moveCategory} label={category.label || "카테고리"} />
           <ItemIconButton itemKey={`weekly:${category.key}`} label={category.label || "카테고리"} />
-          <input className="wk-cat-name" aria-label={`카테고리 이름 ${index + 1}`} placeholder="카테고리 이름" maxLength={24} value={category.label} onChange={(e) => d.updateCategory(category.key, "label", e.target.value)} />
-          <label className="wk-score is-y"><span>했으면</span><input aria-label={`${category.label} Y 점수`} inputMode="text" value={category.yScore} onChange={(e) => d.updateCategory(category.key, "yScore", e.target.value)} /></label>
-          <label className="wk-score is-n"><span>못 했으면</span><input aria-label={`${category.label} N 점수`} inputMode="numeric" value={category.nScore} onChange={(e) => d.updateCategory(category.key, "nScore", e.target.value)} /></label>
-          <span className="wk-cat-tools">
-            <OrderControl index={index} items={categories} onMove={d.moveCategory} label={category.label || "카테고리"} />
-            <button type="button" className="routine-delete-button" disabled={categories.length <= 1} aria-label={`${category.label} 카테고리 삭제`} onClick={() => d.removeCategory(category.key)}><Trash2 size={16} /></button>
-          </span>
+          <input className="routine-name-input wk-cat-name" aria-label={`카테고리 이름 ${index + 1}`} placeholder="카테고리 이름" maxLength={24} value={category.label} onChange={(e) => d.updateCategory(category.key, "label", e.target.value)} />
+          <ScoreInput choice="Y" label={category.label} value={category.yScore} onChange={(value) => d.updateCategory(category.key, "yScore", value)} />
+          <ScoreInput choice="N" label={category.label} value={category.nScore} onChange={(value) => d.updateCategory(category.key, "nScore", value)} />
+          <button type="button" className="routine-delete-button" disabled={categories.length <= 1} aria-label={`${category.label} 카테고리 삭제`} onClick={() => d.removeCategory(category.key)}><Trash2 size={18} /></button>
         </header>
         <div className="wk-days">
           {weekDays.map((day) => <WeeklyDay key={day.key} day={day} label={category.label} today={selectedWeekday === day.key} selectedDate={d.selectedDate}

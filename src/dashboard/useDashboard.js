@@ -1454,6 +1454,29 @@ export function useDashboard(selectedDate, setSelectedDate) {
     });
   };
 
+  // Reordering only permutes the fixed 8 slots, so the stored shape never changes.
+  const moveDateMarker = (from, to) => {
+    saveData((draft) => {
+      const markers = normalizeDateMarkers(draft.dateMarkers);
+      if (from < 0 || from >= markers.length || to < 0 || to >= markers.length || from === to) return draft;
+      const [moved] = markers.splice(from, 1);
+      markers.splice(to, 0, moved);
+      draft.dateMarkers = markers;
+      return draft;
+    });
+  };
+
+  // Clearing a marker moves its now-empty slot to the end so filled ones stay together.
+  const removeDateMarker = (index) => {
+    saveData((draft) => {
+      const markers = normalizeDateMarkers(draft.dateMarkers);
+      markers.splice(index, 1);
+      markers.push({ text: "", date: "", time: "" });
+      draft.dateMarkers = markers;
+      return draft;
+    });
+  };
+
   const updateDisplayMode = (mode) => {
     saveData((draft) => {
       draft.displayMode = normalizeDisplayMode(mode);
@@ -1812,6 +1835,8 @@ export function useDashboard(selectedDate, setSelectedDate) {
     updateCalendarEntries,
     toggleCalendarDuty,
     updateDateMarker,
+    moveDateMarker,
+    removeDateMarker,
     updateDisplayMode,
     addMemoNote,
     updateMemoNote,
