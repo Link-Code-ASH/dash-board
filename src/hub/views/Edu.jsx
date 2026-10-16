@@ -1,11 +1,9 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, CalendarDays, Check, ChevronLeft, ChevronRight, FlaskConical, GraduationCap, History, Plus, Search, Users, X } from "lucide-react";
+import { ArrowLeft, CalendarDays, Check, ChevronLeft, ChevronRight, GraduationCap, History, Plus, Search, Users, X } from "lucide-react";
 import { useEdu } from "../../edu/EduProvider.jsx";
 import Admissions from "../../edu/Admissions.jsx";
 import { GRADE_OPTIONS, countingAge, currentGrade, gradeLabel, pendingTransitions } from "../../edu/model.js";
 import "../../edu/edu.css";
-
-const EduLab = React.lazy(() => import("../../edu/lab/EduLab.jsx"));
 
 const STATUSES = { scheduled: "예약", completed: "완료", cancelled: "취소" };
 const EVENT_TITLES = {
@@ -263,7 +261,6 @@ export default function Edu({ route, navigate }) {
   const student = edu.students.find((item) => item.id === studentId);
   const calendar = section === "calendar";
   const admissions = section === "admissions" || section.startsWith("admissions:");
-  const lab = section === "lab";
   useEffect(() => { setActionError(""); }, [section]);
   const completeConsultation = async (item) => {
     setActionError("");
@@ -272,9 +269,9 @@ export default function Edu({ route, navigate }) {
   };
   return <div className="edu-workspace">
     <div className="edu-page-heading"><div><h1><GraduationCap size={28} strokeWidth={1.6} />Edu</h1><p>원생과 함께하는 매일의 기록</p></div><span className="edu-year-badge">{year}학년도</span></div>
-    <nav className="edu-navigation" aria-label="Edu 메뉴"><button type="button" className={!calendar && !admissions && !lab ? "active" : ""} aria-current={!calendar && !admissions && !lab ? "page" : undefined} onClick={() => navigate("edu", "today")}><Users size={17} />원생 관리</button><button type="button" className={calendar ? "active" : ""} aria-current={calendar ? "page" : undefined} onClick={() => navigate("edu", "calendar")}><CalendarDays size={17} />상담 일정</button><button type="button" className={admissions ? "active" : ""} aria-current={admissions ? "page" : undefined} onClick={() => navigate("edu", "admissions")}><GraduationCap size={17} />입시 일정</button><button type="button" className={lab ? "active" : ""} aria-current={lab ? "page" : undefined} onClick={() => navigate("edu", "lab")}><FlaskConical size={17} />문항 연구소</button></nav>
-    {!lab && <Alert>{actionError || error}</Alert>}
-    {lab ? <EduLab /> : !ready ? <section className="edu-panel" aria-busy={!error}><EmptyState title={error ? "원생 데이터 확인이 필요합니다" : "원생 정보를 불러오는 중입니다"}>{error ? "위 오류를 확인하고 백업 또는 저장된 데이터를 점검해 주세요." : "잠시만 기다려 주세요."}</EmptyState></section> : admissions ? <Admissions edu={edu} today={today} busy={busy} save={save} selectedId={section.startsWith("admissions:") ? section.slice(11) : null} navigate={navigate} /> : studentId ? student ? <StudentDetail key={student.id} student={student} edu={edu} today={today} year={year} busy={busy} save={save} navigate={navigate} openConsultation={setConsultation} completeConsultation={completeConsultation} /> : <section className="edu-panel"><EmptyState title="원생을 찾을 수 없습니다" action={<button type="button" className="edu-button" onClick={() => navigate("edu", "today")}>원생 목록으로</button>}>원생 목록에서 다시 선택해 주세요.</EmptyState></section> : calendar ? <ConsultationCalendar edu={edu} today={today} busy={busy} navigate={navigate} openConsultation={setConsultation} completeConsultation={completeConsultation} /> : <StudentList edu={edu} today={today} navigate={navigate} busy={busy} onRegister={() => setRegistration(true)} />}
+    <nav className="edu-navigation" aria-label="Edu 메뉴"><button type="button" className={!calendar && !admissions ? "active" : ""} aria-current={!calendar && !admissions ? "page" : undefined} onClick={() => navigate("edu", "today")}><Users size={17} />원생 관리</button><button type="button" className={calendar ? "active" : ""} aria-current={calendar ? "page" : undefined} onClick={() => navigate("edu", "calendar")}><CalendarDays size={17} />상담 일정</button><button type="button" className={admissions ? "active" : ""} aria-current={admissions ? "page" : undefined} onClick={() => navigate("edu", "admissions")}><GraduationCap size={17} />입시 일정</button></nav>
+    <Alert>{actionError || error}</Alert>
+    {!ready ? <section className="edu-panel" aria-busy={!error}><EmptyState title={error ? "원생 데이터 확인이 필요합니다" : "원생 정보를 불러오는 중입니다"}>{error ? "위 오류를 확인하고 백업 또는 저장된 데이터를 점검해 주세요." : "잠시만 기다려 주세요."}</EmptyState></section> : admissions ? <Admissions edu={edu} today={today} busy={busy} save={save} selectedId={section.startsWith("admissions:") ? section.slice(11) : null} navigate={navigate} /> : studentId ? student ? <StudentDetail key={student.id} student={student} edu={edu} today={today} year={year} busy={busy} save={save} navigate={navigate} openConsultation={setConsultation} completeConsultation={completeConsultation} /> : <section className="edu-panel"><EmptyState title="원생을 찾을 수 없습니다" action={<button type="button" className="edu-button" onClick={() => navigate("edu", "today")}>원생 목록으로</button>}>원생 목록에서 다시 선택해 주세요.</EmptyState></section> : calendar ? <ConsultationCalendar edu={edu} today={today} busy={busy} navigate={navigate} openConsultation={setConsultation} completeConsultation={completeConsultation} /> : <StudentList edu={edu} today={today} navigate={navigate} busy={busy} onRegister={() => setRegistration(true)} />}
     {registration && <Dialog title="원생 등록" subtitle="필수 정보를 입력한 뒤 원생을 등록하세요." busy={busy} onClose={() => setRegistration(false)}><StudentForm today={today} year={year} busy={busy} save={save} onSaved={(created) => { setRegistration(false); if (created) navigate("edu", `student:${created.id}`); }} onCancel={() => setRegistration(false)} /></Dialog>}
     {consultation && <ConsultationForm {...consultation} date={consultation.date || today} edu={edu} busy={busy} save={save} onClose={() => setConsultation(null)} />}
   </div>;
