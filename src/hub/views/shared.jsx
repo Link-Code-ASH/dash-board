@@ -211,10 +211,12 @@ export function RoutineTasks({ compact = false }) {
                             card.onToggle(card.selectedChoice);
                         }}
                       >
-                        <option value="">Y · 점수</option>
+                        <option value="">
+                          Y {card.scoreRange[0]}~{card.scoreRange[card.scoreRange.length - 1]}
+                        </option>
                         {card.scoreRange.map((score) => (
                           <option key={score} value={score}>
-                            {formatScore(score)}
+                            Y {formatScore(score)}
                           </option>
                         ))}
                       </select>

@@ -5,7 +5,7 @@ import ItemIconButton from "./ItemIconButton.jsx";
 import { weekDays, getWeekdayKey, getWeekSerial, getWeeklyPlanItems, encodeWeeklyPlanItems } from "../dashboard/model.js";
 
 function ScoreInput({ value, choice, label, onChange }) {
-  return <label className={`routine-score-field is-${choice.toLowerCase()}`}>
+  return <label className={`routine-score-field is-${choice.toLowerCase()}`} title={choice === "Y" ? "3처럼 숫자 하나, 또는 1-3처럼 구간 (구간이면 Today's Tasks에서 점수를 골라요)" : undefined}>
     <span>{choice}</span><input aria-label={`${label} ${choice} 점수`} type="text"
       inputMode={choice === "Y" ? "text" : "numeric"} value={value} onChange={(e) => onChange(e.target.value)} />
   </label>;
