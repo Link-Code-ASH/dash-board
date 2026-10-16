@@ -138,6 +138,7 @@ export function normalizeEdu(source) {
     assertAcademic(student.academic);
     assertTimestamp(student.createdAt);
     assertTimestamp(student.updatedAt);
+    if (student.withdrawnAt !== undefined) assertTimestamp(student.withdrawnAt);
   }
   for (const consultation of source.consultations) {
     assertId(consultation.studentId, '원생 ID');
@@ -292,17 +293,18 @@ export function applyEduAction(edu, action, { now = new Date(), actor = 'local' 
     return addEvent({ ...source, students }, { type: previous ? 'student.updated' : 'student.created', studentId: student.id, changes });
   }
 
-  if (action.type === 'student.delete') {
+  if (action.type === 'student.withdraw') {
     const previous = requireStudent(source, action.id);
-    // The typed name guards against deleting the wrong student by accident.
-    if (typeof action.confirmName !== 'string' || action.confirmName.trim() !== previous.name.trim()) throw new TypeError('원생 이름이 일치하지 않습니다.');
-    // Consultations and history must reference an existing student, so they go with it.
-    return {
-      ...source,
-      students: source.students.filter((student) => student.id !== previous.id),
-      consultations: source.consultations.filter((item) => item.studentId !== previous.id),
-      events: source.events.filter((event) => event.studentId !== previous.id),
-    };
+    const withdrawn = action.withdrawn !== false;
+    if (Boolean(previous.withdrawnAt) === withdrawn) return source;
+    // Withdrawal only flags the student; profile, memo, consultations and history are kept.
+    const { withdrawnAt, ...rest } = previous;
+    const student = { ...rest, ...(withdrawn ? { withdrawnAt: at } : {}), updatedAt: at };
+    const students = source.students.map((item) => item.id === previous.id ? student : item);
+    return addEvent({ ...source, students }, {
+      type: withdrawn ? 'student.withdrawn' : 'student.returned', studentId: previous.id,
+      changes: [{ field: 'enrollment', before: withdrawn ? '재원' : '퇴원', after: withdrawn ? '퇴원' : '재원' }],
+    });
   }
 
   if (action.type === 'memo.save') {

@@ -16,12 +16,13 @@ html body #root .hub-app .edu-workspace .edu-button { padding: 8px 13px; border:
 html body #root .hub-app .edu-workspace .edu-button:hover { background: #f1f5fa; }
 html body #root .hub-app .edu-workspace .edu-primary { background: #3c638f; border-color: #3c638f; color: #fff !important; }
 html body #root .hub-app .edu-workspace .edu-primary:hover { background: #2c527d; }
-html body #root .hub-app .edu-workspace .edu-danger { background: #c0453a; border-color: #c0453a; color: #fff !important; }
-html body #root .hub-app .edu-workspace .edu-danger:hover { background: #a3382f; }
-html body #root .hub-app .edu-workspace .edu-danger:disabled { background: #e6b9b4; border-color: #e6b9b4; }
-html body #root .hub-app .edu-workspace .edu-delete-student { display: flex; justify-content: flex-end; margin-top: 18px; padding-top: 12px; border-top: 1px solid var(--edu-line); }
-html body #root .hub-app .edu-workspace .edu-danger-text { color: #b5473d; }
-html body #root .hub-app .edu-workspace .edu-danger-text:hover { color: #8f342c; }
+html body #root .hub-app .edu-workspace .edu-withdraw-student { display: flex; justify-content: flex-end; margin-top: 18px; padding-top: 12px; border-top: 1px solid var(--edu-line); }
+html body #root .hub-app .edu-workspace .edu-withdraw-text { color: #8a6d3b; }
+html body #root .hub-app .edu-workspace .edu-withdrawn-badge { margin-left: 8px; padding: 2px 8px; border-radius: 999px; background: #eef1f5; color: #6b778a; font-size: 12px; font-weight: 600; vertical-align: 3px; }
+html body #root .hub-app .edu-workspace .edu-enrollment-tabs { display: inline-flex; gap: 4px; margin-bottom: 12px; padding: 3px; border-radius: 10px; background: #eef2f7; }
+html body #root .hub-app .edu-workspace .edu-enrollment-tabs button { padding: 6px 14px; border: 0; border-radius: 8px; background: transparent; color: #5f6f84; font-weight: 600; }
+html body #root .hub-app .edu-workspace .edu-enrollment-tabs button.active { background: #fff; color: var(--edu-ink); box-shadow: 0 1px 2px rgb(30 45 70 / 12%); }
+html body #root .hub-app .edu-workspace .edu-enrollment-tabs button span { margin-left: 4px; color: #8b97a8; font-weight: 500; }
 html body #root .hub-app .edu-workspace .edu-icon-button { padding: 7px; min-width: 36px; background: #fff; border: 1px solid var(--edu-line); }
 html body #root .hub-app .edu-workspace .edu-text-button { min-height: 30px; padding: 3px 0; color: #547394; font-weight: 500; display: inline-flex; align-items: center; gap: 5px; border: 0; background: transparent; text-align: left; }
 html body #root .hub-app .edu-workspace .edu-text-button:hover { color: #2c527d; background: transparent; text-decoration: underline; }

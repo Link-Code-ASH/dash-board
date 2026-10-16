@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, CalendarDays, Check, ChevronLeft, ChevronRight, GraduationCap, History, Plus, Search, Trash2, Users, X } from "lucide-react";
+import { ArrowLeft, CalendarDays, Check, ChevronLeft, ChevronRight, GraduationCap, History, Plus, RotateCcw, Search, Trash2, UserMinus, Users, X } from "lucide-react";
 import { useEdu } from "../../edu/EduProvider.jsx";
 import Admissions from "../../edu/Admissions.jsx";
 import { GRADE_OPTIONS, countingAge, currentGrade, gradeLabel, pendingTransitions } from "../../edu/model.js";
@@ -8,13 +8,13 @@ import "../../edu/edu.css";
 const STATUSES = { scheduled: "예약", completed: "완료", cancelled: "취소" };
 const EVENT_TITLES = {
   "student.created": "원생 등록", "student.updated": "기본정보 수정", "memo.updated": "메모 수정",
-  "consultation.created": "상담 등록", "consultation.updated": "상담 수정", "consultation.status": "상담 상태 변경", "consultation.deleted": "상담 삭제",
+  "consultation.created": "상담 등록", "consultation.updated": "상담 수정", "consultation.status": "상담 상태 변경", "consultation.deleted": "상담 삭제", "student.withdrawn": "퇴원 처리", "student.returned": "재원 복귀",
   "promotion.auto": "학년 자동 변경", "promotion.confirmed": "진학 확인 완료",
 };
 const FIELD_TITLES = {
   name: "이름", birthYear: "출생년도", school: "학교", grade: "학년", studentPhone: "본인 연락처",
   guardianPhone: "보호자 연락처", memo: "메모", title: "상담 제목", date: "상담 날짜", time: "상담 시간",
-  notes: "상담 내용", status: "상담 상태", studentId: "상담 원생", promotionIds: "진학 확인", promotionConfirmed: "진학 확인",
+  notes: "상담 내용", status: "상담 상태", studentId: "상담 원생", promotionIds: "진학 확인", promotionConfirmed: "진학 확인", enrollment: "재원 상태",
 };
 const sortAppointments = (items) => [...items].sort((a, b) => `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`));
 const errorMessage = (error) => error?.message || "저장하지 못했습니다. 입력 내용은 유지됩니다. 다시 시도해 주세요.";
@@ -133,7 +133,7 @@ function ConsultationForm({ item, studentId, date, complete = false, edu, busy, 
   const statusOptions = Object.entries(STATUSES).filter(([value]) => value !== "cancelled" || values.status === "cancelled");
   return <Dialog title={complete ? "상담 완료" : item ? "상담 수정" : "상담 예약"} subtitle="모든 상담 시간은 한국 시간(Asia/Seoul)입니다." busy={busy} onClose={onClose}><form className="edu-form" onSubmit={submit}>
     <div className="edu-form-grid">
-      <Field label="원생 *" wide><select value={values.studentId} onChange={change("studentId")} required disabled={busy}>{!values.studentId && <option value="">원생 선택</option>}{edu.students.map((student) => <option key={student.id} value={student.id}>{student.name} · {student.school}</option>)}</select></Field>
+      <Field label="원생 *" wide><select value={values.studentId} onChange={change("studentId")} required disabled={busy}>{!values.studentId && <option value="">원생 선택</option>}{edu.students.map((student) => <option key={student.id} value={student.id}>{student.name} · {student.school}{student.withdrawnAt ? " (퇴원)" : ""}</option>)}</select></Field>
       <Field label="상담 제목 *" wide><input value={values.title} onChange={change("title")} required maxLength={200} placeholder="예: 학습 계획 상담" autoFocus={!complete} disabled={busy} /></Field>
       <Field label="날짜 *"><input type="date" value={values.date} onChange={change("date")} onInput={change("date")} required disabled={busy} /></Field>
       <Field label="시간 *"><input type="time" value={values.time} onChange={change("time")} onInput={change("time")} required disabled={busy} /></Field>
@@ -175,32 +175,18 @@ function HistoryList({ events, students, consultations }) {
   </li>;
   })}</ol>;
 }
-function DeleteStudentDialog({ student, edu, busy, save, onClose, onDeleted }) {
-  const [name, setName] = useState("");
-  const [error, setError] = useState("");
-  const matches = name.trim() === student.name.trim();
-  const consultations = edu.consultations.filter((item) => item.studentId === student.id).length;
-  const submit = async (event) => {
-    event.preventDefault(); setError("");
-    if (!matches) return;
-    try { await save({ type: "student.delete", id: student.id, confirmName: name }); onDeleted(); }
-    catch (failure) { setError(errorMessage(failure)); }
-  };
-  return <Dialog title="원생 삭제" subtitle="삭제하면 되돌릴 수 없습니다." busy={busy} onClose={onClose}><form className="edu-form" onSubmit={submit}>
-    <p className="edu-info">{student.name} 원생의 기본정보, 메모, 상담 {consultations}건, 변경 이력이 모두 삭제됩니다.</p>
-    <div className="edu-form-grid"><Field label={`확인을 위해 원생 이름 "${student.name}"을(를) 입력하세요`} wide><input value={name} onChange={(event) => setName(event.target.value)} autoFocus autoComplete="off" placeholder={student.name} disabled={busy} /></Field></div>
-    <Alert>{error}</Alert>
-    <div className="edu-form-footer"><span className="edu-save-hint" /><div className="edu-actions"><button type="button" className="edu-button" disabled={busy} onClick={onClose}>취소</button><button type="submit" className="edu-button edu-danger" disabled={busy || !matches}><Trash2 size={15} />{busy ? "삭제 중…" : "원생 삭제"}</button></div></div>
-  </form></Dialog>;
-}
 function StudentDetail({ student, edu, today, year, busy, save, navigate, openConsultation, completeConsultation }) {
   const [tab, setTab] = useState("profile");
   const [error, setError] = useState("");
-  const [deleting, setDeleting] = useState(false);
   const pending = pendingTransitions(edu, student.id);
   const now = seoulNow(today);
   const appointments = edu.consultations.filter((item) => item.studentId === student.id);
   const events = edu.events.filter((event) => event.studentId === student.id || event.changes?.some((change) => change.field === "studentId" && change.before === student.id));
+  const withdraw = async () => {
+    setError("");
+    try { await save({ type: "student.withdraw", id: student.id, withdrawn: !student.withdrawnAt }); }
+    catch (failure) { setError(errorMessage(failure)); }
+  };
   const confirm = async () => {
     setError("");
     try { await save({ type: "promotion.confirm", studentId: student.id }); }
@@ -208,31 +194,34 @@ function StudentDetail({ student, edu, today, year, busy, save, navigate, openCo
   };
   return <div className="edu-detail">
     <button type="button" className="edu-text-button edu-back" onClick={() => navigate("edu", "today")}><ArrowLeft size={17} />원생 목록</button>
-    <div className="edu-detail-heading"><div className="edu-detail-identity"><span className="edu-avatar" aria-hidden="true">{student.name.slice(0, 1)}</span><div><h2>{student.name}</h2><p>{student.school} · {gradeLabel(currentGrade(student, now))} · {countingAge(student.birthYear, now)}세</p></div></div><button type="button" className="edu-button edu-primary" onClick={() => openConsultation({ studentId: student.id, date: today })} disabled={busy}><Plus size={16} />상담 예약</button></div>
+    <div className="edu-detail-heading"><div className="edu-detail-identity"><span className="edu-avatar" aria-hidden="true">{student.name.slice(0, 1)}</span><div><h2>{student.name}{student.withdrawnAt && <span className="edu-withdrawn-badge">퇴원</span>}</h2><p>{student.school} · {gradeLabel(currentGrade(student, now))} · {countingAge(student.birthYear, now)}세</p></div></div><button type="button" className="edu-button edu-primary" onClick={() => openConsultation({ studentId: student.id, date: today })} disabled={busy}><Plus size={16} />상담 예약</button></div>
     {pending.length > 0 && <div className="edu-promotion-alert"><span className="edu-warning-mark" aria-hidden="true">!</span><div><strong>고등학교 진학 정보를 확인해 주세요.</strong><p>중3에서 고1로 진급했습니다. 현재 학교명은 {student.school}입니다. 기본정보에서 학교를 확인·수정한 후 완료해 주세요.</p></div><button type="button" className="edu-button" disabled={busy} onClick={confirm}><Check size={16} />진학 확인 완료</button></div>}
     <Alert>{error}</Alert>
     <section className="edu-panel">
       <div className="edu-detail-tabs" role="tablist" aria-label="원생 상세">{[["profile", "기본정보"], ["memo", "메모"], ["consultations", "상담"], ["history", "변경 이력"]].map(([id, label]) => <button type="button" key={id} role="tab" id={`edu-tab-${id}`} aria-selected={tab === id} aria-controls={`edu-panel-${id}`} className={tab === id ? "active" : ""} onClick={() => setTab(id)}>{label}{id === "consultations" && <span className="edu-tab-count">{appointments.length}</span>}</button>)}</div>
-      <div role="tabpanel" id="edu-panel-profile" aria-labelledby="edu-tab-profile" hidden={tab !== "profile"} className="edu-detail-panel"><StudentForm student={student} today={today} year={year} busy={busy} save={save} /><div className="edu-delete-student"><button type="button" className="edu-text-button edu-danger-text" disabled={busy} onClick={() => setDeleting(true)}><Trash2 size={15} />원생 삭제</button></div></div>
+      <div role="tabpanel" id="edu-panel-profile" aria-labelledby="edu-tab-profile" hidden={tab !== "profile"} className="edu-detail-panel"><StudentForm student={student} today={today} year={year} busy={busy} save={save} /><div className="edu-withdraw-student"><button type="button" className="edu-text-button edu-withdraw-text" disabled={busy} onClick={withdraw}>{student.withdrawnAt ? <><RotateCcw size={15} />재원으로 되돌리기</> : <><UserMinus size={15} />퇴원 처리</>}</button></div></div>
       <div role="tabpanel" id="edu-panel-memo" aria-labelledby="edu-tab-memo" hidden={tab !== "memo"} className="edu-detail-panel"><MemoForm student={student} busy={busy} save={save} /></div>
       <div role="tabpanel" id="edu-panel-consultations" aria-labelledby="edu-tab-consultations" hidden={tab !== "consultations"} className="edu-detail-panel"><div className="edu-panel-heading"><div><h3>상담 기록</h3><p>예정된 상담과 지난 상담을 함께 확인합니다.</p></div></div><AppointmentList items={appointments} students={edu.students} onEdit={(item) => openConsultation({ item })} onComplete={completeConsultation} busy={busy} /></div>
       <div role="tabpanel" id="edu-panel-history" aria-labelledby="edu-tab-history" hidden={tab !== "history"} className="edu-detail-panel"><div className="edu-panel-heading"><div><h3>변경 이력</h3><p>등록, 수정, 자동 진급 이력 · 한국 시간 기준</p></div></div><HistoryList events={events} students={edu.students} consultations={edu.consultations} /></div>
     </section>
-    {deleting && <DeleteStudentDialog student={student} edu={edu} busy={busy} save={save} onClose={() => setDeleting(false)} onDeleted={() => navigate("edu", "today")} />}
   </div>;
 }
 function StudentList({ edu, today, navigate, busy, onRegister }) {
   const [search, setSearch] = useState("");
   const [grade, setGrade] = useState("");
   const [pendingOnly, setPendingOnly] = useState(false);
+  const [showWithdrawn, setShowWithdrawn] = useState(false);
   const now = seoulNow(today);
   const query = search.trim().toLocaleLowerCase();
-  const visible = edu.students.filter((student) => (!query || `${student.name} ${student.school}`.toLocaleLowerCase().includes(query)) && (!grade || currentGrade(student, now) === Number(grade)) && (!pendingOnly || pendingTransitions(edu, student.id).length > 0)).sort((a, b) => a.name.localeCompare(b.name, "ko"));
+  const withdrawnCount = edu.students.filter((student) => student.withdrawnAt).length;
+  const group = edu.students.filter((student) => Boolean(student.withdrawnAt) === showWithdrawn);
+  const visible = group.filter((student) => (!query || `${student.name} ${student.school}`.toLocaleLowerCase().includes(query)) && (!grade || currentGrade(student, now) === Number(grade)) && (!pendingOnly || pendingTransitions(edu, student.id).length > 0)).sort((a, b) => a.name.localeCompare(b.name, "ko"));
   const pendingCount = edu.students.filter((student) => pendingTransitions(edu, student.id).length > 0).length;
   return <div className="edu-students">
-    <div className="edu-section-heading"><div><h2>원생 관리 <span className="edu-heading-count">{edu.students.length}</span></h2><p>원생의 정보와 상담을 한곳에서 관리하세요.</p></div><button type="button" className="edu-button edu-primary" onClick={onRegister} disabled={busy}><Plus size={17} />원생 등록</button></div>
+    <div className="edu-section-heading"><div><h2>원생 관리 <span className="edu-heading-count">{edu.students.length - withdrawnCount}</span></h2><p>원생의 정보와 상담을 한곳에서 관리하세요.</p></div><button type="button" className="edu-button edu-primary" onClick={onRegister} disabled={busy}><Plus size={17} />원생 등록</button></div>
+    <div className="edu-enrollment-tabs" role="group" aria-label="재원 구분"><button type="button" aria-pressed={!showWithdrawn} className={!showWithdrawn ? "active" : ""} onClick={() => setShowWithdrawn(false)}>재원 <span>{edu.students.length - withdrawnCount}</span></button><button type="button" aria-pressed={showWithdrawn} className={showWithdrawn ? "active" : ""} onClick={() => setShowWithdrawn(true)}>퇴원 <span>{withdrawnCount}</span></button></div>
     <div className="edu-filters"><label className="edu-search"><Search size={18} aria-hidden="true" /><input aria-label="이름 또는 학교 검색" placeholder="이름 또는 학교 검색" value={search} onChange={(event) => setSearch(event.target.value)} /></label><select aria-label="학년 필터" value={grade} onChange={(event) => setGrade(event.target.value)}><option value="">전체 학년</option>{GRADE_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select><button type="button" className={`edu-filter-toggle${pendingOnly ? " active" : ""}`} aria-pressed={pendingOnly} onClick={() => setPendingOnly((value) => !value)}><span className="edu-warning-mark" aria-hidden="true">!</span>진학 확인 필요 <span>{pendingCount}</span></button></div>
-    {visible.length > 0 ? <><p className="edu-results">{query || grade || pendingOnly ? `${edu.students.length}명 중 ${visible.length}명` : `전체 ${visible.length}명`}</p><div className="edu-student-grid">{visible.map((student) => {
+    {visible.length > 0 ? <><p className="edu-results">{query || grade || pendingOnly ? `${group.length}명 중 ${visible.length}명` : `전체 ${visible.length}명`}</p><div className="edu-student-grid">{visible.map((student) => {
       const pending = pendingTransitions(edu, student.id).length > 0;
       const next = sortAppointments(edu.consultations.filter((item) => item.studentId === student.id && item.status === "scheduled" && item.date >= today))[0];
       return <button type="button" className="edu-student-card" key={student.id} onClick={() => navigate("edu", `student:${student.id}`)} aria-label={`${student.name} 원생 상세${pending ? ", 진학 확인 필요" : ""}`}>
@@ -240,7 +229,7 @@ function StudentList({ edu, today, navigate, busy, onRegister }) {
         <span className="edu-student-school"><span>{student.school}</span><span className="edu-grade">{gradeLabel(currentGrade(student, now))}</span></span>
         <span className={`edu-next-consultation${next ? " has-next" : ""}`}><CalendarDays size={15} /><span>{next ? `${next.date.slice(0, 4) !== today.slice(0, 4) ? `${next.date.slice(0, 4)}년 ` : ""}${shortDate(next.date)} ${next.time} · ${next.title}` : "예정된 상담 없음"}</span></span>
       </button>;
-    })}</div></> : <section className="edu-panel">{edu.students.length === 0 ? <EmptyState title="첫 원생을 등록해 보세요" action={<button type="button" className="edu-button edu-primary" disabled={busy} onClick={onRegister}><Plus size={16} />원생 등록</button>}>이름과 학교, 학년을 입력하면 원생 관리가 시작됩니다.</EmptyState> : <EmptyState icon={Search} title="검색 결과가 없습니다" action={<button type="button" className="edu-button" onClick={() => { setSearch(""); setGrade(""); setPendingOnly(false); }}>필터 초기화</button>}>검색어나 학년, 진학 확인 필터를 변경해 주세요.</EmptyState>}</section>}
+    })}</div></> : <section className="edu-panel">{showWithdrawn && group.length === 0 ? <EmptyState title="퇴원한 원생이 없습니다">원생 상세의 기본정보 탭에서 퇴원 처리할 수 있습니다.</EmptyState> : edu.students.length === 0 ? <EmptyState title="첫 원생을 등록해 보세요" action={<button type="button" className="edu-button edu-primary" disabled={busy} onClick={onRegister}><Plus size={16} />원생 등록</button>}>이름과 학교, 학년을 입력하면 원생 관리가 시작됩니다.</EmptyState> : <EmptyState icon={Search} title="검색 결과가 없습니다" action={<button type="button" className="edu-button" onClick={() => { setSearch(""); setGrade(""); setPendingOnly(false); }}>필터 초기화</button>}>검색어나 학년, 진학 확인 필터를 변경해 주세요.</EmptyState>}</section>}
   </div>;
 }
 function calendarDates(month) {
