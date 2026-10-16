@@ -189,3 +189,36 @@ test('readable rule descriptions retain MOC and distinguish remaining held share
   assert.equal(describeRule({ ...stages[0].rules[0], divisor: 3 }).quantity, '가능 수량의 33%');
   assert.equal(describeRule({ ...stages[0].rules[0], mode: 'fixed', divisor: 2 }).quantity, '2주 고정');
 });
+
+test('splitting a stage halves its range, copies its orders and keeps other stages', async () => {
+  const { splitStrategyStage, mergeStrategyStage } = await import('../src/stock/strategy.js');
+  const saved = editableStages(defaultStages());
+  const third = saved[2]; // 45 ~ 50
+  const split = splitStrategyStage(saved, third.id);
+  assert.equal(split.length, 9);
+  assert.deepEqual(split.map(s => s.upper), [40, 45, 47.5, 50, 55, 60, 70, 90, 100]);
+  assert.deepEqual(split.map(s => s.name), Array.from({ length: 9 }, (_, i) => `${i + 1}단계`));
+  assert.equal(split[2].id, third.id);
+  assert.deepEqual(split[3].rules.map(({ id, ...r }) => r), third.rules.map(({ id, ...r }) => r));
+  assert.notEqual(split[3].rules[0].id, third.rules[0].id);
+  assert.equal(validateStrategy(split), '');
+  // Same orders on both halves: every holding ratio trades exactly as before.
+  for (const held of [20, 46, 47, 48, 49, 52, 95]) {
+    const position = { ...emptyPosition(), average: 78.68, held, capacity: 100 - held };
+    assert.deepEqual(outcome(calculateIBS(position, split)).orders.map(({ id, ...r }) => r), outcome(calculateIBS(position, saved)).orders.map(({ id, ...r }) => r));
+  }
+  const merged = mergeStrategyStage(split, third.id);
+  assert.deepEqual(merged.map(s => s.upper), saved.map(s => s.upper));
+  assert.equal(merged[2].id, third.id);
+  assert.equal(validateStrategy(merged), '');
+});
+
+test('splitting picks a round point and merging the last stage keeps 100%', async () => {
+  const { splitStrategyStage, mergeStrategyStage } = await import('../src/stock/strategy.js');
+  const stages = [{ id: 'a', name: '공격', upper: 40, rules: [] }, { id: 'b', name: '방어', upper: 100, rules: [] }];
+  const split = splitStrategyStage(stages, 'a');
+  assert.deepEqual(split.map(s => [s.name, s.upper]), [['공격', 20], ['공격 (2)', 40], ['방어', 100]]);
+  const merged = mergeStrategyStage(split, split[1].id);
+  assert.deepEqual(merged.map(s => [s.id, s.upper]), [['a', 20], [split[1].id, 100]]);
+  assert.equal(mergeStrategyStage(merged, merged[1].id), merged);
+});

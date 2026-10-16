@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { ArrowLeft, ArrowRight, Check, GripVertical, Pencil, Plus, Trash2 } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, GripVertical, Merge, Pencil, Plus, Scissors, Trash2 } from 'lucide-react';
 import { defaultStages } from './model.js';
-import { sides, ruleAt, rowCount, editableStages, addRule, addStrategyRow, removeStrategyRow, addStrategyStage, moveStrategyStage, validateStrategy, describeRule, orderLabel } from './strategy.js';
+import { sides, ruleAt, rowCount, editableStages, addRule, addStrategyRow, removeStrategyRow, addStrategyStage, moveStrategyStage, splitStrategyStage, mergeStrategyStage, validateStrategy, describeRule, orderLabel } from './strategy.js';
 
 const priceLabel = price => price === null ? 'MOC' : `$${price.toLocaleString('ko-KR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 const signedClass = value => Number(value) > 0 ? 'stock-signed-positive' : Number(value) < 0 ? 'stock-signed-negative' : '';
@@ -28,6 +28,32 @@ function RuleCell({ rule, editing, label, onChange, onAdd, onRemove }) {
   </div>;
 }
 
+
+const formatBound = value => Number.isFinite(Number(value)) ? String(Number(value)) : '?';
+
+// The holding-ratio ranges as one 0~100% bar. While editing, each range can be
+// cut in half and each boundary removed, so stages are added or taken out where
+// they belong instead of only at the end.
+function RangeBar({ sorted, editing, onSplit, onMerge }) {
+  return <div className={`stock-range-bar ${editing ? 'is-editing' : ''}`} aria-label="보유 비율 구간">
+    <div className="stock-range-track">{sorted.map((stage, index) => {
+      const lower = Number(sorted[index - 1]?.upper || 0), upper = Number(stage.upper);
+      const width = Number.isFinite(upper - lower) ? Math.max(upper - lower, 0) : 0;
+      return <React.Fragment key={stage.id}>
+        {index > 0 && <div className="stock-range-boundary">
+          {editing && <button type="button" title={`${sorted[index - 1].name}와 ${stage.name} 합치기`} aria-label={`${formatBound(lower)}% 경계 없애고 ${sorted[index - 1].name}와 ${stage.name} 합치기`} onClick={() => onMerge(sorted[index - 1].id)}><Merge size={12} />합치기</button>}
+        </div>}
+        <div className={`stock-range-segment${index % 2 ? ' is-alt' : ''}`} style={{ flexGrow: width || 1 }}>
+          <strong>{stage.name}</strong>
+          <span>{formatBound(lower)}~{formatBound(upper)}%</span>
+          {editing && <button type="button" title={`${stage.name}을 반으로 나누기`} aria-label={`${stage.name} 구간 반으로 나누기`} disabled={!(upper - lower > 0.02)} onClick={() => onSplit(stage.id)}><Scissors size={12} />나누기</button>}
+        </div>
+      </React.Fragment>;
+    })}</div>
+    {editing && <p>구간을 <b>나누기</b>하면 같은 주문을 가진 두 단계가 생기고, 경계의 <b>합치기</b>를 누르면 두 단계가 하나로 합쳐져요(왼쪽 단계의 주문을 써요). 경계 숫자는 아래 표의 보유 비율 칸에서 고칠 수 있어요.</p>}
+  </div>;
+}
+
 export default function StrategyTable({ asset, stages, draft, setDraft, accounts, onSave, onCancel, onEdit }) {
   const editing = !!draft;
   const [draggedStage, setDraggedStage] = useState('');
@@ -51,7 +77,8 @@ export default function StrategyTable({ asset, stages, draft, setDraft, accounts
       {editing && <span className="stock-badge">미리보기</span>}
     </div>
     <p className="stock-strategy-guide">보유 비율에 맞는 단계의 열을 확인하세요. 각 행이 하나의 주문입니다.</p>
-    {editing && <div className="stock-matrix-actions"><button onClick={() => setDraft(addStrategyStage(stages))}><Plus size={13} />단계 추가</button>{sides.map(([side, label]) => <button key={side} onClick={() => setDraft(addStrategyRow(stages, side))}><Plus size={13} />{label} 행 추가</button>)}<button onClick={() => setDraft(editableStages(defaultStages()))}>TQQQ 시트 규칙 불러오기</button></div>}
+    {editing && <div className="stock-matrix-actions">{!stages.length && <button onClick={() => setDraft(addStrategyStage(stages))}><Plus size={13} />단계 추가</button>}{sides.map(([side, label]) => <button key={side} onClick={() => setDraft(addStrategyRow(stages, side))}><Plus size={13} />{label} 행 추가</button>)}<button onClick={() => setDraft(editableStages(defaultStages()))}>TQQQ 시트 규칙 불러오기</button></div>}
+    {!!stages.length && <RangeBar sorted={sorted} editing={editing} onSplit={id => setDraft(splitStrategyStage(stages, id))} onMerge={id => setDraft(mergeStrategyStage(stages, id))} />}
     {!stages.length ? <div className="stock-empty"><p>이 종목의 전략을 설정해 주세요.</p>{!editing && <button onClick={onEdit}>전략 만들기</button>}</div> : <div className="stock-table-wrap"><table className="stock-strategy-table"><thead><tr>
       <th scope="col">주문</th>
       {sorted.map((stage, index) => {

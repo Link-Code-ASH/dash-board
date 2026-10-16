@@ -56,3 +56,38 @@ export function describeRule(rule) {
   const quantity = rule.mode === 'remaining' ? '남은 보유 수량 전부' : rule.mode === 'fixed' ? `${rule.divisor}주 고정` : `${rule.mode === 'held' ? '보유' : '가능'} 수량의 ${Math.round(100 / Number(rule.divisor))}%`;
   return { price, quantity };
 }
+const numberedName = name => /^\d+단계$/.test(String(name).trim());
+// Keep "N단계" names in step with their order after a split or merge; custom names stay.
+const renumber = ordered => ordered.every(stage => numberedName(stage.name)) ? ordered.map((stage, index) => ({ ...stage, name: `${index + 1}단계` })) : ordered;
+const splitPoint = (lower, upper) => {
+  const middle = lower + (upper - lower) / 2;
+  for (const step of [0.5, 0.1, 0.01]) {
+    const value = Math.round(middle / step) * step;
+    const rounded = Math.round(value * 100) / 100;
+    if (rounded > lower && rounded < upper) return rounded;
+  }
+  return middle > lower && middle < upper ? middle : null;
+};
+// Split one stage's range in half (40~50 → 40~45 and 45~50). Both halves start
+// with the same orders, so trading is unchanged until a half is edited.
+export function splitStrategyStage(stages, id) {
+  const ordered = [...stages].sort((a, b) => Number(a.upper) - Number(b.upper));
+  const index = ordered.findIndex(stage => stage.id === id);
+  if (index < 0) return stages;
+  const stage = ordered[index], lower = Number(ordered[index - 1]?.upper || 0), upper = Number(stage.upper);
+  const point = splitPoint(lower, upper);
+  if (point === null) return stages;
+  const copy = { ...structuredClone(stage), id: uid(), name: numberedName(stage.name) ? stage.name : `${stage.name} (2)`, upper, rules: stage.rules.map(rule => ({ ...structuredClone(rule), id: uid() })) };
+  ordered.splice(index, 1, { ...stage, upper: point }, copy);
+  return renumber(ordered);
+}
+// Merge a stage with the next one: the boundary between them disappears and the
+// combined range keeps this stage's orders.
+export function mergeStrategyStage(stages, id) {
+  const ordered = [...stages].sort((a, b) => Number(a.upper) - Number(b.upper));
+  const index = ordered.findIndex(stage => stage.id === id);
+  if (index < 0 || index === ordered.length - 1) return stages;
+  const next = ordered[index + 1];
+  ordered.splice(index, 2, { ...ordered[index], upper: next.upper });
+  return renumber(ordered);
+}
