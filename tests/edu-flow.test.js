@@ -34,46 +34,20 @@ test("Edu Flow lists only the selected day's booked consultations in time order"
   const { source, getEdu } = harness();
   const before = structuredClone(getEdu());
   assert.deepEqual(source.getItems("2026-10-11"), [
-    { id: "early", title: "09:30 · 박바다 · 진학 상담", displayTitle: "박바다 · 진학 상담", time: "09:30", kind: "consultation", sourceLabel: "Edu · 상담", commands: [{ id: "complete", label: "상담 완료" }] },
-    { id: "later", title: "17:00 · 김하늘 · 학습 상담", displayTitle: "김하늘 · 학습 상담", time: "17:00", kind: "consultation", sourceLabel: "Edu · 상담", commands: [{ id: "complete", label: "상담 완료" }] },
+    { id: "early", title: "09:30 · 박바다 · 진학 상담", displayTitle: "박바다 · 진학 상담", time: "09:30", kind: "consultation", sourceLabel: "Edu · 상담" },
+    { id: "later", title: "17:00 · 김하늘 · 학습 상담", displayTitle: "김하늘 · 학습 상담", time: "17:00", kind: "consultation", sourceLabel: "Edu · 상담" },
   ]);
   assert.deepEqual(source.getItems("2026-10-13"), []);
   assert.deepEqual(getEdu(), before, "Flow reads must not reorder the underlying consultation list");
 });
 
-test("Edu Flow resolves a consultation to its student and rejects missing records", () => {
+test("Edu Flow opens the consultation itself and rejects missing records", () => {
   const { source } = harness();
-  assert.deepEqual(source.openTarget("early"), { moduleId: "edu", section: "student:student-2" });
-  assert.deepEqual(source.openTarget("done"), { moduleId: "edu", section: "student:student-1" });
+  assert.equal(source.execute, undefined, "Flow no longer completes consultations");
+  assert.deepEqual(source.openTarget("early"), { moduleId: "edu", section: "consultation:early" });
+  assert.deepEqual(source.openTarget("done"), { moduleId: "edu", section: "consultation:done" });
   assert.throws(() => source.openTarget("missing"), /찾을 수 없습니다/);
   assert.throws(() => source.openTarget("orphan"), /찾을 수 없습니다/);
-});
-
-test("Edu Flow completion uses the shared action and awaits durable persistence", async () => {
-  const calls = [];
-  let finish;
-  const { source } = harness((action) => {
-    calls.push(action);
-    return new Promise((resolve) => { finish = resolve; });
-  });
-  let completed = false;
-  const operation = source.execute("early", "complete").then(() => { completed = true; });
-  assert.deepEqual(calls, [{ type: "consultation.status", id: "early", status: "completed" }]);
-  await Promise.resolve();
-  assert.equal(completed, false);
-  finish();
-  await operation;
-  assert.equal(completed, true);
-});
-
-test("Edu Flow reports failed saves and refuses unsupported or cancelled actions", async () => {
-  const { source } = harness(async () => { throw new Error("disk full"); });
-  await assert.rejects(source.execute("early", "complete"), /disk full/);
-  await assert.rejects(source.execute("early", "delete"), /지원하지 않는/);
-  await assert.rejects(source.execute("missing", "complete"), /찾을 수 없습니다/);
-  await assert.rejects(source.execute("cancelled", "complete"), /취소된 상담/);
-  await assert.rejects(source.execute("orphan", "complete"), /찾을 수 없습니다/);
-  await source.execute("done", "complete");
 });
 
 test("Edu Flow reads latest data and subscription teardown stops updates", () => {
@@ -107,7 +81,6 @@ test("Unregistering the Edu session invalidates stale Flow callbacks before acco
     nextUnregister = registerFlowSource(replacement.source);
     assert.throws(() => stale.getItems("2026-10-11"), /unregistered/);
     assert.throws(() => stale.openTarget("early"), /unregistered/);
-    assert.throws(() => stale.execute("early", "complete"), /unregistered/);
     assert.deepEqual(getFlowSources().find((source) => source.id === "edu").getItems("2026-10-11"), []);
   } finally {
     unregister();

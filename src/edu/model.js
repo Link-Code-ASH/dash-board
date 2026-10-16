@@ -6,6 +6,7 @@ export const GRADE_OPTIONS = Object.freeze(Array.from({ length: 13 }, (_, index)
 })));
 
 const STATUSES = new Set(['scheduled', 'completed', 'cancelled']);
+const NOTES_REQUIRED = '상담을 완료하려면 상담 내용을 입력해 주세요.';
 const PROFILE_FIELDS = ['name', 'birthYear', 'school', 'grade', 'studentPhone', 'guardianPhone'];
 const CONSULTATION_FIELDS = ['studentId', 'title', 'date', 'time', 'notes', 'status'];
 const dateFormatter = new Intl.DateTimeFormat('en-CA', {
@@ -314,6 +315,7 @@ export function applyEduAction(edu, action, { now = new Date(), actor = 'local' 
     assertTime(next.time);
     assertText(next.notes, '상담 내용');
     assertStatus(next.status);
+    if (next.status === 'completed' && !next.notes.trim() && (previous?.status !== 'completed' || (previous.notes || '').trim())) throw new TypeError(NOTES_REQUIRED);
     const changes = changesFor(CONSULTATION_FIELDS, previous, next);
     if (!changes.length) return source;
     const consultation = { ...previous, ...next, id: previous?.id ?? action.createId ?? uid(), createdAt: previous?.createdAt ?? at, updatedAt: at };
@@ -325,10 +327,20 @@ export function applyEduAction(edu, action, { now = new Date(), actor = 'local' 
     const previous = requireConsultation(source, action.id);
     assertStatus(action.status);
     if (previous.status === action.status) return source;
+    if (action.status === 'completed' && !(previous.notes || '').trim()) throw new TypeError(NOTES_REQUIRED);
     const consultations = source.consultations.map((item) => item.id === previous.id ? { ...item, status: action.status, updatedAt: at } : item);
     return addEvent({ ...source, consultations }, {
       type: 'consultation.status', studentId: previous.studentId, consultationId: previous.id,
       changes: [{ field: 'status', before: previous.status, after: action.status }],
+    });
+  }
+
+  if (action.type === 'consultation.delete') {
+    const previous = requireConsultation(source, action.id);
+    const consultations = source.consultations.filter((item) => item.id !== previous.id);
+    return addEvent({ ...source, consultations }, {
+      type: 'consultation.deleted', studentId: previous.studentId, consultationId: previous.id,
+      changes: [{ field: 'title', before: previous.title, after: '' }],
     });
   }
 

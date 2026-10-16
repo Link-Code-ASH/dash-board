@@ -179,6 +179,24 @@ test('consultation creation, edits and status changes save their history atomica
   assert.equal(cancelled.consultations[0].status, 'cancelled');
 });
 
+test('completing a consultation requires notes and consultations can be deleted', () => {
+  const edu = freeze(create());
+  const created = applyEduAction(edu, { type: 'consultation.save', values: consultationValues(edu, { notes: '  ' }) }, options);
+  const id = created.consultations[0].id;
+  assert.throws(() => applyEduAction(created, { type: 'consultation.status', id, status: 'completed' }, options), /상담 내용을 입력/);
+  assert.throws(() => applyEduAction(created, { type: 'consultation.save', id, values: consultationValues(created, { notes: '', status: 'completed' }) }, options), /상담 내용을 입력/);
+  const completed = applyEduAction(created, { type: 'consultation.save', id, values: consultationValues(created, { notes: '결과 기록', status: 'completed' }) }, options);
+  assert.equal(completed.consultations[0].status, 'completed');
+  // Older completed consultations without notes stay editable.
+  const legacy = freeze({ ...completed, consultations: [{ ...completed.consultations[0], notes: '' }] });
+  assert.equal(applyEduAction(legacy, { type: 'consultation.save', id, values: consultationValues(legacy, { notes: '', status: 'completed', time: '17:00' }) }, options).consultations[0].time, '17:00');
+  const deleted = applyEduAction(completed, { type: 'consultation.delete', id }, options);
+  assert.equal(deleted.consultations.length, 0);
+  assert.equal(deleted.events.at(-1).type, 'consultation.deleted');
+  assert.equal(deleted.events.at(-1).consultationId, id);
+  assert.throws(() => applyEduAction(deleted, { type: 'consultation.delete', id }, options), /상담을 찾을 수 없습니다/);
+});
+
 test('failed optimistic creation can be retried with stable IDs without duplicating entities or events', () => {
   const studentId = globalThis.crypto.randomUUID();
   const action = { type: 'student.save', createId: studentId, values };

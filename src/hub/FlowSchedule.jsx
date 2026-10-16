@@ -1,5 +1,5 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { CalendarRange, Check, ChevronLeft, ChevronRight, Clock3, ExternalLink, GraduationCap, Star, Pencil, RotateCcw } from "lucide-react";
+import { CalendarRange, Check, ChevronLeft, ChevronRight, Clock3, ExternalLink, GraduationCap, MessageCircle, Star, Pencil, RotateCcw } from "lucide-react";
 import { addDays, formatScore, getWeekStart, normalizeDateMarkers, weekDays } from "../dashboard/model.js";
 import { readCalendarEntries, sortCalendarItems } from "../dashboard/calendarEntries.js";
 import { CalendarText } from "./CalendarNoteEditor.jsx";
@@ -97,12 +97,14 @@ export default function FlowSchedule({ route, navigate }) {
                 <span className="flow-desk-marker-tip" role="tooltip"><b>{marker.text || "Date Marker"}</b>{marker.time && <time><Clock3 size={11} aria-hidden="true" />{marker.time}</time>}</span>
               </button>; })}</header>
             <div className="flow-desk-events">
-              {items.map((item) => <div className="flow-desk-event" data-source={item.source?.id || "calendar"} key={`${item.source?.id || "calendar"}:${item.id}`}>
-                {item.source?.id === "edu" && <GraduationCap className="flow-desk-source-icon" size={13} aria-label="Edu" />}
+              {items.map((item) => <div className="flow-desk-event" data-source={item.source?.id || "calendar"} data-kind={item.kind} key={`${item.source?.id || "calendar"}:${item.id}`}>
+                {item.source?.id === "edu" && (item.kind === "consultation"
+                  ? <MessageCircle className="flow-desk-source-icon" size={13} aria-label="상담" />
+                  : <GraduationCap className="flow-desk-source-icon" size={13} aria-label="입시" />)}
                 <div className="flow-desk-event-title">{item.source ? item.displayTitle || item.title : <CalendarText text={item.text} marks={item.marks} />}</div>
                 {item.time && <time className="flow-desk-time"><Clock3 size={11} aria-hidden="true" />{item.time}</time>}
                 {item.source && <div className="flow-desk-event-source">{item.periodStatus && <em>{item.periodStatus}</em>}
-                  {item.source && <button type="button" title="원본 일정 열기" aria-label={`${item.displayTitle || item.title} 원본 열기`} onClick={(event) => open(event, item)}><ExternalLink size={12} /></button>}
+                  {item.source && <button type="button" title={item.kind === "consultation" ? "상담 열기" : "원본 일정 열기"} aria-label={`${item.displayTitle || item.title} ${item.kind === "consultation" ? "상담" : "원본"} 열기`} onClick={(event) => open(event, item)}><ExternalLink size={12} /></button>}
                   {item.source?.execute && item.commands?.map((command) => <button type="button" key={command.id} title={command.label} aria-label={`${item.title} ${command.label}`} onClick={(event) => perform(event, () => item.source.execute(item.id, command.id, command.payload))}><Check size={12} /></button>)}
                 </div>}
               </div>)}

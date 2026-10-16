@@ -682,6 +682,8 @@ html body #root .hub-app.hub-app .flow-desk-event[data-source="edu"] { border-co
 html body #root .hub-app.hub-app .flow-desk-event-title { font-size: 13px; font-weight: 600; line-height: 1.45; }
 html body #root .hub-app.hub-app .flow-desk-time { display: inline-flex; align-items: center; gap: 3px; margin: 0 5px 0 0; padding: 0 5px; border-radius: 5px; background: #fff; color: var(--fp-accent); font-size: 11.5px; font-weight: 800; vertical-align: 1px; }
 html body #root .hub-app.hub-app .flow-desk-source-icon { margin-right: 4px; color: #b07a1d; vertical-align: -2px; }
+html body #root .hub-app.hub-app .flow-desk-event[data-kind="consultation"] { border-color: #ddd8f3; background: #f5f3fd; }
+html body #root .hub-app.hub-app .flow-desk-event[data-kind="consultation"] .flow-desk-source-icon { color: #6d5bc4; }
 html body #root .hub-app.hub-app .flow-desk-event-source { font-size: 11px; }
 /* 10-minute time picker in the calendar entry editor. */
 html body #root .hub-app .calendar-time-picker { display: inline-flex; gap: 4px; }

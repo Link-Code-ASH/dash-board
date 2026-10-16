@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, CalendarDays, Check, ChevronLeft, ChevronRight, GraduationCap, History, Plus, Search, Users, X } from "lucide-react";
+import { ArrowLeft, CalendarDays, Check, ChevronLeft, ChevronRight, GraduationCap, History, Plus, Search, Trash2, Users, X } from "lucide-react";
 import { useEdu } from "../../edu/EduProvider.jsx";
 import Admissions from "../../edu/Admissions.jsx";
 import { GRADE_OPTIONS, countingAge, currentGrade, gradeLabel, pendingTransitions } from "../../edu/model.js";
@@ -8,7 +8,7 @@ import "../../edu/edu.css";
 const STATUSES = { scheduled: "예약", completed: "완료", cancelled: "취소" };
 const EVENT_TITLES = {
   "student.created": "원생 등록", "student.updated": "기본정보 수정", "memo.updated": "메모 수정",
-  "consultation.created": "상담 등록", "consultation.updated": "상담 수정", "consultation.status": "상담 상태 변경",
+  "consultation.created": "상담 등록", "consultation.updated": "상담 수정", "consultation.status": "상담 상태 변경", "consultation.deleted": "상담 삭제",
   "promotion.auto": "학년 자동 변경", "promotion.confirmed": "진학 확인 완료",
 };
 const FIELD_TITLES = {
@@ -106,11 +106,11 @@ function MemoForm({ student, busy, save }) {
 function consultationValues(item, studentId, date, edu) {
   return item ? { studentId: item.studentId, title: item.title, date: item.date, time: item.time, notes: item.notes || "", status: item.status } : { studentId: studentId || edu.students[0]?.id || "", title: "", date, time: "14:00", notes: "", status: "scheduled" };
 }
-function ConsultationForm({ item, studentId, date, edu, busy, save, onClose }) {
+function ConsultationForm({ item, studentId, date, complete = false, edu, busy, save, onClose }) {
   const [createId] = useState(() => crypto.randomUUID());
   const latest = edu.consultations.find((entry) => entry.id === (item?.id || createId));
-  const touched = useRef(new Set());
-  const [values, setValues] = useState(() => consultationValues(latest || item, studentId, date, edu));
+  const touched = useRef(new Set(complete ? ["status"] : []));
+  const [values, setValues] = useState(() => ({ ...consultationValues(latest || item, studentId, date, edu), ...(complete ? { status: "completed" } : {}) }));
   const [error, setError] = useState("");
   useEffect(() => { setValues((draft) => rebaseDraft(consultationValues(latest || item, studentId, date, edu), draft, touched.current)); }, [latest, item, studentId, date, edu.students]);
   const change = (field) => (event) => { const value = event.currentTarget.value; touched.current.add(field); setValues((previous) => ({ ...previous, [field]: value })); };
@@ -122,15 +122,24 @@ function ConsultationForm({ item, studentId, date, edu, busy, save, onClose }) {
     }
     catch (failure) { setError(errorMessage(failure)); }
   };
-  return <Dialog title={item ? "상담 수정" : "상담 예약"} subtitle="모든 상담 시간은 한국 시간(Asia/Seoul)입니다." busy={busy} onClose={onClose}><form className="edu-form" onSubmit={submit}>
+  const remove = async () => {
+    if (!window.confirm(`“${item.title}” 상담을 삭제할까요?`)) return;
+    setError("");
+    try { await save({ type: "consultation.delete", id: item.id }); onClose(); }
+    catch (failure) { setError(errorMessage(failure)); }
+  };
+  const completing = values.status === "completed";
+  // 취소 is no longer offered; it stays visible only on consultations that already have it.
+  const statusOptions = Object.entries(STATUSES).filter(([value]) => value !== "cancelled" || values.status === "cancelled");
+  return <Dialog title={complete ? "상담 완료" : item ? "상담 수정" : "상담 예약"} subtitle="모든 상담 시간은 한국 시간(Asia/Seoul)입니다." busy={busy} onClose={onClose}><form className="edu-form" onSubmit={submit}>
     <div className="edu-form-grid">
       <Field label="원생 *" wide><select value={values.studentId} onChange={change("studentId")} required disabled={busy}>{!values.studentId && <option value="">원생 선택</option>}{edu.students.map((student) => <option key={student.id} value={student.id}>{student.name} · {student.school}</option>)}</select></Field>
-      <Field label="상담 제목 *" wide><input value={values.title} onChange={change("title")} required maxLength={200} placeholder="예: 학습 계획 상담" autoFocus disabled={busy} /></Field>
+      <Field label="상담 제목 *" wide><input value={values.title} onChange={change("title")} required maxLength={200} placeholder="예: 학습 계획 상담" autoFocus={!complete} disabled={busy} /></Field>
       <Field label="날짜 *"><input type="date" value={values.date} onChange={change("date")} onInput={change("date")} required disabled={busy} /></Field>
       <Field label="시간 *"><input type="time" value={values.time} onChange={change("time")} onInput={change("time")} required disabled={busy} /></Field>
-      <Field label="상태" wide><select value={values.status} onChange={change("status")} disabled={busy}>{Object.entries(STATUSES).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></Field>
-      <Field label="상담 내용" wide><textarea value={values.notes} onChange={change("notes")} placeholder="상담할 내용이나 결과를 기록하세요." rows={4} disabled={busy} /></Field>
-    </div><Alert>{error}</Alert><div className="edu-form-footer"><span className="edu-save-hint">예약한 상담은 Flow에도 표시됩니다.</span><div className="edu-actions"><button type="button" className="edu-button" disabled={busy} onClick={onClose}>취소</button><button type="submit" className="edu-button edu-primary" disabled={busy}>{busy ? "저장 중…" : "상담 저장"}</button></div></div>
+      <Field label="상태" wide><select value={values.status} onChange={change("status")} disabled={busy}>{statusOptions.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></Field>
+      <Field label={completing ? "상담 내용 *" : "상담 내용"} hint={completing ? "완료하려면 상담 내용을 입력해 주세요." : undefined} wide><textarea value={values.notes} onChange={change("notes")} placeholder="상담할 내용이나 결과를 기록하세요." rows={4} required={completing} autoFocus={complete} disabled={busy} /></Field>
+    </div><Alert>{error}</Alert><div className="edu-form-footer"><span className="edu-save-hint">예약한 상담은 Flow에도 표시됩니다.</span><div className="edu-actions">{item && <button type="button" className="edu-button" disabled={busy} onClick={remove}><Trash2 size={15} />삭제</button>}<button type="button" className="edu-button" disabled={busy} onClick={onClose}>취소</button><button type="submit" className="edu-button edu-primary" disabled={busy}>{busy ? "저장 중…" : complete ? "완료 처리" : "상담 저장"}</button></div></div>
   </form></Dialog>;
 }
 function AppointmentList({ items, students, showStudent = false, onEdit, onComplete, onOpenStudent, busy }) {
@@ -221,9 +230,9 @@ function calendarDates(month) {
   const count = Math.ceil((first.getUTCDay() + days) / 7) * 7;
   return Array.from({ length: count }, (_, index) => new Date(Date.UTC(year, number - 1, index - first.getUTCDay() + 1)).toISOString().slice(0, 10));
 }
-function ConsultationCalendar({ edu, today, busy, navigate, openConsultation, completeConsultation }) {
-  const [month, setMonth] = useState(today.slice(0, 7));
-  const [selectedDate, setSelectedDate] = useState(today);
+function ConsultationCalendar({ edu, today, initialDate, busy, navigate, openConsultation, completeConsultation }) {
+  const [month, setMonth] = useState((initialDate || today).slice(0, 7));
+  const [selectedDate, setSelectedDate] = useState(initialDate || today);
   const dates = useMemo(() => calendarDates(month), [month]);
   const appointmentsByDate = useMemo(() => {
     const result = {};
@@ -259,20 +268,25 @@ export default function Edu({ route, navigate }) {
   const section = route?.section || "today";
   const studentId = section.startsWith("student:") ? section.slice(8) : null;
   const student = edu.students.find((item) => item.id === studentId);
-  const calendar = section === "calendar";
+  const calendar = section === "calendar" || section.startsWith("consultation:");
   const admissions = section === "admissions" || section.startsWith("admissions:");
   useEffect(() => { setActionError(""); }, [section]);
-  const completeConsultation = async (item) => {
-    setActionError("");
-    try { await save({ type: "consultation.status", id: item.id, status: "completed" }); }
-    catch (failure) { setActionError(errorMessage(failure)); }
-  };
+  // Completing always goes through the form so the consultation notes get written.
+  const completeConsultation = (item) => setConsultation({ item, complete: true });
+  const linkedId = section.startsWith("consultation:") ? section.slice(13) : null;
+  const linked = linkedId ? edu.consultations.find((item) => item.id === linkedId) : null;
+  useEffect(() => {
+    if (!ready || !linkedId) return;
+    if (linked) setConsultation({ item: linked, fromLink: true });
+    else setActionError("상담을 찾을 수 없습니다.");
+  }, [ready, linkedId]);
+  const closeConsultation = () => { if (consultation?.fromLink) navigate("edu", "calendar"); setConsultation(null); };
   return <div className="edu-workspace">
     <div className="edu-page-heading"><div><h1><GraduationCap size={28} strokeWidth={1.6} />Edu</h1><p>원생과 함께하는 매일의 기록</p></div><span className="edu-year-badge">{year}학년도</span></div>
     <nav className="edu-navigation" aria-label="Edu 메뉴"><button type="button" className={!calendar && !admissions ? "active" : ""} aria-current={!calendar && !admissions ? "page" : undefined} onClick={() => navigate("edu", "today")}><Users size={17} />원생 관리</button><button type="button" className={calendar ? "active" : ""} aria-current={calendar ? "page" : undefined} onClick={() => navigate("edu", "calendar")}><CalendarDays size={17} />상담 일정</button><button type="button" className={admissions ? "active" : ""} aria-current={admissions ? "page" : undefined} onClick={() => navigate("edu", "admissions")}><GraduationCap size={17} />입시 일정</button></nav>
     <Alert>{actionError || error}</Alert>
-    {!ready ? <section className="edu-panel" aria-busy={!error}><EmptyState title={error ? "원생 데이터 확인이 필요합니다" : "원생 정보를 불러오는 중입니다"}>{error ? "위 오류를 확인하고 백업 또는 저장된 데이터를 점검해 주세요." : "잠시만 기다려 주세요."}</EmptyState></section> : admissions ? <Admissions edu={edu} today={today} busy={busy} save={save} selectedId={section.startsWith("admissions:") ? section.slice(11) : null} navigate={navigate} /> : studentId ? student ? <StudentDetail key={student.id} student={student} edu={edu} today={today} year={year} busy={busy} save={save} navigate={navigate} openConsultation={setConsultation} completeConsultation={completeConsultation} /> : <section className="edu-panel"><EmptyState title="원생을 찾을 수 없습니다" action={<button type="button" className="edu-button" onClick={() => navigate("edu", "today")}>원생 목록으로</button>}>원생 목록에서 다시 선택해 주세요.</EmptyState></section> : calendar ? <ConsultationCalendar edu={edu} today={today} busy={busy} navigate={navigate} openConsultation={setConsultation} completeConsultation={completeConsultation} /> : <StudentList edu={edu} today={today} navigate={navigate} busy={busy} onRegister={() => setRegistration(true)} />}
+    {!ready ? <section className="edu-panel" aria-busy={!error}><EmptyState title={error ? "원생 데이터 확인이 필요합니다" : "원생 정보를 불러오는 중입니다"}>{error ? "위 오류를 확인하고 백업 또는 저장된 데이터를 점검해 주세요." : "잠시만 기다려 주세요."}</EmptyState></section> : admissions ? <Admissions edu={edu} today={today} busy={busy} save={save} selectedId={section.startsWith("admissions:") ? section.slice(11) : null} navigate={navigate} /> : studentId ? student ? <StudentDetail key={student.id} student={student} edu={edu} today={today} year={year} busy={busy} save={save} navigate={navigate} openConsultation={setConsultation} completeConsultation={completeConsultation} /> : <section className="edu-panel"><EmptyState title="원생을 찾을 수 없습니다" action={<button type="button" className="edu-button" onClick={() => navigate("edu", "today")}>원생 목록으로</button>}>원생 목록에서 다시 선택해 주세요.</EmptyState></section> : calendar ? <ConsultationCalendar initialDate={linked?.date} edu={edu} today={today} busy={busy} navigate={navigate} openConsultation={setConsultation} completeConsultation={completeConsultation} /> : <StudentList edu={edu} today={today} navigate={navigate} busy={busy} onRegister={() => setRegistration(true)} />}
     {registration && <Dialog title="원생 등록" subtitle="필수 정보를 입력한 뒤 원생을 등록하세요." busy={busy} onClose={() => setRegistration(false)}><StudentForm today={today} year={year} busy={busy} save={save} onSaved={(created) => { setRegistration(false); if (created) navigate("edu", `student:${created.id}`); }} onCancel={() => setRegistration(false)} /></Dialog>}
-    {consultation && <ConsultationForm {...consultation} date={consultation.date || today} edu={edu} busy={busy} save={save} onClose={() => setConsultation(null)} />}
+    {consultation && <ConsultationForm {...consultation} date={consultation.date || today} edu={edu} busy={busy} save={save} onClose={closeConsultation} />}
   </div>;
 }

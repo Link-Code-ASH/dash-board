@@ -25,7 +25,6 @@ export function createEduFlowSource({ getEdu, subscribe, save }) {
           title: `${item.time} · ${students.get(item.studentId).name} · ${item.title}`,
           displayTitle: `${students.get(item.studentId).name} · ${item.title}`,
           time: item.time, kind: 'consultation', sourceLabel: 'Edu · 상담',
-          commands: [{ id: "complete", label: "상담 완료" }],
         }));
       const admissions = (edu.admissions || []).filter((item) => item.startDate <= date && (item.endDate || item.startDate) >= date).map((item) => ({
         id: `admission:${item.id}`, title: item.title, displayTitle: [item.institution, item.title].filter(Boolean).join(' · '),
@@ -42,15 +41,8 @@ export function createEduFlowSource({ getEdu, subscribe, save }) {
         if (!(getEdu().admissions || []).some((item) => item.id === admissionId)) throw new Error('입시 일정을 찾을 수 없습니다.');
         return { moduleId: 'edu', section: `admissions:${admissionId}` };
       }
-      const { student } = findConsultation(id);
-      return { moduleId: "edu", section: `student:${student.id}` };
-    },
-    async execute(id, command) {
-      if (command !== "complete") throw new Error("지원하지 않는 상담 작업입니다.");
-      const { consultation } = findConsultation(id);
-      if (consultation.status === "cancelled") throw new Error("취소된 상담은 완료할 수 없습니다.");
-      if (consultation.status === "completed") return;
-      return save({ type: "consultation.status", id, status: "completed" });
+      findConsultation(id);
+      return { moduleId: "edu", section: `consultation:${id}` };
     },
   };
 }
