@@ -101,7 +101,7 @@ export default function FlowSchedule({ route, navigate }) {
                 {item.source?.id === "edu" && <GraduationCap className="flow-desk-source-icon" size={13} aria-label="Edu" />}
                 <div className="flow-desk-event-title">{item.source ? item.displayTitle || item.title : <CalendarText text={item.text} marks={item.marks} />}</div>
                 {item.time && <time className="flow-desk-time"><Clock3 size={11} aria-hidden="true" />{item.time}</time>}
-                {item.source && <div className="flow-desk-event-source"><span>{item.sourceLabel || item.source?.id}</span>{item.periodStatus && <em>{item.periodStatus}</em>}
+                {item.source && <div className="flow-desk-event-source">{item.periodStatus && <em>{item.periodStatus}</em>}
                   {item.source && <button type="button" title="원본 일정 열기" aria-label={`${item.displayTitle || item.title} 원본 열기`} onClick={(event) => open(event, item)}><ExternalLink size={12} /></button>}
                   {item.source?.execute && item.commands?.map((command) => <button type="button" key={command.id} title={command.label} aria-label={`${item.title} ${command.label}`} onClick={(event) => perform(event, () => item.source.execute(item.id, command.id, command.payload))}><Check size={12} /></button>)}
                 </div>}
