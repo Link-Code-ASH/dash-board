@@ -292,6 +292,19 @@ export function applyEduAction(edu, action, { now = new Date(), actor = 'local' 
     return addEvent({ ...source, students }, { type: previous ? 'student.updated' : 'student.created', studentId: student.id, changes });
   }
 
+  if (action.type === 'student.delete') {
+    const previous = requireStudent(source, action.id);
+    // The typed name guards against deleting the wrong student by accident.
+    if (typeof action.confirmName !== 'string' || action.confirmName.trim() !== previous.name.trim()) throw new TypeError('원생 이름이 일치하지 않습니다.');
+    // Consultations and history must reference an existing student, so they go with it.
+    return {
+      ...source,
+      students: source.students.filter((student) => student.id !== previous.id),
+      consultations: source.consultations.filter((item) => item.studentId !== previous.id),
+      events: source.events.filter((event) => event.studentId !== previous.id),
+    };
+  }
+
   if (action.type === 'memo.save') {
     const previous = requireStudent(source, action.studentId);
     const memo = action.memo ?? '';

@@ -197,6 +197,19 @@ test('completing a consultation requires notes and consultations can be deleted'
   assert.throws(() => applyEduAction(deleted, { type: 'consultation.delete', id }, options), /상담을 찾을 수 없습니다/);
 });
 
+test('deleting a student needs the exact name and removes their consultations and history', () => {
+  const edu = freeze(create());
+  const student = edu.students[0];
+  const withConsultation = applyEduAction(edu, { type: 'consultation.save', values: consultationValues(edu) }, options);
+  assert.throws(() => applyEduAction(withConsultation, { type: 'student.delete', id: student.id }, options), /이름이 일치하지/);
+  assert.throws(() => applyEduAction(withConsultation, { type: 'student.delete', id: student.id, confirmName: student.name + '1' }, options), /이름이 일치하지/);
+  const deleted = applyEduAction(withConsultation, { type: 'student.delete', id: student.id, confirmName: ` ${student.name} ` }, options);
+  assert.equal(deleted.students.some((item) => item.id === student.id), false);
+  assert.equal(deleted.consultations.some((item) => item.studentId === student.id), false);
+  assert.equal(deleted.events.some((event) => event.studentId === student.id), false);
+  assert.equal(withConsultation.students.length, edu.students.length, 'input stays untouched');
+});
+
 test('failed optimistic creation can be retried with stable IDs without duplicating entities or events', () => {
   const studentId = globalThis.crypto.randomUUID();
   const action = { type: 'student.save', createId: studentId, values };

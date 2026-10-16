@@ -175,9 +175,28 @@ function HistoryList({ events, students, consultations }) {
   </li>;
   })}</ol>;
 }
+function DeleteStudentDialog({ student, edu, busy, save, onClose, onDeleted }) {
+  const [name, setName] = useState("");
+  const [error, setError] = useState("");
+  const matches = name.trim() === student.name.trim();
+  const consultations = edu.consultations.filter((item) => item.studentId === student.id).length;
+  const submit = async (event) => {
+    event.preventDefault(); setError("");
+    if (!matches) return;
+    try { await save({ type: "student.delete", id: student.id, confirmName: name }); onDeleted(); }
+    catch (failure) { setError(errorMessage(failure)); }
+  };
+  return <Dialog title="원생 삭제" subtitle="삭제하면 되돌릴 수 없습니다." busy={busy} onClose={onClose}><form className="edu-form" onSubmit={submit}>
+    <p className="edu-info">{student.name} 원생의 기본정보, 메모, 상담 {consultations}건, 변경 이력이 모두 삭제됩니다.</p>
+    <div className="edu-form-grid"><Field label={`확인을 위해 원생 이름 "${student.name}"을(를) 입력하세요`} wide><input value={name} onChange={(event) => setName(event.target.value)} autoFocus autoComplete="off" placeholder={student.name} disabled={busy} /></Field></div>
+    <Alert>{error}</Alert>
+    <div className="edu-form-footer"><span className="edu-save-hint" /><div className="edu-actions"><button type="button" className="edu-button" disabled={busy} onClick={onClose}>취소</button><button type="submit" className="edu-button edu-danger" disabled={busy || !matches}><Trash2 size={15} />{busy ? "삭제 중…" : "원생 삭제"}</button></div></div>
+  </form></Dialog>;
+}
 function StudentDetail({ student, edu, today, year, busy, save, navigate, openConsultation, completeConsultation }) {
   const [tab, setTab] = useState("profile");
   const [error, setError] = useState("");
+  const [deleting, setDeleting] = useState(false);
   const pending = pendingTransitions(edu, student.id);
   const now = seoulNow(today);
   const appointments = edu.consultations.filter((item) => item.studentId === student.id);
@@ -194,11 +213,12 @@ function StudentDetail({ student, edu, today, year, busy, save, navigate, openCo
     <Alert>{error}</Alert>
     <section className="edu-panel">
       <div className="edu-detail-tabs" role="tablist" aria-label="원생 상세">{[["profile", "기본정보"], ["memo", "메모"], ["consultations", "상담"], ["history", "변경 이력"]].map(([id, label]) => <button type="button" key={id} role="tab" id={`edu-tab-${id}`} aria-selected={tab === id} aria-controls={`edu-panel-${id}`} className={tab === id ? "active" : ""} onClick={() => setTab(id)}>{label}{id === "consultations" && <span className="edu-tab-count">{appointments.length}</span>}</button>)}</div>
-      <div role="tabpanel" id="edu-panel-profile" aria-labelledby="edu-tab-profile" hidden={tab !== "profile"} className="edu-detail-panel"><StudentForm student={student} today={today} year={year} busy={busy} save={save} /></div>
+      <div role="tabpanel" id="edu-panel-profile" aria-labelledby="edu-tab-profile" hidden={tab !== "profile"} className="edu-detail-panel"><StudentForm student={student} today={today} year={year} busy={busy} save={save} /><div className="edu-delete-student"><button type="button" className="edu-text-button edu-danger-text" disabled={busy} onClick={() => setDeleting(true)}><Trash2 size={15} />원생 삭제</button></div></div>
       <div role="tabpanel" id="edu-panel-memo" aria-labelledby="edu-tab-memo" hidden={tab !== "memo"} className="edu-detail-panel"><MemoForm student={student} busy={busy} save={save} /></div>
       <div role="tabpanel" id="edu-panel-consultations" aria-labelledby="edu-tab-consultations" hidden={tab !== "consultations"} className="edu-detail-panel"><div className="edu-panel-heading"><div><h3>상담 기록</h3><p>예정된 상담과 지난 상담을 함께 확인합니다.</p></div></div><AppointmentList items={appointments} students={edu.students} onEdit={(item) => openConsultation({ item })} onComplete={completeConsultation} busy={busy} /></div>
       <div role="tabpanel" id="edu-panel-history" aria-labelledby="edu-tab-history" hidden={tab !== "history"} className="edu-detail-panel"><div className="edu-panel-heading"><div><h3>변경 이력</h3><p>등록, 수정, 자동 진급 이력 · 한국 시간 기준</p></div></div><HistoryList events={events} students={edu.students} consultations={edu.consultations} /></div>
     </section>
+    {deleting && <DeleteStudentDialog student={student} edu={edu} busy={busy} save={save} onClose={() => setDeleting(false)} onDeleted={() => navigate("edu", "today")} />}
   </div>;
 }
 function StudentList({ edu, today, navigate, busy, onRegister }) {
