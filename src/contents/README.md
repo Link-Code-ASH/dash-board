@@ -16,3 +16,7 @@ A gallery of every title 애쉬 has enjoyed (webtoon, drama, movie, anime, novel
 ## Cover search
 
 `coverSearch.js` finds cover candidates in the browser from key-less sources (Wikipedia ko/en, Apple iTunes Search, AniList), chosen by title type. The editor searches on its own while a title has no cover; a failing source is skipped. A picked image is downloaded and saved like an uploaded cover when its host allows it (CORS), otherwise kept as `coverUrl`.
+
+## Simplified records (2026-10-19)
+
+The editor shows only title, type, rating and one-line review for watched titles, and title, type, release date and memo for 출시 예정 titles (added from their own section). Status, dates, creator, platform and hype are no longer edited but stay stored untouched. The detail view shows "마지막 수정" from `updatedAt`.

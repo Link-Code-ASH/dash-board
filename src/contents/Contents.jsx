@@ -2,13 +2,13 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useHubRuntime } from "../hub/context.jsx";
 import {
-  BookOpen, BookText, Check, ChevronDown, ChevronLeft, ChevronRight, Clapperboard, Crown, Gamepad2, Hourglass, ImagePlus, Pencil, Plus, RefreshCw, Search, Shapes,
+  BookOpen, BookText, Check, ChevronDown, ChevronLeft, ChevronRight, Clapperboard, Crown, Gamepad2, Hourglass, ImagePlus, Minus, Pencil, Plus, RefreshCw, Search, Shapes,
   Sparkles, Star, Trash2, Trophy, Tv, X,
 } from "lucide-react";
 import { useContents } from "./ContentsProvider.jsx";
 import {
-  RARITIES, STATUSES, TIER_NAMES, TYPES, collectionStats, dDayLabel, daysUntil, emptyItem, isUpcoming,
-  localDateKey, rarityOf, rarityWings, statusLabel, typeLabel, upcomingItems, visibleItems,
+  RARITIES, TIER_NAMES, TYPES, collectionStats, dDayLabel, daysUntil, emptyItem, isUpcoming,
+  localDateKey, rarityOf, rarityWings, typeLabel, upcomingItems, visibleItems,
 } from "./model.js";
 import { coverUrl, prepareCover, saveCover } from "./cloud.js";
 import { downloadCover, searchCovers } from "./coverSearch.js";
@@ -16,8 +16,9 @@ import "./contents.css";
 
 const typeIcons = { webtoon: BookOpen, drama: Tv, movie: Clapperboard, anime: Sparkles, novel: BookText, game: Gamepad2, etc: Shapes };
 const SORTS = [{ id: "tier", label: "등급" }, { id: "recent", label: "최근" }, { id: "rating", label: "평점" }, { id: "title", label: "이름" }];
-const yearOf = (item) => (item.date || "").slice(0, 4);
 const dotted = (date) => date.replaceAll("-", ".");
+// The last time a title was edited, shown as a plain local date.
+const editedOn = (item) => dotted(localDateKey(new Date(item.updatedAt || item.createdAt)));
 const comingBadge = (days) => days !== null && days <= 0 ? "OUT NOW" : "COMING SOON";
 const SHELVES_KEY = "hub-contents-shelves-open-v1";
 const readShelves = () => { try { return localStorage.getItem(SHELVES_KEY) === "1"; } catch { return false; } };
@@ -96,7 +97,7 @@ function FigureCase({ item, onOpen, index }) {
       <span className="ct-ledge" aria-hidden="true" />
       <span className="ct-plate">
         <strong>{item.title}</strong>
-        <span className="ct-meta">{[typeLabel(item.type), yearOf(item), item.status !== "done" && statusLabel(item.status)].filter(Boolean).join(" · ")}</span>
+        <span className="ct-meta">{typeLabel(item.type)} · {editedOn(item)}</span>
         <Stars rating={item.rating} />
       </span>
     </button>
@@ -266,7 +267,7 @@ function Coverflow({ items, onOpen }) {
           ) : (
             <span className="ct-hall-score"><b>{current.rating ? current.rating.toFixed(1) : "–"}</b><Stars rating={current.rating} size={17} /></span>
           )}
-          <span className="ct-meta">{[typeLabel(current.type), current.creator, upcoming ? current.platform : yearOf(current)].filter(Boolean).join(" · ")}</span>
+          <span className="ct-meta">{upcoming ? typeLabel(current.type) : `${typeLabel(current.type)} · ${editedOn(current)} 수정`}</span>
         </div>
       )}
       {count > 1 && (
@@ -310,7 +311,7 @@ function Hall({ items, stats, label, toolbar, onOpen, onAdd }) {
   );
 }
 
-function Wing({ id, label, title, caption, count, icon: Icon, bare = false, children }) {
+function Wing({ id, label, title, caption, count, icon: Icon, bare = false, action = null, children }) {
   return (
     <section className={`ct-wing ct-r-${id}`} aria-label={title}>
       <span className="ct-wing-light" aria-hidden="true" />
@@ -318,6 +319,7 @@ function Wing({ id, label, title, caption, count, icon: Icon, bare = false, chil
         <span className="ct-wing-label">{Icon && <Icon size={13} strokeWidth={2} />}<span>{label}</span></span>
         <h2>{title}</h2>
         <p>{caption}<b>{count}</b></p>
+        {action}
       </div>
       {bare ? children : <div className="ct-gallery">{children}</div>}
     </section>
@@ -366,27 +368,23 @@ function Inspect({ item, onClose, onEdit, onRemove, onComplete }) {
         <h2>{item.title}</h2>
         <div className="ct-tags">
           <span>{typeLabel(item.type)}</span>
-          <span>{statusLabel(item.status)}</span>
-          {!upcoming && item.date && <span>{dotted(item.date)}</span>}
-          {item.platform && <span>{item.platform}</span>}
-          {item.creator && <span>{item.creator}</span>}
         </div>
         {upcoming ? (
           <div className="ct-score ct-score-coming">
             <strong>{dDayLabel(days)}</strong>
             <span className="ct-score-text">
               <b>{item.releaseDate ? `${dotted(item.releaseDate)} 출시` : "출시일 미정"}</b>
-              {item.hype > 0 && <span className="ct-hype">기대도 <Stars rating={item.hype} size={15} /></span>}
+              {item.releaseDate && <span className="ct-hype">Flow 일정에 표시돼요</span>}
             </span>
           </div>
         ) : (
           <div className="ct-score">
             <strong>{item.rating ? item.rating.toFixed(1) : "–"}</strong>
             <Stars rating={item.rating} size={22} />
-            {item.releaseDate && <span className="ct-score-note">{dotted(item.releaseDate)} 출시</span>}
           </div>
         )}
         <p className={item.review ? "ct-review" : "ct-review ct-review-empty"}>{item.review || (upcoming ? "아직 메모가 없습니다." : "아직 한 줄 평이 없습니다.")}</p>
+        <p className="ct-updated">마지막 수정 {editedOn(item)}</p>
         <div className="ct-actions">
           {confirm ? (
             <>
@@ -408,37 +406,51 @@ function Inspect({ item, onClose, onEdit, onRemove, onComplete }) {
   );
 }
 
-function RatingPicker({ value, onChange, hype = false }) {
+// Each star has a left half (x.5) and a right half (x.0) as separate targets, so a click always lands on
+// a clear value. Hovering only shows a faint preview; the chosen value stays solid until another click.
+function RatingPicker({ value, onChange }) {
   const [hover, setHover] = useState(null);
-  const shown = hover ?? value;
-  const rarity = hype ? { id: "coming", label: "기대도" } : rarityOf(shown);
-  const pick = (event, index) => {
-    const box = event.currentTarget.getBoundingClientRect();
-    return index + (event.clientX - box.left < box.width / 2 ? 0.5 : 1);
-  };
+  const rarity = rarityOf(value);
+  const step = (delta) => onChange(Math.min(5, Math.max(0, value + delta)));
   return (
     <div className={`ct-rating-picker ct-r-${rarity.id}`}>
-      <div className="ct-rating-stars" onPointerLeave={() => setHover(null)}>
+      <div className="ct-rating-stars" role="radiogroup" aria-label="별점" onPointerLeave={() => setHover(null)}>
         {[0, 1, 2, 3, 4].map((index) => {
-          const fill = Math.max(0, Math.min(1, shown - index));
+          const fill = Math.max(0, Math.min(1, value - index));
+          const ghost = hover === null ? 0 : Math.max(0, Math.min(1, hover - index));
           return (
-            <button
-              key={index}
-              type="button"
-              aria-label={`${index + 1}점`}
-              onPointerMove={(event) => setHover(pick(event, index))}
-              onClick={(event) => onChange(event.detail === 0 ? index + 1 : pick(event, index))}
-            >
-              <Star size={30} strokeWidth={1.5} className="ct-star-empty" />
-              <span className="ct-star-fill" style={{ width: `${fill * 100}%` }}><Star size={30} strokeWidth={1.5} /></span>
-            </button>
+            <span key={index} className="ct-star-slot">
+              <Star size={34} strokeWidth={1.5} className="ct-star-empty" />
+              <span className="ct-star-ghost" style={{ width: `${ghost * 100}%` }}><Star size={34} strokeWidth={1.5} /></span>
+              <span className="ct-star-fill" style={{ width: `${fill * 100}%` }}><Star size={34} strokeWidth={1.5} /></span>
+              {[0.5, 1].map((part) => {
+                const score = index + part;
+                return (
+                  <button
+                    key={part}
+                    type="button"
+                    role="radio"
+                    aria-checked={value === score}
+                    aria-label={`${score.toFixed(1)}점`}
+                    className={part === 0.5 ? "ct-half ct-half-left" : "ct-half ct-half-right"}
+                    onPointerEnter={() => setHover(score)}
+                    onClick={() => onChange(score)}
+                  />
+                );
+              })}
+            </span>
           );
         })}
       </div>
+      <div className="ct-rating-step">
+        <button type="button" onClick={() => step(-0.5)} disabled={value <= 0} aria-label="0.5점 내리기"><Minus size={16} /></button>
+        <strong>{value ? value.toFixed(1) : "–"}</strong>
+        <button type="button" onClick={() => step(0.5)} disabled={value >= 5} aria-label="0.5점 올리기"><Plus size={16} /></button>
+      </div>
       <div className="ct-rating-readout">
-        <strong>{shown ? shown.toFixed(1) : "–"}</strong>
-        {!hype && <span>{rarity.label}</span>}
-        {value > 0 && <button type="button" onClick={() => onChange(0)}>{hype ? "지우기" : "평가 지우기"}</button>}
+        <span>{value ? rarity.label : "평가 전"}</span>
+        {hover !== null && hover !== value && <em>{hover.toFixed(1)}점으로</em>}
+        {value > 0 && hover === null && <button type="button" onClick={() => onChange(0)}>지우기</button>}
       </div>
     </div>
   );
@@ -504,13 +516,13 @@ function Editor({ initial, onClose, onSave }) {
     event.preventDefault();
     if (!draft.title.trim()) { setError("제목을 입력해 주세요."); return; }
     setBusy(true);
-    try { await onSave({ ...draft, title: draft.title.trim(), creator: draft.creator.trim(), platform: draft.platform.trim(), coverUrl: draft.coverUrl.trim() }); }
+    try { await onSave({ ...draft, title: draft.title.trim(), coverUrl: draft.coverUrl.trim() }); }
     catch (problem) { setError(problem.message); setBusy(false); }
   };
   const upcoming = isUpcoming(draft);
   const rarity = upcoming ? { id: "coming" } : rarityOf(draft.rating);
   return (
-    <Modal label={initial.title ? "피규어 수정" : "새 피규어 등록"} onClose={onClose} className={`ct-editor ct-r-${rarity.id}`}>
+    <Modal label={upcoming ? "출시 예정 작품" : initial.title ? "피규어 수정" : "새 피규어 등록"} onClose={onClose} className={`ct-editor ct-r-${rarity.id}`}>
       <form onSubmit={submit} onPaste={onPaste}>
         <div className="ct-chamber ct-chamber-editor">
           <button
@@ -568,7 +580,7 @@ function Editor({ initial, onClose, onSave }) {
           </div>
         </div>
         <div className="ct-form">
-          <span className="ct-rarity ct-rarity-inline">{initial.title ? "EDIT FIGURE" : "NEW FIGURE"}</span>
+          <span className="ct-rarity ct-rarity-inline">{upcoming ? "COMING SOON" : initial.title ? "EDIT FIGURE" : "NEW FIGURE"}</span>
           <label className="ct-field">
             <span>제목</span>
             <input className="ct-input ct-input-title" autoFocus value={draft.title} onChange={(event) => set({ title: event.target.value })} placeholder="작품 이름" maxLength={120} />
@@ -586,67 +598,28 @@ function Editor({ initial, onClose, onSave }) {
               })}
             </div>
           </div>
-          <div className="ct-field">
-            <span>상태</span>
-            <div className="ct-choice ct-choice-small">
-              {STATUSES.map((status) => (
-                <button key={status.id} type="button" aria-pressed={draft.status === status.id} onClick={() => set({ status: status.id })}>
-                  {status.id === "upcoming" && <Hourglass size={14} strokeWidth={1.8} />}{status.label}
-                </button>
-              ))}
-            </div>
-          </div>
           {upcoming ? (
-            <>
-              <div className="ct-field-row ct-field-row-even">
-                <label className="ct-field">
-                  <span>출시일 · Flow 일정에 표시</span>
-                  <input className="ct-input" type="date" value={draft.releaseDate} onChange={(event) => set({ releaseDate: event.target.value })} />
-                </label>
-                <div className="ct-field">
-                  <span>기대도</span>
-                  <RatingPicker hype value={draft.hype} onChange={(hype) => set({ hype })} />
-                </div>
-              </div>
-            </>
+            <label className="ct-field">
+              <span>출시일 · Flow 일정에 자동으로 표시돼요</span>
+              <input className="ct-input" type="date" value={draft.releaseDate} onChange={(event) => set({ releaseDate: event.target.value })} />
+            </label>
           ) : (
-            <>
-              <div className="ct-field">
-                <span>평가</span>
-                <RatingPicker value={draft.rating} onChange={(rating) => set({ rating })} />
-              </div>
-              <div className="ct-field-row ct-field-row-even">
-                <label className="ct-field">
-                  <span>감상 날짜</span>
-                  <input className="ct-input" type="date" value={draft.date} onChange={(event) => set({ date: event.target.value })} />
-                </label>
-                <label className="ct-field">
-                  <span>출시일 · 선택</span>
-                  <input className="ct-input" type="date" value={draft.releaseDate} onChange={(event) => set({ releaseDate: event.target.value })} />
-                </label>
-              </div>
-            </>
+            <div className="ct-field">
+              <span>평가</span>
+              <RatingPicker value={draft.rating} onChange={(rating) => set({ rating })} />
+            </div>
           )}
-          <div className="ct-field-row ct-field-row-even">
-            <label className="ct-field">
-              <span>작가 · 감독 · 제작사</span>
-              <input className="ct-input" value={draft.creator} onChange={(event) => set({ creator: event.target.value })} placeholder="선택 입력" maxLength={80} />
-            </label>
-            <label className="ct-field">
-              <span>어디서 · 플랫폼</span>
-              <input className="ct-input" value={draft.platform} onChange={(event) => set({ platform: event.target.value })} placeholder="넷플릭스, 네이버웹툰, 스팀…" maxLength={60} />
-            </label>
-          </div>
           <label className="ct-field">
-            <span>{upcoming ? "기대 포인트 · 메모" : "한 줄 평"}</span>
-            <textarea className="ct-input ct-textarea" rows={4} value={draft.review} onChange={(event) => set({ review: event.target.value })}
-              placeholder={upcoming ? "공개된 정보, 기대하는 점, 예고편 링크 등" : "어떤 점이 좋았나요?"} />
+            <span>{upcoming ? "메모" : "한 줄 평"}</span>
+            <textarea className="ct-input ct-textarea" rows={3} value={draft.review} onChange={(event) => set({ review: event.target.value })}
+              placeholder={upcoming ? "기대하는 점, 예고편 링크 등" : "어떤 점이 좋았나요?"} />
           </label>
           {error && <p className="ct-error" role="alert">{error}</p>}
           <div className="ct-actions">
             <button type="submit" className="ct-btn ct-btn-primary" disabled={busy}>{upcoming ? <Hourglass size={16} /> : <Trophy size={16} />}{initial.title ? "저장" : upcoming ? "출시 예정에 올리기" : "전시하기"}</button>
             <button type="button" className="ct-btn" onClick={onClose}>취소</button>
           </div>
+          <p className="ct-updated">{initial.title ? `마지막 수정 ${editedOn(initial)}` : "저장하면 오늘 날짜가 수정일로 기록돼요."}</p>
         </div>
       </form>
     </Modal>
@@ -724,9 +697,12 @@ export default function Contents({ route }) {
         onAdd={() => setEditing(emptyItem())}
       />
 
-      {ready && coming.length > 0 && (
-        <Wing id="coming" label="COMING SOON" title="출시 예정" caption="출시일이 가까운 순서" count={coming.length} icon={Hourglass} bare>
-          <Coverflow items={coming} onOpen={setOpenId} />
+      {ready && (
+        <Wing id="coming" label="COMING SOON" title="출시 예정" caption="출시일이 가까운 순서" count={coming.length} icon={Hourglass} bare
+          action={<button type="button" className="ct-btn ct-wing-add" onClick={() => setEditing({ ...emptyItem(), status: "upcoming", date: "" })}><Plus size={16} />출시 예정 추가</button>}>
+          {coming.length ? <Coverflow items={coming} onOpen={setOpenId} /> : (
+            <p className="ct-status ct-status-small">기다리는 작품을 추가하면 출시일이 Flow 일정에 자동으로 표시돼요.</p>
+          )}
         </Wing>
       )}
       {!ready ? (
