@@ -7,7 +7,7 @@ import { mergeDashboard } from "../hub/merge.js";
 import { exportModuleBackups, restoreModuleBackups } from "../hub/moduleRegistry.js";
 import { prepareAuthReturn } from "../hub/authReturn.js";
 import { listRecoverySnapshots, readRecoverySnapshot } from "./recovery.js";
-import { archiveRecoveryEntries } from "./recoveryArchive.js";
+import { archiveRecoveryEntries, latestAccountDraft } from "./recoveryArchive.js";
 import {
   accountSnapshotKey, pendingSnapshotPrefix, readStoredSnapshot, readRecoverableSnapshot,
   sameDashboard, mergeAccountSnapshots, nextEditTimestamp, withDashboardLock, stageDashboardSnapshot, flushDashboardSnapshots, mergeStoredDashboard,
@@ -504,10 +504,11 @@ export function useDashboard(selectedDate, setSelectedDate) {
 
   const downloadAccountRecovery = async () => {
     const userId = accountRef.current.user?.id;
-    const key = userId && latestAccountDraftKey(userId);
-    if (!key) return;
+    if (!userId) return;
     try {
-      const saved = JSON.parse(localStorage.getItem(key));
+      const draft = await latestAccountDraft(userId);
+      if (!draft) { setAccountStatus("내려받을 이전 기기 자료가 없습니다."); return; }
+      const saved = JSON.parse(draft.raw);
       const { images, state } = splitBackupPayload(saved);
       const payload = createBackupPayload(state, images.length ? images : await getNoteImagesForState(state));
       downloadTextFile(`hub-recovery-${toDateKey(new Date())}.json`, JSON.stringify(payload, null, 2));

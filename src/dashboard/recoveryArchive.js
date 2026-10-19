@@ -35,9 +35,9 @@ function run(db, mode, operation) {
   });
 }
 
-// Move recovery entries out of localStorage, newest `keep` account drafts stay
-// so "이전 기기 자료 백업 다운로드" keeps working. Returns how many moved.
-export async function archiveRecoveryEntries(storage = globalThis.localStorage, { keep = 2, factory } = {}) {
+// Move recovery entries out of localStorage; by default none stay (the
+// download button reads the archive too). Returns how many moved.
+export async function archiveRecoveryEntries(storage = globalThis.localStorage, { keep = 0, factory } = {}) {
   const keys = Array.from({ length: storage.length }, (_, index) => storage.key(index)).filter(isRecoveryKey)
     .sort((left, right) => stamp(right) - stamp(left) || right.localeCompare(left));
   const kept = new Set(keys.filter((key) => key.startsWith(ACCOUNT_RECOVERY_PREFIX)).slice(0, keep));
@@ -63,6 +63,16 @@ export async function readRecoveryArchive(factory) {
   try { db = await openArchive(factory); } catch { return []; }
   try { return await run(db, "readonly", (store) => store.getAll()) || []; }
   finally { db.close(); }
+}
+
+// Newest account draft for this user, from localStorage or the archive.
+export async function latestAccountDraft(userId, storage = globalThis.localStorage, factory) {
+  const prefix = `${ACCOUNT_RECOVERY_PREFIX}${userId}:`;
+  const local = Array.from({ length: storage.length }, (_, index) => storage.key(index)).filter((key) => key?.startsWith(prefix))
+    .map((key) => ({ key, raw: storage.getItem(key) }));
+  const archived = (await readRecoveryArchive(factory)).filter(({ key }) => key.startsWith(prefix));
+  return [...local, ...archived].filter(({ raw }) => raw !== null)
+    .sort((left, right) => stamp(right.key) - stamp(left.key) || right.key.localeCompare(left.key))[0] || null;
 }
 
 // A Storage-like view of localStorage plus archived entries, so the full

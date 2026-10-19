@@ -568,7 +568,7 @@ export function AccountSyncControls({ account, onAccountLoad, onAccountRecovery,
       ),
     h("p", { className: "sync-status", role: "status" }, account.status),
     account.user ? h("p", { className: "sync-status sync-storage-usage" }, describeLocalStorageUsage()) : null,
-    account.user && latestAccountDraftKey(account.user.id)
+    account.user
       ? h("button", { className: "text-button", type: "button", onClick: onAccountRecovery }, "이전 기기 자료 백업 다운로드")
       : null,
     account.user && !account.connected && account.cloudAvailable

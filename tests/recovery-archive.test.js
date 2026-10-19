@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { archiveRecoveryEntries, isRecoveryKey, readRecoveryArchive, withRecoveryArchive } from "../src/dashboard/recoveryArchive.js";
+import { archiveRecoveryEntries, isRecoveryKey, latestAccountDraft, readRecoveryArchive, withRecoveryArchive } from "../src/dashboard/recoveryArchive.js";
 import { createRecoveryBundle } from "../src/dashboard/recovery.js";
 
 class MemoryStorage {
@@ -73,4 +73,14 @@ test("nothing leaves localStorage when the archive write fails", async () => {
   const storage = new MemoryStorage({ [draft(1760000000001, "local")]: '{"n":1}' });
   await assert.rejects(archiveRecoveryEntries(storage, { keep: 0, factory: fakeIndexedDB({ failWrites: true }) }));
   assert.equal(storage.getItem(draft(1760000000001, "local")), '{"n":1}');
+});
+
+test("the newest draft is found after every draft moved to the archive", async () => {
+  const storage = new MemoryStorage({ [draft(1760000000001, "local")]: '{"n":1}', [draft(1760000000005, "remote")]: '{"n":5}' });
+  const factory = fakeIndexedDB();
+  assert.equal(await archiveRecoveryEntries(storage, { factory }), 2);
+  assert.equal(storage.length, 0);
+  const latest = await latestAccountDraft(user, storage, factory);
+  assert.equal(latest.raw, '{"n":5}');
+  assert.equal(await latestAccountDraft("someone-else", storage, factory), null);
 });
