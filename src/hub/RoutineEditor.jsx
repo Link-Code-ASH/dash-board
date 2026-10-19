@@ -139,6 +139,12 @@ function WeeklyEditor({ heading, toggle }) {
     <div className="routine-table-heads wk-table-heads" aria-hidden="true">
       <div className="routine-table-head"><span>항목</span><span>Y</span><span>N</span></div>
     </div>
+    {/* Wide panels show Weekly as one timetable: this weekday row on top,
+        then one row per category with its seven day cells under it. */}
+    <div className="wk-board-head" aria-hidden="true">
+      <span>카테고리</span>
+      {weekDays.map((day) => <span key={day.key} className={selectedWeekday === day.key ? "is-today" : ""}>{day.label}{selectedWeekday === day.key && <em>오늘</em>}</span>)}
+    </div>
     <div className="wk-list">
       {categories.map((category, index) => <article className="wk-cat" key={category.key} data-item-key={category.key} {...dragProps(category.key, d.moveCategory)}>
         {/* Same row layout as a Daily item: order, icon, name, Y, N, delete. */}
@@ -146,8 +152,10 @@ function WeeklyEditor({ heading, toggle }) {
           <OrderControl index={index} items={categories} onMove={d.moveCategory} label={category.label || "카테고리"} />
           <ItemIconButton itemKey={`weekly:${category.key}`} label={category.label || "카테고리"} />
           <input className="routine-name-input wk-cat-name" aria-label={`카테고리 이름 ${index + 1}`} placeholder="카테고리 이름" maxLength={24} value={category.label} onChange={(e) => d.updateCategory(category.key, "label", e.target.value)} />
-          <ScoreInput choice="Y" label={category.label} value={category.yScore} onChange={(value) => d.updateCategory(category.key, "yScore", value)} />
-          <ScoreInput choice="N" label={category.label} value={category.nScore} onChange={(value) => d.updateCategory(category.key, "nScore", value)} />
+          <div className="wk-cat-scores">
+            <ScoreInput choice="Y" label={category.label} value={category.yScore} onChange={(value) => d.updateCategory(category.key, "yScore", value)} />
+            <ScoreInput choice="N" label={category.label} value={category.nScore} onChange={(value) => d.updateCategory(category.key, "nScore", value)} />
+          </div>
           <button type="button" className="routine-delete-button" disabled={categories.length <= 1} aria-label={`${category.label} 카테고리 삭제`} onClick={() => d.removeCategory(category.key)}><Trash2 size={18} /></button>
         </header>
         <div className="wk-days">

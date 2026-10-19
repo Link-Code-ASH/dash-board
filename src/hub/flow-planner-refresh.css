@@ -568,6 +568,66 @@ html body #root .hub-app.hub-app.hub-mobile .wk-entry { flex: 1 1 calc(100% - 80
 html body #root .hub-app.hub-app.hub-mobile .wk-entry + .wk-entry,
 html body #root .hub-app.hub-app.hub-mobile .wk-rotate-add { margin-left: 70px; }
 html body #root .hub-app.hub-app.hub-mobile .wk-day:not(:focus-within) .wk-rotate-add { display: none; }
+/* Narrow panels and phones: each category is a bold title over one framed
+   list of its seven days (lines between days, today tinted), so the days
+   read as one block instead of seven loose boxes. */
+@container routine-panel (max-width: 760px) {
+  html body #root .hub-app.hub-app .wk-editor .wk-days { gap: 0; border: 1px solid var(--fp-line); border-radius: 10px; overflow: hidden; background: #fff; }
+  html body #root .hub-app.hub-app .wk-editor .wk-day { border: 0; border-top: 1px solid var(--fp-line-soft); border-radius: 0; background: #fff; box-shadow: none; }
+  html body #root .hub-app.hub-app .wk-editor .wk-day:first-child { border-top: 0; }
+  html body #root .hub-app.hub-app .wk-editor .wk-day.is-today { background: #f4f8ff; box-shadow: none; }
+  html body #root .hub-app.hub-app .wk-editor .wk-day:focus-within { box-shadow: inset 0 0 0 1.5px var(--fp-accent); }
+  html body #root .hub-app.hub-app .wk-editor .wk-cat-name { color: var(--fp-ink) !important; font-size: 16px !important; font-weight: 800 !important; }
+  html body #root .hub-app.hub-app .wk-editor .wk-cat { padding-bottom: 16px; border-bottom: 0; }
+}
+html body #root .hub-app.hub-app.hub-mobile .wk-editor .wk-days { gap: 0; border: 1px solid var(--fp-line); border-radius: 10px; overflow: hidden; background: #fff; }
+html body #root .hub-app.hub-app.hub-mobile .wk-editor .wk-day { border: 0; border-top: 1px solid var(--fp-line-soft); border-radius: 0; background: #fff; box-shadow: none; }
+html body #root .hub-app.hub-app.hub-mobile .wk-editor .wk-day:first-child { border-top: 0; }
+html body #root .hub-app.hub-app.hub-mobile .wk-editor .wk-day.is-today { background: #f4f8ff; box-shadow: none; }
+html body #root .hub-app.hub-app.hub-mobile .wk-editor .wk-day:focus-within { box-shadow: inset 0 0 0 1.5px var(--fp-accent); }
+html body #root .hub-app.hub-app.hub-mobile .wk-editor .wk-cat-name { color: var(--fp-ink) !important; font-size: 16px !important; font-weight: 800 !important; }
+html body #root .hub-app.hub-app.hub-mobile .wk-editor .wk-cat { padding-bottom: 16px; border-bottom: 0; }
+/* Weekly board (wide panels): one timetable. The weekday row sits on top
+   once; each category is a row whose title cell (icon, bold name, Y/N) is on
+   the left and whose seven day cells line up under the weekday row. Today's
+   column is tinted top to bottom. Narrow panels and phones keep the stacked
+   layout above. */
+html body #root .hub-app.hub-app .wk-cat-scores { display: contents; }
+html body #root .hub-app.hub-app .wk-board-head { display: none; }
+@container routine-panel (min-width: 761px) {
+  html body #root .hub-app.hub-app:not(.hub-mobile) .wk-editor { --wk-cols: 216px repeat(7, minmax(0, 1fr)); }
+  html body #root .hub-app.hub-app:not(.hub-mobile) .wk-editor .wk-table-heads { display: none; }
+  html body #root .hub-app.hub-app:not(.hub-mobile) .wk-editor .wk-guide { margin: 8px 0 10px; }
+  html body #root .hub-app.hub-app:not(.hub-mobile) .wk-editor .wk-board-head { display: grid; grid-template-columns: var(--wk-cols); border: 1px solid var(--fp-line); border-bottom: 0; border-radius: 12px 12px 0 0; background: #f5f7fa; }
+  html body #root .hub-app.hub-app:not(.hub-mobile) .wk-editor .wk-board-head > span { display: flex; align-items: center; justify-content: center; gap: 6px; height: 36px; border-left: 1px solid var(--fp-line-soft); color: var(--fp-muted); font-size: 12px; font-weight: 800; letter-spacing: .05em; }
+  html body #root .hub-app.hub-app:not(.hub-mobile) .wk-editor .wk-board-head > span:first-child { justify-content: flex-start; padding-left: 14px; border-left: 0; letter-spacing: 0; }
+  html body #root .hub-app.hub-app:not(.hub-mobile) .wk-editor .wk-board-head > span:nth-child(2) { color: var(--fp-sun); }
+  html body #root .hub-app.hub-app:not(.hub-mobile) .wk-editor .wk-board-head > span:last-child { color: var(--fp-sat); }
+  html body #root .hub-app.hub-app:not(.hub-mobile) .wk-editor .wk-board-head > span.is-today { background: var(--fp-accent-soft); color: var(--fp-accent); }
+  html body #root .hub-app.hub-app:not(.hub-mobile) .wk-editor .wk-board-head em { padding: 1px 6px; border-radius: 999px; background: var(--fp-accent); color: #fff; font-style: normal; font-size: 10px; letter-spacing: 0; }
+  html body #root .hub-app.hub-app:not(.hub-mobile) .wk-editor .wk-list { border: 1px solid var(--fp-line); border-radius: 0 0 12px 12px; overflow: hidden; }
+  html body #root .hub-app.hub-app:not(.hub-mobile) .wk-editor .wk-cat { display: grid; grid-template-columns: var(--wk-cols); padding: 0; border-top: 1px solid var(--fp-line); border-bottom: 0; }
+  html body #root .hub-app.hub-app:not(.hub-mobile) .wk-editor .wk-cat + .wk-cat { padding-top: 0; }
+  html body #root .hub-app.hub-app:not(.hub-mobile) .wk-editor .wk-cat > .wk-days { display: contents; margin: 0; }
+  html body #root .hub-app.hub-app:not(.hub-mobile) .wk-editor .wk-cat > .wk-cat-row { grid-template-columns: 20px 30px minmax(0, 1fr) 26px; grid-template-rows: auto auto; align-content: center; gap: 6px 4px; min-height: 0; padding: 12px 10px 12px 6px; background: #fafbfc; }
+  html body #root .hub-app.hub-app:not(.hub-mobile) .wk-editor .wk-cat-row > .routine-order-controls { grid-column: 1; grid-row: 1 / 3; align-self: center; }
+  html body #root .hub-app.hub-app:not(.hub-mobile) .wk-editor .wk-cat-row > .hub-item-icon { grid-column: 2; grid-row: 1; }
+  html body #root .hub-app.hub-app:not(.hub-mobile) .wk-editor .wk-cat-row > .wk-cat-name { grid-column: 3; grid-row: 1; min-width: 0; padding-left: 2px !important; border: 0 !important; background: transparent !important; box-shadow: none !important; color: var(--fp-ink) !important; font-size: 16px !important; font-weight: 800 !important; }
+  html body #root .hub-app.hub-app:not(.hub-mobile) .wk-editor .wk-cat-row > .routine-delete-button { grid-column: 4; grid-row: 1; }
+  html body #root .hub-app.hub-app:not(.hub-mobile) .wk-editor .wk-cat-row > .wk-cat-scores { grid-column: 2 / 5; grid-row: 2; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+  html body #root .hub-app.hub-app:not(.hub-mobile) .wk-editor .wk-cat-scores .routine-score-field { display: flex; align-items: center; gap: 6px; width: auto; }
+  html body #root .hub-app.hub-app:not(.hub-mobile) .wk-editor .wk-cat-scores .routine-score-field > span { display: block; flex: none; align-self: center; width: 14px; margin: 0 0 0 4px; line-height: 30px; color: var(--fp-muted); font-size: 11px; font-weight: 800; text-align: center; }
+  html body #root .hub-app.hub-app:not(.hub-mobile) .wk-editor .wk-cat-scores .routine-score-field input { flex: 1; min-width: 0; height: 30px !important; min-height: 30px !important; text-align: center; }
+  html body #root .hub-app.hub-app:not(.hub-mobile) .wk-editor .wk-day { min-height: 84px; padding: 10px; border: 0; border-left: 1px solid var(--fp-line-soft); border-radius: 0; background: #fff; box-shadow: none; }
+  html body #root .hub-app.hub-app:not(.hub-mobile) .wk-editor .wk-day.is-empty { border-style: solid; background: #fff; }
+  html body #root .hub-app.hub-app:not(.hub-mobile) .wk-editor .wk-day.is-today { border: 0; border-left: 1px solid var(--fp-line-soft); background: #f4f8ff; box-shadow: none; }
+  html body #root .hub-app.hub-app:not(.hub-mobile) .wk-editor .wk-day:focus-within { border-color: var(--fp-line-soft); box-shadow: inset 0 0 0 1.5px var(--fp-accent); }
+  html body #root .hub-app.hub-app:not(.hub-mobile) .wk-editor .wk-day-name { display: none; }
+  html body #root .hub-app.hub-app:not(.hub-mobile) .wk-editor .wk-board-head > span:not(:first-child) { text-transform: uppercase; }
+  /* Empty cells stay blank so the category titles stand out; "+ 할 일"
+     shows when the pointer is over the cell or it has focus. */
+  html body #root .hub-app.hub-app:not(.hub-mobile) .wk-editor .wk-day.is-empty:not(:hover, :focus-within) .wk-entry textarea::placeholder { color: transparent; }
+}
 
 /* ---------- Flow schedule: score as a corner pill ----------
    The day score moves from a footer row on every day to a small pill beside
