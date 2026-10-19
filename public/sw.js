@@ -45,9 +45,9 @@ self.addEventListener("activate", (event) => {
   })());
 });
 
-// Only the page's module-load recovery asks for this: the old release's lazy
-// files are already gone from the server, so waiting for every window to close
-// would keep reopening a broken app.
+// The page asks for this when it is idle (src/hub/autoUpdate.js) or when an old
+// release's lazy files are already gone (module-load recovery), so devices run
+// the newest release without every window being closed first.
 self.addEventListener("message", (event) => {
   if (typeof BUILD === "string" || event.data?.type !== "HUB_ACTIVATE_RELEASE") return;
   if (new URL(event.origin || ROOT.origin).origin !== ROOT.origin) return;

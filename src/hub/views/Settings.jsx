@@ -13,6 +13,7 @@ import {
 import { generateSyncIdValue, SYNC_ID_KEY, downloadTextFile } from "../../dashboard/model.js";
 import { createRecoveryBundle } from "../../dashboard/recovery.js";
 import { readRecoveryArchive, withRecoveryArchive } from "../../dashboard/recoveryArchive.js";
+import { hubStorage } from "../../dashboard/hubStorage.js";
 
 export default function Settings({ gate }) {
   const d = useDashboardData();
@@ -103,7 +104,7 @@ export default function Settings({ gate }) {
       />
       <button className="hub-install-button" onClick={async () => downloadTextFile(
         `hub-recovery-records-${Date.now()}.json`,
-        JSON.stringify(createRecoveryBundle(withRecoveryArchive(localStorage, await readRecoveryArchive()), d.account.user?.id, d.data), null, 2),
+        JSON.stringify(createRecoveryBundle(withRecoveryArchive(hubStorage, await readRecoveryArchive()), d.account.user?.id, d.data), null, 2),
       )}>
         <Download size={17} />복구 기록 전체 저장
       </button>

@@ -88,14 +88,10 @@ export function withRecoveryArchive(storage, archived) {
   };
 }
 
-// Approximate localStorage use (UTF-16, 2 bytes per character). Browsers cap
-// it around 5MB per site; past STORAGE_WARN_BYTES the shell shows a warning.
-export const STORAGE_WARN_BYTES = 3.5 * 1048576;
-export function localStorageBytes(storage = globalThis.localStorage) {
-  let bytes = 0;
-  for (let index = 0; index < storage.length; index += 1) {
-    const key = storage.key(index) || "";
-    bytes += (key.length + (storage.getItem(key) || "").length) * 2;
-  }
-  return bytes;
+// Store one recovery copy directly in the archive (used when the same key had
+// two different versions while moving data out of localStorage).
+export async function archiveRecoveryRaw(key, raw, factory) {
+  const db = await openArchive(factory);
+  try { await run(db, "readwrite", (store) => store.put({ key, raw, archivedAt: new Date().toISOString() })); }
+  finally { db.close(); }
 }

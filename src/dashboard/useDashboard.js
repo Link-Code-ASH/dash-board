@@ -8,6 +8,7 @@ import { exportModuleBackups, restoreModuleBackups } from "../hub/moduleRegistry
 import { prepareAuthReturn } from "../hub/authReturn.js";
 import { listRecoverySnapshots, readRecoverySnapshot } from "./recovery.js";
 import { archiveRecoveryEntries, latestAccountDraft } from "./recoveryArchive.js";
+import { hubStorage } from "./hubStorage.js";
 import {
   accountSnapshotKey, pendingSnapshotPrefix, readStoredSnapshot, readRecoverableSnapshot,
   sameDashboard, mergeAccountSnapshots, nextEditTimestamp, withDashboardLock, stageDashboardSnapshot, flushDashboardSnapshots, mergeStoredDashboard,
@@ -59,9 +60,20 @@ import {
   normalizeSyncId,
 } from "./model.js";
 
+// Every lock first re-reads HUB storage (another window may have written it)
+// and waits for this window's writes to be committed before it is released.
+const lockDashboard = (name, action) => withDashboardLock(name, async () => {
+  await hubStorage.refresh();
+  try {
+    return await action();
+  } finally {
+    await hubStorage.flushed();
+  }
+});
+
 export function useDashboard(selectedDate, setSelectedDate) {
   const [data, setData] = useState(() => {
-    try { return normalizeState(readRecoverableSnapshot(localStorage, STORAGE_KEY) || loadState()); }
+    try { return normalizeState(readRecoverableSnapshot(hubStorage, STORAGE_KEY) || loadState()); }
     catch { return loadState(); }
   });
 
@@ -83,11 +95,11 @@ export function useDashboard(selectedDate, setSelectedDate) {
 
   const [sync, setSync] = useState({
     backend: loadSyncBackend(),
-    pin: localStorage.getItem(SYNC_REMEMBER_KEY) === "true" ? localStorage.getItem(SYNC_PIN_KEY) || "" : "",
-    rememberDevice: localStorage.getItem(SYNC_REMEMBER_KEY) === "true",
-    syncId: localStorage.getItem(SYNC_ID_KEY) || "",
+    pin: hubStorage.getItem(SYNC_REMEMBER_KEY) === "true" ? hubStorage.getItem(SYNC_PIN_KEY) || "" : "",
+    rememberDevice: hubStorage.getItem(SYNC_REMEMBER_KEY) === "true",
+    syncId: hubStorage.getItem(SYNC_ID_KEY) || "",
     busy: false,
-    status: localStorage.getItem(SYNC_REMEMBER_KEY) === "true" ? "Ready to auto connect." : "Not connected.",
+    status: hubStorage.getItem(SYNC_REMEMBER_KEY) === "true" ? "Ready to auto connect." : "Not connected.",
   });
 
   const [account, setAccount] = useState({
@@ -279,7 +291,7 @@ export function useDashboard(selectedDate, setSelectedDate) {
       deferStorageSnapshot(key, before);
       return;
     }
-    const result = mergeStoredDashboard(localStorage, key, before, dataRef.current, snapshot);
+    const result = mergeStoredDashboard(hubStorage, key, before, dataRef.current, snapshot);
     const merged = normalizeState(result.data);
     reportStorageConflicts(result.conflicts);
     storageSnapshotRef.current = { key, data: snapshot };
@@ -298,15 +310,15 @@ export function useDashboard(selectedDate, setSelectedDate) {
     let write;
     let staged = false;
     try {
-      const base = storageSnapshotRef.current.key === key ? storageSnapshotRef.current.data : readStoredSnapshot(localStorage, key);
-      stageDashboardSnapshot(localStorage, key, storageWriterRef.current, base, next);
+      const base = storageSnapshotRef.current.key === key ? storageSnapshotRef.current.data : readStoredSnapshot(hubStorage, key);
+      stageDashboardSnapshot(hubStorage, key, storageWriterRef.current, base, next);
       staged = true;
-      write = withDashboardLock(`hub-storage:${key}`, () => {
+      write = lockDashboard(`hub-storage:${key}`, () => {
         if (composingRef.current && generation === accountGenerationRef.current && key === currentStorageKey()) {
           deferStorageSnapshot(key, base);
           return { data: null, conflicts: [] };
         }
-        return flushDashboardSnapshots(localStorage, key);
+        return flushDashboardSnapshots(hubStorage, key);
       })
         .then(({ data: saved, conflicts }) => {
           if (generation !== accountGenerationRef.current || key !== currentStorageKey()) return;
@@ -335,10 +347,10 @@ export function useDashboard(selectedDate, setSelectedDate) {
 
   const rememberAccountSnapshot = (userId, state, revision) => {
     const snapshot = { data: JSON.parse(JSON.stringify(state)), revision };
-    const persisted = readStoredSnapshot(localStorage, accountSnapshotKey(userId));
+    const persisted = readStoredSnapshot(hubStorage, accountSnapshotKey(userId));
     if (!persisted || persisted.revision <= revision) {
-      localStorage.setItem(accountSnapshotKey(userId), JSON.stringify(snapshot));
-      localStorage.setItem(accountSyncedKey(userId), state.updatedAt);
+      hubStorage.setItem(accountSnapshotKey(userId), JSON.stringify(snapshot));
+      hubStorage.setItem(accountSyncedKey(userId), state.updatedAt);
     }
     lastSyncedSnapshotRef.current = snapshot;
     accountRevisionRef.current = revision;
@@ -399,21 +411,21 @@ export function useDashboard(selectedDate, setSelectedDate) {
 
   const activateAccountData = async (userId, row, expectedUpdatedAt = null) => {
     const generation = accountGenerationRef.current;
-    return withDashboardLock(`hub-cloud-push:${userId}`, async () => {
+    return lockDashboard(`hub-cloud-push:${userId}`, async () => {
       if (!isCurrentAccount(userId, generation)) return false;
       if (deferAccountRefresh()) return false;
       const before = dataRef.current;
       const key = accountCacheKey(userId);
-      const cacheBefore = storageSnapshotRef.current.key === key ? storageSnapshotRef.current.data : readStoredSnapshot(localStorage, key);
+      const cacheBefore = storageSnapshotRef.current.key === key ? storageSnapshotRef.current.data : readStoredSnapshot(hubStorage, key);
       const { images, state } = splitBackupPayload(row.payload);
       const normalized = normalizeState(state);
       await restoreNoteImages(images, { clear: false });
       if (deferAccountRefresh()) return false;
       if (!isCurrentAccount(userId, generation) || dataRef.current !== before
         || (expectedUpdatedAt && dataRef.current.updatedAt !== expectedUpdatedAt)) return false;
-      if (readStoredSnapshot(localStorage, accountSnapshotKey(userId))?.revision > row.revision) return false;
+      if (readStoredSnapshot(hubStorage, accountSnapshotKey(userId))?.revision > row.revision) return false;
       activeAccountIdRef.current = userId;
-      localStorage.setItem(ACCOUNT_OWNER_KEY, userId);
+      hubStorage.setItem(ACCOUNT_OWNER_KEY, userId);
       window.clearTimeout(pushTimerRef.current);
       window.clearInterval(pollTimerRef.current);
       storageSnapshotRef.current = { key, data: cacheBefore };
@@ -427,7 +439,7 @@ export function useDashboard(selectedDate, setSelectedDate) {
   };
 
   const mergeAccountData = async (userId, row, generation) => {
-    return withDashboardLock(`hub-cloud-push:${userId}`, async () => {
+    return lockDashboard(`hub-cloud-push:${userId}`, async () => {
       if (!isCurrentAccount(userId, generation) || activeAccountIdRef.current !== userId) return false;
       if (deferAccountRefresh()) return false;
       const { images, state } = splitBackupPayload(row.payload);
@@ -437,14 +449,14 @@ export function useDashboard(selectedDate, setSelectedDate) {
       const localImages = await getNoteImagesForState(dataRef.current);
       if (!isCurrentAccount(userId, generation)) return false;
       if (deferAccountRefresh()) return false;
-      if (readStoredSnapshot(localStorage, accountSnapshotKey(userId))?.revision > row.revision) return false;
+      if (readStoredSnapshot(hubStorage, accountSnapshotKey(userId))?.revision > row.revision) return false;
       const local = dataRef.current;
       const localDraft = createBackupPayload(local, localImages);
       const preserve = () => preserveAccountDraft(userId, localDraft, "local") && preserveAccountDraft(userId, row.payload, "remote");
-      // A full localStorage used to stop sync for good; move older recovery
+      // A full hubStorage used to stop sync for good; move older recovery
       // copies to IndexedDB (nothing is deleted) and try once more.
       if (!preserve()) {
-        await archiveRecoveryEntries(localStorage, { keep: 0 }).catch(() => 0);
+        await archiveRecoveryEntries(hubStorage, { keep: 0 }).catch(() => 0);
         if (!isCurrentAccount(userId, generation)) return false;
         if (!preserve()) throw new Error("Recovery storage is full; merge stopped without replacing either draft.");
       }
@@ -477,7 +489,7 @@ export function useDashboard(selectedDate, setSelectedDate) {
       }
       const hasUnsyncedAccountChanges = activeAccountIdRef.current === userId
         && hasAccountChanges();
-      if (hasUnsyncedAccountChanges || (!activeAccountIdRef.current && localStorage.getItem(STORAGE_KEY))) {
+      if (hasUnsyncedAccountChanges || (!activeAccountIdRef.current && hubStorage.getItem(STORAGE_KEY))) {
         downloadTextFile(`hub-before-google-${toDateKey(new Date())}.json`, JSON.stringify(createBackupPayload(dataRef.current, await getNoteImagesForState(dataRef.current)), null, 2));
       }
       if (!await activateAccountData(userId, row) && isCurrentAccount(userId, generation)) {
@@ -489,11 +501,11 @@ export function useDashboard(selectedDate, setSelectedDate) {
     }
   };
 
-  const listDashboardRecoveries = () => listRecoverySnapshots(localStorage, accountRef.current.user?.id || null);
+  const listDashboardRecoveries = () => listRecoverySnapshots(hubStorage, accountRef.current.user?.id || null);
 
   const downloadDashboardRecovery = (key, version = "local") => {
     try {
-      const payload = readRecoverySnapshot(localStorage, accountRef.current.user?.id || null, key, version);
+      const payload = readRecoverySnapshot(hubStorage, accountRef.current.user?.id || null, key, version);
       downloadTextFile(`hub-recovery-${version}-${toDateKey(new Date())}.json`, JSON.stringify(payload, null, 2));
       return true;
     } catch (error) {
@@ -506,7 +518,7 @@ export function useDashboard(selectedDate, setSelectedDate) {
     const userId = accountRef.current.user?.id;
     if (!userId) return;
     try {
-      const draft = await latestAccountDraft(userId);
+      const draft = await latestAccountDraft(userId, hubStorage);
       if (!draft) { setAccountStatus("내려받을 이전 기기 자료가 없습니다."); return; }
       const saved = JSON.parse(draft.raw);
       const { images, state } = splitBackupPayload(saved);
@@ -520,7 +532,7 @@ export function useDashboard(selectedDate, setSelectedDate) {
   const getAccountUploadState = (userId) => {
     if (activeAccountIdRef.current === userId) return dataRef.current;
     try {
-      return JSON.parse(localStorage.getItem(accountCacheKey(userId)) || "null") || dataRef.current;
+      return JSON.parse(hubStorage.getItem(accountCacheKey(userId)) || "null") || dataRef.current;
     } catch {
       return dataRef.current;
     }
@@ -557,7 +569,7 @@ export function useDashboard(selectedDate, setSelectedDate) {
     if (!userId) return false;
     const before = dataRef.current;
     const key = accountCacheKey(userId);
-    const cacheBefore = storageSnapshotRef.current.key === key ? storageSnapshotRef.current.data : readStoredSnapshot(localStorage, key);
+    const cacheBefore = storageSnapshotRef.current.key === key ? storageSnapshotRef.current.data : readStoredSnapshot(hubStorage, key);
     const state = getAccountUploadState(userId);
     const row = await readAccountData(userId).catch((error) => {
       if (isCurrentAccount(userId, generation)) setAccountStatus(`클라우드 확인 실패: ${error.message}`);
@@ -575,7 +587,7 @@ export function useDashboard(selectedDate, setSelectedDate) {
     if (!row && !window.confirm("현재 기기 자료가 가장 최신인지 확인하셨나요? 기존 PIN 동기화나 다른 기기에 더 최신 자료가 있을 수 있습니다. 이 자료를 Google 계정에 처음 저장하시겠습니까?")) return false;
     updateAccount((current) => ({ ...current, busy: true, status: "계정에 저장하는 중입니다..." }));
     try {
-      return await withDashboardLock(`hub-cloud-push:${userId}`, async () => {
+      return await lockDashboard(`hub-cloud-push:${userId}`, async () => {
         if (!isCurrentAccount(userId, generation)) return false;
         if (row) downloadTextFile(`hub-cloud-before-replace-${toDateKey(new Date())}.json`, JSON.stringify(row.payload, null, 2));
         const payload = createBackupPayload(state, await getNoteImagesForState(state));
@@ -584,7 +596,7 @@ export function useDashboard(selectedDate, setSelectedDate) {
         if (revision === null || !isCurrentAccount(userId, generation)) return false;
         // The uploaded snapshot is the base, even if more edits arrived during upload.
         activeAccountIdRef.current = userId;
-        localStorage.setItem(ACCOUNT_OWNER_KEY, userId);
+        hubStorage.setItem(ACCOUNT_OWNER_KEY, userId);
         storageSnapshotRef.current = { key, data: cacheBefore };
         await persistDashboard(normalizeState(mergeDashboard(before, dataRef.current, state).data));
         if (!isCurrentAccount(userId, generation)) return false;
@@ -620,11 +632,11 @@ export function useDashboard(selectedDate, setSelectedDate) {
     accountWriteInFlightRef.current = operation;
     updateAccount((current) => ({ ...current, busy: true }));
     try {
-      await withDashboardLock(`hub-cloud-push:${userId}`, async () => {
+      await lockDashboard(`hub-cloud-push:${userId}`, async () => {
         await storageWriteRef.current.catch(() => {});
         if (!isCurrentAccount(userId, generation) || activeAccountIdRef.current !== userId) return;
         const key = accountCacheKey(userId);
-        const { data: shared, conflicts } = await withDashboardLock(`hub-storage:${key}`, () => flushDashboardSnapshots(localStorage, key));
+        const { data: shared, conflicts } = await lockDashboard(`hub-storage:${key}`, () => flushDashboardSnapshots(hubStorage, key));
         if (!isCurrentAccount(userId, generation)) return;
         acceptStorageSnapshot(key, shared, storageSnapshotRef.current.data);
         reportStorageConflicts(conflicts);
@@ -876,7 +888,7 @@ export function useDashboard(selectedDate, setSelectedDate) {
 
   const startAutoSyncPolling = () => {
     window.clearInterval(pollTimerRef.current);
-    if (localStorage.getItem(ACCOUNT_OWNER_KEY)) return;
+    if (hubStorage.getItem(ACCOUNT_OWNER_KEY)) return;
     if (activeAccountIdRef.current) return;
     if (!syncBackendReady() || !syncIdentityReady()) return;
     pollTimerRef.current = window.setInterval(() => {
@@ -913,7 +925,7 @@ export function useDashboard(selectedDate, setSelectedDate) {
       const before = deferredStorageRef.current?.key === key ? deferredStorageRef.current.before : storageSnapshotRef.current.data;
       deferredStorageRef.current = null;
       const generation = accountGenerationRef.current;
-      withDashboardLock(`hub-storage:${key}`, () => flushDashboardSnapshots(localStorage, key))
+      lockDashboard(`hub-storage:${key}`, () => flushDashboardSnapshots(hubStorage, key))
         .then(({ data: saved, conflicts }) => {
           if (!disposed && generation === accountGenerationRef.current) {
             acceptStorageSnapshot(key, saved, before);
@@ -940,7 +952,7 @@ export function useDashboard(selectedDate, setSelectedDate) {
       }, 0);
     };
     const onStorage = (event) => {
-      if (event.storageArea && event.storageArea !== localStorage) return;
+      if (event.storageArea && event.storageArea !== globalThis.localStorage) return;
       const key = currentStorageKey();
       if (event.newValue && (event.key === key || event.key?.startsWith(pendingSnapshotPrefix(key))
         || (activeAccountIdRef.current && event.key === accountSnapshotKey(activeAccountIdRef.current)))) refresh(key);
@@ -969,8 +981,8 @@ export function useDashboard(selectedDate, setSelectedDate) {
     };
   }, []);
 
-  // Keep localStorage from filling up with old recovery copies (see recoveryArchive.js).
-  useEffect(() => { archiveRecoveryEntries(localStorage).catch(() => {}); }, []);
+  // Keep hubStorage from filling up with old recovery copies (see recoveryArchive.js).
+  useEffect(() => { archiveRecoveryEntries(hubStorage).catch(() => {}); }, []);
 
   useEffect(() => {
     if (account.loading) return;
@@ -980,7 +992,7 @@ export function useDashboard(selectedDate, setSelectedDate) {
       window.clearInterval(accountPollTimerRef.current);
       if (storageSnapshotRef.current.key !== STORAGE_KEY) {
         activeAccountIdRef.current = null;
-        const legacy = normalizeState(readRecoverableSnapshot(localStorage, STORAGE_KEY) || loadState());
+        const legacy = normalizeState(readRecoverableSnapshot(hubStorage, STORAGE_KEY) || loadState());
         storageSnapshotRef.current = { key: STORAGE_KEY, data: legacy };
         dataRef.current = legacy;
         setData(legacy);
@@ -992,11 +1004,11 @@ export function useDashboard(selectedDate, setSelectedDate) {
     let cancelled = false;
     let retryTimer = null;
     const generation = accountGenerationRef.current;
-    const savedOwner = localStorage.getItem(ACCOUNT_OWNER_KEY);
+    const savedOwner = hubStorage.getItem(ACCOUNT_OWNER_KEY);
     if (savedOwner === userId) {
       try {
-        const cached = readRecoverableSnapshot(localStorage, accountCacheKey(userId));
-        const snapshot = readStoredSnapshot(localStorage, accountSnapshotKey(userId));
+        const cached = readRecoverableSnapshot(hubStorage, accountCacheKey(userId));
+        const snapshot = readStoredSnapshot(hubStorage, accountSnapshotKey(userId));
         if (cached) {
           activeAccountIdRef.current = userId;
           lastSyncedSnapshotRef.current = snapshot;
@@ -1015,7 +1027,7 @@ export function useDashboard(selectedDate, setSelectedDate) {
     const inspectAccount = async () => {
       updateAccount((current) => ({ ...current, busy: true, status: "계정 자료를 확인하는 중입니다..." }));
       try {
-        await archiveRecoveryEntries(localStorage).catch(() => 0);
+        await archiveRecoveryEntries(hubStorage).catch(() => 0);
         if (cancelled || !isCurrentAccount(userId, generation)) return;
         const row = await readAccountData(userId);
         if (cancelled || !isCurrentAccount(userId, generation)) return;
@@ -1036,7 +1048,7 @@ export function useDashboard(selectedDate, setSelectedDate) {
           setData(empty);
           setAccountGate(true);
         } else if (savedOwner === userId) {
-          const cached = readRecoverableSnapshot(localStorage, accountCacheKey(userId));
+          const cached = readRecoverableSnapshot(hubStorage, accountCacheKey(userId));
           if (cached) {
             activeAccountIdRef.current = userId;
             dataRef.current = normalizeState(cached);
@@ -1641,8 +1653,8 @@ export function useDashboard(selectedDate, setSelectedDate) {
   const connectSync = async () => {
     const nextSyncId = normalizeSyncId(syncRef.current.syncId);
     updateSync((current) => ({ ...current, syncId: nextSyncId }));
-    localStorage.setItem(SYNC_BACKEND_KEY, JSON.stringify(syncRef.current.backend));
-    localStorage.setItem(SYNC_ID_KEY, nextSyncId);
+    hubStorage.setItem(SYNC_BACKEND_KEY, JSON.stringify(syncRef.current.backend));
+    hubStorage.setItem(SYNC_ID_KEY, nextSyncId);
     if (!syncBackendReady()) {
       setSyncStatus("Enter Supabase URL and Public Key.");
       return;
@@ -1652,11 +1664,11 @@ export function useDashboard(selectedDate, setSelectedDate) {
       return;
     }
     if (syncRef.current.rememberDevice) {
-      localStorage.setItem(SYNC_REMEMBER_KEY, "true");
-      localStorage.setItem(SYNC_PIN_KEY, syncRef.current.pin);
+      hubStorage.setItem(SYNC_REMEMBER_KEY, "true");
+      hubStorage.setItem(SYNC_PIN_KEY, syncRef.current.pin);
     } else {
-      localStorage.removeItem(SYNC_REMEMBER_KEY);
-      localStorage.removeItem(SYNC_PIN_KEY);
+      hubStorage.removeItem(SYNC_REMEMBER_KEY);
+      hubStorage.removeItem(SYNC_PIN_KEY);
     }
     startAutoSyncPolling();
     await pullSyncData({ force: true });
@@ -1664,7 +1676,7 @@ export function useDashboard(selectedDate, setSelectedDate) {
 
   useEffect(() => {
     if (autoConnectRef.current) return;
-    if (localStorage.getItem(ACCOUNT_OWNER_KEY)) return;
+    if (hubStorage.getItem(ACCOUNT_OWNER_KEY)) return;
     if (!sync.rememberDevice || !sync.backend.supabaseUrl || !sync.backend.supabaseAnonKey || !sync.syncId || !sync.pin) return;
     autoConnectRef.current = true;
     setSyncStatus("Auto connecting...");
@@ -1678,11 +1690,11 @@ export function useDashboard(selectedDate, setSelectedDate) {
     if (!confirmed) return;
     window.clearTimeout(pushTimerRef.current);
     window.clearInterval(pollTimerRef.current);
-    localStorage.removeItem(STORAGE_KEY);
-    localStorage.removeItem(SYNC_BACKEND_KEY);
-    localStorage.removeItem(SYNC_ID_KEY);
-    localStorage.removeItem(SYNC_PIN_KEY);
-    localStorage.removeItem(SYNC_REMEMBER_KEY);
+    hubStorage.removeItem(STORAGE_KEY);
+    hubStorage.removeItem(SYNC_BACKEND_KEY);
+    hubStorage.removeItem(SYNC_ID_KEY);
+    hubStorage.removeItem(SYNC_PIN_KEY);
+    hubStorage.removeItem(SYNC_REMEMBER_KEY);
     window.location.reload();
   };
 

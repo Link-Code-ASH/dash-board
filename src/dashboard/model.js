@@ -1,5 +1,6 @@
 import { normalizeCalendarFormats } from "./calendarText.js";
 import React from "react";
+import { hubStorage } from "./hubStorage.js";
 import { normalizeMindfold as normalizeMindfoldV2 } from "../mindfold/model.js";
 import { normalizeEdu } from "../edu/model.js";
 
@@ -815,7 +816,7 @@ function normalizeStoredEdu(source) {
 
 export function loadState() {
   try {
-    return normalizeState(JSON.parse(localStorage.getItem(STORAGE_KEY)));
+    return normalizeState(JSON.parse(hubStorage.getItem(STORAGE_KEY)));
   } catch {
     return createFallbackState();
   }
@@ -926,7 +927,7 @@ export function splitBackupPayload(payload) {
 
 export function loadSyncBackend() {
   try {
-    const saved = JSON.parse(localStorage.getItem(SYNC_BACKEND_KEY));
+    const saved = JSON.parse(hubStorage.getItem(SYNC_BACKEND_KEY));
     return {
       supabaseUrl: saved?.supabaseUrl || "",
       supabaseAnonKey: saved?.supabaseAnonKey || "",
@@ -947,7 +948,7 @@ export function accountSyncedKey(userId) {
 export function preserveAccountDraft(userId, state, version = "local") {
   try {
     const side = version === "remote" ? "remote" : "local";
-    localStorage.setItem(`${ACCOUNT_RECOVERY_PREFIX}${userId}:${Date.now()}:${side}:${crypto.randomUUID()}`, JSON.stringify(state));
+    hubStorage.setItem(`${ACCOUNT_RECOVERY_PREFIX}${userId}:${Date.now()}:${side}:${crypto.randomUUID()}`, JSON.stringify(state));
     return true;
   } catch {
     return false;
@@ -956,7 +957,7 @@ export function preserveAccountDraft(userId, state, version = "local") {
 
 export function latestAccountDraftKey(userId) {
   const prefix = `${ACCOUNT_RECOVERY_PREFIX}${userId}:`;
-  return Object.keys(localStorage).filter((key) => key.startsWith(prefix)).sort().at(-1) || "";
+  return hubStorage.keys().filter((key) => key.startsWith(prefix)).sort().at(-1) || "";
 }
 
 export function accountEditTime(state) {
@@ -964,7 +965,7 @@ export function accountEditTime(state) {
 }
 
 export function needsAccountGate() {
-  return Boolean(localStorage.getItem(ACCOUNT_OWNER_KEY) || !localStorage.getItem(STORAGE_KEY));
+  return Boolean(hubStorage.getItem(ACCOUNT_OWNER_KEY) || !hubStorage.getItem(STORAGE_KEY));
 }
 
 export function toDateKey(date) {
