@@ -38,6 +38,13 @@ export function validateDeck(value) {
     if (keys.has(key)) throw new Error("같은 일본어·읽는 법을 가진 단어가 중복되어 있습니다.");
     ids.add(word.id); keys.add(key);
   }
+  if (value.kind !== undefined) {
+    const items = value.items, seen = new Set();
+    if (value.kind !== "book" || deck.words.length || !Array.isArray(items) ||
+        (value.deleted !== undefined && typeof value.deleted !== "boolean") ||
+        items.some((item) => !item || typeof item.id !== "string" || !item.id || seen.has(item.id) || !seen.add(item.id)))
+      throw new Error("단어장 목록이 올바르지 않습니다.");
+  }
   if (value.source !== null && (!value.source || !["file", "google"].includes(value.source.type) ||
       typeof value.source.name !== "string" || typeof value.source.sheetName !== "string" ||
       (value.source.type === "google" && (typeof value.source.documentId !== "string" ||

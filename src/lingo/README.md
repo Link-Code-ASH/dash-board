@@ -4,6 +4,18 @@ The Japanese tab supports Excel/UTF-8 CSV imports, manually assigned stages 1–
 and temporary flashcard sessions. Right removes a card from this session; left
 moves it to the back. Neither action changes the stored stage.
 
+## Word pool and word books
+
+Every import (Excel, CSV, Google Sheets) adds to one pool deck, `id: "pool"`
+(`전체 단어`). The import panel no longer asks for a deck. Word books are made in
+the app: `내 단어장 → 새 단어장`, or select words and use `단어장에 담기`. A book is a
+`lingo_decks` row with `kind: "book"`, empty `words`, and `items: [{ id }]`, where
+each id is a word's entry key (`wordEntryKey(deckId, wordId)`), so stages and
+favorites stay on the pool word. In a book, `단어장에서 빼기` removes references only.
+Deleting a book sets `deleted: true` (the table has no DELETE grant) and keeps
+its items. Decks created by earlier imports stay as they were and are listed as
+`예전 가져오기` groups; their words also appear in 전체 단어. See `books.js`.
+
 ## Import format
 
 The first row is the header. Required columns: `일본어`, `한국어 뜻`.

@@ -168,3 +168,32 @@ html:has(#root .hub-app .lingo-library) { scrollbar-gutter: stable; }
 @media (prefers-reduced-motion: reduce) {
   #root .hub-app .lingo-card-shell, #root .hub-app .lingo-card-turn { transition: none; }
 }
+
+/* Word books: made in the app from words in 전체 단어. */
+#root .hub-app .lingo-decks > .lingo-books-heading { margin-top: 10px; padding-top: 14px; border-top: 1px solid #e3e9e6; }
+#root .hub-app .lingo-decks > .lingo-book-add { border-style: dashed; background: transparent; color: #386d5b; align-items: center; }
+#root .hub-app .lingo-book-hint { margin: 4px 10px 0; color: #75827f; font-size: 12px; line-height: 1.6; }
+#root .hub-app .lingo-book-hint b { color: #386d5b; }
+#root .hub-app .lingo-book-form { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+#root .hub-app .lingo-book-form input { flex: 1; min-width: 0; height: 38px; }
+#root .hub-app .lingo-book-form button { display: grid; place-items: center; flex: none; width: 38px; height: 38px; padding: 0; }
+#root .hub-app .lingo-book-picker { position: relative; }
+#root .hub-app .lingo-book-pop { position: absolute; top: calc(100% + 8px); right: 0; z-index: 30; display: grid; gap: 4px; width: 260px; padding: 10px; border: 1px solid #dfe6e3; border-radius: 12px; background: #fff; box-shadow: 0 10px 28px #1d253324, 0 2px 6px #1d253314; }
+#root .hub-app .lingo-book-pop > p { margin: 0 4px 4px; color: #75827f; font-size: 12px; }
+#root .hub-app .lingo-book-pop > button { display: flex; align-items: center; gap: 8px; width: 100%; justify-content: flex-start; padding: 9px 10px; border: 0; background: transparent; text-align: left; }
+#root .hub-app .lingo-book-pop > button:hover { background: #eef4f1; }
+#root .hub-app .lingo-book-pop > button span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#root .hub-app .lingo-book-pop > button small { color: #75827f; }
+#root .hub-app .lingo-book-pop > .lingo-book-new { color: #386d5b; border-top: 1px solid #eef1f0; border-radius: 0 0 8px 8px; }
+@media (max-width: 800px) {
+  #root .hub-app .lingo-decks > .lingo-books-heading { display: none; }
+  #root .hub-app .lingo-decks > .lingo-book-hint { display: none; }
+  #root .hub-app .lingo-decks > .lingo-book-form { flex: 0 0 240px; }
+  #root .hub-app .lingo-book-pop { right: auto; left: 0; }
+}
+#root .hub-app .lingo-book-form input { width: auto; }
+#root .hub-app .lingo-book-pop .lingo-book-form { margin: 4px 0 0; }
+#root .hub-app .lingo-book-pop .lingo-book-form button { width: 34px; min-width: 34px; height: 34px; min-height: 34px; }
+#root .hub-app .lingo-book-pop .lingo-book-form input { height: 34px; padding: 0 10px; }
+#root .hub-app .lingo-book-pop { grid-template-columns: minmax(0, 1fr); }
+#root .hub-app .lingo-book-pop > * { min-width: 0; }

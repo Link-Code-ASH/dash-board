@@ -1,14 +1,14 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Upload, Download, X, FileSpreadsheet } from "lucide-react";
 import { useLingo } from "./LingoProvider.jsx";
-import { emptyDeck, HEADERS, FIELDS, importWords, inspectRows, uid } from "./model.js";
+import { emptyDeck, HEADERS, FIELDS, importWords, inspectRows } from "./model.js";
+import { POOL_ID, POOL_NAME } from "./books.js";
 import { openWordFile, downloadTemplate, downloadExample } from "./importFile.js";
 import { googleConfigured, openGoogleSheet, prepareGoogle } from "./google.js";
 
-export default function ImportPanel({ initialDeckId, onClose, onImported }) {
+// Every import goes into the one pool of words; word books are made in the app.
+export default function ImportPanel({ onClose, onImported }) {
   const { decks, change } = useLingo();
-  const [target, setTarget] = useState(initialDeckId || "");
-  const [name, setName] = useState("");
   const [workbook, setWorkbook] = useState(null);
   const [sheetIndex, setSheetIndex] = useState(0);
   const [rows, setRows] = useState(null);
@@ -18,7 +18,7 @@ export default function ImportPanel({ initialDeckId, onClose, onImported }) {
   const [googleReady, setGoogleReady] = useState(false);
   const [googleError, setGoogleError] = useState("");
   const sequence = useRef(0), abort = useRef(null), alive = useRef(true), fileInput = useRef(null);
-  const selectedDeck = decks.find((deck) => deck.id === target);
+  const selectedDeck = decks.find((deck) => deck.id === POOL_ID);
   const preview = useMemo(() => rows ? inspectRows(rows, selectedDeck) : null, [rows, selectedDeck]);
   const prepare = () => {
     setGoogleError("");
@@ -38,7 +38,7 @@ export default function ImportPanel({ initialDeckId, onClose, onImported }) {
       const next = await action(abort.current.signal);
       if (!alive.current || ticket !== sequence.current) return;
       if (!next.sheets.length) throw new Error("가져올 시트가 없습니다.");
-      setWorkbook(next); setName(next.name.replace(/\.(xlsx|csv)$/i, ""));
+      setWorkbook(next);
       const remembered = selectedDeck?.source?.type === "google" && next.documentId === selectedDeck.source.documentId
         ? next.sheets.findIndex((sheet) => sheet.sheetId === selectedDeck.source.sheetId) : 0;
       setSheetIndex(Math.max(0, remembered));
@@ -58,25 +58,22 @@ export default function ImportPanel({ initialDeckId, onClose, onImported }) {
     return () => { current = false; controller.abort(); };
   }, [workbook, sheetIndex]);
   const save = async () => {
-    if (!preview || preview.errors.length || (!target && !name.trim())) return;
+    if (!preview || preview.errors.length) return;
     setSaving(true); setError("");
     try {
-      const id = target || uid();
+      const id = POOL_ID;
       const sheet = workbook.sheets[sheetIndex];
       const source = { type: workbook.type, name: workbook.name, sheetName: sheet.name,
         ...(workbook.type === "google" ? { documentId: workbook.documentId, sheetId: sheet.sheetId } : {}) };
-      await change(id, (current) => {
-        if (target && !current) throw new Error("단어장을 다시 선택해 주세요.");
-        return importWords(current || emptyDeck(name, id), preview, source);
-      });
+      await change(id, (current) => importWords(current || emptyDeck(POOL_NAME, id), preview, source));
       if (alive.current) onImported(id);
     } catch (e) { if (alive.current) setError(e.message); }
     finally { if (alive.current) setSaving(false); }
   };
   return <section className="lingo-import lingo-panel" aria-labelledby="lingo-import-title">
-    <div className="lingo-row"><div><p className="lingo-eyebrow">IMPORT WORDS</p><h2 id="lingo-import-title">나만의 단어장 가져오기</h2></div>
+    <div className="lingo-row"><div><p className="lingo-eyebrow">IMPORT WORDS</p><h2 id="lingo-import-title">단어 가져오기</h2></div>
       <button aria-label="가져오기 닫기" disabled={saving} onClick={onClose}><X size={20} /></button></div>
-    <p className="lingo-muted">일본어와 한국어 뜻만 필수예요. 한자 훈음·예문 읽는 법과 품사·JLPT·특성을 함께 담아보세요.</p>
+    <p className="lingo-muted">가져온 단어는 모두 <strong>전체 단어</strong>에 모여요. 단어장은 단어 목록에서 직접 골라 만들어요. 일본어와 한국어 뜻만 필수예요. 한자 훈음·예문 읽는 법과 품사·JLPT·특성을 함께 담아보세요.</p>
     <div className="lingo-actions">
       <button onClick={() => downloadTemplate()}><Download size={16} />엑셀 양식·예시</button>
       <button onClick={() => downloadTemplate("csv")}><Download size={16} />CSV 양식</button>
@@ -94,10 +91,6 @@ export default function ImportPanel({ initialDeckId, onClose, onImported }) {
     {!googleConfigured && <p className="lingo-muted">구글 시트 연결 설정이 필요합니다. 지금은 엑셀·CSV 파일로 가져올 수 있어요.</p>}
     {googleError && <p role="alert">{googleError} <button onClick={prepare}>연결 다시 시도</button></p>}
     <div className="lingo-import-fields">
-      <label>가져올 단어장<select value={target} disabled={saving} onChange={(e) => setTarget(e.target.value)}>
-        <option value="">새 단어장 만들기</option>{decks.map((deck) => <option key={deck.id} value={deck.id}>{deck.name}</option>)}
-      </select></label>
-      {!target && <label>새 단어장 이름<input value={name} maxLength={100} disabled={saving} onChange={(e) => setName(e.target.value)} placeholder="예: 일상 일본어" /></label>}
       {workbook && <label>시트 탭<select value={sheetIndex} disabled={busy || saving} onChange={(e) => setSheetIndex(Number(e.target.value))}>
         {workbook.sheets.map((sheet, i) => <option key={i} value={i}>{sheet.name}</option>)}
       </select></label>}
@@ -111,7 +104,7 @@ export default function ImportPanel({ initialDeckId, onClose, onImported }) {
         {preview.errors.length > 30 && <p>외 {preview.errors.length - 30}개 오류</p>}</div>}
       <div className="lingo-table-scroll"><table><caption>가져올 단어 미리보기 · 최대 20개</caption><thead><tr>{HEADERS.map((header) => <th key={header}>{header}</th>)}</tr></thead>
         <tbody>{preview.words.slice(0, 20).map((word, index) => <tr key={index}>{FIELDS.map((key) => <td key={key}>{(Array.isArray(word[key]) ? word[key].join("; ") : word[key]) || "—"}</td>)}</tr>)}</tbody></table></div>
-      <div className="lingo-actions lingo-import-footer"><button className="lingo-primary" disabled={busy || saving || preview.errors.length > 0 || (!target && !name.trim())} onClick={save}>{saving ? "저장 중…" : "단어장에 가져오기"}</button>
+      <div className="lingo-actions lingo-import-footer"><button className="lingo-primary" disabled={busy || saving || preview.errors.length > 0} onClick={save}>{saving ? "저장 중…" : "전체 단어에 추가"}</button>
         <span className="lingo-muted">원본에서 빠진 단어는 삭제하지 않습니다. 옛 양식에 없는 추가 정보는 유지하고, 새 열의 빈칸은 지웁니다.</span></div>
     </>}
   </section>;
