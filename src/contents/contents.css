@@ -1,17 +1,8 @@
-/* Contents: a dark "trophy room" that stays dark whatever the HUB theme is. */
-#root .hub-app .hub-contents-content {
-  padding: 0 !important;
-  background: #060a14;
-}
-
+/* Contents: a bright trophy gallery in the same light tone as the rest of HUB. */
 html body #root .hub-app .ct-room {
   position: relative;
   isolation: isolate;
-  min-height: calc(100vh - 56px);
-  padding: 36px 40px 56px;
   overflow: hidden;
-  background: radial-gradient(1200px 520px at 50% -180px, rgba(57, 208, 255, 0.16), transparent 70%),
-    radial-gradient(900px 600px at 100% 0%, rgba(139, 107, 255, 0.12), transparent 70%), #060a14;
 }
 /* Dialogs render here (outside the app shell) so they cover the bottom nav and sidebar too. */
 html body #root > .ct-layer {
@@ -25,24 +16,25 @@ html body #root > .ct-layer {
 }
 
 html body :is(#root .hub-app .ct-room, #root > .ct-layer) {
-  --ink: #e8eef9;
-  --muted: rgba(200, 214, 236, 0.62);
-  --line: rgba(255, 255, 255, 0.09);
-  --glass: rgba(255, 255, 255, 0.035);
-  --accent: #39d0ff;
-  --accent-2: #8b6bff;
+  --ink: #242831;
+  --muted: #747c88;
+  --line: #e1e4e9;
+  --glass: #ffffff;
+  --soft: #f3f5f8;
   --mono: "JetBrains Mono", "Cascadia Mono", Consolas, "SF Mono", Menlo, monospace;
   color: var(--ink);
 
   & *, & *::before, & *::after { box-sizing: border-box; }
 
   /* Rarity palette: every themed element reads --c. */
-  & .ct-r-legendary { --c: #ffc94a; }
-  & .ct-r-epic { --c: #b57cff; }
-  & .ct-r-rare { --c: #39d0ff; }
-  & .ct-r-uncommon { --c: #4ee39a; }
-  & .ct-r-common { --c: #9aa7bd; }
-  & .ct-r-unrated { --c: #66738a; }
+  & .ct-r-legendary { --c: #e8a600; }
+  & .ct-r-epic { --c: #8b5cf6; }
+  & .ct-r-rare { --c: #0ea5e9; }
+  & .ct-r-uncommon { --c: #10b981; }
+  & .ct-r-common { --c: #94a3b8; }
+  & .ct-r-unrated { --c: #b4bcc8; }
+  /* Readable text version of the rarity colour on white. */
+  & [class*="ct-r-"] { --ct: color-mix(in srgb, var(--c) 78%, #1b2230); }
 
   & button {
     font: inherit !important;
@@ -54,16 +46,7 @@ html body :is(#root .hub-app .ct-room, #root > .ct-layer) {
     cursor: pointer;
   }
 
-  & .ct-backdrop {
-    position: absolute;
-    inset: 0;
-    z-index: -1;
-    pointer-events: none;
-    background-image: linear-gradient(rgba(120, 170, 255, 0.05) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(120, 170, 255, 0.05) 1px, transparent 1px);
-    background-size: 48px 48px;
-    mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.9), transparent 70%);
-  }
+  & .ct-backdrop { display: none; }
 
   /* Hero */
   & .ct-hero {
@@ -79,18 +62,16 @@ html body :is(#root .hub-app .ct-room, #root > .ct-layer) {
     gap: 8px;
     font: 600 11px/1 var(--mono) !important;
     letter-spacing: 0.28em;
-    color: var(--accent);
+    color: var(--muted);
+    & svg { color: #e8a600; }
   }
   & .ct-hero h1 {
     margin: 10px 0 6px !important;
-    font-size: 44px !important;
+    font-size: 40px !important;
     line-height: 1.05;
     font-weight: 800 !important;
     letter-spacing: -0.02em;
-    color: transparent;
-    background: linear-gradient(100deg, #ffffff 10%, #a9e9ff 45%, #c2afff 90%);
-    -webkit-background-clip: text;
-    background-clip: text;
+    color: var(--ink) !important;
   }
   & .ct-hero p { color: var(--muted); font-size: 15px; }
 
@@ -116,9 +97,9 @@ html body :is(#root .hub-app .ct-room, #root > .ct-layer) {
       margin: 0;
       font: 700 26px/1 var(--mono) !important;
       font-variant-numeric: tabular-nums;
-      color: #fff;
+      color: var(--ink);
     }
-    & .ct-stat-legend dd { color: #ffc94a; text-shadow: 0 0 18px rgba(255, 201, 74, 0.55); }
+    & .ct-stat-legend dd { color: #d99a00; }
   }
 
   & .ct-btn {
@@ -128,9 +109,9 @@ html body :is(#root .hub-app .ct-room, #root > .ct-layer) {
     gap: 8px;
     height: 40px;
     padding: 0 16px;
-    border: 1px solid rgba(255, 255, 255, 0.14);
+    border: 1px solid var(--line);
     border-radius: 11px;
-    background: rgba(255, 255, 255, 0.04);
+    background: #fff;
     color: var(--ink);
     font-size: 14px;
     font-weight: 600 !important;
@@ -138,18 +119,18 @@ html body :is(#root .hub-app .ct-room, #root > .ct-layer) {
     white-space: nowrap;
     box-shadow: none;
     transition: background 0.15s, border-color 0.15s, box-shadow 0.2s, filter 0.15s;
-    &:hover { background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.24); }
+    &:hover { background: var(--soft); border-color: #cfd5de; }
     &:disabled { opacity: 0.55; cursor: progress; }
   }
   & .ct-btn-primary {
     border: 0;
-    color: #04101f;
-    background: linear-gradient(120deg, #4fdcff, #8b6bff);
-    box-shadow: 0 10px 28px -10px rgba(79, 220, 255, 0.75);
-    &:hover { background: linear-gradient(120deg, #4fdcff, #8b6bff); filter: brightness(1.1); }
+    color: #fff;
+    background: var(--ink);
+    box-shadow: 0 8px 20px -10px rgba(36, 40, 49, 0.6);
+    &:hover { background: #3a414e; }
   }
   & .ct-btn-ghost { border-color: transparent; background: transparent; color: var(--muted); }
-  & .ct-btn-danger { border: 0; background: #ff4d6d; color: #fff; &:hover { background: #ff6680; } }
+  & .ct-btn-danger { border: 0; background: #e5484d; color: #fff; &:hover { background: #d63c41; } }
   & .ct-add { height: 46px; padding: 0 20px; font-size: 15px; }
 
   /* Toolbar */
@@ -186,7 +167,7 @@ html body :is(#root .hub-app .ct-room, #root > .ct-layer) {
     white-space: nowrap;
     box-shadow: none;
     transition: color 0.15s, background 0.15s, border-color 0.15s, box-shadow 0.2s;
-    &:hover { color: var(--ink); border-color: rgba(255, 255, 255, 0.2); }
+    &:hover { color: var(--ink); border-color: #cfd5de; }
     & b {
       display: inline-grid;
       place-items: center;
@@ -194,17 +175,16 @@ html body :is(#root .hub-app .ct-room, #root > .ct-layer) {
       height: 20px;
       padding: 0 6px;
       border-radius: 999px;
-      background: rgba(255, 255, 255, 0.07);
+      background: var(--soft);
       font: 600 11px/1 var(--mono) !important;
     }
   }
   & .ct-filters button[aria-selected="true"],
   & .ct-choice button[aria-pressed="true"] {
     color: #fff;
-    border-color: rgba(79, 220, 255, 0.6);
-    background: rgba(79, 220, 255, 0.13);
-    box-shadow: 0 0 0 1px rgba(79, 220, 255, 0.25), 0 0 22px -6px rgba(79, 220, 255, 0.7);
-    & b { background: rgba(79, 220, 255, 0.28); }
+    border-color: var(--ink);
+    background: var(--ink);
+    & b { background: rgba(255, 255, 255, 0.18); }
   }
   & .ct-tools { display: flex; align-items: center; gap: 10px; flex: none; }
   & .ct-search {
@@ -231,7 +211,7 @@ html body :is(#root .hub-app .ct-room, #root > .ct-layer) {
       font-size: 14px;
       box-shadow: none !important;
     }
-    &:focus-within { border-color: rgba(79, 220, 255, 0.55); }
+    &:focus-within { border-color: #9aa6b8 !important; }
   }
   & .ct-sort {
     display: flex;
@@ -252,7 +232,7 @@ html body :is(#root .hub-app .ct-room, #root > .ct-layer) {
       line-height: 1;
       white-space: nowrap;
       box-shadow: none;
-      &[aria-pressed="true"] { background: rgba(255, 255, 255, 0.1); color: #fff; }
+      &[aria-pressed="true"] { background: #e9ecf0; color: var(--ink); }
     }
   }
 
@@ -271,9 +251,8 @@ html body :is(#root .hub-app .ct-room, #root > .ct-layer) {
     padding: 46px 14px 18px;
     border: 1px solid var(--line);
     border-radius: 18px;
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.012) 70%),
-      #0a1020;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07);
+    background: linear-gradient(180deg, #ffffff, #f8f9fb);
+    box-shadow: 0 1px 2px rgba(20, 30, 50, 0.04), 0 10px 26px -18px rgba(20, 30, 50, 0.25);
     overflow: hidden;
     text-align: center;
     perspective: 900px;
@@ -285,19 +264,19 @@ html body :is(#root .hub-app .ct-room, #root > .ct-layer) {
       position: absolute;
       inset: -30% 10% auto;
       height: 75%;
-      background: radial-gradient(ellipse at 50% 0%, color-mix(in srgb, var(--c) 30%, transparent), transparent 68%);
-      opacity: 0.75;
+      background: radial-gradient(ellipse at 50% 0%, color-mix(in srgb, var(--c) 22%, transparent), transparent 68%);
+      opacity: 0.8;
       pointer-events: none;
       transition: opacity 0.3s;
     }
     &:hover, &:focus-visible {
       outline: none;
       translate: 0 -4px;
-      border-color: color-mix(in srgb, var(--c) 55%, transparent);
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 24px 48px -24px color-mix(in srgb, var(--c) 80%, transparent);
+      border-color: color-mix(in srgb, var(--c) 45%, transparent);
+      box-shadow: 0 1px 2px rgba(20, 30, 50, 0.04), 0 22px 40px -22px color-mix(in srgb, var(--c) 65%, transparent);
       &::before { opacity: 1; }
       & .ct-shine { opacity: 1; }
-      & .ct-pedestal::before { box-shadow: 0 0 34px 6px color-mix(in srgb, var(--c) 60%, transparent); }
+      & .ct-pedestal::before { box-shadow: 0 0 26px 4px color-mix(in srgb, var(--c) 55%, transparent); }
     }
   }
   & .ct-rarity {
@@ -306,15 +285,14 @@ html body :is(#root .hub-app .ct-room, #root > .ct-layer) {
     left: 50%;
     translate: -50% 0;
     padding: 5px 10px 5px 11px;
-    border: 1px solid color-mix(in srgb, var(--c) 45%, transparent);
+    border: 1px solid color-mix(in srgb, var(--c) 40%, transparent);
     border-radius: 999px;
-    background: color-mix(in srgb, var(--c) 10%, transparent);
-    color: var(--c);
+    background: color-mix(in srgb, var(--c) 9%, #fff);
+    color: var(--ct);
     font: 700 9.5px/1 var(--mono) !important;
     letter-spacing: 0.2em;
     white-space: nowrap;
   }
-  & .ct-r-legendary .ct-rarity { text-shadow: 0 0 10px rgba(255, 201, 74, 0.7); }
   & .ct-rarity-inline { position: static; translate: none; align-self: flex-start; }
 
   & .ct-stage {
@@ -332,20 +310,13 @@ html body :is(#root .hub-app .ct-room, #root > .ct-layer) {
     aspect-ratio: 3 / 4;
     border-radius: 10px;
     overflow: hidden;
-    background: #111a2e;
-    box-shadow: 0 22px 30px -14px rgba(0, 0, 0, 0.9), 0 0 0 1px rgba(255, 255, 255, 0.14),
-      0 0 30px -8px color-mix(in srgb, var(--c) 75%, transparent);
+    background: #eef1f5;
+    box-shadow: 0 18px 26px -14px rgba(20, 30, 50, 0.45), 0 0 0 1px rgba(20, 30, 50, 0.06),
+      0 0 26px -8px color-mix(in srgb, var(--c) 60%, transparent);
     transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
     transition: transform 0.2s ease-out;
     animation: ct-float 5.5s ease-in-out infinite alternate;
     & img { display: block; width: 100%; height: 100%; object-fit: cover; }
-    &::after {
-      content: "";
-      position: absolute;
-      inset: 0;
-      background: repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.035) 0 1px, transparent 1px 3px);
-      pointer-events: none;
-    }
   }
   & .ct-shine {
     position: absolute;
@@ -369,9 +340,9 @@ html body :is(#root .hub-app .ct-room, #root > .ct-layer) {
     width: 100%;
     height: 100%;
     padding: 14px;
-    color: color-mix(in srgb, var(--c) 80%, white);
-    background: radial-gradient(circle at 50% 35%, color-mix(in srgb, var(--c) 28%, transparent), transparent 70%),
-      linear-gradient(160deg, #18233b, #0b1222);
+    color: var(--ct, var(--muted));
+    background: radial-gradient(circle at 50% 35%, color-mix(in srgb, var(--c) 20%, transparent), transparent 70%),
+      linear-gradient(160deg, #ffffff, #eceff4);
     & span {
       display: -webkit-box;
       -webkit-line-clamp: 3;
@@ -381,7 +352,7 @@ html body :is(#root .hub-app .ct-room, #root > .ct-layer) {
       font-weight: 700 !important;
       line-height: 1.35;
       text-align: center;
-      color: #fff;
+      color: var(--ink);
       word-break: keep-all;
     }
   }
@@ -389,9 +360,9 @@ html body :is(#root .hub-app .ct-room, #root > .ct-layer) {
     width: 66%;
     height: auto;
     aspect-ratio: 3 / 4;
-    border: 1px dashed rgba(255, 255, 255, 0.22);
+    border: 1px dashed #cfd5de;
     border-radius: 10px;
-    background: rgba(255, 255, 255, 0.03);
+    background: #fafbfc;
     color: var(--muted);
     animation: none;
     & span { color: var(--muted); font-weight: 600 !important; }
@@ -414,7 +385,7 @@ html body :is(#root .hub-app .ct-room, #root > .ct-layer) {
       translate: -50% 0;
       background: linear-gradient(to top, color-mix(in srgb, var(--c) 40%, transparent), transparent);
       clip-path: polygon(8% 100%, 92% 100%, 100% 0, 0 0);
-      opacity: 0.45;
+      opacity: 0.3;
       filter: blur(6px);
     }
     &::before, &::after { content: ""; position: absolute; left: 0; right: 0; }
@@ -423,9 +394,9 @@ html body :is(#root .hub-app .ct-room, #root > .ct-layer) {
       top: 0;
       height: 18px;
       border-radius: 50%;
-      background: radial-gradient(ellipse at 50% 45%, color-mix(in srgb, var(--c) 85%, white) 0%,
-        color-mix(in srgb, var(--c) 45%, #0b1222) 45%, #141d31 72%);
-      box-shadow: 0 0 22px 2px color-mix(in srgb, var(--c) 45%, transparent);
+      background: radial-gradient(ellipse at 50% 45%, #ffffff 0%,
+        color-mix(in srgb, var(--c) 55%, #ffffff) 42%, #dde2ea 74%);
+      box-shadow: 0 0 18px 1px color-mix(in srgb, var(--c) 40%, transparent);
       transition: box-shadow 0.3s;
     }
     &::after {
@@ -433,8 +404,8 @@ html body :is(#root .hub-app .ct-room, #root > .ct-layer) {
       top: 9px;
       height: 19px;
       border-radius: 0 0 50% 50% / 0 0 70% 70%;
-      background: linear-gradient(90deg, #0c1322, #253049 50%, #0c1322);
-      border-bottom: 1px solid color-mix(in srgb, var(--c) 45%, transparent);
+      background: linear-gradient(90deg, #d3d9e2, #f5f7fa 50%, #d3d9e2);
+      border-bottom: 1px solid color-mix(in srgb, var(--c) 50%, transparent);
     }
   }
 
@@ -457,7 +428,7 @@ html body :is(#root .hub-app .ct-room, #root > .ct-layer) {
       font-size: 15px;
       font-weight: 700 !important;
       line-height: 1.35;
-      color: #fff;
+      color: var(--ink);
       word-break: keep-all;
     }
   }
@@ -470,13 +441,13 @@ html body :is(#root .hub-app .ct-room, #root > .ct-layer) {
     & > span { display: flex; }
     & svg { flex: none; }
   }
-  & .ct-stars-base { color: rgba(255, 255, 255, 0.16); }
+  & .ct-stars-base { color: #dde1e7; }
   & .ct-stars-fill {
     position: absolute;
     inset: 0 auto 0 0;
     overflow: hidden;
-    color: var(--c, #ffc94a);
-    filter: drop-shadow(0 0 4px color-mix(in srgb, var(--c, #ffc94a) 60%, transparent));
+    color: var(--c, #e8a600);
+    filter: drop-shadow(0 0 3px color-mix(in srgb, var(--c, #e8a600) 35%, transparent));
     & svg { fill: currentColor; }
   }
 
@@ -493,9 +464,9 @@ html body :is(#root .hub-app .ct-room, #root > .ct-layer) {
     margin: 30px auto 0;
     padding: 30px 0;
     text-align: center;
-    --c: #39d0ff;
+    --c: #8b5cf6;
     & .ct-stage { width: 200px; margin-bottom: 12px; }
-    & strong { font-size: 18px; color: #fff; }
+    & strong { font-size: 18px; color: var(--ink); }
     & p { color: var(--muted); font-size: 14px; margin-bottom: 8px !important; }
   }
 
@@ -511,11 +482,11 @@ html body :is(#root .hub-app .ct-room, #root > .ct-layer) {
       display: inline-flex;
       align-items: center;
       gap: 7px;
-      color: var(--c);
+      color: var(--ct);
       font: 600 10.5px/1 var(--mono) !important;
       letter-spacing: 0.14em;
     }
-    & i { width: 7px; height: 7px; border-radius: 50%; background: var(--c); box-shadow: 0 0 8px var(--c); }
+    & i { width: 7px; height: 7px; border-radius: 50%; background: var(--c); }
     & span { color: var(--muted); letter-spacing: 0.04em; }
   }
 
@@ -527,8 +498,8 @@ html body :is(#root .hub-app .ct-room, #root > .ct-layer) {
     display: grid;
     place-items: center;
     padding: 24px;
-    background: rgba(2, 5, 12, 0.74);
-    backdrop-filter: blur(10px);
+    background: rgba(24, 30, 42, 0.32);
+    backdrop-filter: blur(6px);
     animation: ct-fade 0.2s ease-out both;
   }
   & .ct-modal {
@@ -538,10 +509,10 @@ html body :is(#root .hub-app .ct-room, #root > .ct-layer) {
     width: min(960px, 100%);
     max-height: calc(100vh - 48px);
     overflow: auto;
-    border: 1px solid color-mix(in srgb, var(--c) 35%, rgba(255, 255, 255, 0.1));
+    border: 1px solid var(--line);
     border-radius: 22px;
-    background: linear-gradient(180deg, #0d1528, #080d19);
-    box-shadow: 0 40px 100px -30px rgba(0, 0, 0, 0.9), 0 0 60px -30px var(--c);
+    background: #fff;
+    box-shadow: 0 40px 90px -30px rgba(20, 30, 50, 0.4);
     color: var(--ink);
     animation: ct-pop 0.28s cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
     & form { display: contents; }
@@ -558,10 +529,10 @@ html body :is(#root .hub-app .ct-room, #root > .ct-layer) {
     padding: 0;
     border: 1px solid var(--line);
     border-radius: 10px;
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--soft);
     color: var(--muted);
     box-shadow: none;
-    &:hover { color: #fff; background: rgba(255, 255, 255, 0.1); }
+    &:hover { color: var(--ink); background: #e9ecf0; }
   }
   & .ct-chamber {
     position: relative;
@@ -573,8 +544,8 @@ html body :is(#root .hub-app .ct-room, #root > .ct-layer) {
     min-height: 460px;
     padding: 48px 28px 36px;
     overflow: hidden;
-    background: radial-gradient(ellipse at 50% 85%, color-mix(in srgb, var(--c) 22%, transparent), transparent 60%),
-      radial-gradient(ellipse at 50% 0%, color-mix(in srgb, var(--c) 18%, transparent), transparent 55%);
+    background: radial-gradient(ellipse at 50% 85%, color-mix(in srgb, var(--c) 18%, transparent), transparent 60%),
+      radial-gradient(ellipse at 50% 0%, color-mix(in srgb, var(--c) 14%, transparent), transparent 55%), #f7f8fb;
     border-right: 1px solid var(--line);
   }
   & .ct-chamber-ring {
@@ -613,11 +584,10 @@ html body :is(#root .hub-app .ct-room, #root > .ct-layer) {
   & .ct-info h2 {
     margin: 0 !important;
     padding-right: 40px;
-    color: #fff !important;
+    color: var(--ink) !important;
     font-size: 30px !important;
     line-height: 1.2;
     font-weight: 800 !important;
-    color: #fff;
     word-break: keep-all;
   }
   & .ct-tags {
@@ -631,7 +601,7 @@ html body :is(#root .hub-app .ct-room, #root > .ct-layer) {
       padding: 0 11px;
       border: 1px solid var(--line);
       border-radius: 8px;
-      background: var(--glass);
+      background: var(--soft);
       font-size: 13px;
       color: var(--ink);
     }
@@ -643,11 +613,10 @@ html body :is(#root .hub-app .ct-room, #root > .ct-layer) {
     padding: 16px 18px;
     border: 1px solid color-mix(in srgb, var(--c) 30%, transparent);
     border-radius: 14px;
-    background: color-mix(in srgb, var(--c) 7%, transparent);
+    background: color-mix(in srgb, var(--c) 7%, #fff);
     & strong {
       font: 700 40px/1 var(--mono) !important;
-      color: var(--c);
-      text-shadow: 0 0 24px color-mix(in srgb, var(--c) 60%, transparent);
+      color: var(--ct);
     }
   }
   & .ct-review {
@@ -666,7 +635,7 @@ html body :is(#root .hub-app .ct-room, #root > .ct-layer) {
     gap: 10px;
     margin-top: 4px;
   }
-  & .ct-confirm-text { margin-right: 4px; color: #ff8fa3; font-size: 14px; font-weight: 600 !important; }
+  & .ct-confirm-text { margin-right: 4px; color: #e5484d; font-size: 14px; font-weight: 600 !important; }
 
   /* Editor */
   & .ct-chamber-editor { min-height: 0; padding-top: 56px; }
@@ -678,7 +647,7 @@ html body :is(#root .hub-app .ct-room, #root > .ct-layer) {
     border: 0;
     background: transparent;
     box-shadow: none;
-    &:hover .ct-figure, &:focus-visible .ct-figure { box-shadow: 0 0 0 2px var(--c), 0 0 40px -6px var(--c); }
+    &:hover .ct-figure, &:focus-visible .ct-figure { box-shadow: 0 0 0 2px var(--c), 0 0 30px -8px var(--c); }
   }
   & .ct-drop-hint { color: var(--muted); font-size: 12px; text-align: center; }
   & .ct-cover-row { display: flex; gap: 8px; width: 100%; }
@@ -686,17 +655,17 @@ html body :is(#root .hub-app .ct-room, #root > .ct-layer) {
     width: 100%;
     height: 42px !important;
     padding: 0 12px !important;
-    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    border: 1px solid #dfe3e9 !important;
     border-radius: 10px !important;
     outline: 0;
-    background: rgba(255, 255, 255, 0.04) !important;
+    background: #fff !important;
     color: var(--ink) !important;
     font: inherit !important;
     font-size: 14px;
-    color-scheme: dark !important;
+    color-scheme: light !important;
     box-shadow: none !important;
-    &::placeholder { color: rgba(200, 214, 236, 0.38); }
-    &:focus { border-color: rgba(79, 220, 255, 0.6) !important; box-shadow: 0 0 0 3px rgba(79, 220, 255, 0.15) !important; }
+    &::placeholder { color: #a3acb9; }
+    &:focus { border-color: #8b97aa !important; box-shadow: 0 0 0 3px rgba(36, 40, 49, 0.08) !important; }
   }
   & .ct-input-title { height: 48px !important; font-size: 18px !important; font-weight: 700 !important; }
   & .ct-textarea { height: auto !important; padding: 10px 12px !important; line-height: 1.6; resize: vertical; }
@@ -730,7 +699,7 @@ html body :is(#root .hub-app .ct-room, #root > .ct-layer) {
       box-shadow: none;
       line-height: 0;
     }
-    & .ct-star-empty { color: rgba(255, 255, 255, 0.18); }
+    & .ct-star-empty { color: #dde1e7; }
     & .ct-star-fill {
       position: absolute;
       top: 4px;
@@ -738,7 +707,7 @@ html body :is(#root .hub-app .ct-room, #root > .ct-layer) {
       height: 30px;
       overflow: hidden;
       color: var(--c);
-      filter: drop-shadow(0 0 6px color-mix(in srgb, var(--c) 70%, transparent));
+      filter: drop-shadow(0 0 4px color-mix(in srgb, var(--c) 40%, transparent));
       & svg { fill: currentColor; }
     }
   }
@@ -746,8 +715,8 @@ html body :is(#root .hub-app .ct-room, #root > .ct-layer) {
     display: flex;
     align-items: baseline;
     gap: 10px;
-    & strong { font: 700 26px/1 var(--mono) !important; color: var(--c); }
-    & span { font: 700 10.5px/1 var(--mono) !important; letter-spacing: 0.18em; color: var(--c); }
+    & strong { font: 700 26px/1 var(--mono) !important; color: var(--ct); }
+    & span { font: 700 10.5px/1 var(--mono) !important; letter-spacing: 0.18em; color: var(--ct); }
     & button {
       padding: 0;
       border: 0;
@@ -758,7 +727,7 @@ html body :is(#root .hub-app .ct-room, #root > .ct-layer) {
       text-decoration: underline;
     }
   }
-  & .ct-error { color: #ff8fa3; font-size: 13px; }
+  & .ct-error { color: #e5484d; font-size: 13px; }
 
   @media (prefers-reduced-motion: reduce) {
     & .ct-figure, & .ct-chamber-ring::before, & .ct-case { animation: none; }
@@ -768,7 +737,6 @@ html body :is(#root .hub-app .ct-room, #root > .ct-layer) {
 /* Laptop */
 @media (max-width: 1280px) {
   html body #root .hub-app .ct-room {
-    padding: 30px 28px 48px;
     & .ct-hero { grid-template-columns: minmax(0, 1fr) auto; }
     & .ct-stats { grid-column: 1 / -1; grid-row: 2; grid-template-columns: repeat(4, minmax(0, 1fr)); }
     & .ct-gallery { grid-template-columns: repeat(auto-fill, minmax(176px, 1fr)); }
@@ -781,8 +749,6 @@ html body :is(#root .hub-app .ct-room, #root > .ct-layer) {
 
 /* Phone */
 html body #root .hub-app.hub-mobile .ct-room {
-  min-height: calc(100vh - 120px);
-  padding: 22px 16px 96px;
   & .ct-hero { grid-template-columns: minmax(0, 1fr) auto; gap: 16px; margin-bottom: 20px; }
   & .ct-hero h1 { font-size: 34px !important; }
   & .ct-hero p { font-size: 13px; }
