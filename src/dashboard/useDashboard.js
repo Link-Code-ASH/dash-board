@@ -7,6 +7,7 @@ import { mergeDashboard } from "../hub/merge.js";
 import { exportModuleBackups, restoreModuleBackups } from "../hub/moduleRegistry.js";
 import { prepareAuthReturn } from "../hub/authReturn.js";
 import { listRecoverySnapshots, readRecoverySnapshot } from "./recovery.js";
+import { archiveRecoveryEntries } from "./recoveryArchive.js";
 import {
   accountSnapshotKey, pendingSnapshotPrefix, readStoredSnapshot, readRecoverableSnapshot,
   sameDashboard, mergeAccountSnapshots, nextEditTimestamp, withDashboardLock, stageDashboardSnapshot, flushDashboardSnapshots, mergeStoredDashboard,
@@ -100,6 +101,8 @@ export function useDashboard(selectedDate, setSelectedDate) {
   });
 
   const [accountGate, setAccountGate] = useState(needsAccountGate);
+  const [accountRetry, setAccountRetry] = useState(0);
+  const retryAccount = () => setAccountRetry((value) => value + 1);
 
   const dataRef = useRef(data);
 
@@ -436,8 +439,14 @@ export function useDashboard(selectedDate, setSelectedDate) {
       if (deferAccountRefresh()) return false;
       if (readStoredSnapshot(localStorage, accountSnapshotKey(userId))?.revision > row.revision) return false;
       const local = dataRef.current;
-      if (!preserveAccountDraft(userId, createBackupPayload(local, localImages), "local") || !preserveAccountDraft(userId, row.payload, "remote")) {
-        throw new Error("Recovery storage is full; merge stopped without replacing either draft.");
+      const localDraft = createBackupPayload(local, localImages);
+      const preserve = () => preserveAccountDraft(userId, localDraft, "local") && preserveAccountDraft(userId, row.payload, "remote");
+      // A full localStorage used to stop sync for good; move older recovery
+      // copies to IndexedDB (nothing is deleted) and try once more.
+      if (!preserve()) {
+        await archiveRecoveryEntries(localStorage, { keep: 0 }).catch(() => 0);
+        if (!isCurrentAccount(userId, generation)) return false;
+        if (!preserve()) throw new Error("Recovery storage is full; merge stopped without replacing either draft.");
       }
       const { data: merged, conflicts } = mergeAccountSnapshots(lastSyncedSnapshotRef.current, local, remote);
       if (conflicts.length) updateAccount((current) => ({ ...current, mergeConflicts: [...(current.mergeConflicts || []), ...conflicts] }));
@@ -959,6 +968,9 @@ export function useDashboard(selectedDate, setSelectedDate) {
     };
   }, []);
 
+  // Keep localStorage from filling up with old recovery copies (see recoveryArchive.js).
+  useEffect(() => { archiveRecoveryEntries(localStorage).catch(() => {}); }, []);
+
   useEffect(() => {
     if (account.loading) return;
     const userId = account.user?.id;
@@ -1002,6 +1014,8 @@ export function useDashboard(selectedDate, setSelectedDate) {
     const inspectAccount = async () => {
       updateAccount((current) => ({ ...current, busy: true, status: "계정 자료를 확인하는 중입니다..." }));
       try {
+        await archiveRecoveryEntries(localStorage).catch(() => 0);
+        if (cancelled || !isCurrentAccount(userId, generation)) return;
         const row = await readAccountData(userId);
         if (cancelled || !isCurrentAccount(userId, generation)) return;
         if (row) {
@@ -1034,15 +1048,13 @@ export function useDashboard(selectedDate, setSelectedDate) {
       } catch (error) {
         if (!cancelled && isCurrentAccount(userId, generation)) {
           updateAccount((current) => ({ ...current, busy: false, status: `계정 확인 실패: ${error.message}` }));
-          if (!error.message.startsWith("Recovery storage is full")) {
-            retryTimer = window.setTimeout(inspectAccount, 10000);
-          }
+          retryTimer = window.setTimeout(inspectAccount, error.message.startsWith("Recovery storage is full") ? 60000 : 10000);
         }
       }
     };
     inspectAccount();
     return () => { cancelled = true; window.clearTimeout(retryTimer); };
-  }, [account.loading, account.user?.id]);
+  }, [account.loading, account.user?.id, accountRetry]);
 
   useEffect(() => {
     window.clearInterval(accountPollTimerRef.current);
@@ -1772,6 +1784,7 @@ export function useDashboard(selectedDate, setSelectedDate) {
     activateAccountData,
     loadAccountData,
     downloadAccountRecovery,
+    retryAccount,
     listDashboardRecoveries,
     downloadDashboardRecovery,
     getAccountUploadState,

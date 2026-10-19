@@ -12,6 +12,7 @@ import {
 } from "../../dashboard/components.jsx";
 import { generateSyncIdValue, SYNC_ID_KEY, downloadTextFile } from "../../dashboard/model.js";
 import { createRecoveryBundle } from "../../dashboard/recovery.js";
+import { readRecoveryArchive, withRecoveryArchive } from "../../dashboard/recoveryArchive.js";
 
 export default function Settings({ gate }) {
   const d = useDashboardData();
@@ -26,6 +27,7 @@ export default function Settings({ gate }) {
     onPrepareReplacement: d.prepareAccountReplacement,
     onAccountUpload: d.uploadAccountData,
     onAccountRefresh: d.pullAccountData,
+    onAccountRetry: d.retryAccount,
     onAccountSave: d.pushAccountData,
     onAccountRecovery: d.downloadAccountRecovery,
   };
@@ -99,9 +101,9 @@ export default function Settings({ gate }) {
         isOpen={d.openPanels.system}
         onToggle={() => d.togglePanel("system")}
       />
-      <button className="hub-install-button" onClick={() => downloadTextFile(
+      <button className="hub-install-button" onClick={async () => downloadTextFile(
         `hub-recovery-records-${Date.now()}.json`,
-        JSON.stringify(createRecoveryBundle(localStorage, d.account.user?.id, d.data), null, 2),
+        JSON.stringify(createRecoveryBundle(withRecoveryArchive(localStorage, await readRecoveryArchive()), d.account.user?.id, d.data), null, 2),
       )}>
         <Download size={17} />복구 기록 전체 저장
       </button>

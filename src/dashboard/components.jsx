@@ -479,7 +479,7 @@ export function formatAccountSyncDate(value) {
   return Number.isNaN(date.getTime()) ? "알 수 없음" : date.toLocaleString("ko-KR", { dateStyle: "medium", timeStyle: "short" });
 }
 
-export function AccountSyncControls({ account, onAccountLoad, onAccountRecovery, onAccountRefresh, onAccountSave, onAccountUpload, onGoogleSignIn, onGoogleSignOut, onPrepareReplacement }) {
+export function AccountSyncControls({ account, onAccountLoad, onAccountRecovery, onAccountRefresh, onAccountRetry, onAccountSave, onAccountUpload, onGoogleSignIn, onGoogleSignOut, onPrepareReplacement }) {
   const [replacement, setReplacement] = useState(null);
   const [confirmation, setConfirmation] = useState("");
   const [preparing, setPreparing] = useState(false);
@@ -541,6 +541,8 @@ export function AccountSyncControls({ account, onAccountLoad, onAccountRecovery,
             h("button", { className: "text-button", type: "button", disabled: account.busy, onClick: onAccountSave }, "지금 저장"),
             h("button", { className: "text-button", type: "button", disabled: account.busy, onClick: onAccountRefresh }, "새로고침"),
           )
+          : /계정 확인 실패/.test(account.status || "") && onAccountRetry
+            ? h("button", { className: "text-button account-primary", type: "button", disabled: account.busy, onClick: onAccountRetry }, "다시 연결")
           : h(React.Fragment, null,
             account.cloudAvailable ? h("button", { className: "text-button account-primary", type: "button", disabled: account.busy, onClick: onAccountLoad }, "클라우드 자료 가져오기") : null,
             !account.cloudAvailable ? h("button", { className: "text-button", type: "button", disabled: account.busy, onClick: () => onAccountUpload() }, "이 기기 자료 옮기기") : null,
@@ -591,7 +593,7 @@ export function AccountSyncControls({ account, onAccountLoad, onAccountRecovery,
   );
 }
 
-export function SyncPanel({ account, forgetThisDevice, isOpen, onAccountLoad, onAccountRecovery, onAccountRefresh, onAccountSave, onAccountUpload, onConnect, onGenerate, onGoogleSignIn, onGoogleSignOut, onPrepareReplacement, onPull, onPush, onToggle, setSync, sync, syncReady }) {
+export function SyncPanel({ account, forgetThisDevice, isOpen, onAccountLoad, onAccountRecovery, onAccountRefresh, onAccountRetry, onAccountSave, onAccountUpload, onConnect, onGenerate, onGoogleSignIn, onGoogleSignOut, onPrepareReplacement, onPull, onPush, onToggle, setSync, sync, syncReady }) {
   return h(CollapsiblePanel, {
     className: "sync-panel",
     controls: "syncBody",
@@ -604,7 +606,7 @@ export function SyncPanel({ account, forgetThisDevice, isOpen, onAccountLoad, on
       body: h(
         "div",
         { className: "sync-body", id: "syncBody" },
-        h(AccountSyncControls, { account, onAccountLoad, onAccountRecovery, onAccountRefresh, onAccountSave, onAccountUpload, onGoogleSignIn, onGoogleSignOut, onPrepareReplacement }),
+        h(AccountSyncControls, { account, onAccountLoad, onAccountRecovery, onAccountRefresh, onAccountRetry, onAccountSave, onAccountUpload, onGoogleSignIn, onGoogleSignOut, onPrepareReplacement }),
         !account.connected ? h("details", { className: "legacy-sync" },
           h("summary", null, "기존 PIN 동기화"),
         h(
