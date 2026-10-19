@@ -23,6 +23,8 @@ export const RARITIES = [
   { id: "uncommon", label: "UNCOMMON", min: 2 },
   { id: "common", label: "COMMON", min: 0.5 },
 ];
+// Korean names for the gallery wings, one per rarity tier.
+export const TIER_NAMES = { legendary: "전설의 전당", epic: "영웅 전시실", rare: "희귀 전시실", uncommon: "고급 전시실", common: "일반 전시실", unrated: "평가 대기" };
 const typeIds = TYPES.map((type) => type.id);
 const statusIds = STATUSES.map((status) => status.id);
 const isDate = (value) => /^\d{4}-\d{2}-\d{2}$/.test(value);
@@ -94,9 +96,23 @@ export function visibleItems(items, { type = "all", sort = "recent", query = "" 
   const sorters = {
     recent: byDate,
     rating: (a, b) => b.rating - a.rating || byDate(a, b),
+    tier: (a, b) => b.rating - a.rating || byDate(a, b),
     title: (a, b) => a.title.localeCompare(b.title, "ko"),
   };
   return list.sort(sorters[sort] || byDate);
+}
+
+// The podium: best-rated titles first, newest first among ties.
+export function hallOfFame(items, { type = "all" } = {}, size = 5) {
+  return visibleItems(items, { type, sort: "rating" }).filter((item) => item.rating > 0).slice(0, size);
+}
+
+// Splits a gallery list into rarity wings (legendary first, unrated last), keeping the list's order inside each.
+export function rarityWings(list) {
+  const order = [...RARITIES.map((rarity) => rarity.id), "unrated"];
+  const wings = new Map(order.map((id) => [id, []]));
+  for (const item of list) wings.get(rarityOf(item.rating).id).push(item);
+  return order.filter((id) => wings.get(id).length).map((id) => ({ id, items: wings.get(id) }));
 }
 
 // Coming-soon shelf: soonest release first, undated last.

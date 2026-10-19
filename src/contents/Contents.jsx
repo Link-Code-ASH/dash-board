@@ -2,22 +2,26 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useHubRuntime } from "../hub/context.jsx";
 import {
-  BookOpen, BookText, Check, Clapperboard, Gamepad2, Hourglass, ImagePlus, Pencil, Plus, Search, Shapes,
+  BookOpen, BookText, Check, Clapperboard, Crown, Gamepad2, Hourglass, ImagePlus, Pencil, Plus, Search, Shapes,
   Sparkles, Star, Trash2, Trophy, Tv, X,
 } from "lucide-react";
 import { useContents } from "./ContentsProvider.jsx";
 import {
-  RARITIES, STATUSES, TYPES, collectionStats, dDayLabel, daysUntil, emptyItem, isUpcoming, localDateKey, rarityOf,
-  statusLabel, typeLabel, upcomingItems, visibleItems,
+  RARITIES, STATUSES, TIER_NAMES, TYPES, collectionStats, dDayLabel, daysUntil, emptyItem, hallOfFame, isUpcoming,
+  localDateKey, rarityOf, rarityWings, statusLabel, typeLabel, upcomingItems, visibleItems,
 } from "./model.js";
 import { coverUrl, prepareCover, saveCover } from "./cloud.js";
 import "./contents.css";
 
 const typeIcons = { webtoon: BookOpen, drama: Tv, movie: Clapperboard, anime: Sparkles, novel: BookText, game: Gamepad2, etc: Shapes };
-const SORTS = [{ id: "recent", label: "최근" }, { id: "rating", label: "평점" }, { id: "title", label: "이름" }];
+const SORTS = [{ id: "tier", label: "등급" }, { id: "recent", label: "최근" }, { id: "rating", label: "평점" }, { id: "title", label: "이름" }];
 const yearOf = (item) => (item.date || "").slice(0, 4);
 const dotted = (date) => date.replaceAll("-", ".");
 const comingBadge = (days) => days !== null && days <= 0 ? "OUT NOW" : "COMING SOON";
+// Podium slots left to right: 4th, 2nd, 1st, 3rd, 5th.
+const PODIUM = [3, 1, 0, 2, 4];
+// Ratings move in 0.5 steps, so each tier covers these scores.
+const TIER_RANGES = { legendary: "만점 5.0", epic: "4.0 ~ 4.5점", rare: "3.0 ~ 3.5점", uncommon: "2.0 ~ 2.5점", common: "0.5 ~ 1.5점", unrated: "아직 별점 없음" };
 
 function useCover(item) {
   const { userId } = useContents();
@@ -87,6 +91,7 @@ function FigureCase({ item, onOpen, index }) {
         <Figure item={item} url={url} />
         <span className="ct-pedestal" aria-hidden="true"><span /></span>
       </span>
+      <span className="ct-ledge" aria-hidden="true" />
       <span className="ct-plate">
         <strong>{item.title}</strong>
         <span className="ct-meta">{[typeLabel(item.type), yearOf(item), item.status !== "done" && statusLabel(item.status)].filter(Boolean).join(" · ")}</span>
@@ -114,12 +119,93 @@ function ComingCase({ item, onOpen, index }) {
         <Figure item={item} url={url} />
         <span className="ct-pedestal" aria-hidden="true"><span /></span>
       </span>
+      <span className="ct-ledge" aria-hidden="true" />
       <span className="ct-plate">
         <strong>{item.title}</strong>
         <span className="ct-meta">{[typeLabel(item.type), item.platform].filter(Boolean).join(" · ")}</span>
         <span className="ct-dday"><b>{dDayLabel(days)}</b>{item.releaseDate && <time dateTime={item.releaseDate}>{dotted(item.releaseDate)}</time>}</span>
       </span>
     </button>
+  );
+}
+
+function PodiumSlot({ item, rank, onOpen }) {
+  const url = useCover(item);
+  const rarity = rarityOf(item.rating);
+  return (
+    <button
+      type="button"
+      className={`ct-slot ct-rank-${rank} ct-r-${rarity.id}`}
+      onClick={() => onOpen(item.id)}
+      onPointerMove={tilt}
+      onPointerLeave={untilt}
+      aria-label={`${rank}위 ${item.title} 자세히 보기`}
+    >
+      {rank === 1 && <Crown className="ct-crown" size={26} strokeWidth={1.6} aria-hidden="true" />}
+      <span className="ct-beam" aria-hidden="true" />
+      <span className="ct-stage">
+        <Figure item={item} url={url} />
+        <span className="ct-pedestal" aria-hidden="true"><span /></span>
+      </span>
+      <span className="ct-plinth" aria-hidden="true"><b>{rank}</b></span>
+      {rank > 1 && <span className="ct-slot-name">{item.title}</span>}
+    </button>
+  );
+}
+
+function Hall({ hall, stats, typeName, onOpen, onAdd }) {
+  const top = hall[0];
+  const rarity = top ? rarityOf(top.rating) : { id: "unrated", label: "" };
+  return (
+    <header className={`ct-hall ct-r-${rarity.id}${top ? "" : " is-empty"}`}>
+      <span className="ct-hall-arch" aria-hidden="true" />
+      <div className="ct-hall-head">
+        <span className="ct-eyebrow"><Trophy size={14} />TROPHY ROOM</span>
+        <h1>Contents</h1>
+        <p>지금까지 즐긴 이야기들의 전시관</p>
+      </div>
+      <button type="button" className="ct-btn ct-btn-primary ct-add" onClick={onAdd}>
+        <Plus size={18} /><span>새 피규어 등록</span>
+      </button>
+      {top && (
+        <>
+          <span className="ct-hall-label">HALL OF FAME{typeName && <em>{typeName}</em>}</span>
+          <div className="ct-podium">
+            {PODIUM.filter((index) => index < hall.length).map((index) => (
+              <PodiumSlot key={hall[index].id} item={hall[index]} rank={index + 1} onOpen={onOpen} />
+            ))}
+            <span className="ct-floor" aria-hidden="true" />
+          </div>
+          <div className="ct-hall-plate">
+            <span className="ct-rarity ct-rarity-inline">{rarity.label}</span>
+            <strong>{top.title}</strong>
+            <span className="ct-hall-score"><b>{top.rating.toFixed(1)}</b><Stars rating={top.rating} size={17} /></span>
+            <span className="ct-meta">{[typeLabel(top.type), top.creator, yearOf(top)].filter(Boolean).join(" · ")}</span>
+          </div>
+        </>
+      )}
+      <dl className="ct-stats">
+        <div><dt>전시 중</dt><dd>{stats.total}</dd></div>
+        <div><dt>평균 평점</dt><dd>{stats.average ? stats.average.toFixed(1) : "–"}</dd></div>
+        <div className="ct-stat-legend"><dt><span className="ct-long">LEGENDARY</span><span className="ct-short">전설</span></dt><dd>{stats.legendary}</dd></div>
+        <div><dt>{new Date().getFullYear()}년</dt><dd>{stats.thisYear}</dd></div>
+        <div className="ct-stat-coming"><dt>출시 예정</dt><dd>{stats.upcoming}</dd></div>
+      </dl>
+    </header>
+  );
+}
+
+function Wing({ id, label, title, caption, count, icon: Icon, children }) {
+  return (
+    <section className={`ct-wing ct-r-${id}`} aria-label={title}>
+      <span className="ct-wing-light" aria-hidden="true" />
+      <div className="ct-wing-head">
+        <span className="ct-wing-label">{Icon && <Icon size={13} strokeWidth={2} />}<span>{label}</span></span>
+        <h2>{title}</h2>
+        <p>{caption}<b>{count}</b></p>
+      </div>
+      <div className="ct-gallery">{children}</div>
+    </section>
   );
 }
 
@@ -399,13 +485,15 @@ function Editor({ initial, onClose, onSave }) {
 export default function Contents({ route }) {
   const { items, ready, status, change } = useContents();
   const [type, setType] = useState("all");
-  const [sort, setSort] = useState("recent");
+  const [sort, setSort] = useState("tier");
   const [query, setQuery] = useState("");
   const [openId, setOpenId] = useState(null);
   const [editing, setEditing] = useState(null);
   const stats = useMemo(() => collectionStats(items), [items]);
   const shown = useMemo(() => visibleItems(items, { type, sort, query }), [items, type, sort, query]);
   const coming = useMemo(() => upcomingItems(items, { type, query }), [items, type, query]);
+  const hall = useMemo(() => hallOfFame(items, { type }), [items, type]);
+  const wings = useMemo(() => sort === "tier" ? rarityWings(shown) : [{ id: "gallery", items: shown }], [shown, sort]);
   // Flow's release chips open a title here via #/contents/item:<id>.
   useEffect(() => {
     const target = route?.section?.match(/^item:(.+)$/)?.[1];
@@ -428,22 +516,8 @@ export default function Contents({ route }) {
   return (
     <div className="ct-room">
       <div className="ct-backdrop" aria-hidden="true" />
-      <header className="ct-hero">
-        <div className="ct-hero-title">
-          <span className="ct-eyebrow"><Trophy size={14} />TROPHY ROOM</span>
-          <h1>Contents</h1>
-          <p>지금까지 즐긴 이야기들의 전시관</p>
-        </div>
-        <dl className="ct-stats">
-          <div><dt>전시 중</dt><dd>{stats.total}</dd></div>
-          <div><dt>평균 평점</dt><dd>{stats.average ? stats.average.toFixed(1) : "–"}</dd></div>
-          <div className="ct-stat-legend"><dt>LEGENDARY</dt><dd>{stats.legendary}</dd></div>
-          <div><dt>{new Date().getFullYear()}년</dt><dd>{stats.thisYear}</dd></div>
-        </dl>
-        <button type="button" className="ct-btn ct-btn-primary ct-add" onClick={() => setEditing(emptyItem())}>
-          <Plus size={18} /><span>새 피규어 등록</span>
-        </button>
-      </header>
+      <Hall hall={ready ? hall : []} stats={stats} typeName={type === "all" ? "" : typeLabel(type)}
+        onOpen={setOpenId} onAdd={() => setEditing(emptyItem())} />
 
       <div className="ct-toolbar">
         <div className="ct-filters" role="tablist" aria-label="종류">
@@ -473,20 +547,23 @@ export default function Contents({ route }) {
       </div>
 
       {ready && coming.length > 0 && (
-        <section className="ct-shelf" aria-label="출시 예정">
-          <h2><Hourglass size={16} />출시 예정<b>{coming.length}</b></h2>
-          <div className="ct-gallery">
-            {coming.map((item, index) => <ComingCase key={item.id} item={item} index={index} onOpen={setOpenId} />)}
-          </div>
-        </section>
+        <Wing id="coming" label="COMING SOON" title="출시 예정" caption="기다리는 작품" count={coming.length} icon={Hourglass}>
+          {coming.map((item, index) => <ComingCase key={item.id} item={item} index={index} onOpen={setOpenId} />)}
+        </Wing>
       )}
-      {ready && coming.length > 0 && <h2 className="ct-shelf-title"><Trophy size={16} />전시관<b>{shown.length}</b></h2>}
       {!ready ? (
         <p className="ct-status" role="status">{status}</p>
       ) : shown.length ? (
-        <div className="ct-gallery">
-          {shown.map((item, index) => <FigureCase key={item.id} item={item} index={index} onOpen={setOpenId} />)}
-        </div>
+        wings.map((wing) => wing.id === "gallery" ? (
+          <Wing key="gallery" id="unrated" label="GALLERY" title="전시관" caption={`${SORTS.find((entry) => entry.id === sort)?.label}순 전체 전시`} count={wing.items.length} icon={Trophy}>
+            {wing.items.map((item, index) => <FigureCase key={item.id} item={item} index={index} onOpen={setOpenId} />)}
+          </Wing>
+        ) : (
+          <Wing key={wing.id} id={wing.id} label={wing.id === "unrated" ? "UNRATED" : RARITIES.find((entry) => entry.id === wing.id).label}
+            title={TIER_NAMES[wing.id]} caption={TIER_RANGES[wing.id]} count={wing.items.length} icon={wing.id === "legendary" ? Crown : null}>
+            {wing.items.map((item, index) => <FigureCase key={item.id} item={item} index={index} onOpen={setOpenId} />)}
+          </Wing>
+        ))
       ) : coming.length ? (
         <p className="ct-status ct-status-small">{stats.total ? "조건에 맞는 전시 작품이 없습니다." : "다 본 작품은 여기에 전시됩니다."}</p>
       ) : (
