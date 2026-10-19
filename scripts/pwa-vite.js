@@ -10,6 +10,7 @@ export const apps = {
   lingo: "Lingo",
   mindfold: "Mindfold",
   stock: "Stock",
+  contents: "Contents",
 };
 
 const entryPattern = new RegExp(`^/(${Object.keys(apps).join("|")})(?:/|/index\\.html)?$`);

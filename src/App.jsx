@@ -20,6 +20,7 @@ import { navigationStrokeWidth } from "./hub/icons.jsx";
 import { appBase, installedModule, useHubRoute } from "./hub/routing.js";
 import LingoProvider from "./lingo/LingoProvider.jsx";
 import EduProvider from "./edu/EduProvider.jsx";
+import ContentsProvider from "./contents/ContentsProvider.jsx";
 import { claimAutomaticRecovery, isModuleLoadError, openLatestApp } from "./hub/moduleRecovery.js";
 
 const SettingsView = React.lazy(() => import("./hub/views/Settings.jsx"));
@@ -210,7 +211,9 @@ function HubShell({ route, navigate }) {
           className={
             route.module === "mindfold" && !gate
               ? "hub-mindfold-content"
-              : "hub-content-modern"
+              : route.module === "contents" && !gate && !settings
+                ? "hub-content-modern hub-contents-content"
+                : "hub-content-modern"
           }
         >
           <ModuleBoundary key={gate ? "gate" : route.module}>
@@ -258,7 +261,9 @@ export default function App() {
     <DashboardProvider date={route.date} setDate={setDate}>
       <LingoProvider>
         <EduProvider>
-          <HubShell route={route} navigate={navigate} />
+          <ContentsProvider>
+            <HubShell route={route} navigate={navigate} />
+          </ContentsProvider>
         </EduProvider>
       </LingoProvider>
     </DashboardProvider>

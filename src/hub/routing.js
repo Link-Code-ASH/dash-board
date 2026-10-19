@@ -2,16 +2,16 @@ import { useCallback, useEffect, useState } from "react";
 import { getWeekStart } from "../dashboard/model.js";
 import { isValidMonth } from "./calendarMonth.js";
 
-export const moduleIds = ["flow", "routine", "edu", "lingo", "mindfold", "stock"];
+export const moduleIds = ["flow", "routine", "edu", "lingo", "mindfold", "stock", "contents"];
 export function appBase(path = window.location.pathname) {
   return path
-    .replace(/(?:hub|flow|routine|edu|lingo|mindfold|stock)\/(?:index\.html)?$/, "")
+    .replace(/(?:hub|flow|routine|edu|lingo|mindfold|stock|contents)\/(?:index\.html)?$/, "")
     .replace(/index\.html$/, "")
     .replace(/\/?$/, "/");
 }
 export function installedModule(path = window.location.pathname) {
   return (
-    path.match(/\/(flow|routine|edu|lingo|mindfold|stock)\/(?:index\.html)?$/)?.[1] ||
+    path.match(/\/(flow|routine|edu|lingo|mindfold|stock|contents)\/(?:index\.html)?$/)?.[1] ||
     null
   );
 }

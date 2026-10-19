@@ -5,6 +5,7 @@ import {
   Languages,
   NotebookPen,
   ChartNoAxesCombined,
+  Trophy,
 } from "lucide-react";
 import { ScheduleIcon } from "./icons.jsx";
 
@@ -50,5 +51,12 @@ export const modules = [
     icon: ChartNoAxesCombined,
     path: "stock/",
     Component: lazy(() => import("./views/Stock.jsx")),
+  },
+  {
+    id: "contents",
+    name: "Contents",
+    icon: Trophy,
+    path: "contents/",
+    Component: lazy(() => import("../contents/Contents.jsx")),
   },
 ];
