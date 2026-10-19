@@ -663,6 +663,8 @@ html body #root .hub-app.hub-app .flow-desk-source-icon { margin-right: 4px; col
 html body #root .hub-app.hub-app .flow-desk-event[data-kind="consultation"] { border-color: #ddd8f3; background: #f5f3fd; }
 html body #root .hub-app.hub-app .flow-desk-event[data-kind="consultation"] .flow-desk-source-icon { color: #6d5bc4; }
 html body #root .hub-app.hub-app .flow-desk-event[data-kind="consultation"][data-completed] { opacity: .72; }
+html body #root .hub-app.hub-app .flow-desk-event[data-source="contents"] { border-color: #f3d9e4; background: #fdf2f6; }
+html body #root .hub-app.hub-app .flow-desk-event[data-source="contents"] .flow-desk-source-icon { color: #c2417a; }
 html body #root .hub-app.hub-app .flow-desk-event-source { font-size: 11px; }
 /* 10-minute time picker in the calendar entry editor. */
 html body #root .hub-app .calendar-time-picker { display: inline-flex; gap: 4px; }

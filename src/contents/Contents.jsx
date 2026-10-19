@@ -2,12 +2,13 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useHubRuntime } from "../hub/context.jsx";
 import {
-  BookOpen, BookText, Clapperboard, Gamepad2, ImagePlus, Pencil, Plus, Search, Shapes,
+  BookOpen, BookText, Check, Clapperboard, Gamepad2, Hourglass, ImagePlus, Pencil, Plus, Search, Shapes,
   Sparkles, Star, Trash2, Trophy, Tv, X,
 } from "lucide-react";
 import { useContents } from "./ContentsProvider.jsx";
 import {
-  RARITIES, STATUSES, TYPES, collectionStats, emptyItem, rarityOf, statusLabel, typeLabel, visibleItems,
+  RARITIES, STATUSES, TYPES, collectionStats, dDayLabel, daysUntil, emptyItem, isUpcoming, localDateKey, rarityOf,
+  statusLabel, typeLabel, upcomingItems, visibleItems,
 } from "./model.js";
 import { coverUrl, prepareCover, saveCover } from "./cloud.js";
 import "./contents.css";
@@ -15,6 +16,8 @@ import "./contents.css";
 const typeIcons = { webtoon: BookOpen, drama: Tv, movie: Clapperboard, anime: Sparkles, novel: BookText, game: Gamepad2, etc: Shapes };
 const SORTS = [{ id: "recent", label: "최근" }, { id: "rating", label: "평점" }, { id: "title", label: "이름" }];
 const yearOf = (item) => (item.date || "").slice(0, 4);
+const dotted = (date) => date.replaceAll("-", ".");
+const comingBadge = (days) => days !== null && days <= 0 ? "OUT NOW" : "COMING SOON";
 
 function useCover(item) {
   const { userId } = useContents();
@@ -93,6 +96,33 @@ function FigureCase({ item, onOpen, index }) {
   );
 }
 
+function ComingCase({ item, onOpen, index }) {
+  const url = useCover(item);
+  const days = daysUntil(item.releaseDate);
+  return (
+    <button
+      type="button"
+      className={`ct-case ct-coming ct-r-coming${days !== null && days <= 0 ? " is-out" : ""}`}
+      style={{ "--delay": `${Math.min(index, 18) * 40}ms` }}
+      onClick={() => onOpen(item.id)}
+      onPointerMove={tilt}
+      onPointerLeave={untilt}
+      aria-label={`${item.title} 출시 정보 보기`}
+    >
+      <span className="ct-rarity">{comingBadge(days)}</span>
+      <span className="ct-stage">
+        <Figure item={item} url={url} />
+        <span className="ct-pedestal" aria-hidden="true"><span /></span>
+      </span>
+      <span className="ct-plate">
+        <strong>{item.title}</strong>
+        <span className="ct-meta">{[typeLabel(item.type), item.platform].filter(Boolean).join(" · ")}</span>
+        <span className="ct-dday"><b>{dDayLabel(days)}</b>{item.releaseDate && <time dateTime={item.releaseDate}>{dotted(item.releaseDate)}</time>}</span>
+      </span>
+    </button>
+  );
+}
+
 function Modal({ label, onClose, className = "", children }) {
   const { displayMode } = useHubRuntime();
   useEffect(() => {
@@ -115,9 +145,11 @@ function Modal({ label, onClose, className = "", children }) {
   );
 }
 
-function Inspect({ item, onClose, onEdit, onRemove }) {
+function Inspect({ item, onClose, onEdit, onRemove, onComplete }) {
   const url = useCover(item);
-  const rarity = rarityOf(item.rating);
+  const upcoming = isUpcoming(item);
+  const rarity = upcoming ? { id: "coming", label: comingBadge(daysUntil(item.releaseDate)) } : rarityOf(item.rating);
+  const days = daysUntil(item.releaseDate);
   const [confirm, setConfirm] = useState(false);
   return (
     <Modal label={`${item.title} 상세`} onClose={onClose} className={`ct-inspect ct-r-${rarity.id}`}>
@@ -134,14 +166,26 @@ function Inspect({ item, onClose, onEdit, onRemove }) {
         <div className="ct-tags">
           <span>{typeLabel(item.type)}</span>
           <span>{statusLabel(item.status)}</span>
-          {item.date && <span>{item.date.replaceAll("-", ".")}</span>}
+          {!upcoming && item.date && <span>{dotted(item.date)}</span>}
+          {item.platform && <span>{item.platform}</span>}
           {item.creator && <span>{item.creator}</span>}
         </div>
-        <div className="ct-score">
-          <strong>{item.rating ? item.rating.toFixed(1) : "–"}</strong>
-          <Stars rating={item.rating} size={22} />
-        </div>
-        <p className={item.review ? "ct-review" : "ct-review ct-review-empty"}>{item.review || "아직 한 줄 평이 없습니다."}</p>
+        {upcoming ? (
+          <div className="ct-score ct-score-coming">
+            <strong>{dDayLabel(days)}</strong>
+            <span className="ct-score-text">
+              <b>{item.releaseDate ? `${dotted(item.releaseDate)} 출시` : "출시일 미정"}</b>
+              {item.hype > 0 && <span className="ct-hype">기대도 <Stars rating={item.hype} size={15} /></span>}
+            </span>
+          </div>
+        ) : (
+          <div className="ct-score">
+            <strong>{item.rating ? item.rating.toFixed(1) : "–"}</strong>
+            <Stars rating={item.rating} size={22} />
+            {item.releaseDate && <span className="ct-score-note">{dotted(item.releaseDate)} 출시</span>}
+          </div>
+        )}
+        <p className={item.review ? "ct-review" : "ct-review ct-review-empty"}>{item.review || (upcoming ? "아직 메모가 없습니다." : "아직 한 줄 평이 없습니다.")}</p>
         <div className="ct-actions">
           {confirm ? (
             <>
@@ -151,7 +195,8 @@ function Inspect({ item, onClose, onEdit, onRemove }) {
             </>
           ) : (
             <>
-              <button type="button" className="ct-btn ct-btn-primary" onClick={onEdit}><Pencil size={16} />수정</button>
+              {upcoming && <button type="button" className="ct-btn ct-btn-primary" onClick={onComplete}><Check size={16} />다 봤어요 · 전시하기</button>}
+              <button type="button" className={upcoming ? "ct-btn" : "ct-btn ct-btn-primary"} onClick={onEdit}><Pencil size={16} />수정</button>
               <button type="button" className="ct-btn ct-btn-ghost" onClick={() => setConfirm(true)}><Trash2 size={16} />치우기</button>
             </>
           )}
@@ -161,10 +206,10 @@ function Inspect({ item, onClose, onEdit, onRemove }) {
   );
 }
 
-function RatingPicker({ value, onChange }) {
+function RatingPicker({ value, onChange, hype = false }) {
   const [hover, setHover] = useState(null);
   const shown = hover ?? value;
-  const rarity = rarityOf(shown);
+  const rarity = hype ? { id: "coming", label: "기대도" } : rarityOf(shown);
   const pick = (event, index) => {
     const box = event.currentTarget.getBoundingClientRect();
     return index + (event.clientX - box.left < box.width / 2 ? 0.5 : 1);
@@ -190,8 +235,8 @@ function RatingPicker({ value, onChange }) {
       </div>
       <div className="ct-rating-readout">
         <strong>{shown ? shown.toFixed(1) : "–"}</strong>
-        <span>{rarity.label}</span>
-        {value > 0 && <button type="button" onClick={() => onChange(0)}>평가 지우기</button>}
+        {!hype && <span>{rarity.label}</span>}
+        {value > 0 && <button type="button" onClick={() => onChange(0)}>{hype ? "지우기" : "평가 지우기"}</button>}
       </div>
     </div>
   );
@@ -226,10 +271,11 @@ function Editor({ initial, onClose, onSave }) {
     event.preventDefault();
     if (!draft.title.trim()) { setError("제목을 입력해 주세요."); return; }
     setBusy(true);
-    try { await onSave({ ...draft, title: draft.title.trim(), creator: draft.creator.trim(), coverUrl: draft.coverUrl.trim() }); }
+    try { await onSave({ ...draft, title: draft.title.trim(), creator: draft.creator.trim(), platform: draft.platform.trim(), coverUrl: draft.coverUrl.trim() }); }
     catch (problem) { setError(problem.message); setBusy(false); }
   };
-  const rarity = rarityOf(draft.rating);
+  const upcoming = isUpcoming(draft);
+  const rarity = upcoming ? { id: "coming" } : rarityOf(draft.rating);
   return (
     <Modal label={initial.title ? "피규어 수정" : "새 피규어 등록"} onClose={onClose} className={`ct-editor ct-r-${rarity.id}`}>
       <form onSubmit={submit} onPaste={onPaste}>
@@ -284,34 +330,64 @@ function Editor({ initial, onClose, onSave }) {
             </div>
           </div>
           <div className="ct-field">
-            <span>평가</span>
-            <RatingPicker value={draft.rating} onChange={(rating) => set({ rating })} />
-          </div>
-          <div className="ct-field-row">
-            <div className="ct-field">
-              <span>상태</span>
-              <div className="ct-choice ct-choice-small">
-                {STATUSES.map((status) => (
-                  <button key={status.id} type="button" aria-pressed={draft.status === status.id} onClick={() => set({ status: status.id })}>{status.label}</button>
-                ))}
-              </div>
+            <span>상태</span>
+            <div className="ct-choice ct-choice-small">
+              {STATUSES.map((status) => (
+                <button key={status.id} type="button" aria-pressed={draft.status === status.id} onClick={() => set({ status: status.id })}>
+                  {status.id === "upcoming" && <Hourglass size={14} strokeWidth={1.8} />}{status.label}
+                </button>
+              ))}
             </div>
+          </div>
+          {upcoming ? (
+            <>
+              <div className="ct-field-row ct-field-row-even">
+                <label className="ct-field">
+                  <span>출시일 · Flow 일정에 표시</span>
+                  <input className="ct-input" type="date" value={draft.releaseDate} onChange={(event) => set({ releaseDate: event.target.value })} />
+                </label>
+                <div className="ct-field">
+                  <span>기대도</span>
+                  <RatingPicker hype value={draft.hype} onChange={(hype) => set({ hype })} />
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="ct-field">
+                <span>평가</span>
+                <RatingPicker value={draft.rating} onChange={(rating) => set({ rating })} />
+              </div>
+              <div className="ct-field-row ct-field-row-even">
+                <label className="ct-field">
+                  <span>감상 날짜</span>
+                  <input className="ct-input" type="date" value={draft.date} onChange={(event) => set({ date: event.target.value })} />
+                </label>
+                <label className="ct-field">
+                  <span>출시일 · 선택</span>
+                  <input className="ct-input" type="date" value={draft.releaseDate} onChange={(event) => set({ releaseDate: event.target.value })} />
+                </label>
+              </div>
+            </>
+          )}
+          <div className="ct-field-row ct-field-row-even">
             <label className="ct-field">
-              <span>날짜</span>
-              <input className="ct-input" type="date" value={draft.date} onChange={(event) => set({ date: event.target.value })} />
+              <span>작가 · 감독 · 제작사</span>
+              <input className="ct-input" value={draft.creator} onChange={(event) => set({ creator: event.target.value })} placeholder="선택 입력" maxLength={80} />
+            </label>
+            <label className="ct-field">
+              <span>어디서 · 플랫폼</span>
+              <input className="ct-input" value={draft.platform} onChange={(event) => set({ platform: event.target.value })} placeholder="넷플릭스, 네이버웹툰, 스팀…" maxLength={60} />
             </label>
           </div>
           <label className="ct-field">
-            <span>작가 · 감독 · 제작사</span>
-            <input className="ct-input" value={draft.creator} onChange={(event) => set({ creator: event.target.value })} placeholder="선택 입력" maxLength={80} />
-          </label>
-          <label className="ct-field">
-            <span>한 줄 평</span>
-            <textarea className="ct-input ct-textarea" rows={4} value={draft.review} onChange={(event) => set({ review: event.target.value })} placeholder="어떤 점이 좋았나요?" />
+            <span>{upcoming ? "기대 포인트 · 메모" : "한 줄 평"}</span>
+            <textarea className="ct-input ct-textarea" rows={4} value={draft.review} onChange={(event) => set({ review: event.target.value })}
+              placeholder={upcoming ? "공개된 정보, 기대하는 점, 예고편 링크 등" : "어떤 점이 좋았나요?"} />
           </label>
           {error && <p className="ct-error" role="alert">{error}</p>}
           <div className="ct-actions">
-            <button type="submit" className="ct-btn ct-btn-primary" disabled={busy}><Trophy size={16} />{initial.title ? "저장" : "전시하기"}</button>
+            <button type="submit" className="ct-btn ct-btn-primary" disabled={busy}>{upcoming ? <Hourglass size={16} /> : <Trophy size={16} />}{initial.title ? "저장" : upcoming ? "출시 예정에 올리기" : "전시하기"}</button>
             <button type="button" className="ct-btn" onClick={onClose}>취소</button>
           </div>
         </div>
@@ -320,7 +396,7 @@ function Editor({ initial, onClose, onSave }) {
   );
 }
 
-export default function Contents() {
+export default function Contents({ route }) {
   const { items, ready, status, change } = useContents();
   const [type, setType] = useState("all");
   const [sort, setSort] = useState("recent");
@@ -329,6 +405,12 @@ export default function Contents() {
   const [editing, setEditing] = useState(null);
   const stats = useMemo(() => collectionStats(items), [items]);
   const shown = useMemo(() => visibleItems(items, { type, sort, query }), [items, type, sort, query]);
+  const coming = useMemo(() => upcomingItems(items, { type, query }), [items, type, query]);
+  // Flow's release chips open a title here via #/contents/item:<id>.
+  useEffect(() => {
+    const target = route?.section?.match(/^item:(.+)$/)?.[1];
+    if (target) setOpenId(target);
+  }, [route?.section]);
   const opened = items.find((item) => item.id === openId && !item.deletedAt);
 
   const save = async (draft) => {
@@ -366,7 +448,7 @@ export default function Contents() {
       <div className="ct-toolbar">
         <div className="ct-filters" role="tablist" aria-label="종류">
           <button type="button" role="tab" aria-selected={type === "all"} onClick={() => setType("all")}>
-            전체<b>{stats.total}</b>
+            전체<b>{stats.all}</b>
           </button>
           {TYPES.map((entry) => {
             const Icon = typeIcons[entry.id];
@@ -390,12 +472,23 @@ export default function Contents() {
         </div>
       </div>
 
+      {ready && coming.length > 0 && (
+        <section className="ct-shelf" aria-label="출시 예정">
+          <h2><Hourglass size={16} />출시 예정<b>{coming.length}</b></h2>
+          <div className="ct-gallery">
+            {coming.map((item, index) => <ComingCase key={item.id} item={item} index={index} onOpen={setOpenId} />)}
+          </div>
+        </section>
+      )}
+      {ready && coming.length > 0 && <h2 className="ct-shelf-title"><Trophy size={16} />전시관<b>{shown.length}</b></h2>}
       {!ready ? (
         <p className="ct-status" role="status">{status}</p>
       ) : shown.length ? (
         <div className="ct-gallery">
           {shown.map((item, index) => <FigureCase key={item.id} item={item} index={index} onOpen={setOpenId} />)}
         </div>
+      ) : coming.length ? (
+        <p className="ct-status ct-status-small">{stats.total ? "조건에 맞는 전시 작품이 없습니다." : "다 본 작품은 여기에 전시됩니다."}</p>
       ) : (
         <div className="ct-empty">
           <span className="ct-stage">
@@ -416,7 +509,8 @@ export default function Contents() {
       </ul>
 
       {opened && !editing && (
-        <Inspect item={opened} onClose={() => setOpenId(null)} onEdit={() => setEditing(opened)} onRemove={remove} />
+        <Inspect item={opened} onClose={() => setOpenId(null)} onEdit={() => setEditing(opened)} onRemove={remove}
+          onComplete={() => setEditing({ ...opened, status: "done", date: localDateKey() })} />
       )}
       {editing && <Editor initial={editing} onClose={() => setEditing(null)} onSave={save} />}
     </div>

@@ -13,6 +13,7 @@ export const STATUSES = [
   { id: "done", label: "완료" },
   { id: "ongoing", label: "보는 중" },
   { id: "dropped", label: "중단" },
+  { id: "upcoming", label: "출시 예정" },
 ];
 // Rarity is derived from the rating only, never stored.
 export const RARITIES = [
@@ -25,17 +26,26 @@ export const RARITIES = [
 const typeIds = TYPES.map((type) => type.id);
 const statusIds = STATUSES.map((status) => status.id);
 const isDate = (value) => /^\d{4}-\d{2}-\d{2}$/.test(value);
+const DAY = 86400000;
 
 export const uid = () => crypto.randomUUID();
 export const typeLabel = (id) => TYPES.find((type) => type.id === id)?.label || "기타";
 export const statusLabel = (id) => STATUSES.find((status) => status.id === id)?.label || "";
+export const isUpcoming = (item) => item.status === "upcoming";
+export const localDateKey = (date = new Date()) =>
+  `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+// Days until release: positive = still waiting, 0 = today, negative = already out. null when undated.
+export const daysUntil = (releaseDate, today = localDateKey()) =>
+  isDate(releaseDate || "") ? Math.round((Date.parse(`${releaseDate}T00:00:00Z`) - Date.parse(`${today}T00:00:00Z`)) / DAY) : null;
+export const dDayLabel = (days) => days === null ? "미정" : days > 0 ? `D-${days}` : days === 0 ? "D-DAY" : "출시됨";
 export const rarityOf = (rating) =>
   rating ? RARITIES.find((rarity) => rating >= rarity.min) || RARITIES.at(-1) : { id: "unrated", label: "UNRATED" };
 
 export function emptyItem(id = uid(), now = new Date().toISOString()) {
   return {
     version: VERSION, id, title: "", type: "webtoon", rating: 0, status: "done",
-    date: now.slice(0, 10), creator: "", review: "", cover: null, coverUrl: "",
+    date: now.slice(0, 10), creator: "", platform: "", review: "", cover: null, coverUrl: "",
+    releaseDate: "", hype: 0,
     createdAt: now, updatedAt: now, deletedAt: null,
   };
 }
@@ -52,7 +62,10 @@ export function validateItem(value) {
   const rating = Number(item.rating);
   item.rating = Number.isFinite(rating) ? Math.min(5, Math.max(0, Math.round(rating * 2) / 2)) : 0;
   if (item.date !== "" && !isDate(item.date)) item.date = "";
-  for (const field of ["creator", "review", "coverUrl"])
+  if (item.releaseDate !== "" && !isDate(item.releaseDate)) item.releaseDate = "";
+  const hype = Number(item.hype);
+  item.hype = Number.isFinite(hype) ? Math.min(5, Math.max(0, Math.round(hype * 2) / 2)) : 0;
+  for (const field of ["creator", "platform", "review", "coverUrl"])
     if (typeof item[field] !== "string") item[field] = "";
   if (item.cover !== null && (typeof item.cover !== "string" || !item.cover)) item.cover = null;
   if (item.deletedAt !== null && typeof item.deletedAt !== "string") item.deletedAt = null;
@@ -68,11 +81,15 @@ export function validateBackup(value) {
   return { version: VERSION, items };
 }
 
-export function visibleItems(items, { type = "all", sort = "recent", query = "" } = {}) {
+const matches = (item, type, query) => {
   const needle = query.trim().toLowerCase();
-  const list = items.filter((item) => !item.deletedAt &&
-    (type === "all" || item.type === type) &&
-    (!needle || `${item.title} ${item.creator} ${item.review}`.toLowerCase().includes(needle)));
+  return !item.deletedAt && (type === "all" || item.type === type) &&
+    (!needle || `${item.title} ${item.creator} ${item.platform} ${item.review}`.toLowerCase().includes(needle));
+};
+
+// Gallery of titles already enjoyed (upcoming ones wait on their own shelf).
+export function visibleItems(items, { type = "all", sort = "recent", query = "" } = {}) {
+  const list = items.filter((item) => !isUpcoming(item) && matches(item, type, query));
   const byDate = (a, b) => (b.date || b.createdAt).localeCompare(a.date || a.createdAt);
   const sorters = {
     recent: byDate,
@@ -82,12 +99,27 @@ export function visibleItems(items, { type = "all", sort = "recent", query = "" 
   return list.sort(sorters[sort] || byDate);
 }
 
+// Coming-soon shelf: soonest release first, undated last.
+export function upcomingItems(items, { type = "all", query = "" } = {}) {
+  return items.filter((item) => isUpcoming(item) && matches(item, type, query))
+    .sort((a, b) => (a.releaseDate || "9999").localeCompare(b.releaseDate || "9999") || a.title.localeCompare(b.title, "ko"));
+}
+
+// Release dates shown in Flow's schedule.
+export function releasesOn(items, date) {
+  return items.filter((item) => !item.deletedAt && item.releaseDate === date)
+    .sort((a, b) => a.title.localeCompare(b.title, "ko"));
+}
+
 export function collectionStats(items, year = new Date().getFullYear()) {
-  const live = items.filter((item) => !item.deletedAt);
+  const all = items.filter((item) => !item.deletedAt);
+  const live = all.filter((item) => !isUpcoming(item));
   const rated = live.filter((item) => item.rating > 0);
   const counts = Object.fromEntries(TYPES.map((type) => [type.id, 0]));
-  for (const item of live) counts[item.type] = (counts[item.type] || 0) + 1;
+  for (const item of all) counts[item.type] = (counts[item.type] || 0) + 1;
   return {
+    all: all.length,
+    upcoming: all.length - live.length,
     total: live.length,
     average: rated.length ? Math.round((rated.reduce((sum, item) => sum + item.rating, 0) / rated.length) * 10) / 10 : 0,
     legendary: live.filter((item) => rarityOf(item.rating).id === "legendary").length,

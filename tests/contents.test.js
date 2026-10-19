@@ -91,3 +91,40 @@ test("offline edits stay local until the cloud accepts them", async () => {
   assert.equal(cloud.rows.get("y").revision, 1);
   assert.equal(storage.data.get("off").entries[0].dirty, false);
 });
+
+test("upcoming titles wait on their own shelf, count down and stay out of the gallery stats", async () => {
+  const { upcomingItems, daysUntil, dDayLabel } = await import("../src/contents/model.js");
+  const items = [
+    item("done", { rating: 5, date: "2026-02-01" }),
+    item("soon", { status: "upcoming", releaseDate: "2026-10-24", hype: 4.6 }),
+    item("later", { status: "upcoming", releaseDate: "2026-12-01" }),
+    item("tbd", { status: "upcoming" }),
+  ];
+  assert.deepEqual(visibleItems(items).map((x) => x.id), ["done"]);
+  assert.deepEqual(upcomingItems(items).map((x) => x.id), ["soon", "later", "tbd"]);
+  const stats = collectionStats(items, 2026);
+  assert.equal(stats.total, 1);
+  assert.equal(stats.upcoming, 3);
+  assert.equal(stats.all, 4);
+  assert.equal(validateItem(items[1]).hype, 4.5);
+  assert.equal(dDayLabel(daysUntil("2026-10-24", "2026-10-19")), "D-5");
+  assert.equal(dDayLabel(daysUntil("2026-10-19", "2026-10-19")), "D-DAY");
+  assert.equal(dDayLabel(daysUntil("2026-10-01", "2026-10-19")), "출시됨");
+  assert.equal(dDayLabel(daysUntil("", "2026-10-19")), "미정");
+});
+
+test("release dates appear in Flow and open the title in Contents", async () => {
+  const { createContentsFlowSource } = await import("../src/contents/flow.js");
+  const items = [
+    item("a", { title: "GTA 6", type: "game", status: "upcoming", releaseDate: "2026-10-24" }),
+    item("b", { releaseDate: "2026-10-24", deletedAt: "2026-10-19T00:00:00.000Z" }),
+  ];
+  const source = createContentsFlowSource({ getItems: () => items, subscribe: () => () => {} });
+  const flow = source.getItems("2026-10-24");
+  assert.equal(flow.length, 1);
+  assert.equal(flow[0].displayTitle, "GTA 6");
+  assert.equal(flow[0].kind, "release");
+  assert.deepEqual(source.getItems("2026-10-25"), []);
+  assert.deepEqual(source.openTarget("a"), { moduleId: "contents", section: "item:a" });
+  assert.throws(() => source.openTarget("b"), /찾을 수 없/);
+});

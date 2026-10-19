@@ -1,9 +1,10 @@
 import React, { createContext, useContext, useEffect, useLayoutEffect, useState, useSyncExternalStore } from "react";
 import { useHubRuntime } from "../hub/context.jsx";
-import { registerBackupProvider } from "../hub/moduleRegistry.js";
+import { registerBackupProvider, registerFlowSource } from "../hub/moduleRegistry.js";
 import { createContentsStore } from "./store.js";
 import { localStorageAdapter, accountLock } from "./storage.js";
 import { cloudAdapter } from "./cloud.js";
+import { createContentsFlowSource } from "./flow.js";
 
 const Context = createContext(null);
 export const useContents = () => useContext(Context);
@@ -40,6 +41,13 @@ function AccountContents({ userId, loading, children }) {
     document.addEventListener("visibilitychange", onVisible);
     return () => { unregister(); clearInterval(timer); window.removeEventListener("online", sync);
       window.removeEventListener("focus", sync); document.removeEventListener("visibilitychange", onVisible); };
+  }, [store]);
+  useEffect(() => {
+    if (!store) return;
+    return registerFlowSource(createContentsFlowSource({
+      getItems: () => store.getSnapshot().items,
+      subscribe: (listener) => store.subscribe(listener),
+    }));
   }, [store]);
   const change = async (id, transform) => {
     const item = await store.change(id, transform);
