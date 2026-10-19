@@ -22,6 +22,7 @@ import LingoProvider from "./lingo/LingoProvider.jsx";
 import EduProvider from "./edu/EduProvider.jsx";
 import ContentsProvider from "./contents/ContentsProvider.jsx";
 import { claimAutomaticRecovery, isModuleLoadError, openLatestApp } from "./hub/moduleRecovery.js";
+import { STORAGE_WARN_BYTES, localStorageBytes } from "./dashboard/recoveryArchive.js";
 
 const SettingsView = React.lazy(() => import("./hub/views/Settings.jsx"));
 
@@ -88,8 +89,18 @@ function HubShell({ route, navigate }) {
       localSync.storageConflicts?.length,
   );
   const syncFailed = account.localSaveFailed || /실패|failed|full|paused/i.test(account.status || "");
+  // Warn well before the browser's ~5MB localStorage cap stops saving.
+  const [storageNearlyFull, setStorageNearlyFull] = useState(false);
+  useEffect(() => {
+    const check = () => { try { setStorageNearlyFull(localStorageBytes() > STORAGE_WARN_BYTES); } catch { /* unreadable storage */ } };
+    check();
+    const timer = window.setInterval(check, 60000);
+    return () => window.clearInterval(timer);
+  }, []);
   const status = needsRecovery
     ? "복구 사본 있음"
+    : storageNearlyFull
+      ? "저장 공간 부족"
     : syncFailed
       ? "동기화 확인 필요"
       : account.loading
@@ -145,8 +156,8 @@ function HubShell({ route, navigate }) {
             ))}
           </nav>
           <div className="hub-sidebar-bottom">
-            <span className="hub-connection" title={account.status || status}>
-              {needsRecovery || syncFailed ? (
+            <span className="hub-connection" title={storageNearlyFull ? "브라우저 저장 공간이 3.5MB를 넘었습니다. Settings → 기기 동기화에서 확인하세요." : account.status || status}>
+              {needsRecovery || syncFailed || storageNearlyFull ? (
                 <CloudAlert size={16} />
               ) : account.connected ? (
                 <Cloud size={16} />
@@ -178,8 +189,8 @@ function HubShell({ route, navigate }) {
             <strong>{settings ? "Settings" : module.name}</strong>
           </div>
           <div className="hub-top-actions">
-            <span className="hub-connection" title={account.status || status}>
-              {needsRecovery || syncFailed ? (
+            <span className="hub-connection" title={storageNearlyFull ? "브라우저 저장 공간이 3.5MB를 넘었습니다. Settings → 기기 동기화에서 확인하세요." : account.status || status}>
+              {needsRecovery || syncFailed || storageNearlyFull ? (
                 <CloudAlert size={15} />
               ) : account.connected ? (
                 <Cloud size={15} />

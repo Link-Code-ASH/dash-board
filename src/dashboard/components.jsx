@@ -2,6 +2,7 @@ import CalendarNoteEditor from "../hub/CalendarNoteEditor.jsx";
 import CalendarEventEditor, { TimePicker } from "../hub/CalendarEventEditor.jsx";
 import React, { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { localStorageBytes } from "./recoveryArchive.js";
 import MemoEditor, { MemoFormatToolbar } from "../MemoEditor.jsx";
 import {
   SYNC_PIN_KEY,
@@ -483,14 +484,13 @@ export function formatAccountSyncDate(value) {
 // sync) is visible from Settings without developer tools.
 function describeLocalStorageUsage() {
   try {
-    let bytes = 0, copies = 0, pending = 0;
+    let copies = 0, pending = 0;
     for (let index = 0; index < localStorage.length; index += 1) {
       const key = localStorage.key(index) || "";
-      bytes += (key.length + (localStorage.getItem(key) || "").length) * 2;
       if (key.includes(":recovery:") || key.startsWith("hub-account-recovery-v1:")) copies += 1;
       if (key.includes(":pending:")) pending += 1;
     }
-    return `브라우저 저장 공간 ${(bytes / 1048576).toFixed(1)}MB 사용 · 복구 사본 ${copies}개 · 저장 대기 ${pending}개`;
+    return `브라우저 저장 공간 ${(localStorageBytes() / 1048576).toFixed(1)}MB / 약 5MB 사용 · 복구 사본 ${copies}개 · 저장 대기 ${pending}개`;
   } catch {
     return "브라우저 저장 공간을 읽지 못했습니다.";
   }
