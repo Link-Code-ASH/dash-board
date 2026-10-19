@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useHubRuntime } from "../hub/context.jsx";
 import {
-  BookOpen, BookText, Check, ChevronDown, ChevronLeft, ChevronRight, Clapperboard, Crown, Gamepad2, Hourglass, ImagePlus, Pencil, Plus, Search, Shapes,
+  BookOpen, BookText, Check, ChevronDown, ChevronLeft, ChevronRight, Clapperboard, Crown, Gamepad2, Hourglass, ImagePlus, Pencil, Plus, RefreshCw, Search, Shapes,
   Sparkles, Star, Trash2, Trophy, Tv, X,
 } from "lucide-react";
 import { useContents } from "./ContentsProvider.jsx";
@@ -11,6 +11,7 @@ import {
   localDateKey, rarityOf, rarityWings, statusLabel, typeLabel, upcomingItems, visibleItems,
 } from "./model.js";
 import { coverUrl, prepareCover, saveCover } from "./cloud.js";
+import { downloadCover, searchCovers } from "./coverSearch.js";
 import "./contents.css";
 
 const typeIcons = { webtoon: BookOpen, drama: Tv, movie: Clapperboard, anime: Sparkles, novel: BookText, game: Gamepad2, etc: Shapes };
@@ -397,6 +398,7 @@ function Inspect({ item, onClose, onEdit, onRemove, onComplete }) {
             <>
               {upcoming && <button type="button" className="ct-btn ct-btn-primary" onClick={onComplete}><Check size={16} />다 봤어요 · 전시하기</button>}
               <button type="button" className={upcoming ? "ct-btn" : "ct-btn ct-btn-primary"} onClick={onEdit}><Pencil size={16} />수정</button>
+              {!item.cover && !item.coverUrl && <button type="button" className="ct-btn" onClick={onEdit}><ImagePlus size={16} />표지 찾기</button>}
               <button type="button" className="ct-btn ct-btn-ghost" onClick={() => setConfirm(true)}><Trash2 size={16} />치우기</button>
             </>
           )}
@@ -452,6 +454,28 @@ function Editor({ initial, onClose, onSave }) {
   const savedUrl = useCover(initial);
   const set = (patch) => setDraft((current) => ({ ...current, ...patch }));
   const shownUrl = draft.cover === initial.cover && !preview ? (draft.cover ? savedUrl : draft.coverUrl) : preview || draft.coverUrl;
+  const [found, setFound] = useState({ status: "idle", list: [], term: "" });
+  const [picked, setPicked] = useState("");
+  const searchRef = useRef(null);
+  const hasCover = Boolean(draft.cover || draft.coverUrl);
+
+  const findCovers = (title = draft.title, type = draft.type) => {
+    searchRef.current?.abort();
+    const controller = new AbortController();
+    searchRef.current = controller;
+    setFound((current) => ({ ...current, status: "loading" }));
+    searchCovers(title, type, { signal: controller.signal })
+      .then((list) => { if (!controller.signal.aborted) setFound({ status: "done", list, term: `${type}:${title.trim()}` }); })
+      .catch(() => { if (!controller.signal.aborted) setFound({ status: "done", list: [], term: `${type}:${title.trim()}` }); });
+  };
+  // Looks for covers on its own while a title has none, shortly after typing stops.
+  useEffect(() => {
+    const title = draft.title.trim();
+    if (hasCover || title.length < 2 || found.term === `${draft.type}:${title}`) return undefined;
+    const timer = setTimeout(() => findCovers(draft.title, draft.type), 650);
+    return () => clearTimeout(timer);
+  }, [draft.title, draft.type, hasCover]);
+  useEffect(() => () => searchRef.current?.abort(), []);
 
   const takeImage = async (file) => {
     if (!file) return;
@@ -462,6 +486,15 @@ function Editor({ initial, onClose, onSave }) {
       setPreview(URL.createObjectURL(blob));
       set({ cover: id, coverUrl: "" });
     } catch (problem) { setError(problem.message); }
+  };
+  // A chosen candidate is copied into our own storage when its host allows it, otherwise kept as a link.
+  const pickCover = async (candidate) => {
+    setPicked(candidate.url);
+    setError("");
+    const blob = await downloadCover(candidate.url);
+    if (blob) { await takeImage(blob); return; }
+    setPreview("");
+    set({ cover: null, coverUrl: candidate.url });
   };
   const onPaste = (event) => {
     const file = [...(event.clipboardData?.files || [])].find((entry) => entry.type.startsWith("image/"));
@@ -506,7 +539,31 @@ function Editor({ initial, onClose, onSave }) {
               onChange={(event) => { setPreview(""); set({ coverUrl: event.target.value, cover: null }); }}
             />
             {(draft.cover || draft.coverUrl) && (
-              <button type="button" className="ct-btn ct-btn-ghost" onClick={() => { setPreview(""); set({ cover: null, coverUrl: "" }); }}>지우기</button>
+              <button type="button" className="ct-btn ct-btn-ghost" onClick={() => { setPreview(""); setPicked(""); set({ cover: null, coverUrl: "" }); }}>지우기</button>
+            )}
+          </div>
+          <div className="ct-suggest">
+            <div className="ct-suggest-head">
+              <span><Sparkles size={14} />표지 후보</span>
+              <button type="button" onClick={() => findCovers()} disabled={draft.title.trim().length < 2 || found.status === "loading"}>
+                <RefreshCw size={13} />{found.status === "idle" ? "찾기" : "다시 찾기"}
+              </button>
+            </div>
+            {found.status === "loading" ? (
+              <p className="ct-suggest-note" role="status">표지를 찾는 중…</p>
+            ) : found.list.length ? (
+              <div className="ct-suggest-grid">
+                {found.list.map((candidate) => (
+                  <button key={candidate.url} type="button" className="ct-suggest-item" aria-pressed={picked === candidate.url}
+                    onClick={() => void pickCover(candidate)} title={`${candidate.title} · ${candidate.source}`} aria-label={`${candidate.title} 표지 쓰기`}>
+                    <img src={candidate.url} alt="" loading="lazy" referrerPolicy="no-referrer"
+                      onError={(event) => { event.currentTarget.parentElement.hidden = true; }} />
+                    <span>{candidate.source}</span>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <p className="ct-suggest-note">{found.status === "done" ? "찾지 못했어요. 원제나 영어 제목으로 바꿔서 다시 찾아 보세요." : "제목을 입력하면 표지를 알아서 찾아 드려요."}</p>
             )}
           </div>
         </div>

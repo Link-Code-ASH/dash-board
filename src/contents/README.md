@@ -12,3 +12,7 @@ A gallery of every title 애쉬 has enjoyed (webtoon, drama, movie, anime, novel
 - Local-first: IndexedDB `hub-contents-v1` → `accounts` holds every row with its last synced base and revision. Sync uses optimistic `revision` checks and the HUB three-way merge; conflicts keep recovery copies.
 - Removing a title only sets `deletedAt`; the row stays (the table has no delete grant). Never hard-delete rows or change field meanings; add fields and let `validateItem` fill defaults.
 - Backups: registered as the `contents` module backup provider (metadata only, covers stay in Storage).
+
+## Cover search
+
+`coverSearch.js` finds cover candidates in the browser from key-less sources (Wikipedia ko/en, Apple iTunes Search, AniList), chosen by title type. The editor searches on its own while a title has no cover; a failing source is skipped. A picked image is downloaded and saved like an uploaded cover when its host allows it (CORS), otherwise kept as `coverUrl`.

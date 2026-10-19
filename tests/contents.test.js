@@ -142,3 +142,42 @@ test("the gallery splits into rarity wings in rating order", async () => {
   const wings = rarityWings(visibleItems(items, { sort: "tier" }));
   assert.deepEqual(wings.map((w) => [w.id, w.items.map((x) => x.id)]), [["legendary", ["b", "a"]], ["rare", ["c"]], ["unrated", ["d"]]]);
 });
+
+test("cover search asks the sources for the title's kind, mixes their best results and skips failures", async () => {
+  const { searchCovers, interleave, downloadCover } = await import("../src/contents/coverSearch.js");
+  const calls = [];
+  const reply = (body) => ({ ok: true, json: async () => body });
+  const fetcher = async (url, init) => {
+    calls.push(url);
+    if (url.startsWith("https://graphql.anilist.co")) {
+      assert.equal(JSON.parse(init.body).variables.type, "MANGA");
+      return reply({ data: { Page: { media: [
+        { title: { native: "나 혼자만 레벨업" }, coverImage: { extraLarge: "https://img/a1.jpg" } },
+        { title: { native: "다른 작품" }, coverImage: { large: "https://img/a2.jpg" } },
+      ] } } });
+    }
+    if (url.includes("ko.wikipedia.org")) return reply({ query: { pages: {
+      2: { index: 2, title: "둘째", thumbnail: { source: "https://img/w2.jpg" } },
+      1: { index: 1, title: "첫째", thumbnail: { source: "https://img/a1.jpg" } },
+      3: { index: 3, title: "그림 없음" },
+    } } });
+    throw new Error("offline");
+  };
+  const found = await searchCovers(" 나 혼자만 레벨업 ", "webtoon", { fetcher });
+  assert.deepEqual(found.map((x) => x.url), ["https://img/a1.jpg", "https://img/a2.jpg", "https://img/w2.jpg"]);
+  assert.equal(found[0].source, "AniList");
+  assert.ok(calls.some((url) => url.includes("en.wikipedia.org")), "a failing source is still tried and then skipped");
+  assert.ok(calls.find((url) => url.includes("ko.wikipedia")).includes(encodeURIComponent("나 혼자만 레벨업")));
+  assert.deepEqual(await searchCovers("a", "movie", { fetcher }), [], "one letter is too short to search");
+
+  const movie = await searchCovers("인터스텔라", "movie", { fetcher: async (url) => url.includes("itunes")
+    ? reply({ results: [{ trackName: "인터스텔라", artworkUrl100: "https://is1.mzstatic.com/x/100x100bb.jpg" }] })
+    : reply({}) });
+  assert.equal(movie[0].url, "https://is1.mzstatic.com/x/600x600bb.jpg");
+
+  assert.equal(interleave([[{ url: "a" }, { url: "b" }, { url: "c" }], [{ url: "d" }]], 3).map((x) => x.url).join(""), "adb");
+  const blob = new Blob(["x"], { type: "image/jpeg" });
+  assert.equal(await downloadCover("u", { fetcher: async () => ({ ok: true, blob: async () => blob }) }), blob);
+  assert.equal(await downloadCover("u", { fetcher: async () => { throw new TypeError("CORS"); } }), null);
+  assert.equal(await downloadCover("u", { fetcher: async () => ({ ok: true, blob: async () => new Blob(["<html>"], { type: "text/html" }) }) }), null);
+});
