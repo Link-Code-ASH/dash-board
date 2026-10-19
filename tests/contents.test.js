@@ -129,8 +129,8 @@ test("release dates appear in Flow and open the title in Contents", async () => 
   assert.throws(() => source.openTarget("b"), /찾을 수 없/);
 });
 
-test("the podium lists the best-rated titles and the gallery splits into rarity wings", async () => {
-  const { hallOfFame, rarityWings } = await import("../src/contents/model.js");
+test("the gallery splits into rarity wings in rating order", async () => {
+  const { rarityWings } = await import("../src/contents/model.js");
   const items = [
     item("a", { rating: 5, date: "2026-01-01" }),
     item("b", { rating: 5, date: "2026-03-01" }),
@@ -139,9 +139,6 @@ test("the podium lists the best-rated titles and the gallery splits into rarity 
     item("e", { rating: 4.5, status: "upcoming" }),
     item("f", { rating: 4, deletedAt: "2026-10-01T00:00:00.000Z" }),
   ];
-  assert.deepEqual(hallOfFame(items).map((x) => x.id), ["b", "a", "c"]);
-  assert.deepEqual(hallOfFame(items, { type: "movie" }).map((x) => x.id), ["c"]);
-  assert.deepEqual(hallOfFame(items, {}, 1).map((x) => x.id), ["b"]);
   const wings = rarityWings(visibleItems(items, { sort: "tier" }));
   assert.deepEqual(wings.map((w) => [w.id, w.items.map((x) => x.id)]), [["legendary", ["b", "a"]], ["rare", ["c"]], ["unrated", ["d"]]]);
 });

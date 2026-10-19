@@ -49,8 +49,9 @@ html body :is(#root .hub-app .ct-room, #root > .ct-layer) {
 
   & .ct-backdrop { display: none; }
 
-  /* Hall of fame: the museum hall at the top with the best-rated titles on a podium. */
+  /* The museum hall at the top: title, filters, the coverflow and the collection stats. */
   & .ct-hall {
+    --c: #e8a600;
     position: relative;
     isolation: isolate;
     display: grid;
@@ -74,7 +75,7 @@ html body :is(#root .hub-app .ct-room, #root > .ct-layer) {
     background: repeating-linear-gradient(90deg, rgba(30, 40, 60, 0.05) 0 1px, transparent 1px 74px);
     mask-image: linear-gradient(90deg, #000, transparent 30%, transparent 70%, #000);
   }
-  /* The arch behind the podium. */
+  /* The arch behind the coverflow. */
   & .ct-hall::before {
     content: "";
     position: absolute;
@@ -116,7 +117,7 @@ html body :is(#root .hub-app .ct-room, #root > .ct-layer) {
     display: inline-flex;
     align-items: center;
     gap: 14px;
-    margin-top: 4px;
+    margin-top: 30px;
     color: var(--ct);
     font: 700 11px/1 var(--mono) !important;
     letter-spacing: 0.42em;
@@ -133,117 +134,162 @@ html body :is(#root .hub-app .ct-room, #root > .ct-layer) {
     }
   }
 
-  & .ct-podium {
+  /* Coverflow: drag, swipe or use the arrows; the centre title is largest. */
+  & .ct-hall > .ct-toolbar { grid-column: 1 / -1; margin: 24px 0 0; }
+  & .ct-wing .ct-flow-stage { margin-top: 0; }
+  & .ct-flow { grid-column: 1 / -1; display: flex; flex-direction: column; align-items: center; min-width: 0; }
+  & .ct-flow-stage {
     position: relative;
-    grid-column: 1 / -1;
-    display: flex;
-    justify-content: center;
-    align-items: flex-end;
-    gap: clamp(12px, 2.6vw, 40px);
-    padding: 54px 0 34px;
+    width: 100%;
+    margin-top: 10px;
+    perspective: 1400px;
+    touch-action: pan-y;
+    user-select: none;
+    cursor: grab;
+    outline: none;
+    &.is-dragging { cursor: grabbing; }
+    &.is-dragging .ct-flow-item { transition: none; }
   }
-  & .ct-slot {
-    --w: 128px;
-    --h: 24px;
-    --n: 12px;
-    position: relative;
+  & .ct-flow-item {
+    position: absolute;
+    left: 50%;
+    bottom: 22px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    flex: none;
-    width: var(--w);
     padding: 0;
     border: 0;
     background: transparent;
     box-shadow: none;
-    animation: ct-enter 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
-    & .ct-stage { perspective: 900px; transition: translate 0.3s; }
-    & .ct-figure { width: 80%; }
-    & .ct-pedestal { width: 88%; }
+    transform-origin: 50% 100%;
+    transition: transform 0.5s cubic-bezier(0.22, 0.8, 0.24, 1), opacity 0.4s, filter 0.4s;
+    will-change: transform;
+    & .ct-stage { pointer-events: none; }
+    & .ct-figure { width: 82%; animation: none; }
+    & .ct-pedestal { width: 92%; }
     & .ct-pedestal > span { display: none; }
-    &:hover, &:focus-visible {
-      outline: none;
-      & .ct-stage { translate: 0 -6px; }
-      & .ct-shine { opacity: 1; }
-      & .ct-beam { opacity: 0.9; }
-    }
+    & .ct-figure img { pointer-events: none; }
+    &.is-centre .ct-figure { animation: ct-float 5.5s ease-in-out infinite alternate; }
+    &.is-centre:hover .ct-shine, &.is-centre:focus-visible .ct-shine { opacity: 1; }
+    &:focus-visible { outline: none; }
+    &:focus-visible .ct-figure { box-shadow: 0 0 0 3px color-mix(in srgb, var(--c) 60%, #fff), 0 18px 26px -14px rgba(20, 30, 50, 0.45); }
   }
-  & .ct-rank-1 { --w: 232px; --h: 56px; --n: 20px; animation-delay: 80ms; }
-  & :is(.ct-rank-2, .ct-rank-3) { --w: 170px; --h: 38px; --n: 15px; animation-delay: 200ms; }
-  & :is(.ct-rank-4, .ct-rank-5) { animation-delay: 320ms; }
   & .ct-beam {
     position: absolute;
     z-index: -1;
     left: 50%;
-    bottom: calc(var(--h) - 4px);
-    width: 170%;
-    height: calc(100% + 70px);
+    bottom: 10px;
+    width: 180%;
+    height: calc(100% + 90px);
     translate: -50% 0;
-    background: linear-gradient(180deg, color-mix(in srgb, var(--c) 30%, transparent), color-mix(in srgb, var(--c) 8%, transparent) 70%, transparent);
+    background: linear-gradient(180deg, color-mix(in srgb, var(--c) 32%, transparent), color-mix(in srgb, var(--c) 8%, transparent) 70%, transparent);
     clip-path: polygon(43% 0, 57% 0, 100% 100%, 0 100%);
     filter: blur(8px);
-    opacity: 0.55;
-    transition: opacity 0.3s;
+    opacity: 0;
+    transition: opacity 0.4s;
     pointer-events: none;
   }
-  & .ct-rank-1 .ct-beam { opacity: 0.85; animation: ct-breathe 4.5s ease-in-out infinite alternate; }
-  & .ct-crown {
-    position: absolute;
-    z-index: 3;
-    top: -40px;
-    left: 50%;
-    translate: -50% 0;
-    color: #e8a600;
-    fill: color-mix(in srgb, #e8a600 22%, #fff);
-    filter: drop-shadow(0 4px 8px rgba(232, 166, 0, 0.45));
-    animation: ct-float 3.6s ease-in-out infinite alternate;
-  }
-  & .ct-plinth {
-    position: relative;
-    z-index: 1;
-    display: grid;
-    place-items: center;
-    width: 88%;
-    height: var(--h);
-    margin-top: -10px;
-    padding-top: 6px;
-    border-radius: 0 0 12px 12px;
-    background: linear-gradient(180deg, #f7f8fa, #e3e7ed);
-    border-bottom: 2px solid color-mix(in srgb, var(--c) 55%, #d3d9e2);
-    box-shadow: inset 0 -10px 16px -12px rgba(20, 30, 50, 0.18), 0 22px 26px -20px rgba(20, 30, 50, 0.5);
-    & b { color: var(--ct); font: 800 var(--n)/1 var(--mono) !important; }
-  }
-  & .ct-slot-name {
-    position: absolute;
-    top: calc(100% + 10px);
-    left: 0;
-    right: 0;
-    overflow: hidden;
-    color: var(--muted);
-    font-size: 12.5px;
-    font-weight: 600 !important;
-    line-height: 1.3;
-    text-align: center;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
+  & .ct-flow-item.is-centre .ct-beam { opacity: 0.85; animation: ct-breathe 4.5s ease-in-out infinite alternate; }
   & .ct-floor {
     position: absolute;
-    z-index: -1;
-    left: 4%;
-    right: 4%;
-    bottom: 6px;
-    height: 90px;
-    background: radial-gradient(ellipse 50% 46% at 50% 50%, rgba(20, 30, 50, 0.11), transparent 72%),
-      radial-gradient(ellipse 34% 30% at 50% 44%, color-mix(in srgb, var(--c) 30%, transparent), transparent 70%);
+    z-index: 0;
+    left: 6%;
+    right: 6%;
+    bottom: 0;
+    height: 110px;
+    background: radial-gradient(ellipse 50% 40% at 50% 62%, rgba(20, 30, 50, 0.12), transparent 72%),
+      radial-gradient(ellipse 22% 26% at 50% 58%, color-mix(in srgb, var(--c) 20%, transparent), transparent 70%);
     pointer-events: none;
   }
+  & .ct-flow-arrow {
+    position: absolute;
+    z-index: 200;
+    top: 44%;
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: 1px solid var(--line);
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.92);
+    color: var(--ink);
+    box-shadow: 0 8px 20px -12px rgba(20, 30, 50, 0.45);
+    translate: 0 -50%;
+    transition: background 0.15s, opacity 0.2s;
+    &:hover { background: #fff; }
+    &:disabled { opacity: 0.3; cursor: default; }
+  }
+  & .ct-flow-prev { left: 4px; }
+  & .ct-flow-next { right: 4px; }
+  & .ct-flow-scrub {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: min(360px, 100%);
+    margin-top: 18px;
+    & span { min-width: 22px; color: var(--muted); font: 600 12px/1 var(--mono) !important; text-align: center; font-variant-numeric: tabular-nums; }
+    & input {
+      flex: 1;
+      height: 4px !important;
+      margin: 0;
+      padding: 0 !important;
+      border: 0 !important;
+      border-radius: 999px;
+      background: #e3e7ec !important;
+      accent-color: var(--ink);
+      appearance: none;
+      cursor: pointer;
+      box-shadow: none !important;
+    }
+    & input::-webkit-slider-thumb { appearance: none; width: 16px; height: 16px; border-radius: 50%; background: var(--ink); box-shadow: 0 0 0 4px #fff, 0 2px 6px rgba(20, 30, 50, 0.3); }
+    & input::-moz-range-thumb { width: 16px; height: 16px; border: 0; border-radius: 50%; background: var(--ink); box-shadow: 0 0 0 4px #fff, 0 2px 6px rgba(20, 30, 50, 0.3); }
+  }
+
+  /* Folded shelves below the hall. */
+  & .ct-shelves-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    height: 52px;
+    margin-bottom: 20px;
+    padding: 0 18px;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    background: #fff;
+    color: var(--ink);
+    font-size: 15px;
+    font-weight: 700 !important;
+    line-height: 1;
+    box-shadow: none;
+    & > svg:first-child { color: #e8a600; }
+    & b {
+      display: inline-grid;
+      place-items: center;
+      min-width: 22px;
+      height: 22px;
+      padding: 0 7px;
+      border-radius: 999px;
+      background: var(--soft);
+      color: var(--muted);
+      font: 600 12px/1 var(--mono) !important;
+    }
+    & span { margin-left: 6px; color: var(--muted); font-size: 13px; font-weight: 600 !important; }
+    & .ct-chevron { color: var(--muted); transition: rotate 0.2s; }
+    &[aria-expanded="true"] .ct-chevron { rotate: 180deg; }
+    &:hover { background: var(--soft); }
+  }
+
   & .ct-hall-plate {
     grid-column: 1 / -1;
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 9px;
+    min-height: 118px;
+    margin-top: 6px;
     text-align: center;
     & .ct-rarity-inline { align-self: center; }
     & strong {
@@ -293,7 +339,6 @@ html body :is(#root .hub-app .ct-room, #root > .ct-layer) {
     & .ct-short { display: none; }
     & .ct-stat-coming dd { color: #c2417a; }
   }
-  & .ct-hall.is-empty .ct-stats { margin-top: 20px; }
 
   & .ct-btn {
     display: inline-flex;
@@ -731,19 +776,6 @@ html body :is(#root .hub-app .ct-room, #root > .ct-layer) {
   }
 
   /* Coming-soon wing */
-  & .ct-coming {
-    & .ct-figure { filter: saturate(0.55) brightness(1.04); opacity: 0.9; }
-    & .ct-figure::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      z-index: 1;
-      background: repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.16) 0 1px, transparent 1px 4px);
-      pointer-events: none;
-    }
-    &:hover .ct-figure { filter: none; opacity: 1; }
-    &.is-out .ct-figure { filter: none; opacity: 1; }
-  }
   & .ct-dday {
     display: inline-flex;
     align-items: center;
@@ -1054,22 +1086,18 @@ html body :is(#root .hub-app .ct-room, #root > .ct-layer) {
   & .ct-error { color: #e5484d; font-size: 13px; }
 
   @media (prefers-reduced-motion: reduce) {
-    & .ct-figure, & .ct-chamber-ring::before, & .ct-case, & .ct-slot, & .ct-crown, & .ct-beam { animation: none; }
+    & .ct-figure, & .ct-chamber-ring::before, & .ct-case, & .ct-beam, & .ct-flow-item .ct-figure { animation: none; }
   }
 }
 
 /* Laptop */
 @media (max-width: 1280px) {
   html body #root .hub-app .ct-room {
-    & .ct-rank-1 { --w: 200px; --h: 50px; }
-    & :is(.ct-rank-2, .ct-rank-3) { --w: 148px; --h: 34px; }
-    & :is(.ct-rank-4, .ct-rank-5) { --w: 112px; }
     & .ct-gallery { grid-template-columns: repeat(auto-fit, 158px); }
     & .ct-wing { padding: 30px 24px 26px; }
   }
 }
 @media (max-width: 1080px) {
-  html body #root .hub-app .ct-room :is(.ct-rank-4, .ct-rank-5) { display: none; }
   html body #root .hub-app .ct-room .ct-toolbar { flex-direction: column; align-items: stretch; }
   html body #root .hub-app .ct-room .ct-tools { justify-content: space-between; }
 }
@@ -1084,14 +1112,11 @@ html body #root .hub-app.hub-mobile .ct-room {
   & .ct-add { width: 48px; height: 48px; padding: 0; gap: 0; border-radius: 14px; }
   & .ct-add span { display: none; }
   & .ct-add svg { width: 22px; height: 22px; }
-  & .ct-podium { gap: 8px; padding: 46px 0 30px; }
-  & .ct-rank-1 { --w: 40%; --h: 40px; --n: 16px; }
-  & :is(.ct-rank-2, .ct-rank-3) { --w: 27%; --h: 26px; --n: 12px; }
+  & .ct-hall > .ct-toolbar { margin-top: 16px; }
+  & .ct-flow-arrow { display: none; }
+  & .ct-hall-plate { min-height: 108px; }
   & .ct-stats .ct-long { display: none; }
   & .ct-stats .ct-short { display: inline; }
-  & :is(.ct-rank-4, .ct-rank-5) { display: none; }
-  & .ct-crown { top: -34px; width: 22px; height: 22px; }
-  & .ct-slot-name { font-size: 11px; }
   & .ct-hall-plate strong { font-size: 21px; }
   & .ct-stats { justify-self: stretch; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; margin-top: 20px;
     & > div { padding: 10px 2px; border-radius: 12px; }

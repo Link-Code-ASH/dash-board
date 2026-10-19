@@ -102,11 +102,6 @@ export function visibleItems(items, { type = "all", sort = "recent", query = "" 
   return list.sort(sorters[sort] || byDate);
 }
 
-// The podium: best-rated titles first, newest first among ties.
-export function hallOfFame(items, { type = "all" } = {}, size = 5) {
-  return visibleItems(items, { type, sort: "rating" }).filter((item) => item.rating > 0).slice(0, size);
-}
-
 // Splits a gallery list into rarity wings (legendary first, unrated last), keeping the list's order inside each.
 export function rarityWings(list) {
   const order = [...RARITIES.map((rarity) => rarity.id), "unrated"];

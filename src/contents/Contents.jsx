@@ -2,12 +2,12 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useHubRuntime } from "../hub/context.jsx";
 import {
-  BookOpen, BookText, Check, Clapperboard, Crown, Gamepad2, Hourglass, ImagePlus, Pencil, Plus, Search, Shapes,
+  BookOpen, BookText, Check, ChevronDown, ChevronLeft, ChevronRight, Clapperboard, Crown, Gamepad2, Hourglass, ImagePlus, Pencil, Plus, Search, Shapes,
   Sparkles, Star, Trash2, Trophy, Tv, X,
 } from "lucide-react";
 import { useContents } from "./ContentsProvider.jsx";
 import {
-  RARITIES, STATUSES, TIER_NAMES, TYPES, collectionStats, dDayLabel, daysUntil, emptyItem, hallOfFame, isUpcoming,
+  RARITIES, STATUSES, TIER_NAMES, TYPES, collectionStats, dDayLabel, daysUntil, emptyItem, isUpcoming,
   localDateKey, rarityOf, rarityWings, statusLabel, typeLabel, upcomingItems, visibleItems,
 } from "./model.js";
 import { coverUrl, prepareCover, saveCover } from "./cloud.js";
@@ -18,8 +18,9 @@ const SORTS = [{ id: "tier", label: "등급" }, { id: "recent", label: "최근" 
 const yearOf = (item) => (item.date || "").slice(0, 4);
 const dotted = (date) => date.replaceAll("-", ".");
 const comingBadge = (days) => days !== null && days <= 0 ? "OUT NOW" : "COMING SOON";
-// Podium slots left to right: 4th, 2nd, 1st, 3rd, 5th.
-const PODIUM = [3, 1, 0, 2, 4];
+const SHELVES_KEY = "hub-contents-shelves-open-v1";
+const readShelves = () => { try { return localStorage.getItem(SHELVES_KEY) === "1"; } catch { return false; } };
+const writeShelves = (open) => { try { localStorage.setItem(SHELVES_KEY, open ? "1" : "0"); } catch { /* private mode */ } };
 // Ratings move in 0.5 steps, so each tier covers these scores.
 const TIER_RANGES = { legendary: "만점 5.0", epic: "4.0 ~ 4.5점", rare: "3.0 ~ 3.5점", uncommon: "2.0 ~ 2.5점", common: "0.5 ~ 1.5점", unrated: "아직 별점 없음" };
 
@@ -101,63 +102,186 @@ function FigureCase({ item, onOpen, index }) {
   );
 }
 
-function ComingCase({ item, onOpen, index }) {
-  const url = useCover(item);
-  const days = daysUntil(item.releaseDate);
-  return (
-    <button
-      type="button"
-      className={`ct-case ct-coming ct-r-coming${days !== null && days <= 0 ? " is-out" : ""}`}
-      style={{ "--delay": `${Math.min(index, 18) * 40}ms` }}
-      onClick={() => onOpen(item.id)}
-      onPointerMove={tilt}
-      onPointerLeave={untilt}
-      aria-label={`${item.title} 출시 정보 보기`}
-    >
-      <span className="ct-rarity">{comingBadge(days)}</span>
-      <span className="ct-stage">
-        <Figure item={item} url={url} />
-        <span className="ct-pedestal" aria-hidden="true"><span /></span>
-      </span>
-      <span className="ct-ledge" aria-hidden="true" />
-      <span className="ct-plate">
-        <strong>{item.title}</strong>
-        <span className="ct-meta">{[typeLabel(item.type), item.platform].filter(Boolean).join(" · ")}</span>
-        <span className="ct-dday"><b>{dDayLabel(days)}</b>{item.releaseDate && <time dateTime={item.releaseDate}>{dotted(item.releaseDate)}</time>}</span>
-      </span>
-    </button>
-  );
+// Coverflow geometry: the centre figure is full size, each step outwards is smaller, pushed back and turned inwards.
+const FLOW = {
+  desktop: { width: 236, first: 226, step: 150, range: 4, height: 392 },
+  mobile: { width: 150, first: 118, step: 60, range: 2, height: 268 },
+};
+// Fits the side figures into the stage width: fewer, closer figures on narrower screens.
+function fitFlow(base, width) {
+  if (!width || base === FLOW.mobile) return base;
+  const half = width / 2 - 70;
+  for (let range = base.range; range > 1; range -= 1) {
+    const step = (half - base.first - 30) / (range - 1);
+    if (step >= 84) return { ...base, range, step: Math.min(base.step, step) };
+  }
+  return { ...base, range: 1 };
+}
+function flowStyle(offset, geometry) {
+  const distance = Math.abs(offset);
+  const x = Math.sign(offset) * (Math.min(distance, 1) * geometry.first + Math.max(distance - 1, 0) * geometry.step);
+  const scale = Math.max(0.4, 1 - distance * 0.17);
+  const turn = Math.max(-38, Math.min(38, -offset * 24));
+  const fade = Math.max(0, Math.min(1, geometry.range + 0.6 - distance));
+  return {
+    transform: `translateX(-50%) translateX(${x}px) scale(${scale}) rotateY(${turn}deg)`,
+    zIndex: 100 - Math.round(distance * 10),
+    opacity: fade,
+    filter: distance > 0.5 ? `saturate(${Math.max(0.55, 1 - distance * 0.12)})` : "none",
+  };
 }
 
-function PodiumSlot({ item, rank, onOpen }) {
+function FlowFigure({ item, offset, geometry, onPick }) {
   const url = useCover(item);
-  const rarity = rarityOf(item.rating);
+  const rarity = isUpcoming(item) ? { id: "coming" } : rarityOf(item.rating);
+  const centre = Math.abs(offset) < 0.5;
   return (
     <button
       type="button"
-      className={`ct-slot ct-rank-${rank} ct-r-${rarity.id}`}
-      onClick={() => onOpen(item.id)}
-      onPointerMove={tilt}
-      onPointerLeave={untilt}
-      aria-label={`${rank}위 ${item.title} 자세히 보기`}
+      className={`ct-flow-item ct-r-${rarity.id}${centre ? " is-centre" : ""}`}
+      style={{ ...flowStyle(offset, geometry), width: geometry.width }}
+      onClick={onPick}
+      tabIndex={centre ? 0 : -1}
+      aria-label={centre ? `${item.title} 자세히 보기` : `${item.title}로 이동`}
     >
-      {rank === 1 && <Crown className="ct-crown" size={26} strokeWidth={1.6} aria-hidden="true" />}
       <span className="ct-beam" aria-hidden="true" />
       <span className="ct-stage">
         <Figure item={item} url={url} />
         <span className="ct-pedestal" aria-hidden="true"><span /></span>
       </span>
-      <span className="ct-plinth" aria-hidden="true"><b>{rank}</b></span>
-      {rank > 1 && <span className="ct-slot-name">{item.title}</span>}
     </button>
   );
 }
 
-function Hall({ hall, stats, typeName, onOpen, onAdd }) {
-  const top = hall[0];
-  const rarity = top ? rarityOf(top.rating) : { id: "unrated", label: "" };
+function Coverflow({ items, onOpen }) {
+  const { displayMode } = useHubRuntime();
+  const [stageWidth, setStageWidth] = useState(0);
+  const geometry = fitFlow(displayMode === "mobile" ? FLOW.mobile : FLOW.desktop, stageWidth);
+  const [pos, setPos] = useState(0);
+  const [dragging, setDragging] = useState(false);
+  const drag = useRef(null);
+  const wheel = useRef({ total: 0, at: 0 });
+  const stageRef = useRef(null);
+  const count = items.length;
+  const clamp = (value) => Math.max(0, Math.min(count - 1, value));
+  const index = Math.round(clamp(pos));
+  const listKey = items.map((item) => item.id).join("|");
+  // A new filter or sort starts again from the first title.
+  useEffect(() => { setPos(0); }, [listKey]);
+  const go = (step) => setPos((current) => clamp(Math.round(current) + step));
+
+  useEffect(() => {
+    const stage = stageRef.current;
+    if (!stage) return undefined;
+    // Trackpad swipes and shift+wheel turn the carousel one title at a time.
+    const onWheel = (event) => {
+      const delta = Math.abs(event.deltaX) > Math.abs(event.deltaY) ? event.deltaX : event.shiftKey ? event.deltaY : 0;
+      if (!delta) return;
+      event.preventDefault();
+      const now = Date.now();
+      if (now - wheel.current.at > 220) wheel.current.total = 0;
+      wheel.current.at = now;
+      wheel.current.total += delta;
+      if (Math.abs(wheel.current.total) >= 60) {
+        setPos((current) => Math.max(0, Math.min(count - 1, Math.round(current) + Math.sign(wheel.current.total))));
+        wheel.current.total = 0;
+      }
+    };
+    stage.addEventListener("wheel", onWheel, { passive: false });
+    const observer = new ResizeObserver(([entry]) => setStageWidth(Math.round(entry.contentRect.width)));
+    observer.observe(stage);
+    return () => { stage.removeEventListener("wheel", onWheel); observer.disconnect(); };
+  }, [count]);
+
+  const onPointerDown = (event) => {
+    if (event.button !== 0) return;
+    drag.current = { x: event.clientX, pos, moved: false, id: event.pointerId };
+  };
+  const onPointerMove = (event) => {
+    const current = drag.current;
+    if (!current || current.id !== event.pointerId) return;
+    const dx = event.clientX - current.x;
+    if (!current.moved && Math.abs(dx) > 6) {
+      current.moved = true;
+      setDragging(true);
+      event.currentTarget.setPointerCapture(event.pointerId);
+    }
+    if (current.moved) setPos(Math.max(-0.35, Math.min(count - 0.65, current.pos - dx / Math.max(geometry.step, 110))));
+  };
+  const onPointerUp = (event) => {
+    const current = drag.current;
+    if (!current || current.id !== event.pointerId) return;
+    if (current.moved) setPos((value) => clamp(Math.round(value)));
+    setDragging(false);
+    // Keep "moved" for the click that follows this release, then forget the drag.
+    setTimeout(() => { drag.current = null; }, 0);
+  };
+  const pick = (target) => {
+    if (drag.current?.moved) return;
+    if (target === index) onOpen(items[target].id);
+    else setPos(target);
+  };
+  const onKeyDown = (event) => {
+    if (event.key === "ArrowLeft") { event.preventDefault(); go(-1); }
+    if (event.key === "ArrowRight") { event.preventDefault(); go(1); }
+    if (event.key === "Home") { event.preventDefault(); setPos(0); }
+    if (event.key === "End") { event.preventDefault(); setPos(count - 1); }
+  };
+
+  const current = items[index];
+  const upcoming = current && isUpcoming(current);
+  const rarity = current ? (upcoming ? { id: "coming", label: comingBadge(daysUntil(current.releaseDate)) } : rarityOf(current.rating)) : null;
   return (
-    <header className={`ct-hall ct-r-${rarity.id}${top ? "" : " is-empty"}`}>
+    <div className="ct-flow" aria-roledescription="carousel" aria-label="작품 회전 진열">
+      <div
+        ref={stageRef}
+        className={`ct-flow-stage${dragging ? " is-dragging" : ""}`}
+        style={{ height: geometry.height }}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerCancel={onPointerUp}
+        onKeyDown={onKeyDown}
+      >
+        <span className="ct-floor" aria-hidden="true" />
+        {items.map((item, target) => {
+          const offset = target - pos;
+          if (Math.abs(offset) > geometry.range + 0.6) return null;
+          return <FlowFigure key={item.id} item={item} offset={offset} geometry={geometry} onPick={() => pick(target)} />;
+        })}
+        <button type="button" className="ct-flow-arrow ct-flow-prev" onClick={() => go(-1)} disabled={index === 0} aria-label="이전 작품">
+          <ChevronLeft size={22} />
+        </button>
+        <button type="button" className="ct-flow-arrow ct-flow-next" onClick={() => go(1)} disabled={index === count - 1} aria-label="다음 작품">
+          <ChevronRight size={22} />
+        </button>
+      </div>
+      {current && (
+        <div className={`ct-hall-plate ct-r-${rarity.id}`} aria-live="polite">
+          <span className="ct-rarity ct-rarity-inline">{rarity.label}</span>
+          <strong>{current.title}</strong>
+          {upcoming ? (
+            <span className="ct-dday"><b>{dDayLabel(daysUntil(current.releaseDate))}</b>{current.releaseDate && <time dateTime={current.releaseDate}>{dotted(current.releaseDate)}</time>}</span>
+          ) : (
+            <span className="ct-hall-score"><b>{current.rating ? current.rating.toFixed(1) : "–"}</b><Stars rating={current.rating} size={17} /></span>
+          )}
+          <span className="ct-meta">{[typeLabel(current.type), current.creator, upcoming ? current.platform : yearOf(current)].filter(Boolean).join(" · ")}</span>
+        </div>
+      )}
+      {count > 1 && (
+        <div className="ct-flow-scrub">
+          <span>{index + 1}</span>
+          <input type="range" min={0} max={count - 1} step={1} value={index} onChange={(event) => setPos(Number(event.target.value))} aria-label="작품 위치" />
+          <span>{count}</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Hall({ items, stats, label, toolbar, onOpen, onAdd }) {
+  return (
+    <header className="ct-hall">
       <span className="ct-hall-arch" aria-hidden="true" />
       <div className="ct-hall-head">
         <span className="ct-eyebrow"><Trophy size={14} />TROPHY ROOM</span>
@@ -167,21 +291,11 @@ function Hall({ hall, stats, typeName, onOpen, onAdd }) {
       <button type="button" className="ct-btn ct-btn-primary ct-add" onClick={onAdd}>
         <Plus size={18} /><span>새 피규어 등록</span>
       </button>
-      {top && (
+      {toolbar}
+      {items.length > 0 && (
         <>
-          <span className="ct-hall-label">HALL OF FAME{typeName && <em>{typeName}</em>}</span>
-          <div className="ct-podium">
-            {PODIUM.filter((index) => index < hall.length).map((index) => (
-              <PodiumSlot key={hall[index].id} item={hall[index]} rank={index + 1} onOpen={onOpen} />
-            ))}
-            <span className="ct-floor" aria-hidden="true" />
-          </div>
-          <div className="ct-hall-plate">
-            <span className="ct-rarity ct-rarity-inline">{rarity.label}</span>
-            <strong>{top.title}</strong>
-            <span className="ct-hall-score"><b>{top.rating.toFixed(1)}</b><Stars rating={top.rating} size={17} /></span>
-            <span className="ct-meta">{[typeLabel(top.type), top.creator, yearOf(top)].filter(Boolean).join(" · ")}</span>
-          </div>
+          <span className="ct-hall-label">COLLECTION<em>{label}</em></span>
+          <Coverflow items={items} onOpen={onOpen} />
         </>
       )}
       <dl className="ct-stats">
@@ -195,7 +309,7 @@ function Hall({ hall, stats, typeName, onOpen, onAdd }) {
   );
 }
 
-function Wing({ id, label, title, caption, count, icon: Icon, children }) {
+function Wing({ id, label, title, caption, count, icon: Icon, bare = false, children }) {
   return (
     <section className={`ct-wing ct-r-${id}`} aria-label={title}>
       <span className="ct-wing-light" aria-hidden="true" />
@@ -204,7 +318,7 @@ function Wing({ id, label, title, caption, count, icon: Icon, children }) {
         <h2>{title}</h2>
         <p>{caption}<b>{count}</b></p>
       </div>
-      <div className="ct-gallery">{children}</div>
+      {bare ? children : <div className="ct-gallery">{children}</div>}
     </section>
   );
 }
@@ -492,7 +606,8 @@ export default function Contents({ route }) {
   const stats = useMemo(() => collectionStats(items), [items]);
   const shown = useMemo(() => visibleItems(items, { type, sort, query }), [items, type, sort, query]);
   const coming = useMemo(() => upcomingItems(items, { type, query }), [items, type, query]);
-  const hall = useMemo(() => hallOfFame(items, { type }), [items, type]);
+  const [shelvesOpen, setShelvesOpen] = useState(readShelves);
+  const toggleShelves = () => setShelvesOpen((open) => { writeShelves(!open); return !open; });
   const wings = useMemo(() => sort === "tier" ? rarityWings(shown) : [{ id: "gallery", items: shown }], [shown, sort]);
   // Flow's release chips open a title here via #/contents/item:<id>.
   useEffect(() => {
@@ -516,45 +631,56 @@ export default function Contents({ route }) {
   return (
     <div className="ct-room">
       <div className="ct-backdrop" aria-hidden="true" />
-      <Hall hall={ready ? hall : []} stats={stats} typeName={type === "all" ? "" : typeLabel(type)}
-        onOpen={setOpenId} onAdd={() => setEditing(emptyItem())} />
-
-      <div className="ct-toolbar">
-        <div className="ct-filters" role="tablist" aria-label="종류">
-          <button type="button" role="tab" aria-selected={type === "all"} onClick={() => setType("all")}>
-            전체<b>{stats.all}</b>
-          </button>
-          {TYPES.map((entry) => {
-            const Icon = typeIcons[entry.id];
-            return (
-              <button key={entry.id} type="button" role="tab" aria-selected={type === entry.id} onClick={() => setType(entry.id)}>
-                <Icon size={15} strokeWidth={1.8} />{entry.label}<b>{stats.counts[entry.id] || 0}</b>
+      <Hall
+        items={ready ? shown : []}
+        stats={stats}
+        label={`${type === "all" ? "전체" : typeLabel(type)} · ${SORTS.find((entry) => entry.id === sort)?.label}순`}
+        toolbar={
+          <div className="ct-toolbar">
+            <div className="ct-filters" role="tablist" aria-label="종류">
+              <button type="button" role="tab" aria-selected={type === "all"} onClick={() => setType("all")}>
+                전체<b>{stats.all}</b>
               </button>
-            );
-          })}
-        </div>
-        <div className="ct-tools">
-          <label className="ct-search">
-            <Search size={16} />
-            <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="검색" aria-label="제목, 작가, 한 줄 평 검색" />
-          </label>
-          <div className="ct-sort" role="group" aria-label="정렬">
-            {SORTS.map((entry) => (
-              <button key={entry.id} type="button" aria-pressed={sort === entry.id} onClick={() => setSort(entry.id)}>{entry.label}</button>
-            ))}
+              {TYPES.map((entry) => {
+                const Icon = typeIcons[entry.id];
+                return (
+                  <button key={entry.id} type="button" role="tab" aria-selected={type === entry.id} onClick={() => setType(entry.id)}>
+                    <Icon size={15} strokeWidth={1.8} />{entry.label}<b>{stats.counts[entry.id] || 0}</b>
+                  </button>
+                );
+              })}
+            </div>
+            <div className="ct-tools">
+              <label className="ct-search">
+                <Search size={16} />
+                <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="검색" aria-label="제목, 작가, 한 줄 평 검색" />
+              </label>
+              <div className="ct-sort" role="group" aria-label="정렬">
+                {SORTS.map((entry) => (
+                  <button key={entry.id} type="button" aria-pressed={sort === entry.id} onClick={() => setSort(entry.id)}>{entry.label}</button>
+                ))}
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
+        }
+        onOpen={setOpenId}
+        onAdd={() => setEditing(emptyItem())}
+      />
 
       {ready && coming.length > 0 && (
-        <Wing id="coming" label="COMING SOON" title="출시 예정" caption="기다리는 작품" count={coming.length} icon={Hourglass}>
-          {coming.map((item, index) => <ComingCase key={item.id} item={item} index={index} onOpen={setOpenId} />)}
+        <Wing id="coming" label="COMING SOON" title="출시 예정" caption="출시일이 가까운 순서" count={coming.length} icon={Hourglass} bare>
+          <Coverflow items={coming} onOpen={setOpenId} />
         </Wing>
       )}
       {!ready ? (
         <p className="ct-status" role="status">{status}</p>
       ) : shown.length ? (
-        wings.map((wing) => wing.id === "gallery" ? (
+        <>
+          <button type="button" className="ct-shelves-toggle" aria-expanded={shelvesOpen} onClick={toggleShelves}>
+            <Trophy size={16} />{sort === "tier" ? "등급별 진열장" : "전체 진열장"}<b>{shown.length}</b>
+            <span>{shelvesOpen ? "접기" : "펼쳐 보기"}</span><ChevronDown size={16} className="ct-chevron" />
+          </button>
+          {shelvesOpen && wings.map((wing) => wing.id === "gallery" ? (
           <Wing key="gallery" id="unrated" label="GALLERY" title="전시관" caption={`${SORTS.find((entry) => entry.id === sort)?.label}순 전체 전시`} count={wing.items.length} icon={Trophy}>
             {wing.items.map((item, index) => <FigureCase key={item.id} item={item} index={index} onOpen={setOpenId} />)}
           </Wing>
@@ -563,7 +689,8 @@ export default function Contents({ route }) {
             title={TIER_NAMES[wing.id]} caption={TIER_RANGES[wing.id]} count={wing.items.length} icon={wing.id === "legendary" ? Crown : null}>
             {wing.items.map((item, index) => <FigureCase key={item.id} item={item} index={index} onOpen={setOpenId} />)}
           </Wing>
-        ))
+        ))}
+        </>
       ) : coming.length ? (
         <p className="ct-status ct-status-small">{stats.total ? "조건에 맞는 전시 작품이 없습니다." : "다 본 작품은 여기에 전시됩니다."}</p>
       ) : (
