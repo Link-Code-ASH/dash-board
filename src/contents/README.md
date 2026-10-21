@@ -15,7 +15,7 @@ An archive of every title 애쉬 has finished (webtoon, drama, movie, anime, nov
 
 ## Cover search
 
-`coverSearch.js` finds cover candidates in the browser from key-less sources (Wikipedia ko/en, Apple iTunes Search, AniList), chosen by title type. The editor searches on its own while a title has no cover; a failing source is skipped. A picked image is downloaded and saved like an uploaded cover when its host allows it (CORS), otherwise kept as `coverUrl`.
+`coverSearch.js` finds cover candidates in the browser from key-less sources. Wikidata comes first: it searches Korean and English titles, keeps only creative works (no people or places), ranks the chosen kind first, and gives the poster from the English (then Korean) Wikipedia article. The work's English name is then also sent to Apple iTunes Search, AniList and Google Books, and their results are kept only when the name matches the work. A failing source is skipped. A picked image is downloaded and saved like an uploaded cover when its host allows it (CORS), otherwise kept as `coverUrl`.
 
 ## Simplified records (2026-10-19)
 

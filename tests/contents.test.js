@@ -143,38 +143,43 @@ test("the gallery splits into rarity wings in rating order", async () => {
   assert.deepEqual(wings.map((w) => [w.id, w.items.map((x) => x.id)]), [["legendary", ["b", "a"]], ["rare", ["c"]], ["unrated", ["d"]]]);
 });
 
-test("cover search asks the sources for the title's kind, mixes their best results and skips failures", async () => {
-  const { searchCovers, interleave, downloadCover } = await import("../src/contents/coverSearch.js");
+test("cover search finds the work on Wikidata, uses its English name elsewhere and drops unrelated covers", async () => {
+  const { searchCovers, interleave, downloadCover, sameWork } = await import("../src/contents/coverSearch.js");
   const calls = [];
   const reply = (body) => ({ ok: true, json: async () => body });
+  const P31 = (id) => ({ mainsnak: { datavalue: { value: { id } } } });
   const fetcher = async (url, init) => {
     calls.push(url);
-    if (url.startsWith("https://graphql.anilist.co")) {
-      assert.equal(JSON.parse(init.body).variables.type, "MANGA");
-      return reply({ data: { Page: { media: [
-        { title: { native: "나 혼자만 레벨업" }, coverImage: { extraLarge: "https://img/a1.jpg" } },
-        { title: { native: "다른 작품" }, coverImage: { large: "https://img/a2.jpg" } },
-      ] } } });
-    }
-    if (url.includes("ko.wikipedia.org")) return reply({ query: { pages: {
-      2: { index: 2, title: "둘째", thumbnail: { source: "https://img/w2.jpg" } },
-      1: { index: 1, title: "첫째", thumbnail: { source: "https://img/a1.jpg" } },
-      3: { index: 3, title: "그림 없음" },
-    } } });
+    if (url.includes("wbsearchentities")) return reply({ search: url.includes("language=ko") ? [{ id: "Q2" }, { id: "Q1" }, { id: "Q3" }] : [{ id: "Q1" }] });
+    if (url.includes("wbgetentities")) return reply({ entities: {
+      Q1: { labels: { ko: { value: "나의 아저씨" }, en: { value: "My Mister" } }, claims: { P31: [P31("Q5398426")], P577: [{}] },
+        sitelinks: { enwiki: { title: "My Mister" }, kowiki: { title: "나의 아저씨" } } },
+      Q2: { labels: { ko: { value: "나의 아저씨" } }, claims: { P31: [P31("Q5")] }, sitelinks: {} },
+      Q3: { labels: { ko: { value: "아저씨" }, en: { value: "The Man from Nowhere" } }, claims: { P31: [P31("Q11424")] }, sitelinks: { enwiki: { title: "The Man from Nowhere" } } },
+    } });
+    if (url.includes("en.wikipedia.org")) return reply({ query: { pages: { 1: { title: "My Mister", thumbnail: { source: "https://img/poster.jpg" } } } } });
+    if (url.includes("itunes.apple.com")) return reply({ results: url.includes("My%20Mister")
+      ? [{ trackName: "My Mister, Season 1", artworkUrl100: "https://is1.mzstatic.com/a/100x100bb.jpg" }]
+      : [{ trackName: "나의 아저씨 시즌 1", artworkUrl100: "https://is1.mzstatic.com/b/100x100bb.jpg" }, { trackName: "전혀 다른 드라마", artworkUrl100: "https://is1.mzstatic.com/c/100x100bb.jpg" }] });
     throw new Error("offline");
   };
-  const found = await searchCovers(" 나 혼자만 레벨업 ", "webtoon", { fetcher });
-  assert.deepEqual(found.map((x) => x.url), ["https://img/a1.jpg", "https://img/a2.jpg", "https://img/w2.jpg"]);
-  assert.equal(found[0].source, "AniList");
-  assert.ok(calls.some((url) => url.includes("en.wikipedia.org")), "a failing source is still tried and then skipped");
-  assert.ok(calls.find((url) => url.includes("ko.wikipedia")).includes(encodeURIComponent("나 혼자만 레벨업")));
+  const found = await searchCovers(" 나의 아저씨 ", "drama", { fetcher });
+  assert.deepEqual(found.map((x) => x.url), ["https://img/poster.jpg", "https://is1.mzstatic.com/b/600x600bb.jpg", "https://is1.mzstatic.com/a/600x600bb.jpg"]);
+  assert.equal(found[0].source, "위키백과");
+  assert.ok(!calls.some((url) => url.includes("The%20Man")), "a different work with a partial name is not used");
+  assert.ok(calls.some((url) => url.includes("ko.wikipedia.org")), "a failing source is still tried and then skipped");
   assert.deepEqual(await searchCovers("a", "movie", { fetcher }), [], "one letter is too short to search");
 
-  const movie = await searchCovers("인터스텔라", "movie", { fetcher: async (url) => url.includes("itunes")
-    ? reply({ results: [{ trackName: "인터스텔라", artworkUrl100: "https://is1.mzstatic.com/x/100x100bb.jpg" }] })
-    : reply({}) });
-  assert.equal(movie[0].url, "https://is1.mzstatic.com/x/600x600bb.jpg");
+  const offline = await searchCovers("나 혼자만 레벨업", "webtoon", { fetcher: async (url, init) => url.startsWith("https://graphql.anilist.co")
+    ? reply({ data: { Page: { media: [
+      { title: { native: "나 혼자만 레벨업" }, coverImage: { extraLarge: "https://img/a1.jpg" } },
+      { title: { native: "다른 작품" }, synonyms: [], coverImage: { large: "https://img/a2.jpg" } },
+    ] } } })
+    : url.includes("googleapis") ? reply({ items: [{ volumeInfo: { title: "나 혼자만 레벨업 1", imageLinks: { thumbnail: "http://books.google.com/x?id=1&edge=curl" } } }] })
+      : Promise.reject(new Error("offline")) });
+  assert.deepEqual(offline.map((x) => x.url), ["https://img/a1.jpg", "https://books.google.com/x?id=1"], "without Wikidata the others still answer");
 
+  assert.ok(sameWork("나혼자만 레벨업!", ["나 혼자만 레벨업"]) && !sameWork("체인소 맨", ["나 혼자만 레벨업"]));
   assert.equal(interleave([[{ url: "a" }, { url: "b" }, { url: "c" }], [{ url: "d" }]], 3).map((x) => x.url).join(""), "adb");
   const blob = new Blob(["x"], { type: "image/jpeg" });
   assert.equal(await downloadCover("u", { fetcher: async () => ({ ok: true, blob: async () => blob }) }), blob);

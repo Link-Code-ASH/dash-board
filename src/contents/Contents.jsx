@@ -386,7 +386,7 @@ function Editor({ initial, number, onClose, onSave }) {
                 ))}
               </div>
             ) : (
-              <p className="ct-suggest-note">{found.status === "done" ? "찾지 못했어요. 원제나 영어 제목으로 바꿔서 다시 찾아 보세요." : "제목을 입력하면 표지를 알아서 찾아 드려요."}</p>
+              <p className="ct-suggest-note">{found.status === "done" ? "찾지 못했어요. 띄어쓰기를 바꾸거나 원제로 다시 찾아 보세요. 이미지를 붙여넣어도 돼요." : "제목을 입력하면 표지를 알아서 찾아 드려요."}</p>
             )}
           </div>
         </aside>
