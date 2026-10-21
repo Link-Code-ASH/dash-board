@@ -1,5 +1,5 @@
 import React, { useState, useRef, useLayoutEffect } from "react";
-import { symbols, symbolGroups, defaultSymbolColor } from "./symbols.js";
+import { pickerSymbols, symbolGroups, defaultSymbolColor } from "./symbols.js";
 
 const colors = [
   "#64748b",
@@ -24,7 +24,7 @@ export default function SymbolPicker({ value, onChange }) {
     setDraftColor(next);
     if (value) onChange({ ...value, color: next });
   };
-  const filtered = symbols.filter(
+  const filtered = pickerSymbols.filter(
     (item) =>
       (group === "전체" || item.group === group) &&
       `${item.keywords} ${item.label}`.toLowerCase().includes(query.trim().toLowerCase()),

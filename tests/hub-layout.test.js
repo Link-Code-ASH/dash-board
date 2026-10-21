@@ -10,7 +10,7 @@ import {
 import { readRoute } from "../src/hub/routing.js";
 import { mergeDashboard } from "../src/hub/merge.js";
 import { isValidMonth, monthCells, shiftMonth } from "../src/hub/calendarMonth.js";
-import { symbols } from "../src/hub/symbols.js";
+import { pickerSymbols, symbols } from "../src/hub/symbols.js";
 
 test("monochrome symbols preserve legacy emojis and survive backups", () => {
   const state = normalizeState({ itemIcons: { "daily:a": "book" }, itemSymbols: { "daily:a": { name: "book", color: "#6484b3" } } });
@@ -117,10 +117,19 @@ test("month grids cover leap days and year transitions without changing date key
   assert.equal(isValidMonth("2026-00"), false);
 });
 
-test("311 unique icons retain legacy IDs and searchable English aliases", () => {
-  assert.equal(symbols.length, 311);
-  assert.equal(new Set(symbols.map((item) => item.name)).size, 311);
+test("359 unique icons retain legacy IDs and searchable English aliases", () => {
+  assert.equal(symbols.length, 359);
+  assert.equal(new Set(symbols.map((item) => item.name)).size, 359);
   for (const name of ["book", "note", "education", "exercise", "circle", "location"])
     assert.ok(symbols.some((item) => item.name === name && item.Icon));
   assert.ok(symbols.some((item) => item.keywords.includes("subway")));
+});
+
+test("life activities come first in the picker; rarely used icons are hidden but still draw", () => {
+  assert.equal(pickerSymbols[0].group, "생활 활동");
+  for (const name of ["meal", "laundry", "life-spray", "life-dishes", "life-toothbrush"])
+    assert.equal(pickerSymbols.find((item) => item.name === name)?.group, "생활 활동", name);
+  assert.ok(pickerSymbols.some((item) => item.keywords.includes("청소")));
+  assert.ok(!pickerSymbols.some((item) => item.name === "extra-regex"));
+  assert.ok(symbols.some((item) => item.name === "extra-regex" && item.Icon));
 });

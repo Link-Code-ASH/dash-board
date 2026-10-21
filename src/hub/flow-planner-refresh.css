@@ -933,3 +933,19 @@ html body #root .hub-app.hub-app .flow-routines .hub-task-actions .hub-score-pop
 html body #root .hub-app.hub-app .flow-routines .hub-task-actions .hub-score-pop button:hover { border-color: var(--fp-plus) !important; }
 html body #root .hub-app.hub-app .flow-routines .hub-task-actions .hub-score-pop button[aria-pressed="true"] { border-color: var(--fp-plus) !important; background: var(--fp-plus) !important; color: #fff !important; }
 html body #root .hub-app.hub-app.hub-mobile .flow-routines .hub-task-actions .hub-score-pop button { min-width: 44px; height: 40px; min-height: 40px; }
+
+/* ---------- Drag to reorder (Daily / EDU / Weekly) ----------
+   The grip is the only order control; dragging lifts the row and a line marks
+   where it will land. Lines run along the top/bottom edge, never the left. */
+html body #root .hub-app.hub-app .routine-order-controls { display: flex; align-items: center; justify-content: center; }
+html body #root .hub-app.hub-app .routine-order-controls .routine-drag-handle { display: grid; place-items: center; width: 24px; min-width: 24px; height: 32px; min-height: 32px; padding: 0; border: 0; border-radius: 6px; background: transparent; box-shadow: none; color: #a3afbf; cursor: grab; touch-action: none; line-height: 0; }
+html body #root .hub-app.hub-app .routine-order-controls .routine-drag-handle svg { display: block; }
+html body #root .hub-app.hub-app .routine-order-controls .routine-drag-handle:hover { background: #eef2f7; color: #476a95; }
+html body #root .hub-app.hub-app .routine-order-controls .routine-drag-handle:focus-visible { outline: 2px solid var(--fp-accent); outline-offset: 1px; }
+html body #root .hub-app.hub-app.hub-mobile .routine-config-editor .routine-order-controls .routine-drag-handle { width: 32px; min-width: 32px; height: 44px; min-height: 44px; }
+html.is-row-dragging, html.is-row-dragging * { cursor: grabbing !important; user-select: none !important; -webkit-user-select: none !important; }
+html body #root .hub-app.hub-app :is(.routine-preset-row, .wk-cat).is-dragging { position: relative; z-index: 2; border-radius: 10px; background: #f1f5fb !important; box-shadow: 0 6px 18px rgba(31, 52, 84, .14) !important; opacity: .7; }
+html body #root .hub-app.hub-app :is(.routine-preset-row, .wk-cat):is(.is-drop-before, .is-drop-after) { position: relative; }
+html body #root .hub-app.hub-app :is(.routine-preset-row, .wk-cat):is(.is-drop-before, .is-drop-after)::after { content: ""; position: absolute; z-index: 3; left: 0; right: 0; height: 3px; border-radius: 2px; background: var(--fp-accent); pointer-events: none; }
+html body #root .hub-app.hub-app :is(.routine-preset-row, .wk-cat).is-drop-before::after { top: -2px; }
+html body #root .hub-app.hub-app :is(.routine-preset-row, .wk-cat).is-drop-after::after { bottom: -2px; }

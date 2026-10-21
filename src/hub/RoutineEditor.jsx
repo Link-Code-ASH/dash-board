@@ -1,5 +1,5 @@
-import React, { useLayoutEffect, useRef } from "react";
-import { Plus, Trash2, GripVertical, ChevronUp, ChevronDown, Repeat2, CalendarRange, GraduationCap } from "lucide-react";
+import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { Plus, Trash2, GripVertical, Repeat2, CalendarRange, GraduationCap } from "lucide-react";
 import { useDashboardData } from "./context.jsx";
 import ItemIconButton from "./ItemIconButton.jsx";
 import { weekDays, getWeekdayKey, getWeekSerial, getWeeklyPlanItems, encodeWeeklyPlanItems } from "../dashboard/model.js";
@@ -11,14 +11,96 @@ function ScoreInput({ value, choice, label, onChange }) {
   </label>;
 }
 
-function OrderControl({ index, items, onMove, label }) {
+// Grab the handle and drag (mouse or finger) to reorder. Arrow keys on the
+// focused handle move one step. The item takes the slot it is dropped on.
+function OrderControl({ index, items, label, drag }) {
+  const key = items[index].key;
   return <div className="routine-order-controls">
-    <GripVertical size={17} aria-hidden="true" />
-    <div>
-      <button type="button" aria-label={`${label} 위로 이동`} disabled={index === 0} onClick={() => onMove(items[index].key, items[index - 1].key)}><ChevronUp size={15} /></button>
-      <button type="button" aria-label={`${label} 아래로 이동`} disabled={index === items.length - 1} onClick={() => onMove(items[index].key, items[index + 1].key)}><ChevronDown size={15} /></button>
-    </div>
+    <button type="button" className="routine-drag-handle" aria-label={`${label} 순서 옮기기 (끌거나 위아래 화살표)`} title="끌어서 순서 옮기기"
+      onPointerDown={(e) => drag.start(e, key)}
+      onKeyDown={(e) => {
+        const step = e.key === "ArrowUp" ? -1 : e.key === "ArrowDown" ? 1 : 0;
+        const target = items[index + step];
+        if (!step || !target) return;
+        e.preventDefault();
+        drag.move(key, target.key);
+        requestAnimationFrame(() => drag.focus(key));
+      }}>
+      <GripVertical size={17} aria-hidden="true" />
+    </button>
   </div>;
+}
+
+function useRowDrag(root, move) {
+  const [state, setState] = useState({ from: null, over: null });
+  const session = useRef(null);
+  useEffect(() => () => session.current?.stop(), []);
+  const rows = () => [...(root.current?.querySelectorAll("[data-item-key]") || [])];
+  const start = (event, key) => {
+    if (event.button !== 0 && event.pointerType === "mouse") return;
+    event.preventDefault();
+    let over = key;
+    let lastY = event.clientY;
+    let scrollTimer = 0;
+    let lastX = event.clientX;
+    // The row under the finger, or the nearest one (Daily can be two columns).
+    const pick = (y, x = lastX) => {
+      const list = rows();
+      if (!list.length) return;
+      const distance = (row) => {
+        const box = row.getBoundingClientRect();
+        const dx = Math.max(box.left - x, 0, x - box.right);
+        const dy = Math.max(box.top - y, 0, y - box.bottom);
+        return dx * dx + dy * dy;
+      };
+      const hit = list.reduce((best, row) => distance(row) < distance(best) ? row : best);
+      if (hit.dataset.itemKey !== over) { over = hit.dataset.itemKey; setState({ from: key, over }); }
+    };
+    // Near the top or bottom of the screen the page scrolls so long lists can be reordered.
+    const autoScroll = () => {
+      const edge = 70;
+      const speed = lastY < edge ? -(edge - lastY) / 4 : lastY > window.innerHeight - edge ? (lastY - window.innerHeight + edge) / 4 : 0;
+      if (speed) { window.scrollBy(0, speed); pick(lastY); }
+      scrollTimer = requestAnimationFrame(autoScroll);
+    };
+    const onMove = (e) => { e.preventDefault(); lastY = e.clientY; lastX = e.clientX; pick(e.clientY); };
+    const finish = (commit) => {
+      stop();
+      if (commit && over !== key) move(key, over);
+    };
+    const onUp = () => finish(true);
+    const onCancel = () => finish(false);
+    const onKey = (e) => { if (e.key === "Escape") finish(false); };
+    const stop = () => {
+      cancelAnimationFrame(scrollTimer);
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onCancel);
+      window.removeEventListener("keydown", onKey);
+      document.documentElement.classList.remove("is-row-dragging");
+      session.current = null;
+      setState({ from: null, over: null });
+    };
+    session.current?.stop();
+    session.current = { stop };
+    window.addEventListener("pointermove", onMove, { passive: false });
+    window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onCancel);
+    window.addEventListener("keydown", onKey);
+    document.documentElement.classList.add("is-row-dragging");
+    setState({ from: key, over: key });
+    scrollTimer = requestAnimationFrame(autoScroll);
+  };
+  const focus = (key) => rows().find((row) => row.dataset.itemKey === key)?.querySelector(".routine-drag-handle")?.focus();
+  const order = (items) => Object.fromEntries(items.map((item, index) => [item.key, index]));
+  const rowClass = (key, items) => {
+    if (!state.from) return "";
+    if (key === state.from) return " is-dragging";
+    if (key !== state.over) return "";
+    const index = order(items);
+    return index[state.from] > index[key] ? " is-drop-before" : " is-drop-after";
+  };
+  return { start, move, focus, rowClass };
 }
 
 function useNewItemFocus(items) {
@@ -35,19 +117,6 @@ function useNewItemFocus(items) {
   return root;
 }
 
-function dragProps(key, move) {
-  return {
-    draggable: true,
-    onDragStart: (e) => {
-      if (e.target.closest("input, textarea, button")) { e.preventDefault(); return; }
-      e.dataTransfer.effectAllowed = "move";
-      e.dataTransfer.setData("text/routine-order", key);
-    },
-    onDragOver: (e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; },
-    onDrop: (e) => { e.preventDefault(); move(e.dataTransfer.getData("text/routine-order"), key); },
-  };
-}
-
 function PresetEditor({ kind, heading, toggle }) {
   const d = useDashboardData();
   const edu = kind === "edu";
@@ -59,6 +128,7 @@ function PresetEditor({ kind, heading, toggle }) {
   const move = edu ? d.moveSchoolPreset : d.movePreset;
   const update = (index, field, value) => edu ? d.updateSchoolPreset(presets[index].key, field, value) : d.updatePreset(index, field, value);
   const remove = (index) => edu ? d.removeSchoolPreset(presets[index].key) : d.removePreset(index);
+  const drag = useRowDrag(root, move);
   return <div className="routine-config-editor" ref={root} aria-label={`${title} 편집`}>
     <div className="routine-editor-actions">{heading && <h2><Icon size={18} />{title}<small>{presets.length}</small></h2>}<span className="routine-editor-tools"><button className="routine-add-button" type="button" aria-label={`${title} 항목 추가`} title="항목 추가" onClick={add}><Plus size={17} /><span className="routine-add-label">항목 추가</span></button>{toggle}</span></div>
     {edu && <div className="routine-subjects" aria-label="요일별 과목">
@@ -71,8 +141,8 @@ function PresetEditor({ kind, heading, toggle }) {
       {Array.from({ length: 2 }, (_, index) => <div key={index} className={`routine-table-head${index ? " is-secondary" : ""}`}><span>항목</span><span>Y</span><span>N</span></div>)}
     </div>}
     <div className="routine-preset-list">
-      {presets.map((preset, index) => <article className="routine-preset-row" key={preset.key} data-item-key={preset.key} {...dragProps(preset.key, move)}>
-        <OrderControl index={index} items={presets} onMove={move} label={preset.name || title} />
+      {presets.map((preset, index) => <article className={`routine-preset-row${drag.rowClass(preset.key, presets)}`} key={preset.key} data-item-key={preset.key}>
+        <OrderControl index={index} items={presets} drag={drag} label={preset.name || title} />
         <ItemIconButton itemKey={`${kind}:${preset.key}`} label={preset.name || title} />
         <input className="routine-name-input" aria-label={`${title} 항목 이름 ${index + 1}`} placeholder="항목 이름" maxLength={32} value={preset.name}
           onChange={(e) => update(index, "name", e.target.value)} />
@@ -133,6 +203,7 @@ function WeeklyEditor({ heading, toggle }) {
   const categories = d.data.categories;
   const root = useNewItemFocus(categories);
   const selectedWeekday = getWeekdayKey(d.selectedDate);
+  const drag = useRowDrag(root, d.moveCategory);
   return <div className="routine-config-editor routine-weekly-editor wk-editor" ref={root} aria-label="Weekly 편집">
     <div className="routine-editor-actions">{heading && <h2><CalendarRange size={18} />Weekly<small>{categories.length}</small></h2>}<span className="routine-editor-tools"><button className="routine-add-button" type="button" aria-label="Weekly 카테고리 추가" title="카테고리 추가" onClick={d.addCategory}><Plus size={17} /><span className="routine-add-label">카테고리 추가</span></button>{toggle}</span></div>
     <p className="wk-guide">요일 칸에 적은 할 일은 그 요일 <b>Today's Tasks</b>에 나와요. 한 칸에 여러 개를 넣으면 주마다 번갈아 나와요.</p>
@@ -146,10 +217,10 @@ function WeeklyEditor({ heading, toggle }) {
       {weekDays.map((day) => <span key={day.key} className={selectedWeekday === day.key ? "is-today" : ""}>{day.label}{selectedWeekday === day.key && <em>오늘</em>}</span>)}
     </div>
     <div className="wk-list">
-      {categories.map((category, index) => <article className="wk-cat" key={category.key} data-item-key={category.key} {...dragProps(category.key, d.moveCategory)}>
+      {categories.map((category, index) => <article className={`wk-cat${drag.rowClass(category.key, categories)}`} key={category.key} data-item-key={category.key}>
         {/* Same row layout as a Daily item: order, icon, name, Y, N, delete. */}
         <header className="routine-preset-row wk-cat-row">
-          <OrderControl index={index} items={categories} onMove={d.moveCategory} label={category.label || "카테고리"} />
+          <OrderControl index={index} items={categories} drag={drag} label={category.label || "카테고리"} />
           <ItemIconButton itemKey={`weekly:${category.key}`} label={category.label || "카테고리"} />
           <input className="routine-name-input wk-cat-name" aria-label={`카테고리 이름 ${index + 1}`} placeholder="카테고리 이름" maxLength={24} value={category.label} onChange={(e) => d.updateCategory(category.key, "label", e.target.value)} />
           <div className="wk-cat-scores">

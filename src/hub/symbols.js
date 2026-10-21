@@ -1,4 +1,5 @@
 import { symbolExtras } from "./symbolExtras.js";
+import { hiddenSymbolNames, lifeActivities } from "./symbolLife.js";
 import {
   BookOpen,
   NotebookPen,
@@ -59,6 +60,7 @@ import {
 
 export const symbolGroups = [
   "전체",
+  "생활 활동",
   "학습·작업",
   "일정·목표",
   "생활·건강",
@@ -194,15 +196,22 @@ const groups = [
     ["ticket", Ticket, "티켓 공연", "ticket concert"],
   ],
 ];
-export const symbols = groups.flatMap((items, i) =>
-  [...items, ...symbolExtras[i]].map(([name, Icon, label, keywords = ""]) => ({
-    name,
-    Icon,
-    label,
-    group: symbolGroups[i + 1],
-    keywords: `${name} ${Icon.displayName || ""} ${keywords}`.toLowerCase(),
-  })),
-);
+const toSymbol = (group) => ([name, Icon, label, keywords = ""]) => ({
+  name,
+  Icon,
+  label,
+  group,
+  keywords: `${name} ${Icon.displayName || ""} ${keywords} ${label}`.toLowerCase(),
+});
+const grouped = groups.flatMap((items, i) => [...items, ...symbolExtras[i]].map(toSymbol(symbolGroups[i + 2])));
+const byName = Object.fromEntries(grouped.map((item) => [item.name, item]));
+const life = lifeActivities.map((entry) => entry.length === 1
+  ? { ...byName[entry[0]], group: symbolGroups[1] }
+  : toSymbol(symbolGroups[1])(entry));
+const moved = new Set(life.map((item) => item.name));
+// Every icon, including ones no longer offered, so stored items keep drawing.
+export const symbols = [...life, ...grouped.filter((item) => !moved.has(item.name))];
+export const pickerSymbols = symbols.filter((item) => !hiddenSymbolNames.has(item.name));
 export const symbolMap = Object.fromEntries(
   symbols.map((item) => [item.name, item]),
 );
