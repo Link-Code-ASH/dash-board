@@ -25,6 +25,8 @@ export const RARITIES = [
 ];
 // Korean names for the gallery wings, one per rarity tier.
 export const TIER_NAMES = { legendary: "전설의 전당", epic: "영웅 전시실", rare: "희귀 전시실", uncommon: "고급 전시실", common: "일반 전시실", unrated: "평가 대기" };
+// Q&A review entries: "claude" asked by Claude, "guide" a built-in question, "me" the owner's answer.
+export const ROLES = ["claude", "guide", "me"];
 const typeIds = TYPES.map((type) => type.id);
 const statusIds = STATUSES.map((status) => status.id);
 const isDate = (value) => /^\d{4}-\d{2}-\d{2}$/.test(value);
@@ -47,7 +49,7 @@ export function emptyItem(id = uid(), now = new Date().toISOString()) {
   return {
     version: VERSION, id, title: "", type: "webtoon", rating: 0, status: "done",
     date: now.slice(0, 10), creator: "", platform: "", review: "", cover: null, coverUrl: "",
-    releaseDate: "", hype: 0,
+    releaseDate: "", hype: 0, dialogue: [],
     createdAt: now, updatedAt: now, deletedAt: null,
   };
 }
@@ -71,6 +73,9 @@ export function validateItem(value) {
     if (typeof item[field] !== "string") item[field] = "";
   if (item.cover !== null && (typeof item.cover !== "string" || !item.cover)) item.cover = null;
   if (item.deletedAt !== null && typeof item.deletedAt !== "string") item.deletedAt = null;
+  item.dialogue = Array.isArray(item.dialogue) ? item.dialogue
+    .filter((entry) => entry && typeof entry.text === "string" && typeof entry.id === "string")
+    .map((entry) => ({ ...entry, role: ROLES.includes(entry.role) ? entry.role : "me" })) : [];
   return item;
 }
 
@@ -97,9 +102,17 @@ export function visibleItems(items, { type = "all", sort = "recent", query = "" 
     recent: byDate,
     rating: (a, b) => b.rating - a.rating || byDate(a, b),
     tier: (a, b) => b.rating - a.rating || byDate(a, b),
+    edited: (a, b) => (b.updatedAt || "").localeCompare(a.updatedAt || "") || byDate(a, b),
     title: (a, b) => a.title.localeCompare(b.title, "ko"),
   };
   return list.sort(sorters[sort] || byDate);
+}
+
+// Archive numbers: No.1 is the oldest record still kept; upcoming titles get no number.
+export function archiveNumbers(items) {
+  const kept = items.filter((item) => !item.deletedAt && !isUpcoming(item))
+    .sort((a, b) => (a.createdAt || "").localeCompare(b.createdAt || "") || a.id.localeCompare(b.id));
+  return new Map(kept.map((item, index) => [item.id, index + 1]));
 }
 
 // Splits a gallery list into rarity wings (legendary first, unrated last), keeping the list's order inside each.

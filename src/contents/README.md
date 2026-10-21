@@ -1,6 +1,6 @@
-# Contents (트로피룸)
+# Contents (기록 아카이브)
 
-A gallery of every title 애쉬 has enjoyed (webtoon, drama, movie, anime, novel, game, etc.), each shown as a "figure" on a glowing pedestal. Rarity (LEGENDARY/EPIC/RARE/UNCOMMON/COMMON) is derived from the rating and never stored.
+An archive of every title 애쉬 has finished (webtoon, drama, movie, anime, novel, game, etc.), one record card each, with a rating, a one-line review and a Q&A review. Rarity helpers in `model.js` are kept but no longer shown.
 
 ## Upcoming titles
 - `status: "upcoming"` titles sit on a separate 출시 예정 shelf with a D-day badge, `releaseDate` and `hype` (기대도, not a rating; no rarity). "다 봤어요" turns one into a normal exhibit.
@@ -20,3 +20,11 @@ A gallery of every title 애쉬 has enjoyed (webtoon, drama, movie, anime, novel
 ## Simplified records (2026-10-19)
 
 The editor shows only title, type, rating and one-line review for watched titles, and title, type, release date and memo for 출시 예정 titles (added from their own section). Status, dates, creator, platform and hype are no longer edited but stay stored untouched. The detail view shows "마지막 수정" from `updatedAt`.
+
+## Archive and Q&A reviews (2026-10-21)
+
+The trophy room became a record archive: numbered record cards (No.001 = first recorded) with the upcoming list beside them.
+Each record keeps a Q&A review in `item.dialogue`: `{ id, role: "claude" | "guide" | "me", text, at, skipped? }`.
+The owner does the Q&A with Claude in the project chat, and Claude appends the entries to the row in `contents_items`
+(payload `dialogue` plus `updatedAt`, revision + 1). Built-in questions (`interview.js`) let the owner do it alone in the app.
+Stars are SVGs clipped at `24 * fill`, so half a star is exactly half.

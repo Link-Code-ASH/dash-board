@@ -181,3 +181,31 @@ test("cover search asks the sources for the title's kind, mixes their best resul
   assert.equal(await downloadCover("u", { fetcher: async () => { throw new TypeError("CORS"); } }), null);
   assert.equal(await downloadCover("u", { fetcher: async () => ({ ok: true, blob: async () => new Blob(["<html>"], { type: "text/html" }) }) }), null);
 });
+
+test("Q&A reviews keep valid entries, number the archive and ask each built-in question once", async () => {
+  const { archiveNumbers } = await import("../src/contents/model.js");
+  const { nextQuestion, questionPlan, awaitingAnswer } = await import("../src/contents/interview.js");
+  const value = validateItem({ version: 1, id: "q", title: "듄", type: "movie",
+    dialogue: [{ id: "1", role: "guide", text: "질문" }, { id: "2", role: "robot", text: "답" }, { id: 3, text: "x" }, null] });
+  assert.deepEqual(value.dialogue.map((x) => [x.id, x.role]), [["1", "guide"], ["2", "me"]]);
+  assert.deepEqual(validateItem({ version: 1, id: "old", title: "옛 기록", type: "movie" }).dialogue, [], "older rows get an empty dialogue");
+
+  const items = [
+    item("b", { createdAt: "2026-02-01T00:00:00.000Z" }),
+    item("a", { createdAt: "2026-01-01T00:00:00.000Z" }),
+    item("u", { status: "upcoming", createdAt: "2025-01-01T00:00:00.000Z" }),
+    item("d", { deletedAt: "2026-03-01T00:00:00.000Z", createdAt: "2025-06-01T00:00:00.000Z" }),
+  ];
+  assert.deepEqual([...archiveNumbers(items)], [["a", 1], ["b", 2]]);
+
+  const movie = item("m", { type: "movie", rating: 5 });
+  const first = nextQuestion(movie);
+  assert.equal(first, questionPlan(movie)[0]);
+  const asked = { ...movie, dialogue: [{ id: "1", role: "guide", text: first }, { id: "2", role: "me", text: "좋았어" }] };
+  assert.notEqual(nextQuestion(asked), first);
+  assert.equal(awaitingAnswer(asked.dialogue), false);
+  assert.equal(awaitingAnswer([{ id: "1", role: "guide", text: first }]), true);
+  const done = { ...movie, dialogue: questionPlan(movie).map((text, i) => ({ id: String(i), role: "claude", text })) };
+  assert.equal(nextQuestion(done), null);
+  assert.ok(questionPlan(item("x", { rating: 1.5 })).some((q) => q.includes("아쉬웠던")));
+});
