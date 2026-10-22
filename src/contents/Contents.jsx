@@ -2,7 +2,7 @@ import React, { useEffect, useId, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useHubRuntime } from "../hub/context.jsx";
 import {
-  BookOpen, BookText, Check, Clapperboard, Gamepad2, Hourglass, ImagePlus, MessageCircle, Minus, Pencil, Plus, RefreshCw,
+  BookOpen, BookText, Check, Clapperboard, ExternalLink, Gamepad2, Hourglass, ImagePlus, MessageCircle, Minus, Pencil, Plus, RefreshCw,
   Search, Send, Shapes, Sparkles, Trash2, Tv, X,
 } from "lucide-react";
 import { useContents } from "./ContentsProvider.jsx";
@@ -11,7 +11,7 @@ import {
   upcomingItems, visibleItems,
 } from "./model.js";
 import { awaitingAnswer, nextQuestion } from "./interview.js";
-import { coverUrl, prepareCover, saveCover } from "./cloud.js";
+import { coverUrl, naverSearch, prepareCover, proxyImage, saveCover } from "./cloud.js";
 import { downloadCover, searchCovers } from "./coverSearch.js";
 import "./contents.css";
 
@@ -25,6 +25,7 @@ const answers = (item) => (item.dialogue || []).filter((entry) => entry.role ===
 // What a card shows under the title: the one-line review, else the latest answer from the Q&A.
 const excerpt = (item) => item.review || answers(item).at(-1)?.text || "";
 const WHO = { me: "나", claude: "Claude", guide: "질문" };
+const GOOGLE_HINTS = { movie: "영화 포스터", drama: "드라마 포스터", anime: "애니 포스터", webtoon: "웹툰", novel: "소설 표지", game: "게임 표지", etc: "포스터" };
 
 function useCover(item) {
   const { userId } = useContents();
@@ -299,7 +300,7 @@ function Editor({ initial, number, onClose, onSave }) {
     const controller = new AbortController();
     searchRef.current = controller;
     setFound((current) => ({ ...current, status: "loading" }));
-    searchCovers(title, type, { signal: controller.signal })
+    searchCovers(title, type, { signal: controller.signal, naver: userId ? naverSearch : null })
       .then((list) => { if (!controller.signal.aborted) setFound({ status: "done", list, term: `${type}:${title.trim()}` }); })
       .catch(() => { if (!controller.signal.aborted) setFound({ status: "done", list: [], term: `${type}:${title.trim()}` }); });
   };
@@ -322,15 +323,18 @@ function Editor({ initial, number, onClose, onSave }) {
       set({ cover: id, coverUrl: "" });
     } catch (problem) { setError(problem.message); }
   };
-  // A chosen candidate is copied into our own storage when its host allows it, otherwise kept as a link.
+  // A chosen candidate is copied into our own storage: straight from its host when allowed, else through
+  // our server function (signed in), else it is kept as a link to the preview that already showed.
   const pickCover = async (candidate) => {
     setPicked(candidate.url);
     setError("");
-    const blob = await downloadCover(candidate.url);
+    const blob = await downloadCover(candidate.url)
+      || (userId && (await proxyImage(candidate.url) || (candidate.thumb && candidate.thumb !== candidate.url && await proxyImage(candidate.thumb))));
     if (blob) { await takeImage(blob); return; }
     setPreview("");
-    set({ cover: null, coverUrl: candidate.url });
+    set({ cover: null, coverUrl: candidate.thumb || candidate.url });
   };
+  const googleUrl = `https://www.google.com/search?tbm=isch&q=${encodeURIComponent(`${draft.title.trim()} ${GOOGLE_HINTS[draft.type] || "포스터"}`)}`;
   const onPaste = (event) => {
     const file = [...(event.clipboardData?.files || [])].find((entry) => entry.type.startsWith("image/"));
     if (file) { event.preventDefault(); void takeImage(file); }
@@ -368,9 +372,14 @@ function Editor({ initial, number, onClose, onSave }) {
           <div className="ct-suggest">
             <div className="ct-suggest-head">
               <span><Sparkles size={14} />표지 후보</span>
-              <button type="button" onClick={() => findCovers()} disabled={draft.title.trim().length < 2 || found.status === "loading"}>
-                <RefreshCw size={13} />{found.status === "idle" ? "찾기" : "다시 찾기"}
-              </button>
+              <div className="ct-suggest-tools">
+                {draft.title.trim().length >= 2 && (
+                  <a href={googleUrl} target="_blank" rel="noreferrer" title="구글 이미지에서 찾은 뒤 복사해서 여기에 붙여넣기(Ctrl+V)"><ExternalLink size={13} />구글</a>
+                )}
+                <button type="button" onClick={() => findCovers()} disabled={draft.title.trim().length < 2 || found.status === "loading"}>
+                  <RefreshCw size={13} />{found.status === "idle" ? "찾기" : "다시 찾기"}
+                </button>
+              </div>
             </div>
             {found.status === "loading" ? (
               <p className="ct-suggest-note" role="status">표지를 찾는 중…</p>
@@ -379,14 +388,14 @@ function Editor({ initial, number, onClose, onSave }) {
                 {found.list.map((candidate) => (
                   <button key={candidate.url} type="button" className="ct-suggest-item" aria-pressed={picked === candidate.url}
                     onClick={() => void pickCover(candidate)} title={`${candidate.title} · ${candidate.source}`} aria-label={`${candidate.title} 표지 쓰기`}>
-                    <img src={candidate.url} alt="" loading="lazy" referrerPolicy="no-referrer"
+                    <img src={candidate.thumb || candidate.url} alt="" loading="lazy" referrerPolicy="no-referrer"
                       onError={(event) => { event.currentTarget.parentElement.hidden = true; }} />
                     <span>{candidate.source}</span>
                   </button>
                 ))}
               </div>
             ) : (
-              <p className="ct-suggest-note">{found.status === "done" ? "찾지 못했어요. 띄어쓰기를 바꾸거나 원제로 다시 찾아 보세요. 이미지를 붙여넣어도 돼요." : "제목을 입력하면 표지를 알아서 찾아 드려요."}</p>
+              <p className="ct-suggest-note">{found.status === "done" ? "찾지 못했어요. 구글 버튼으로 찾은 이미지를 복사해서 붙여넣어(Ctrl+V) 주세요." : "제목을 입력하면 표지를 알아서 찾아 드려요."}</p>
             )}
           </div>
         </aside>

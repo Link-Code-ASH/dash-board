@@ -229,17 +229,19 @@ html body :is(#root .hub-app .ct-room, #root > .ct-layer) {
     margin-bottom: 10px;
     & > span { display: inline-flex; align-items: center; gap: 6px; color: var(--ink); font-size: 13px; font-weight: 700 !important; line-height: 1; }
     & > span svg { color: #e8a600; }
-    & button {
+    & .ct-suggest-tools { display: inline-flex; align-items: center; gap: 6px; }
+    & button, & a {
       display: inline-flex;
       align-items: center;
       gap: 5px;
       height: 28px;
+      text-decoration: none;
       padding: 0 10px;
       border: 1px solid var(--line);
       border-radius: 8px;
       background: #fff;
       color: var(--muted);
-      font-size: 12px;
+      font-size: 12px !important;
       font-weight: 600 !important;
       line-height: 1;
       box-shadow: none;

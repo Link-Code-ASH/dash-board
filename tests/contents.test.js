@@ -179,6 +179,13 @@ test("cover search finds the work on Wikidata, uses its English name elsewhere a
       : Promise.reject(new Error("offline")) });
   assert.deepEqual(offline.map((x) => x.url), ["https://img/a1.jpg", "https://books.google.com/x?id=1"], "without Wikidata the others still answer");
 
+  const withNaver = await searchCovers("나의 아저씨", "drama", { fetcher, naver: async (body) => {
+    assert.deepEqual(body, { query: "나의 아저씨", type: "drama" });
+    return { items: [{ url: "https://blog/p.jpg", thumb: "https://search.pstatic.net/p", title: "나의 아저씨 포스터" }] };
+  } });
+  assert.deepEqual([withNaver[0].source, withNaver[0].thumb, withNaver[1].source], ["네이버", "https://search.pstatic.net/p", "위키백과"]);
+  const naverDown = await searchCovers("나의 아저씨", "drama", { fetcher, naver: async () => { throw new Error("503"); } });
+  assert.equal(naverDown[0].source, "위키백과", "a missing Naver key changes nothing else");
   assert.ok(sameWork("나혼자만 레벨업!", ["나 혼자만 레벨업"]) && !sameWork("체인소 맨", ["나 혼자만 레벨업"]));
   assert.equal(interleave([[{ url: "a" }, { url: "b" }, { url: "c" }], [{ url: "d" }]], 3).map((x) => x.url).join(""), "adb");
   const blob = new Blob(["x"], { type: "image/jpeg" });

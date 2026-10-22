@@ -145,6 +145,15 @@ export async function googleBooks(fetcher, title, signal) {
     }));
 }
 
+// Naver image search through our own server function (it holds the API keys). "naver" is any
+// function that takes { query, type } and returns { items } or throws; missing when signed out.
+export async function naverImages(naver, title, type) {
+  const data = await naver({ query: title, type });
+  return (data?.items || []).slice(0, 12).map((item) => ({
+    url: item.url, thumb: item.thumb || item.url, title: item.title || "", source: "네이버",
+  }));
+}
+
 // Other sources for each kind, best first, after Wikidata.
 const PLANS = {
   webtoon: [["anilist", "MANGA"], ["books"]],
@@ -174,9 +183,10 @@ export function interleave(lists, limit = 12) {
 
 const settledList = (result) => result.status === "fulfilled" ? result.value : [];
 
-export async function searchCovers(title, type, { fetcher = fetch, signal, limit = 12 } = {}) {
+export async function searchCovers(title, type, { fetcher = fetch, signal, limit = 12, naver = null } = {}) {
   const term = title.trim();
   if (term.length < 2) return [];
+  const naverFound = naver ? naverImages(naver, term, type).catch(() => []) : Promise.resolve([]);
   const wiki = await wikidataWorks(fetcher, term, type, signal).catch(() => ({ list: [], names: [] }));
   if (signal?.aborted) return [];
   // The other sources also get the work's English name, since they rarely know Korean titles.
@@ -192,8 +202,9 @@ export async function searchCovers(title, type, { fetcher = fetch, signal, limit
     // Only results whose name matches one of the work's names, so unrelated covers stay out.
     return lists.flatMap(settledList).filter((entry) => [entry.title, ...(entry.names || [])].some((name) => sameWork(name, names)));
   }));
+  const naverList = await naverFound;
   if (signal?.aborted) return [];
-  return interleave([wiki.list, ...settled.map(settledList)], limit).map(({ names: _names, ...entry }) => entry);
+  return interleave([naverList, wiki.list, ...settled.map(settledList)], limit).map(({ names: _names, ...entry }) => entry);
 }
 
 // Downloads a chosen candidate so it can be kept in our own storage (null when the host refuses).

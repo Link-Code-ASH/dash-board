@@ -28,3 +28,12 @@ Each record keeps a Q&A review in `item.dialogue`: `{ id, role: "claude" | "guid
 The owner does the Q&A with Claude in the project chat, and Claude appends the entries to the row in `contents_items`
 (payload `dialogue` plus `updatedAt`, revision + 1). Built-in questions (`interview.js`) let the owner do it alone in the app.
 Stars are SVGs clipped at `24 * fill`, so half a star is exactly half.
+
+## Naver image search and Google link (2026-10-22)
+
+Signed-in users also get Naver image search results first, through the Supabase Edge Function `cover-search`
+(`supabase/functions/cover-search/index.ts`, deployed with JWT check). It needs the secrets `NAVER_CLIENT_ID` and
+`NAVER_CLIENT_SECRET` (Naver Developers, 검색 API); without them it answers 503 and the other sources still work.
+The same function fetches a picked image server-side when its host blocks the browser, so the cover is saved in our
+own storage. The "구글" button opens Google Images for the title in a new tab (Google's search API is closed to new
+users); a copied image is pasted into the editor with Ctrl+V.

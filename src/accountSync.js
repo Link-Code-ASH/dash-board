@@ -1,7 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 
-const supabaseUrl = "https://kjincyabqwqdmvcctsvq.supabase.co";
-const publishableKey = "sb_publishable_epVTDY45ypijPec0oWnFFQ_7C4VUtdS";
+export const supabaseUrl = "https://kjincyabqwqdmvcctsvq.supabase.co";
+export const publishableKey = "sb_publishable_epVTDY45ypijPec0oWnFFQ_7C4VUtdS";
 
 export const accountClient = createClient(supabaseUrl, publishableKey, {
   auth: { flowType: "pkce", detectSessionInUrl: true, persistSession: true, autoRefreshToken: true },

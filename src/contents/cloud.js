@@ -1,4 +1,4 @@
-import { accountClient } from "../accountSync.js";
+import { accountClient, publishableKey, supabaseUrl } from "../accountSync.js";
 import { getCover, putCover } from "./storage.js";
 
 const BUCKET = "contents-covers";
@@ -77,4 +77,29 @@ export async function prepareCover(file, maxHeight = 900) {
   const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/webp", 0.86));
   if (!blob) throw new Error("이미지를 변환하지 못했습니다.");
   return blob;
+}
+
+// Calls the cover-search server function as the signed-in user (it holds the Naver keys).
+async function callCoverSearch(body) {
+  const { data } = await accountClient.auth.getSession();
+  const token = data.session?.access_token;
+  if (!token) throw new Error("로그인이 필요합니다.");
+  const response = await fetch(`${supabaseUrl}/functions/v1/cover-search`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}`, apikey: publishableKey, "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+    signal: AbortSignal.timeout(15000),
+  });
+  if (!response.ok) throw new Error(`cover-search ${response.status}`);
+  return response;
+}
+export const naverSearch = async (body) => (await callCoverSearch(body)).json();
+// Fetches a picked image through the server function when its host blocks the browser (null on failure).
+export async function proxyImage(url) {
+  try {
+    const blob = await (await callCoverSearch({ image: url })).blob();
+    return /^image\/(png|jpeg|webp|gif)$/.test(blob.type) ? blob : null;
+  } catch {
+    return null;
+  }
 }
