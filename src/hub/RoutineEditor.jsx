@@ -119,24 +119,14 @@ function useNewItemFocus(items) {
 
 function PresetEditor({ kind, heading, toggle }) {
   const d = useDashboardData();
-  const edu = kind === "edu";
-  const title = edu ? "EDU" : "Daily";
-  const Icon = edu ? GraduationCap : Repeat2;
-  const presets = edu ? d.data.schoolPresets : d.data.presets;
+  const title = "Daily";
+  const presets = d.data.presets;
   const root = useNewItemFocus(presets);
-  const add = edu ? d.addSchoolPreset : d.addPreset;
-  const move = edu ? d.moveSchoolPreset : d.movePreset;
-  const update = (index, field, value) => edu ? d.updateSchoolPreset(presets[index].key, field, value) : d.updatePreset(index, field, value);
-  const remove = (index) => edu ? d.removeSchoolPreset(presets[index].key) : d.removePreset(index);
-  const drag = useRowDrag(root, move);
+  const update = (index, field, value) => d.updatePreset(index, field, value);
+  const remove = (index) => d.removePreset(index);
+  const drag = useRowDrag(root, d.movePreset);
   return <div className="routine-config-editor" ref={root} aria-label={`${title} 편집`}>
-    <div className="routine-editor-actions">{heading && <h2><Icon size={18} />{title}<small>{presets.length}</small></h2>}<span className="routine-editor-tools"><button className="routine-add-button" type="button" aria-label={`${title} 항목 추가`} title="항목 추가" onClick={add}><Plus size={17} /><span className="routine-add-label">항목 추가</span></button>{toggle}</span></div>
-    {edu && <div className="routine-subjects" aria-label="요일별 과목">
-      {weekDays.map((day) => <label key={day.key} className={getWeekdayKey(d.selectedDate) === day.key ? "is-selected" : ""}>
-        <span>{day.label}</span><input aria-label={`EDU ${day.full} 과목`} placeholder="과목" maxLength={80}
-          value={d.data.schoolSubjects?.[day.key] || ""} onChange={(e) => d.updateSchoolSubject(day.key, e.target.value)} />
-      </label>)}
-    </div>}
+    <div className="routine-editor-actions">{heading && <h2><Repeat2 size={18} />{title}<small>{presets.length}</small></h2>}<span className="routine-editor-tools"><button className="routine-add-button" type="button" aria-label={`${title} 항목 추가`} title="항목 추가" onClick={d.addPreset}><Plus size={17} /><span className="routine-add-label">항목 추가</span></button>{toggle}</span></div>
     {heading && <div className="routine-table-heads" aria-hidden="true">
       {Array.from({ length: 2 }, (_, index) => <div key={index} className={`routine-table-head${index ? " is-secondary" : ""}`}><span>항목</span><span>Y</span><span>N</span></div>)}
     </div>}
@@ -198,40 +188,59 @@ function WeeklyDay({ day, label, value, today, onChange, selectedDate }) {
   </div>;
 }
 
-function WeeklyEditor({ heading, toggle }) {
+// Weekly and EDU share one editor: rows with Y/N scores and a task per weekday.
+// EDU rows are the saved schoolPresets (name field) with schoolWeeklyPlan.
+function useWeeklySource(kind) {
   const d = useDashboardData();
-  const categories = d.data.categories;
-  const root = useNewItemFocus(categories);
+  if (kind === "edu") return {
+    title: "EDU", Icon: GraduationCap, noun: "항목",
+    rows: d.data.schoolPresets.map((preset) => ({ key: preset.key, label: preset.name, yScore: preset.yScore, nScore: preset.nScore })),
+    add: d.addSchoolPreset, move: d.moveSchoolPreset, remove: d.removeSchoolPreset,
+    update: (key, field, value) => d.updateSchoolPreset(key, field === "label" ? "name" : field, value),
+    plan: d.data.schoolWeeklyPlan || {}, updatePlan: d.updateSchoolWeeklyPlan,
+  };
+  return {
+    title: "Weekly", Icon: CalendarRange, noun: "카테고리",
+    rows: d.data.categories,
+    add: d.addCategory, move: d.moveCategory, remove: d.removeCategory, update: d.updateCategory,
+    plan: d.data.weeklyPlan, updatePlan: d.updateWeeklyPlan,
+  };
+}
+
+function WeeklyEditor({ kind, heading, toggle }) {
+  const d = useDashboardData();
+  const { title, Icon, noun, rows, add, move, remove, update, plan, updatePlan } = useWeeklySource(kind);
+  const root = useNewItemFocus(rows);
   const selectedWeekday = getWeekdayKey(d.selectedDate);
-  const drag = useRowDrag(root, d.moveCategory);
-  return <div className="routine-config-editor routine-weekly-editor wk-editor" ref={root} aria-label="Weekly 편집">
-    <div className="routine-editor-actions">{heading && <h2><CalendarRange size={18} />Weekly<small>{categories.length}</small></h2>}<span className="routine-editor-tools"><button className="routine-add-button" type="button" aria-label="Weekly 카테고리 추가" title="카테고리 추가" onClick={d.addCategory}><Plus size={17} /><span className="routine-add-label">카테고리 추가</span></button>{toggle}</span></div>
+  const drag = useRowDrag(root, move);
+  return <div className="routine-config-editor routine-weekly-editor wk-editor" ref={root} aria-label={`${title} 편집`}>
+    <div className="routine-editor-actions">{heading && <h2><Icon size={18} />{title}<small>{rows.length}</small></h2>}<span className="routine-editor-tools"><button className="routine-add-button" type="button" aria-label={`${title} ${noun} 추가`} title={`${noun} 추가`} onClick={add}><Plus size={17} /><span className="routine-add-label">{noun} 추가</span></button>{toggle}</span></div>
     <p className="wk-guide">요일 칸에 적은 할 일은 그 요일 <b>Today's Tasks</b>에 나와요. 한 칸에 여러 개를 넣으면 주마다 번갈아 나와요.</p>
     <div className="routine-table-heads wk-table-heads" aria-hidden="true">
       <div className="routine-table-head"><span>항목</span><span>Y</span><span>N</span></div>
     </div>
-    {/* Wide panels show Weekly as one timetable: this weekday row on top,
+    {/* Wide panels show the editor as one timetable: this weekday row on top,
         then one row per category with its seven day cells under it. */}
     <div className="wk-board-head" aria-hidden="true">
-      <span>카테고리</span>
+      <span>{noun}</span>
       {weekDays.map((day) => <span key={day.key} className={selectedWeekday === day.key ? "is-today" : ""}>{day.label}{selectedWeekday === day.key && <em>오늘</em>}</span>)}
     </div>
     <div className="wk-list">
-      {categories.map((category, index) => <article className={`wk-cat${drag.rowClass(category.key, categories)}`} key={category.key} data-item-key={category.key}>
+      {rows.map((row, index) => <article className={`wk-cat${drag.rowClass(row.key, rows)}`} key={row.key} data-item-key={row.key}>
         {/* Same row layout as a Daily item: order, icon, name, Y, N, delete. */}
         <header className="routine-preset-row wk-cat-row">
-          <OrderControl index={index} items={categories} drag={drag} label={category.label || "카테고리"} />
-          <ItemIconButton itemKey={`weekly:${category.key}`} label={category.label || "카테고리"} />
-          <input className="routine-name-input wk-cat-name" aria-label={`카테고리 이름 ${index + 1}`} placeholder="카테고리 이름" maxLength={24} value={category.label} onChange={(e) => d.updateCategory(category.key, "label", e.target.value)} />
+          <OrderControl index={index} items={rows} drag={drag} label={row.label || noun} />
+          <ItemIconButton itemKey={`${kind}:${row.key}`} label={row.label || noun} />
+          <input className="routine-name-input wk-cat-name" aria-label={`${title} ${noun} 이름 ${index + 1}`} placeholder={`${noun} 이름`} maxLength={kind === "edu" ? 32 : 24} value={row.label} onChange={(e) => update(row.key, "label", e.target.value)} />
           <div className="wk-cat-scores">
-            <ScoreInput choice="Y" label={category.label} value={category.yScore} onChange={(value) => d.updateCategory(category.key, "yScore", value)} />
-            <ScoreInput choice="N" label={category.label} value={category.nScore} onChange={(value) => d.updateCategory(category.key, "nScore", value)} />
+            <ScoreInput choice="Y" label={row.label} value={row.yScore} onChange={(value) => update(row.key, "yScore", value)} />
+            <ScoreInput choice="N" label={row.label} value={row.nScore} onChange={(value) => update(row.key, "nScore", value)} />
           </div>
-          <button type="button" className="routine-delete-button" disabled={categories.length <= 1} aria-label={`${category.label} 카테고리 삭제`} onClick={() => d.removeCategory(category.key)}><Trash2 size={18} /></button>
+          <button type="button" className="routine-delete-button" disabled={rows.length <= 1} aria-label={`${row.label} ${noun} 삭제`} onClick={() => remove(row.key)}><Trash2 size={18} /></button>
         </header>
         <div className="wk-days">
-          {weekDays.map((day) => <WeeklyDay key={day.key} day={day} label={category.label} today={selectedWeekday === day.key} selectedDate={d.selectedDate}
-            value={d.data.weeklyPlan[category.key]?.[day.key] || ""} onChange={(value) => d.updateWeeklyPlan(category.key, day.key, value)} />)}
+          {weekDays.map((day) => <WeeklyDay key={day.key} day={day} label={row.label} today={selectedWeekday === day.key} selectedDate={d.selectedDate}
+            value={plan[row.key]?.[day.key] || ""} onChange={(value) => updatePlan(row.key, day.key, value)} />)}
         </div>
       </article>)}
     </div>
@@ -239,5 +248,5 @@ function WeeklyEditor({ heading, toggle }) {
 }
 
 export default function RoutineEditor({ kind, heading = false, toggle = null }) {
-  return kind === "weekly" ? <WeeklyEditor heading={heading} toggle={toggle} /> : <PresetEditor key={kind} kind={kind} heading={heading} toggle={toggle} />;
+  return kind === "weekly" || kind === "edu" ? <WeeklyEditor key={kind} kind={kind} heading={heading} toggle={toggle} /> : <PresetEditor key={kind} kind={kind} heading={heading} toggle={toggle} />;
 }

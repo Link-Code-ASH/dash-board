@@ -1382,6 +1382,15 @@ export function useDashboard(selectedDate, setSelectedDate) {
     });
   };
 
+  const updateSchoolWeeklyPlan = (presetKey, dayKey, value) => {
+    saveData((draft) => {
+      if (!draft.schoolWeeklyPlan) draft.schoolWeeklyPlan = {};
+      if (!draft.schoolWeeklyPlan[presetKey]) draft.schoolWeeklyPlan[presetKey] = createEmptyWeeklyPlan([{ key: presetKey }])[presetKey];
+      draft.schoolWeeklyPlan[presetKey][dayKey] = value;
+      return draft;
+    });
+  };
+
   const updateSchoolSubject = (dayKey, value) => {
     saveData((draft) => {
       draft.schoolSubjects[dayKey] = value;
@@ -1851,6 +1860,7 @@ export function useDashboard(selectedDate, setSelectedDate) {
     updateSchoolPreset,
     moveSchoolPreset,
     removeSchoolPreset,
+    updateSchoolWeeklyPlan,
     updateSchoolSubject,
     addCategory,
     updateCategory,

@@ -154,42 +154,42 @@ export function RoutineTasks({ compact = false }) {
         toggleChoice: d.toggleChoice,
       }),
     );
-  const weeklyCards = d.data.categories
-    .map((category) => {
-      const value = getWeeklyPlanEntry(
-        d.data.weeklyPlan[category.key]?.[d.weekday.key],
-        d.selectedDate,
-      ).value;
-      const planKey = `plan:${d.selectedDate}:${category.key}`;
-      const range = getCategoryScoreRange(category);
+  // Weekly and EDU: a row shows up on the weekdays that have a task written.
+  const planCards = (rows, plan, prefix, fallback) => rows
+    .map((row) => {
+      const label = row.label ?? row.name ?? "";
+      const value = getWeeklyPlanEntry(plan?.[row.key]?.[d.weekday.key], d.selectedDate).value;
+      const planKey = `${prefix}:${d.selectedDate}:${row.key}`;
+      const range = getCategoryScoreRange(row);
       return {
-        key: category.key,
-        label: category.label,
+        key: row.key,
+        label,
         value,
-        scheduled: getWeeklyPlanItems(
-          d.data.weeklyPlan[category.key]?.[d.weekday.key],
-        ).some((item) => item.trim()),
+        scheduled: getWeeklyPlanItems(plan?.[row.key]?.[d.weekday.key]).some((item) => item.trim()),
         scoreRange: range.length > 1 ? range : null,
-        yScore: category.yScore,
-        nScore: category.nScore,
+        yScore: row.yScore,
+        nScore: row.nScore,
         selectedChoice:
           d.entries.find((entry) => entry.planKey === planKey)?.choice || "",
         onToggle: (choice) =>
           d.toggleChoice({
             planKey,
             choice: String(choice),
-            name: `${category.label}: ${value} (${choice})`,
+            name: `${label || fallback}: ${value} (${choice})`,
             score: Number(
               choice === "N"
-                ? category.nScore
+                ? row.nScore
                 : choice === "Y"
-                  ? category.yScore
+                  ? row.yScore
                   : choice,
             ),
           }),
       };
     })
     .filter((card) => card.scheduled || card.selectedChoice);
+  const weeklyCards = planCards(d.data.categories, d.data.weeklyPlan, "plan", "Weekly");
+  // EDU checks keep the "school:" key they always had, so past days still show them.
+  const eduCards = planCards(d.data.schoolPresets || [], d.data.schoolWeeklyPlan, "school", "EDU");
   const groups = [
     {
       id: "daily",
@@ -197,6 +197,7 @@ export function RoutineTasks({ compact = false }) {
       cards: presetCards(d.data.presets, "Daily", "daily"),
     },
     { id: "weekly", title: "Weekly", cards: weeklyCards },
+    { id: "edu", title: "EDU", cards: eduCards },
   ];
   return (
     <div className={`hub-task-groups ${compact ? "is-compact" : ""}`}>

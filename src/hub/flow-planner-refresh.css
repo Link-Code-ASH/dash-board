@@ -500,6 +500,8 @@ html body #root .hub-app.hub-app.hub-desktop .routine-preset-row :is(.hub-item-i
 @container hub-content (min-width: 1500px) {
   html body #root .hub-app.hub-app.hub-desktop .routine-desktop-workspace { grid-template-columns: minmax(380px, 460px) minmax(0, 1fr); }
   html body #root .hub-app.hub-app.hub-desktop .routine-desktop-workspace:has(> .is-collapsed) { grid-template-columns: minmax(0, 1fr); }
+  /* EDU is a timetable like Weekly, so it gets the full width under both. */
+  html body #root .hub-app.hub-app.hub-desktop .routine-editor-panel[data-kind="edu"] { grid-column: 1 / -1; }
   html body #root .hub-app.hub-app.hub-desktop .routine-editor-panel[data-kind="daily"] :is(.routine-preset-list, .routine-table-heads) { grid-template-columns: minmax(0, 1fr); }
   html body #root .hub-app.hub-app.hub-desktop .routine-editor-panel[data-kind="daily"] .routine-table-head.is-secondary { display: none; }
   html body #root .hub-app.hub-app.hub-desktop .routine-weekly-grid { grid-template-columns: 180px repeat(7, minmax(0, 1fr)); }
