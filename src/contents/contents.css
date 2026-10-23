@@ -282,7 +282,26 @@ html body :is(#root .hub-app .ct-room, #root > .ct-layer) {
     &[aria-pressed="true"] { border-color: var(--ink); box-shadow: 0 0 0 2px var(--ink); }
     &[hidden] { display: none; }
   }
-  & .ct-drop-hint { color: var(--muted); font-size: 12px; text-align: center; }
+  & .ct-drop-hint { color: var(--muted); font-size: 12px; line-height: 1.5; text-align: center; word-break: keep-all; }
+  & .ct-drop-hint.ct-error { color: #e5484d; line-height: 1.5; word-break: keep-all; }
+  /* Shown over the whole dialog while an image is dragged over it. */
+  & .ct-drop-veil {
+    position: absolute;
+    inset: 8px;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border: 2px dashed #8b97aa;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.9);
+    color: var(--ink);
+    pointer-events: none;
+    & strong { font-size: 16px; font-weight: 700 !important; line-height: 1.2; }
+    & span { color: var(--muted); font-size: 13px; line-height: 1.2; }
+  }
   & .ct-cover-row { display: flex; gap: 8px; width: 100%; }
   & .ct-input {
     width: 100%;

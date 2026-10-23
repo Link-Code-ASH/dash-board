@@ -1,5 +1,7 @@
 import { accountClient, publishableKey, supabaseUrl } from "../accountSync.js";
 import { getCover, putCover } from "./storage.js";
+import { coverCrop } from "./intake.js";
+import { downloadCover } from "./coverSearch.js";
 
 const BUCKET = "contents-covers";
 const timeout = () => AbortSignal.timeout(20000);
@@ -64,15 +66,17 @@ export async function coverUrl(userId, id) {
   return url;
 }
 
-// Shrinks any picked or pasted image to a light WebP so covers stay small in Storage.
+// Cuts any picked, pasted or dropped image to the 3:4 cover shape (from the centre) and shrinks it to a
+// light WebP, so covers fit their frame and stay small in Storage.
 export async function prepareCover(file, maxHeight = 900) {
-  if (!/^image\/(png|jpeg|webp|gif)$/.test(file.type)) throw new Error("PNG, JPG, WEBP, GIF 이미지만 사용할 수 있습니다.");
+  if (!/^image\/(png|jpeg|webp|gif|avif|bmp)$/.test(file.type)) throw new Error("PNG, JPG, WEBP, GIF 이미지만 사용할 수 있습니다.");
   const bitmap = await createImageBitmap(file);
-  const scale = Math.min(1, maxHeight / bitmap.height, 640 / bitmap.width);
+  const crop = coverCrop(bitmap.width, bitmap.height);
+  const scale = Math.min(1, maxHeight / crop.height, 675 / crop.width);
   const canvas = document.createElement("canvas");
-  canvas.width = Math.round(bitmap.width * scale);
-  canvas.height = Math.round(bitmap.height * scale);
-  canvas.getContext("2d").drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+  canvas.width = Math.round(crop.width * scale);
+  canvas.height = Math.round(crop.height * scale);
+  canvas.getContext("2d").drawImage(bitmap, crop.x, crop.y, crop.width, crop.height, 0, 0, canvas.width, canvas.height);
   bitmap.close?.();
   const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/webp", 0.86));
   if (!blob) throw new Error("이미지를 변환하지 못했습니다.");
@@ -102,4 +106,13 @@ export async function proxyImage(url) {
   } catch {
     return null;
   }
+}
+
+// Turns an image address from a drop or paste into image data: inline data right away, otherwise from the
+// host when it allows the browser, otherwise through the server function (signed in only).
+export async function imageFromUrl(url, signedIn) {
+  if (url.startsWith("data:image/")) {
+    try { return await (await fetch(url)).blob(); } catch { return null; }
+  }
+  return await downloadCover(url) || (signedIn ? await proxyImage(url) : null);
 }

@@ -37,3 +37,10 @@ Signed-in users also get Naver image search results first, through the Supabase 
 The same function fetches a picked image server-side when its host blocks the browser, so the cover is saved in our
 own storage. The "구글" button opens Google Images for the title in a new tab (Google's search API is closed to new
 users); a copied image is pasted into the editor with Ctrl+V.
+
+## Drop or paste a cover (2026-10-23)
+
+The editor and an open record take an image dropped anywhere on the dialog or pasted while it is open (`intake.js`):
+a file, a copied image, or a picture dragged straight out of Google Images (read from the dragged `<img>` address,
+fetched directly, or through the `cover-search` function when the host blocks the browser). Every cover is cut to
+3:4 from the centre and shrunk to WebP in `prepareCover`, so no manual resizing is needed.

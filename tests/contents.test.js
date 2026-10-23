@@ -221,3 +221,22 @@ test("Q&A reviews keep valid entries, number the archive and ask each built-in q
   assert.equal(nextQuestion(done), null);
   assert.ok(questionPlan(item("x", { rating: 1.5 })).some((q) => q.includes("아쉬웠던")));
 });
+
+test("dropped or pasted pictures are read from files or from the page's image, and cropped to the cover shape", async () => {
+  const { imageFromTransfer, mayHoldImage, coverCrop } = await import("../src/contents/intake.js");
+  const transfer = (data, files = []) => ({ files, types: Object.keys(data), getData: (type) => data[type] || "" });
+  const file = { type: "image/png" };
+  assert.deepEqual(imageFromTransfer(transfer({ "text/html": "<img src='https://x/a.jpg'>" }, [{ type: "text/plain" }, file])), { file });
+  assert.deepEqual(imageFromTransfer(transfer({
+    "text/uri-list": "https://www.google.com/imgres?imgurl=x",
+    "text/html": '<a href="/x"><img alt="" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:a&amp;s"></a>',
+  })), { url: "https://encrypted-tbn0.gstatic.com/images?q=tbn:a&s" }, "a picture dragged from Google Images");
+  assert.deepEqual(imageFromTransfer(transfer({ "text/html": '<img src="data:image/jpeg;base64,AAA">' })), { url: "data:image/jpeg;base64,AAA" });
+  assert.deepEqual(imageFromTransfer(transfer({ "text/plain": "https://site/poster.webp?w=600" })), { url: "https://site/poster.webp?w=600" });
+  assert.equal(imageFromTransfer(transfer({ "text/plain": "그냥 글자" })), null);
+  assert.equal(imageFromTransfer(transfer({ "text/uri-list": "https://site/page" })), null, "a plain page link is not a picture");
+  assert.ok(mayHoldImage({ types: ["Files"] }) && !mayHoldImage({ types: ["text/plain"] }));
+  assert.deepEqual(coverCrop(1200, 800), { x: 300, y: 0, width: 600, height: 800 }, "wide stills keep their middle");
+  assert.deepEqual(coverCrop(600, 1200), { x: 0, y: 200, width: 600, height: 800 });
+  assert.deepEqual(coverCrop(300, 400), { x: 0, y: 0, width: 300, height: 400 });
+});

@@ -11,7 +11,8 @@ import {
   upcomingItems, visibleItems,
 } from "./model.js";
 import { awaitingAnswer, nextQuestion } from "./interview.js";
-import { coverUrl, naverSearch, prepareCover, proxyImage, saveCover } from "./cloud.js";
+import { coverUrl, imageFromUrl, naverSearch, prepareCover, proxyImage, saveCover } from "./cloud.js";
+import { imageFromTransfer, mayHoldImage } from "./intake.js";
 import { downloadCover, searchCovers } from "./coverSearch.js";
 import "./contents.css";
 
@@ -114,7 +115,56 @@ function UpcomingRow({ item, onOpen }) {
   );
 }
 
-function Modal({ label, onClose, className = "", children }) {
+// Lets a dialog take an image dropped anywhere on it or pasted while it is open, from a file, a copied
+// image or a picture dragged straight out of another page (Google Images). onImage gets the image data.
+function useImageIntake(onImage) {
+  const { userId } = useContents();
+  const [dragging, setDragging] = useState(false);
+  const [state, setState] = useState({ busy: false, error: "" });
+  const depth = useRef(0);
+  const latest = useRef(onImage);
+  latest.current = onImage;
+  const take = async (source) => {
+    if (!source) return;
+    setState({ busy: true, error: "" });
+    try {
+      const blob = source.file || await imageFromUrl(source.url, Boolean(userId));
+      if (!blob) throw new Error("이 이미지는 바로 가져올 수 없어요. 이미지를 우클릭해서 '이미지 복사' 후 붙여넣어(Ctrl+V) 주세요.");
+      await latest.current(blob);
+      setState({ busy: false, error: "" });
+    } catch (problem) {
+      setState({ busy: false, error: problem.message });
+    }
+  };
+  useEffect(() => {
+    const onPaste = (event) => {
+      const source = imageFromTransfer(event.clipboardData);
+      if (!source) return;
+      // Text pasted into a field stays text; only a real picture (or nothing else) becomes the cover.
+      const typing = event.target.closest?.("input, textarea, [contenteditable]");
+      if (typing && !source.file && event.clipboardData.getData("text/plain")) return;
+      event.preventDefault();
+      void take(source);
+    };
+    document.addEventListener("paste", onPaste);
+    return () => document.removeEventListener("paste", onPaste);
+  }, [userId]);
+  const handlers = {
+    onDragEnter: (event) => { if (!mayHoldImage(event.dataTransfer)) return; event.preventDefault(); depth.current += 1; setDragging(true); },
+    onDragOver: (event) => { if (!mayHoldImage(event.dataTransfer)) return; event.preventDefault(); event.dataTransfer.dropEffect = "copy"; },
+    onDragLeave: () => { depth.current = Math.max(0, depth.current - 1); if (!depth.current) setDragging(false); },
+    onDrop: (event) => {
+      if (!mayHoldImage(event.dataTransfer)) return;
+      event.preventDefault();
+      depth.current = 0;
+      setDragging(false);
+      void take(imageFromTransfer(event.dataTransfer));
+    },
+  };
+  return { dragging, handlers, ...state };
+}
+
+function Modal({ label, onClose, className = "", intake = null, children }) {
   const { displayMode } = useHubRuntime();
   useEffect(() => {
     const onKey = (event) => { if (event.key === "Escape") onClose(); };
@@ -126,9 +176,10 @@ function Modal({ label, onClose, className = "", children }) {
   return createPortal(
     <div className={`ct-layer ${displayMode === "mobile" ? "ct-layer-mobile" : ""}`}>
       <div className="ct-overlay" onPointerDown={(event) => event.target === event.currentTarget && onClose()}>
-        <section className={`ct-modal ${className}`} role="dialog" aria-modal="true" aria-label={label}>
+        <section className={`ct-modal ${className}`} role="dialog" aria-modal="true" aria-label={label} {...(intake?.handlers || {})}>
           <button type="button" className="ct-close" onClick={onClose} aria-label="닫기"><X size={20} /></button>
           {children}
+          {intake?.dragging && <div className="ct-drop-veil" aria-hidden="true"><ImagePlus size={30} strokeWidth={1.6} /><strong>여기에 놓으면 표지가 돼요</strong><span>크기는 알아서 맞춰요</span></div>}
         </section>
       </div>
     </div>,
@@ -197,15 +248,19 @@ function Dialogue({ item, onChange }) {
   );
 }
 
-function Record({ item, number, onClose, onEdit, onRemove, onComplete, onDialogue }) {
+function Record({ item, number, onClose, onEdit, onRemove, onComplete, onDialogue, onCover }) {
   const url = useCover(item);
+  const intake = useImageIntake(onCover);
   const upcoming = isUpcoming(item);
   const days = daysUntil(item.releaseDate);
   const [confirm, setConfirm] = useState(false);
   return (
-    <Modal label={`${item.title} 기록`} onClose={onClose} className={upcoming ? "ct-record ct-record-upcoming" : "ct-record"}>
+    <Modal label={`${item.title} 기록`} onClose={onClose} className={upcoming ? "ct-record ct-record-upcoming" : "ct-record"} intake={intake}>
       <aside className="ct-record-side">
         <Cover item={item} url={url} className="ct-cover-large" />
+        <p className={intake.error ? "ct-drop-hint ct-error" : "ct-drop-hint"} role="status">
+          {intake.busy ? "표지를 가져오는 중…" : intake.error || "이미지를 끌어다 놓거나 붙여넣어 표지 바꾸기"}
+        </p>
         <div className="ct-record-meta">
           <span className="ct-no">{upcoming ? "출시 예정" : recordNo(number)}</span>
           <h2>{item.title}</h2>
@@ -335,10 +390,7 @@ function Editor({ initial, number, onClose, onSave }) {
     set({ cover: null, coverUrl: candidate.thumb || candidate.url });
   };
   const googleUrl = `https://www.google.com/search?tbm=isch&q=${encodeURIComponent(`${draft.title.trim()} ${GOOGLE_HINTS[draft.type] || "포스터"}`)}`;
-  const onPaste = (event) => {
-    const file = [...(event.clipboardData?.files || [])].find((entry) => entry.type.startsWith("image/"));
-    if (file) { event.preventDefault(); void takeImage(file); }
-  };
+  const intake = useImageIntake(async (blob) => { setPicked(""); await takeImage(blob); });
   const submit = async (event) => {
     event.preventDefault();
     if (!draft.title.trim()) { setError("제목을 입력해 주세요."); return; }
@@ -348,18 +400,17 @@ function Editor({ initial, number, onClose, onSave }) {
   };
   const upcoming = isUpcoming(draft);
   return (
-    <Modal label={upcoming ? "출시 예정 작품" : initial.title ? "기록 수정" : "새 기록"} onClose={onClose} className="ct-editor">
-      <form onSubmit={submit} onPaste={onPaste}>
+    <Modal label={upcoming ? "출시 예정 작품" : initial.title ? "기록 수정" : "새 기록"} onClose={onClose} className="ct-editor" intake={intake}>
+      <form onSubmit={submit}>
         <aside className="ct-editor-side">
-          <button type="button" className="ct-drop" onClick={() => fileRef.current?.click()}
-            onDragOver={(event) => event.preventDefault()}
-            onDrop={(event) => { event.preventDefault(); void takeImage(event.dataTransfer.files[0]); }}
-            aria-label="표지 이미지 고르기">
+          <button type="button" className="ct-drop" onClick={() => fileRef.current?.click()} aria-label="표지 이미지 고르기">
             {shownUrl || draft.title ? <Cover item={draft} url={shownUrl} className="ct-cover-large" /> : (
               <span className="ct-cover ct-cover-large ct-cover-empty"><ImagePlus size={28} strokeWidth={1.4} /><span>표지 이미지</span></span>
             )}
           </button>
-          <p className="ct-drop-hint">눌러서 고르거나, 끌어다 놓거나 붙여넣기(Ctrl+V)</p>
+          <p className={intake.error ? "ct-drop-hint ct-error" : "ct-drop-hint"} role="status">
+            {intake.busy ? "표지를 가져오는 중…" : intake.error || "구글 이미지를 그대로 끌어다 놓거나 복사해서 붙여넣기(Ctrl+V)"}
+          </p>
           <input ref={fileRef} type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden
             onChange={(event) => { void takeImage(event.target.files[0]); event.target.value = ""; }} />
           <div className="ct-cover-row">
@@ -447,7 +498,7 @@ function Editor({ initial, number, onClose, onSave }) {
 }
 
 export default function Contents({ route }) {
-  const { items, ready, status, change } = useContents();
+  const { items, ready, status, change, userId } = useContents();
   const [type, setType] = useState("all");
   const [sort, setSort] = useState("edited");
   const [query, setQuery] = useState("");
@@ -478,6 +529,12 @@ export default function Contents({ route }) {
   const saveDialogue = (dialogue) => {
     const now = new Date().toISOString();
     void change(opened.id, (current) => ({ ...current, dialogue, updatedAt: now }));
+  };
+  // An image dropped or pasted on an open record becomes its cover right away.
+  const setCover = async (blob) => {
+    const id = await saveCover(userId, await prepareCover(blob));
+    const now = new Date().toISOString();
+    await change(opened.id, (current) => ({ ...current, cover: id, coverUrl: "", updatedAt: now }));
   };
   const addUpcoming = () => setEditing({ ...emptyItem(), status: "upcoming", date: "" });
 
@@ -563,7 +620,7 @@ export default function Contents({ route }) {
 
       {opened && !editing && (
         <Record item={opened} number={numbers.get(opened.id)} onClose={() => setOpenId(null)} onEdit={() => setEditing(opened)} onRemove={remove}
-          onComplete={() => setEditing({ ...opened, status: "done", date: localDateKey() })} onDialogue={saveDialogue} />
+          onComplete={() => setEditing({ ...opened, status: "done", date: localDateKey() })} onDialogue={saveDialogue} onCover={setCover} />
       )}
       {editing && <Editor initial={editing} number={numbers.get(editing.id)} onClose={() => setEditing(null)} onSave={save} />}
     </div>
