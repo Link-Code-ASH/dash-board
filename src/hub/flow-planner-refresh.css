@@ -477,10 +477,11 @@ html body #root .hub-app.hub-app.hub-mobile .mobile-duty-buttons button span { d
 html body #root .hub-app.hub-app.hub-mobile .mobile-duty-buttons button.active { border-color: transparent !important; background: #fff3dc !important; color: #946312 !important; }
 html body #root .hub-app.hub-app.hub-mobile .mobile-calendar-editor .calendar-entry { padding: 6px 10px; border: 0; border-radius: 8px; background: var(--fp-accent-soft); margin-bottom: 6px; }
 
-/* ---------- Planner routines: Daily | Weekly ----------
-   Monitor: Daily beside Weekly. Laptop: stacked, Daily as a two-column
-   list. Each panel folds from its header; a folded panel gives its width
-   back to the other. */
+/* ---------- Planner routines: Daily, Weekly, EDU ----------
+   One card on every desktop width: the three sections stack in it, split by
+   a line, so they share one left edge and one width. Daily is a 2- or
+   3-column list; Weekly and EDU are matching timetables. Each section folds
+   from its header. */
 html body #root .hub-app.hub-app .routine-desktop-workspace { gap: 20px; align-items: start; }
 html body #root .hub-app.hub-app .routine-editor-panel { padding: 16px 20px 18px; border: 1px solid var(--fp-line); border-radius: 14px; background: #fff; box-shadow: var(--fp-shadow); }
 html body #root .hub-app.hub-app .routine-editor-actions { padding: 0 0 12px; margin-bottom: 4px; border-bottom-color: var(--fp-line-soft); }
@@ -497,16 +498,18 @@ html body #root .hub-app.hub-app.hub-desktop .routine-preset-row { min-height: 4
 html body #root .hub-app.hub-app.hub-desktop .routine-table-head { grid-template-columns: 24px 30px minmax(0, 1fr) 58px 58px 28px; padding: 4px 0; font-size: 12px; }
 html body #root .hub-app.hub-app.hub-desktop .routine-config-editor input { height: 34px !important; min-height: 34px !important; font-size: 15px !important; }
 html body #root .hub-app.hub-app.hub-desktop .routine-preset-row :is(.hub-item-icon, .routine-delete-button) { height: 34px; min-height: 34px; }
-@container hub-content (min-width: 1500px) {
-  html body #root .hub-app.hub-app.hub-desktop .routine-desktop-workspace { grid-template-columns: minmax(380px, 460px) minmax(0, 1fr); }
-  html body #root .hub-app.hub-app.hub-desktop .routine-desktop-workspace:has(> .is-collapsed) { grid-template-columns: minmax(0, 1fr); }
-  /* EDU is a timetable like Weekly, so it gets the full width under both. */
-  html body #root .hub-app.hub-app.hub-desktop .routine-editor-panel[data-kind="edu"] { grid-column: 1 / -1; }
-  html body #root .hub-app.hub-app.hub-desktop .routine-editor-panel[data-kind="daily"] :is(.routine-preset-list, .routine-table-heads) { grid-template-columns: minmax(0, 1fr); }
-  html body #root .hub-app.hub-app.hub-desktop .routine-editor-panel[data-kind="daily"] .routine-table-head.is-secondary { display: none; }
-  html body #root .hub-app.hub-app.hub-desktop .routine-weekly-grid { grid-template-columns: 180px repeat(7, minmax(0, 1fr)); }
+html body #root .hub-app.hub-app.hub-desktop .routine-desktop-workspace { grid-template-columns: minmax(0, 1fr); gap: 0; padding: 4px 22px; border: 1px solid var(--fp-line); border-radius: 14px; background: #fff; box-shadow: var(--fp-shadow); }
+html body #root .hub-app.hub-app.hub-desktop .routine-desktop-workspace > .routine-editor-panel { padding: 16px 0 20px; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+html body #root .hub-app.hub-app.hub-desktop .routine-desktop-workspace > .routine-editor-panel + .routine-editor-panel { border-top: 1px solid var(--fp-line); }
+html body #root .hub-app.hub-app.hub-desktop .routine-desktop-workspace > .routine-editor-panel.is-collapsed { padding-bottom: 12px; }
+html body #root .hub-app.hub-app .routine-table-head.is-tertiary { display: none; }
+/* Weekly already explains the day cells; EDU right under it does not repeat it. */
+html body #root .hub-app.hub-app.hub-desktop .routine-desktop-workspace .routine-editor-panel[data-kind="edu"] .wk-guide { display: none; }
+@container routine-panel (min-width: 1240px) {
+  html body #root .hub-app.hub-app.hub-desktop .routine-editor-panel[data-kind="daily"] :is(.routine-preset-list, .routine-table-heads) { grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: 28px; }
+  html body #root .hub-app.hub-app.hub-desktop .routine-editor-panel[data-kind="daily"] .routine-table-head.is-tertiary { display: grid; }
 }
-html body #root .hub-app.hub-app .routine-editor-tabs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+html body #root .hub-app.hub-app .routine-editor-tabs { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 
 /* Phone: shorter memo boxes (they scroll inside) and one-line Daily rows. */
 html body #root .hub-app.hub-app.hub-mobile .flow-view { --hub-memo-height: 170px; }

@@ -128,7 +128,7 @@ function PresetEditor({ kind, heading, toggle }) {
   return <div className="routine-config-editor" ref={root} aria-label={`${title} 편집`}>
     <div className="routine-editor-actions">{heading && <h2><Repeat2 size={18} />{title}<small>{presets.length}</small></h2>}<span className="routine-editor-tools"><button className="routine-add-button" type="button" aria-label={`${title} 항목 추가`} title="항목 추가" onClick={d.addPreset}><Plus size={17} /><span className="routine-add-label">항목 추가</span></button>{toggle}</span></div>
     {heading && <div className="routine-table-heads" aria-hidden="true">
-      {Array.from({ length: 2 }, (_, index) => <div key={index} className={`routine-table-head${index ? " is-secondary" : ""}`}><span>항목</span><span>Y</span><span>N</span></div>)}
+      {["", " is-secondary", " is-tertiary"].map((extra) => <div key={extra} className={`routine-table-head${extra}`}><span>항목</span><span>Y</span><span>N</span></div>)}
     </div>}
     <div className="routine-preset-list">
       {presets.map((preset, index) => <article className={`routine-preset-row${drag.rowClass(preset.key, presets)}`} key={preset.key} data-item-key={preset.key}>
