@@ -197,3 +197,22 @@ html:has(#root .hub-app .lingo-library) { scrollbar-gutter: stable; }
 #root .hub-app .lingo-book-pop .lingo-book-form input { height: 34px; padding: 0 10px; }
 #root .hub-app .lingo-book-pop { grid-template-columns: minmax(0, 1fr); }
 #root .hub-app .lingo-book-pop > * { min-width: 0; }
+
+/* Words per page stepper and shuffle, between the result count and the bulk star. */
+#root .hub-app .lingo-result-toolbar { flex-wrap: wrap; }
+#root .hub-app .lingo-view-tools { display: inline-flex; align-items: center; gap: 6px; margin-left: auto; }
+#root .hub-app .lingo-page-size { display: inline-flex; align-items: center; height: 34px; box-sizing: border-box; padding: 2px; border: 1px solid #dfe6e3; border-radius: 9px; background: #fff; }
+#root .hub-app .lingo-workspace .lingo-page-size button { display: grid; place-items: center; width: 28px; min-width: 28px; height: 28px; min-height: 28px; padding: 0; border: 0; border-radius: 6px; background: transparent; color: #5f6f6b; box-shadow: none; }
+#root .hub-app .lingo-workspace .lingo-page-size button:hover:not(:disabled) { background: #eef4f1; }
+#root .hub-app .lingo-workspace .lingo-page-size button:disabled { opacity: .35; }
+#root .hub-app .lingo-page-size span { min-width: 54px; color: #75827f; font-size: 12px; text-align: center; }
+#root .hub-app .lingo-page-size strong { color: #2f3d3a; font-size: 13px; font-variant-numeric: tabular-nums; }
+#root .hub-app .lingo-workspace :is(button.lingo-shuffle, button.lingo-shuffle-off) { display: inline-flex; align-items: center; gap: 5px; min-height: 34px; padding: 6px 10px; border: 1px solid #dfe6e3; border-radius: 9px; background: #fff; color: #4f5f5b; font-size: 12px; white-space: nowrap; }
+#root .hub-app .lingo-workspace button.lingo-shuffle[aria-pressed="true"] { border-color: #2f5d50; background: #2f5d50; color: #fff; }
+#root .hub-app.hub-mobile .lingo-view-tools { order: 3; flex: 1 1 100%; min-width: 0; margin-left: 0; }
+#root .hub-app.hub-mobile .lingo-view-tools > * { flex: 1 1 0; min-width: 0; justify-content: center; }
+#root .hub-app.hub-mobile .lingo-page-size { flex: 1.5 1 0; justify-content: space-between; }
+#root .hub-app.hub-mobile .lingo-page-size span { min-width: 0; white-space: nowrap; }
+#root .hub-app.hub-mobile .lingo-page-size { height: 44px; }
+#root .hub-app.hub-mobile .lingo-workspace .lingo-page-size button { width: 34px; min-width: 34px; height: 38px; min-height: 38px; }
+#root .hub-app.hub-mobile .lingo-workspace :is(button.lingo-shuffle, button.lingo-shuffle-off) { min-height: 44px; padding: 6px 8px; }
