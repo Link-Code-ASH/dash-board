@@ -28,3 +28,6 @@
   #root .hub-app .lingo-category-options > label { min-height: 40px; padding: 8px 10px; }
   #root .hub-app .lingo-category-options input[type=checkbox] { width: 16px; height: 16px; min-height: 16px; }
 }
+
+/* 특성 waits for a 품사 or JLPT choice; until then it shows a one-line hint. */
+.lingo-category-group.is-topic-hint .lingo-topic-hint { margin: 2px 0 0; color: #8a97a9; font-size: 13px; line-height: 1.5; }

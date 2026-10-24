@@ -1,3 +1,5 @@
+import { wordTopicGroups } from "./topicGroups.js";
+
 export const UNCATEGORIZED = Symbol("uncategorized");
 export const wordEntryKey = (deckId, wordId) => JSON.stringify([deckId, wordId]);
 
@@ -19,10 +21,10 @@ export function filterWordEntries(entries, filters = {}) {
     if (decks.size && !decks.has(deckId)) return false;
     if (stages.size && !stages.has(word.stage)) return false;
     if (!matches(parts, word.partsOfSpeech || []) || !matches(levels, word.jlpt ? [word.jlpt] : []) ||
-        !matches(topics, word.topics || [])) return false;
+        !matches(topics, [...wordTopicGroups(word), ...(word.topics || [])])) return false;
     if (!query) return true;
     return [deckName, word.japanese, word.meaning, word.reading, word.hanja, word.example,
-      word.exampleReading, word.translation, word.jlpt, ...(word.partsOfSpeech || []), ...(word.topics || [])]
+      word.exampleReading, word.translation, word.jlpt, ...(word.partsOfSpeech || []), ...(word.topics || []), ...wordTopicGroups(word)]
       .join(" ").toLocaleLowerCase().includes(query);
   });
 }

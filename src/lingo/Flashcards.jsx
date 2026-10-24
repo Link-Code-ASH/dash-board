@@ -3,6 +3,7 @@ import { RotateCcw, Check, X } from "lucide-react";
 import { createSession, judgeCard, swipeDirection, undoCard } from "./session.js";
 import { sessionStageChanges } from "./sessionStages.js";
 import { exampleSegments } from "./furigana.js";
+import { wordTopicGroups } from "./topicGroups.js";
 
 export default function Flashcards({ words, onExit, onSaveStages = async () => {} }) {
   const [session, setSession] = useState(() => createSession(words));
@@ -16,7 +17,7 @@ export default function Flashcards({ words, onExit, onSaveStages = async () => {
   const committing = useRef(false), finished = useRef(false), mounted = useRef(false);
   draftRef.current = draftStages; saveRef.current = onSaveStages;
   const word = session.queue[0];
-  const categories = word && [...(word.partsOfSpeech || []), word.jlpt, ...(word.topics || [])].filter(Boolean).join(", ");
+  const categories = word && [...(word.partsOfSpeech || []), word.jlpt, ...wordTopicGroups(word)].filter(Boolean).join(", ");
   const answerLabel = word && [categories, word.japanese, word.reading, word.meaning,
     word.hanja, word.example, word.exampleReading, word.translation].filter(Boolean).join(". ");
   const example = useMemo(() => exampleSegments(word?.example || "", word?.exampleReading || ""), [word?.example, word?.exampleReading]);
@@ -139,6 +140,6 @@ function CategoryBadges({ word }) {
   return <span className="lingo-card-parts" aria-label="단어 카테고리">
     {(word.partsOfSpeech || []).map((part) => <span key={`part:${part}`} aria-label={`품사: ${part}`}>{part}</span>)}
     {word.jlpt && <span className="lingo-card-jlpt" aria-label={`JLPT: ${word.jlpt}`}>{word.jlpt}</span>}
-    {(word.topics || []).map((topic) => <span key={`topic:${topic}`} className="lingo-card-topic" aria-label={`특성: ${topic}`}>{topic}</span>)}
+    {wordTopicGroups(word).map((topic) => <span key={`topic:${topic}`} className="lingo-card-topic" aria-label={`특성: ${topic}`}>{topic}</span>)}
   </span>;
 }

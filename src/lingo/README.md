@@ -45,6 +45,17 @@ words. New word IDs are derived from the identity pair so concurrent imports on
 two devices do not duplicate the same word. Imported text is rendered as text,
 never HTML. Spreadsheet formulas are not executed.
 
+## 특성 groups
+
+Imported `특성` tags are fine-grained (the first 5,000-word import had 823, a
+quarter of them on one word). `topicGroups.js` maps each tag to one of 18 broad
+groups (음식·요리, 집·생활, …). The list, filters and cards show groups; the
+stored `topics` are never rewritten, so filtering by a raw tag still works and a
+tag missing from the table shows as itself. In the filter, 특성 appears only
+after a 품사 or JLPT box is checked and lists the groups found in those words;
+checked groups that disappear are unchecked. `미분류` shows only when some
+words in the current scope lack a value.
+
 ## Study list and cards
 
 The initial scope is all decks; importing opens the target deck. POS, JLPT, and

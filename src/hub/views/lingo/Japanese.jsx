@@ -3,6 +3,7 @@ import { BookOpen, BookPlus, Library, Plus, Search, Play, RefreshCw, Download, S
 import { useLingo } from "../../../lingo/LingoProvider.jsx";
 import { JLPT_LEVELS, setStages } from "../../../lingo/model.js";
 import { collectWordEntries, filterWordEntries, UNCATEGORIZED } from "../../../lingo/filter.js";
+import { compareTopicGroups, wordTopicGroups } from "../../../lingo/topicGroups.js";
 import { downloadJson } from "../../../lingo/importFile.js";
 import ImportPanel from "../../../lingo/ImportPanel.jsx";
 import Flashcards from "../../../lingo/Flashcards.jsx";
@@ -14,19 +15,45 @@ import "../../../lingo/category-filters.css";
 
 const emptyCategories = () => ({ partsOfSpeech: [], jlpt: [], topics: [] });
 
+// After 품사/JLPT changes, drop checked 특성 that no longer appear, so no hidden
+// condition keeps filtering the list.
+function keepAvailableTopics(entries, categories) {
+  if (!categories.topics.length) return categories;
+  if (!categories.partsOfSpeech.length && !categories.jlpt.length) return { ...categories, topics: [] };
+  const available = new Set(filterWordEntries(entries, { partsOfSpeech: categories.partsOfSpeech, jlpt: categories.jlpt })
+    .flatMap(({ word }) => { const groups = wordTopicGroups(word); return groups.length ? groups : [UNCATEGORIZED]; }));
+  return { ...categories, topics: categories.topics.filter((topic) => available.has(topic)) };
+}
+
+const valuesOf = (word, field) => field === "jlpt" ? (word.jlpt ? [word.jlpt] : [])
+  : field === "topics" ? wordTopicGroups(word) : word[field] || [];
+
+// 미분류 is offered only when some words really have no value for the group.
 function CategoryFilter({ name, field, entries, selected, onChange }) {
   const counts = new Map();
   entries.forEach(({ word }) => {
-    const values = field === "jlpt" ? (word.jlpt ? [word.jlpt] : []) : word[field];
+    const values = valuesOf(word, field);
     (values.length ? values : [UNCATEGORIZED]).forEach((value) => counts.set(value, (counts.get(value) || 0) + 1));
   });
-  const values = field === "jlpt" ? JLPT_LEVELS : [...counts.keys()].filter((value) => value !== UNCATEGORIZED).sort((a, b) => a.localeCompare(b, "ko"));
-  return <fieldset className="lingo-category-group" aria-label={name}><legend>{name}{selected.length > 0 && <span>{selected.length}개 선택</span>}</legend>
-    <div className="lingo-category-options">{[...values, UNCATEGORIZED].map((value) => <label key={value === UNCATEGORIZED ? "unclassified" : `tag:${value}`} className={selected.includes(value) ? "is-selected" : ""}>
+  const known = [...counts.keys()].filter((value) => value !== UNCATEGORIZED);
+  const values = field === "jlpt" ? JLPT_LEVELS : known.sort(field === "topics" ? compareTopicGroups : (a, b) => a.localeCompare(b, "ko"));
+  const options = counts.has(UNCATEGORIZED) || selected.includes(UNCATEGORIZED) ? [...values, UNCATEGORIZED] : values;
+  return <fieldset className="lingo-category-group" aria-label={name} data-field={field}><legend>{name}{selected.length > 0 && <span>{selected.length}개 선택</span>}</legend>
+    <div className="lingo-category-options">{options.map((value) => <label key={value === UNCATEGORIZED ? "unclassified" : `tag:${value}`} className={selected.includes(value) ? "is-selected" : ""}>
       <input type="checkbox" checked={selected.includes(value)} onChange={() => onChange(selected.includes(value) ? selected.filter((item) => item !== value) : [...selected, value])} />
       <span>{value === UNCATEGORIZED ? "미분류" : value}</span><small>{counts.get(value) || 0}</small>
     </label>)}</div>
   </fieldset>;
+}
+
+// 특성 sits under 품사·JLPT: it appears once one of them is checked and lists
+// only the groups found in the words that match those checks.
+function TopicFilter({ entries, categories, onChange }) {
+  const narrowed = categories.partsOfSpeech.length || categories.jlpt.length;
+  if (!narrowed) return <fieldset className="lingo-category-group is-topic-hint" aria-label="특성"><legend>특성</legend>
+    <p className="lingo-topic-hint">품사나 JLPT를 고르면 그 단어들의 특성이 여기 나와요.</p></fieldset>;
+  const matching = filterWordEntries(entries, { partsOfSpeech: categories.partsOfSpeech, jlpt: categories.jlpt });
+  return <CategoryFilter name="특성" field="topics" entries={matching} selected={categories.topics} onChange={onChange} />;
 }
 
 // Small inline form for a word book name (new book or rename).
@@ -159,8 +186,9 @@ export default function Japanese() {
           <span>{value ? `${value}단계` : "전체"}</span><strong>{value ? scoped.filter(({ word }) => word.stage === value).length : scoped.length}</strong></button>)}</div>
         <div className="lingo-category-filters" aria-label="학습 카테고리 필터">
           <div className="lingo-filter-heading"><span>이번에 공부할 단어</span><button disabled={!search && !stage && !Object.values(categories).some((items) => items.length)} onClick={() => { setSearch(""); setStage(0); setCategories(emptyCategories()); resetSelection(); }}>조건 초기화</button></div>
-          <div className="lingo-filter-groups">{[["품사", "partsOfSpeech"], ["JLPT", "jlpt"], ["특성", "topics"]].map(([name, field]) => <CategoryFilter key={field} name={name} field={field} entries={scoped} selected={categories[field]} onChange={(values) => { setCategories((current) => ({ ...current, [field]: values })); resetSelection(); }} />)}</div>
-          <p className="lingo-filter-help">같은 그룹에서는 하나라도, 품사·JLPT·특성 사이에서는 모두 일치하는 단어를 찾아요.</p>
+          <div className="lingo-filter-groups">{[["품사", "partsOfSpeech"], ["JLPT", "jlpt"]].map(([name, field]) => <CategoryFilter key={field} name={name} field={field} entries={scoped} selected={categories[field]} onChange={(values) => { setCategories((current) => keepAvailableTopics(scoped, { ...current, [field]: values })); resetSelection(); }} />)}
+            <TopicFilter entries={scoped} categories={categories} onChange={(values) => { setCategories((current) => ({ ...current, topics: values })); resetSelection(); }} /></div>
+          <p className="lingo-filter-help">같은 그룹에서는 하나라도, 품사·JLPT·특성 사이에서는 모두 일치하는 단어를 찾아요. 특성은 품사나 JLPT를 고르면 나와요.</p>
         </div>
         <label className="lingo-search"><Search size={17} /><input aria-label="단어 검색" placeholder="일본어, 읽는 법, 뜻 검색" value={search} onChange={(e) => { setSearch(e.target.value); resetSelection(); }} /></label>
         <div className="lingo-result-toolbar"><span aria-live="polite">검색 결과 {visible.length}개</span><button className="lingo-bulk-favorite" disabled={busy || !visible.length} aria-pressed={allFavorites} onClick={() => favorite(visible, !allFavorites)}><Star size={16} fill={allFavorites ? "currentColor" : "none"} />{allFavorites ? "전체 즐겨찾기 해제" : "결과 전체 즐겨찾기"}</button></div>
@@ -180,7 +208,7 @@ export default function Japanese() {
             const next = new Set(current); next.has(key) ? next.delete(key) : next.add(key); return next;
           })} /></label><button className="lingo-favorite-toggle" aria-label={`${wordLabel} 즐겨찾기 ${word.favorite ? "해제" : "추가"}`} aria-pressed={word.favorite} title={word.favorite ? "즐겨찾기 해제" : "즐겨찾기 추가"} disabled={busy} onClick={() => favorite([entry], !word.favorite)}><Star size={18} fill={word.favorite ? "currentColor" : "none"} /></button></div>
           <div className="lingo-word-japanese"><strong lang="ja">{word.japanese}</strong>{word.reading && <small lang="ja">{word.reading}</small>}{showSource(entry) && <small className="lingo-word-source"><BookOpen size={12} />{deckName}</small>}</div>
-          <div className="lingo-word-meaning"><span>{word.meaning}</span><div className="lingo-word-tags">{word.partsOfSpeech.map((part) => <span key={`part:${part}`}>{part}</span>)}{word.jlpt && <span className="lingo-level-tag">{word.jlpt}</span>}{word.topics.map((topic) => <span key={`topic:${topic}`} className="lingo-topic-tag">{topic}</span>)}</div>{word.example && <small lang="ja">{word.example}</small>}</div>
+          <div className="lingo-word-meaning"><span>{word.meaning}</span><div className="lingo-word-tags">{word.partsOfSpeech.map((part) => <span key={`part:${part}`}>{part}</span>)}{word.jlpt && <span className="lingo-level-tag">{word.jlpt}</span>}{wordTopicGroups(word).map((topic) => <span key={`topic:${topic}`} className="lingo-topic-tag" title={word.topics.join(", ")}>{topic}</span>)}</div>{word.example && <small lang="ja">{word.example}</small>}</div>
           <select aria-label={`${wordLabel} 단계`} value={word.stage} disabled={busy} onChange={(e) => assign([entry], Number(e.target.value))}>{[1, 2, 3, 4, 5].map((value) => <option key={value} value={value}>{value}단계</option>)}</select>
         </div>; })}</div>
         {!visible.length && <p className="lingo-empty-result" role="status">{favoriteScope && !favoriteEntries.length ? "별표를 누른 단어가 여기에 모여요." : "조건에 맞는 단어가 없어요."}</p>}
