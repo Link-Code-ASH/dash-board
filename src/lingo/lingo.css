@@ -101,17 +101,17 @@ html:has(#root .hub-app .lingo-library) { scrollbar-gutter: stable; }
 #root .hub-app .lingo-card-parts > span { padding: 4px 10px; border: 1px solid #dae7df; border-radius: 999px; background: #f0f6f2; color: #567b68; font-size: 12px; font-weight: 600; line-height: 1.4; overflow-wrap: anywhere; }
 #root .hub-app .lingo-card-parts > .lingo-card-jlpt { background: #f7f2e5; border-color: #ebe2c9; color: #8c7744; }
 #root .hub-app .lingo-card-parts > .lingo-card-topic { background: #f5f6f5; border-color: #e6ebe6; color: #7b887e; }
-#root .hub-app .lingo-card-front-body { display: flex; flex: 1; align-items: center; justify-content: center; width: 100%; }
+#root .hub-app .lingo-card-front-body { display: flex; align-items: center; justify-content: center; width: 100%; margin-block: auto; }
 #root .hub-app .lingo-card-word { font-size: clamp(36px, 6vw, 56px); font-weight: 500; line-height: 1.5; white-space: pre-wrap; }
-#root .hub-app .lingo-answer { display: flex; flex-direction: column; gap: 14px; width: 100%; margin-top: 0; text-align: left; white-space: pre-wrap; }
+#root .hub-app .lingo-answer { display: flex; flex-direction: column; gap: 14px; width: 100%; margin-block: auto; text-align: center; white-space: pre-wrap; }
 #root .hub-app .lingo-answer-word { font-size: 30px; font-weight: 500; line-height: 1.45; text-align: center; color: #283c3a; }
 #root .hub-app .lingo-answer .lingo-meaning { font-size: 26px; font-weight: 650; line-height: 1.5; text-align: center; color: #386d5b; }
 #root .hub-app .lingo-reading { font-size: 20px; line-height: 1.6; text-align: center; color: #6e8278; }
-#root .hub-app .lingo-card-field { display: flex; flex-direction: column; gap: 7px; padding-top: 17px; border-top: 1px solid #edf1ed; font-size: 17px; line-height: 1.75; }
+#root .hub-app .lingo-card-field { display: flex; flex-direction: column; align-items: center; gap: 7px; padding-top: 17px; border-top: 1px solid #edf1ed; font-size: 17px; line-height: 1.75; }
 #root .hub-app .lingo-card-field-label { color: #829289; font-size: 12px; font-weight: 500; line-height: 1.5; }
-#root .hub-app .lingo-hanja { flex-direction: row; align-items: baseline; gap: 14px; color: #4a6256; }
+#root .hub-app .lingo-hanja { gap: 7px; color: #4a6256; }
 #root .hub-app .lingo-hanja > .lingo-card-field-label { flex: 0 0 auto; }
-#root .hub-app .lingo-hanja-items { display: flex; flex-wrap: wrap; gap: 4px 18px; }
+#root .hub-app .lingo-hanja-items { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 18px; }
 #root .hub-app .lingo-hanja-items > span { white-space: normal; }
 #root .hub-app .lingo-example { font-size: 20px; gap: 7px; padding-top: 22px; }
 #root .hub-app .lingo-example-text { line-height: 2.15; overflow-wrap: anywhere; }
@@ -160,7 +160,6 @@ html:has(#root .hub-app .lingo-library) { scrollbar-gutter: stable; }
   #root .hub-app .lingo-answer .lingo-meaning { font-size: 23px; }
   #root .hub-app .lingo-card-field { font-size: 16px; }
   #root .hub-app .lingo-example { font-size: 18px; }
-  #root .hub-app .lingo-hanja { gap: 9px; }
   #root .hub-app .lingo-hanja-items { gap: 4px 12px; }
   #root .hub-app .lingo-translation { font-size: 15px; }
   #root .hub-app .lingo-selection .lingo-actions { width: 100%; justify-content: space-between; }
@@ -216,3 +215,12 @@ html:has(#root .hub-app .lingo-library) { scrollbar-gutter: stable; }
 #root .hub-app.hub-mobile .lingo-page-size { height: 44px; }
 #root .hub-app.hub-mobile .lingo-workspace .lingo-page-size button { width: 34px; min-width: 34px; height: 38px; min-height: 38px; }
 #root .hub-app.hub-mobile .lingo-workspace :is(button.lingo-shuffle, button.lingo-shuffle-off) { min-height: 44px; padding: 6px 8px; }
+
+/* Every card is the same size whatever the word holds, so the judge buttons stay put.
+   Content is centered; a card with unusually much text scrolls inside instead of growing. */
+#root .hub-app .lingo-card-turn { height: clamp(440px, 60vh, 560px); grid-template-rows: minmax(0, 1fr); }
+#root .hub-app .lingo-card-face { height: 100%; min-height: 0; }
+#root .hub-app button.lingo-flashcard { min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: #d6e0da transparent; }
+@media (max-width: 520px) {
+  #root .hub-app .lingo-card-turn { height: clamp(440px, 64svh, 560px); }
+}
