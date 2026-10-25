@@ -117,9 +117,9 @@ test("month grids cover leap days and year transitions without changing date key
   assert.equal(isValidMonth("2026-00"), false);
 });
 
-test("359 unique icons retain legacy IDs and searchable English aliases", () => {
-  assert.equal(symbols.length, 359);
-  assert.equal(new Set(symbols.map((item) => item.name)).size, 359);
+test("392 unique icons retain legacy IDs and searchable English aliases", () => {
+  assert.equal(symbols.length, 392);
+  assert.equal(new Set(symbols.map((item) => item.name)).size, 392);
   for (const name of ["book", "note", "education", "exercise", "circle", "location"])
     assert.ok(symbols.some((item) => item.name === name && item.Icon));
   assert.ok(symbols.some((item) => item.keywords.includes("subway")));
@@ -132,4 +132,9 @@ test("life activities come first in the picker; rarely used icons are hidden but
   assert.ok(pickerSymbols.some((item) => item.keywords.includes("청소")));
   assert.ok(!pickerSymbols.some((item) => item.name === "extra-regex"));
   assert.ok(symbols.some((item) => item.name === "extra-regex" && item.Icon));
+  for (const name of ["life-sleep-mask", "life-sheet-mask", "life-comb", "life-computer"])
+    assert.equal(pickerSymbols.find((item) => item.name === name)?.group, "생활 활동", name);
+  // Hidden duplicates still draw for items that already use them.
+  assert.ok(!pickerSymbols.some((item) => item.name === "monitor"));
+  assert.ok(symbols.some((item) => item.name === "monitor" && item.Icon));
 });

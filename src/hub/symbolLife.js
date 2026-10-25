@@ -4,7 +4,13 @@ import {
   Toothbrush, SoapDispenserDroplet, BedSingle, Volleyball, Hospital, Ambulance, Baby, Users, UserRound,
   Handshake, MessageCircle, Gift, Cake, PartyPopper, PiggyBank, Banknote, HandCoins, Wrench, Hammer,
   Shovel, DoorOpen, Key, School, Newspaper, LampDesk, Lamp, CigaretteOff, WineOff,
+  Laptop, Monitor, MonitorOff, PhoneOff, Smartphone, SmartphoneCharging, Gamepad2, EyeClosed, BicepsFlexed,
+  PillBottle, Scissors, BookHeart, Backpack, Bone, Blinds, Headset, Plug,
 } from "lucide-react";
+import {
+  SleepMask, SheetMask, Comb, HairDryer, Razor, Iron, Vacuum, Pillow, LotionPump, CreamJar, Lipstick,
+  SunscreenTube, YogaMat, JumpRope, Sock, BedMade,
+} from "./symbolCustom.js";
 
 // The "생활 활동" picker group, in display order. A bare name moves an existing
 // icon here (its stored name never changes); a full entry adds a new icon.
@@ -16,8 +22,12 @@ export const lifeActivities = [
   ["life-recycle", Recycle, "분리수거", "recycle 재활용"],
   ["life-dishes", Bubbles, "설거지", "dishes wash 세제 거품"],
   ["life-toilet", Toilet, "화장실 청소", "toilet bathroom 화장실"],
+  ["life-vacuum", Vacuum, "청소기", "vacuum 청소기 돌리기"],
+  ["life-bed-made", BedMade, "이불 정리", "make bed 침구 이불 개기"],
   ["laundry"],
   ["extra-shirt"],
+  ["life-iron", Iron, "다림질", "iron 다리미 옷"],
+  ["life-sock", Sock, "빨래 개기", "socks laundry fold 양말 옷 정리"],
   ["life-air", AirVent, "환기", "ventilation air 공기"],
   ["life-fan", Fan, "선풍기 냉방", "fan cooling 에어컨"],
   ["life-heater", Heater, "난방", "heater heating 보일러"],
@@ -57,14 +67,28 @@ export const lifeActivities = [
   // 씻기·잠·몸 관리
   ["life-toothbrush", Toothbrush, "양치", "brush teeth 이닦기"],
   ["life-handwash", SoapDispenserDroplet, "세안 스킨케어", "wash face skincare 손씻기"],
+  ["life-sheet-mask", SheetMask, "마스크팩", "sheet mask face pack 팩 피부"],
+  ["life-lotion", LotionPump, "로션 바디", "lotion skincare 바디로션 화장품"],
+  ["life-cream", CreamJar, "크림 보습", "cream moisturizer 수분크림 핸드크림"],
+  ["life-sunscreen", SunscreenTube, "선크림", "sunscreen spf 자외선"],
+  ["life-makeup", Lipstick, "화장 메이크업", "makeup lipstick 립 화장"],
+  ["life-comb", Comb, "빗질", "comb hair 머리 빗기"],
+  ["life-hair-dryer", HairDryer, "머리 말리기", "hair dryer 드라이기"],
+  ["life-razor", Razor, "면도", "shave razor 면도기"],
+  ["life-haircut", Scissors, "미용실 머리 손질", "haircut salon 미용 커트 손톱"],
+  ["extra-glasses"],
   ["shower"],
   ["bath"],
   ["alarm"],
   ["bed"],
+  ["life-sleep-mask", SleepMask, "안대 수면", "sleep mask eye mask 안대 잠"],
+  ["life-pillow", Pillow, "베개 취침", "pillow sleep 잠자리"],
   ["life-nap", BedSingle, "낮잠", "nap rest 쉬기"],
+  ["life-eyes-closed", EyeClosed, "눈 감기 명상", "meditation eyes rest 눈 휴식"],
   ["moon"],
   ["extra-armchair"],
   ["pill"],
+  ["life-supplements", PillBottle, "영양제", "supplements vitamin 비타민"],
   ["life-hospital", Hospital, "병원", "hospital clinic 진료 치과"],
   ["life-ambulance", Ambulance, "응급", "emergency 응급실"],
   ["extra-weight"],
@@ -72,6 +96,9 @@ export const lifeActivities = [
   ["life-no-drink", WineOff, "금주", "no alcohol 술"],
   // 운동
   ["exercise"],
+  ["life-muscle", BicepsFlexed, "근력 운동", "strength muscle 헬스 웨이트"],
+  ["life-yoga", YogaMat, "요가 스트레칭", "yoga mat stretching 홈트 매트"],
+  ["life-jump-rope", JumpRope, "줄넘기", "jump rope skipping"],
   ["walk"],
   ["extra-accessibility"],
   ["extra-person-standing"],
@@ -91,6 +118,21 @@ export const lifeActivities = [
   ["life-door", DoorOpen, "외출 귀가", "go out come home 나가기"],
   ["life-key", Key, "열쇠 집", "key 문단속"],
   ["life-news", Newspaper, "뉴스 신문", "news newspaper 기사"],
+  // 화면·기기
+  ["life-computer", Monitor, "컴퓨터", "computer pc desktop 모니터 컴퓨터 작업"],
+  ["life-laptop", Laptop, "노트북", "laptop notebook computer 노트북 컴퓨터"],
+  ["life-smartphone", Smartphone, "휴대폰", "smartphone phone mobile 핸드폰 폰"],
+  ["life-phone-off", PhoneOff, "폰 내려놓기", "phone off digital detox 폰 줄이기 디톡스"],
+  ["life-screen-off", MonitorOff, "화면 끄기", "screen off 화면 시간 줄이기"],
+  ["life-charge", SmartphoneCharging, "충전", "charge battery 폰 충전"],
+  ["life-plug", Plug, "플러그 뽑기", "unplug power 전기 절약"],
+  ["life-game", Gamepad2, "게임", "game gaming 게임하기"],
+  ["life-call", Headset, "통화 회의", "call meeting headset 화상"],
+  // 그 밖의 생활
+  ["life-diary", BookHeart, "일기", "diary journal 감사일기"],
+  ["life-bag", Backpack, "가방 챙기기", "bag pack 준비물"],
+  ["life-curtain", Blinds, "커튼 블라인드", "curtain blinds 햇빛 아침"],
+  ["life-pet-food", Bone, "반려동물 간식", "pet treat dog 강아지 산책"],
 ];
 
 // Icons that rarely fit a daily routine. They still draw for items that
@@ -103,4 +145,16 @@ export const hiddenSymbolNames = new Set([
   "extra-list-filter", "extra-clock-arrow-down", "extra-timer-off", "extra-alarm-clock-off", "extra-bell-off",
   "extra-scan-eye", "extra-diamond", "extra-forward", "extra-fast-forward", "extra-orbit", "extra-satellite",
   "extra-camera-off", "extra-sun-snow", "extra-anchor", "extra-castle", "extra-traffic-cone", "extra-train-front",
+  // 2026-10-25: more that rarely fit a day (duplicates, abstract shapes, scenery).
+  "monitor", "extra-laptop", "extra-smartphone", "game",
+  "rocket", "ship", "compass", "milestone", "circle-dot", "square-check", "circle-check",
+  "extra-book-copy", "extra-book-a", "extra-file-image", "extra-files", "extra-folder-check",
+  "extra-chart-pie", "extra-chart-line", "extra-chart-bar", "extra-calendar-search", "extra-calendar-sync", "extra-calendar-fold",
+  "extra-clock-check", "extra-clock-alert", "extra-clock-arrow-up", "extra-timer-reset", "extra-alarm-clock-check",
+  "extra-list-ordered", "extra-list-restart", "extra-check", "extra-check-circle2", "extra-badge-check", "extra-badge",
+  "extra-gem", "extra-route", "extra-signpost", "extra-flag-triangle-right", "extra-bookmark-check", "extra-bookmark-plus",
+  "extra-bell-ring", "extra-rotate-ccw", "extra-rabbit", "extra-turtle", "extra-snail", "extra-bug", "extra-feather",
+  "extra-clover", "extra-cloud", "extra-cloud-snow", "extra-snowflake", "extra-wind", "extra-rainbow", "extra-mountain-snow",
+  "extra-earth", "extra-telescope", "extra-sailboat", "extra-kayak", "extra-caravan", "extra-building2", "extra-church",
+  "extra-parking-circle", "extra-flame-kindling", "extra-scale",
 ]);
