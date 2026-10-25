@@ -1,8 +1,9 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { Plus, Trash2, GripVertical, Repeat2, CalendarRange, GraduationCap } from "lucide-react";
+import { Plus, Trash2, GripVertical, Repeat2, CalendarRange, ChevronUp, ChevronDown, FolderPlus } from "lucide-react";
 import { useDashboardData } from "./context.jsx";
 import ItemIconButton from "./ItemIconButton.jsx";
-import { weekDays, getWeekdayKey, getWeekSerial, getWeeklyPlanItems, encodeWeeklyPlanItems } from "../dashboard/model.js";
+import { weekDays, getWeekdayKey, getWeekSerial, getWeeklyPlanItems, encodeWeeklyPlanItems, weeklyGroupColors } from "../dashboard/model.js";
+import { groupStyle, groupWeeklyCategories, weeklyGroupPalette } from "./weeklyGroups.js";
 
 function ScoreInput({ value, choice, label, onChange }) {
   return <label className={`routine-score-field is-${choice.toLowerCase()}`} title={choice === "Y" ? "3처럼 숫자 하나, 또는 1-3처럼 구간 (구간이면 Today's Tasks에서 점수를 골라요)" : undefined}>
@@ -97,6 +98,7 @@ function useRowDrag(root, move) {
     if (!state.from) return "";
     if (key === state.from) return " is-dragging";
     if (key !== state.over) return "";
+    if (key.startsWith("group:")) return " is-drop-after";
     const index = order(items);
     return index[state.from] > index[key] ? " is-drop-before" : " is-drop-after";
   };
@@ -188,34 +190,83 @@ function WeeklyDay({ day, label, value, today, onChange, selectedDate }) {
   </div>;
 }
 
-// Weekly and EDU share one editor: rows with Y/N scores and a task per weekday.
-// EDU rows are the saved schoolPresets (name field) with schoolWeeklyPlan.
-function useWeeklySource(kind) {
-  const d = useDashboardData();
-  if (kind === "edu") return {
-    title: "EDU", Icon: GraduationCap, noun: "항목",
-    rows: d.data.schoolPresets.map((preset) => ({ key: preset.key, label: preset.name, yScore: preset.yScore, nScore: preset.nScore })),
-    add: d.addSchoolPreset, move: d.moveSchoolPreset, remove: d.removeSchoolPreset,
-    update: (key, field, value) => d.updateSchoolPreset(key, field === "label" ? "name" : field, value),
-    plan: d.data.schoolWeeklyPlan || {}, updatePlan: d.updateSchoolWeeklyPlan,
-  };
-  return {
-    title: "Weekly", Icon: CalendarRange, noun: "카테고리",
-    rows: d.data.categories,
-    add: d.addCategory, move: d.moveCategory, remove: d.removeCategory, update: d.updateCategory,
-    plan: d.data.weeklyPlan, updatePlan: d.updateWeeklyPlan,
-  };
+// Colour dot of a group; hovering it (tapping on touch screens) opens a small
+// card of colour swatches, like the Y score picker in Today's Tasks.
+function GroupColorPicker({ group, onPick }) {
+  const [open, setOpen] = useState(false);
+  const root = useRef(null);
+  useEffect(() => {
+    if (!open) return undefined;
+    const close = (event) => { if (!root.current?.contains(event.target)) setOpen(false); };
+    document.addEventListener("pointerdown", close);
+    return () => document.removeEventListener("pointerdown", close);
+  }, [open]);
+  return <div className={`wk-color-picker${open ? " is-open" : ""}`} ref={root}>
+    <button type="button" className="wk-color-dot" aria-haspopup="true" aria-expanded={open} aria-label={`${group.name || "그룹"} 색 바꾸기`} title="색 바꾸기"
+      onClick={() => setOpen((value) => !value)}><i /></button>
+    <div className="wk-color-pop" role="group" aria-label={`${group.name || "그룹"} 색`}>
+      {weeklyGroupColors.map((color) => <button type="button" key={color} aria-pressed={group.color === color} aria-label={weeklyGroupPalette[color].label} title={weeklyGroupPalette[color].label}
+        style={{ "--swatch": weeklyGroupPalette[color].ink }} onClick={() => { onPick(color); setOpen(false); }} />)}
+    </div>
+  </div>;
 }
 
+function GroupHead({ group, count, index, total, dragClass, d }) {
+  if (!group) return <div className={`wk-group-head is-loose${dragClass}`} data-item-key="group:">
+    <span className="wk-group-title">그룹 없음</span><small>{count}</small>
+  </div>;
+  return <div className={`wk-group-head${dragClass}`} data-item-key={`group:${group.key}`} style={groupStyle(group)}>
+    <GroupColorPicker group={group} onPick={(color) => d.updateWeeklyGroup(group.key, "color", color)} />
+    <input className="wk-group-name" aria-label="그룹 이름" placeholder="그룹 이름" maxLength={24} value={group.name}
+      onChange={(e) => d.updateWeeklyGroup(group.key, "name", e.target.value)} />
+    <small>{count}</small>
+    <span className="wk-group-tools">
+      <button type="button" aria-label={`${group.name} 그룹 위로`} title="그룹 위로" disabled={index === 0} onClick={() => d.moveWeeklyGroup(group.key, -1)}><ChevronUp size={16} /></button>
+      <button type="button" aria-label={`${group.name} 그룹 아래로`} title="그룹 아래로" disabled={index === total - 1} onClick={() => d.moveWeeklyGroup(group.key, 1)}><ChevronDown size={16} /></button>
+      <button type="button" aria-label={`${group.name} 그룹에 카테고리 추가`} title="이 그룹에 카테고리 추가" onClick={() => d.addCategory(group.key)}><Plus size={16} /></button>
+      <button type="button" aria-label={`${group.name} 그룹 삭제`} title="그룹 삭제 (카테고리는 남아요)" onClick={() => d.removeWeeklyGroup(group.key)}><Trash2 size={15} /></button>
+    </span>
+  </div>;
+}
+
+// Weekly: rows with Y/N scores and a task per weekday, shown group by group.
 function WeeklyEditor({ kind, heading, toggle }) {
   const d = useDashboardData();
-  const { title, Icon, noun, rows, add, move, remove, update, plan, updatePlan } = useWeeklySource(kind);
+  const title = "Weekly";
+  const noun = "카테고리";
+  const all = d.data.categories;
+  const plan = d.data.weeklyPlan;
+  const { groups, sections } = groupWeeklyCategories(all, d.data.weeklyGroups);
+  const rows = sections.flatMap((section) => section.rows);
+  const headKey = (group) => `group:${group?.key || ""}`;
+  const shown = groups.length ? sections.flatMap((section) => [headKey(section.group), ...section.rows.map((row) => row.key)]) : rows.map((row) => row.key);
+  // Dropping on a category takes its place (and its group); dropping on a
+  // group title makes it that group's first category.
+  const move = (fromKey, toKey) => {
+    const fromIndex = shown.indexOf(fromKey);
+    const next = shown.filter((key) => key !== fromKey);
+    let at = next.indexOf(toKey);
+    if (at < 0 || fromIndex < 0) return;
+    if (toKey.startsWith("group:") || fromIndex < shown.indexOf(toKey)) at += 1;
+    next.splice(at, 0, fromKey);
+    let current = "";
+    const order = [];
+    const members = {};
+    for (const key of next) {
+      if (key.startsWith("group:")) current = key.slice(6);
+      else { order.push(key); members[key] = current; }
+    }
+    d.arrangeWeeklyCategories(order, members);
+  };
   const root = useNewItemFocus(rows);
   const selectedWeekday = getWeekdayKey(d.selectedDate);
   const drag = useRowDrag(root, move);
+  const items = shown.map((key) => ({ key }));
   return <div className="routine-config-editor routine-weekly-editor wk-editor" ref={root} aria-label={`${title} 편집`}>
-    <div className="routine-editor-actions">{heading && <h2><Icon size={18} />{title}<small>{rows.length}</small></h2>}<span className="routine-editor-tools"><button className="routine-add-button" type="button" aria-label={`${title} ${noun} 추가`} title={`${noun} 추가`} onClick={add}><Plus size={17} /><span className="routine-add-label">{noun} 추가</span></button>{toggle}</span></div>
-    <p className="wk-guide">요일 칸에 적은 할 일은 그 요일 <b>Today's Tasks</b>에 나와요. 한 칸에 여러 개를 넣으면 주마다 번갈아 나와요.</p>
+    <div className="routine-editor-actions">{heading && <h2><CalendarRange size={18} />{title}<small>{rows.length}</small></h2>}<span className="routine-editor-tools">
+      <button className="routine-add-button wk-group-add" type="button" aria-label="그룹 추가" title="그룹 추가" onClick={() => d.addWeeklyGroup()}><FolderPlus size={17} /><span className="routine-add-label">그룹</span></button>
+      <button className="routine-add-button" type="button" aria-label={`${title} ${noun} 추가`} title={`${noun} 추가`} onClick={() => d.addCategory()}><Plus size={17} /><span className="routine-add-label">{noun} 추가</span></button>{toggle}</span></div>
+    <p className="wk-guide">요일 칸에 적은 할 일은 그 요일 <b>Today's Tasks</b>에 나와요. 한 칸에 여러 개를 넣으면 주마다 번갈아 나와요.{groups.length ? " 카테고리를 끌어서 다른 그룹으로 옮길 수 있어요." : ""}</p>
     <div className="routine-table-heads wk-table-heads" aria-hidden="true">
       <div className="routine-table-head"><span>항목</span><span>Y</span><span>N</span></div>
     </div>
@@ -225,28 +276,35 @@ function WeeklyEditor({ kind, heading, toggle }) {
       <span>{noun}</span>
       {weekDays.map((day) => <span key={day.key} className={selectedWeekday === day.key ? "is-today" : ""}>{day.label}{selectedWeekday === day.key && <em>오늘</em>}</span>)}
     </div>
-    <div className="wk-list">
-      {rows.map((row, index) => <article className={`wk-cat${drag.rowClass(row.key, rows)}`} key={row.key} data-item-key={row.key}>
-        {/* Same row layout as a Daily item: order, icon, name, Y, N, delete. */}
-        <header className="routine-preset-row wk-cat-row">
-          <OrderControl index={index} items={rows} drag={drag} label={row.label || noun} />
-          <ItemIconButton itemKey={`${kind}:${row.key}`} label={row.label || noun} />
-          <input className="routine-name-input wk-cat-name" aria-label={`${title} ${noun} 이름 ${index + 1}`} placeholder={`${noun} 이름`} maxLength={kind === "edu" ? 32 : 24} value={row.label} onChange={(e) => update(row.key, "label", e.target.value)} />
-          <div className="wk-cat-scores">
-            <ScoreInput choice="Y" label={row.label} value={row.yScore} onChange={(value) => update(row.key, "yScore", value)} />
-            <ScoreInput choice="N" label={row.label} value={row.nScore} onChange={(value) => update(row.key, "nScore", value)} />
-          </div>
-          <button type="button" className="routine-delete-button" disabled={rows.length <= 1} aria-label={`${row.label} ${noun} 삭제`} onClick={() => remove(row.key)}><Trash2 size={18} /></button>
-        </header>
-        <div className="wk-days">
-          {weekDays.map((day) => <WeeklyDay key={day.key} day={day} label={row.label} today={selectedWeekday === day.key} selectedDate={d.selectedDate}
-            value={plan[row.key]?.[day.key] || ""} onChange={(value) => updatePlan(row.key, day.key, value)} />)}
-        </div>
-      </article>)}
+    <div className={`wk-list${groups.length ? " has-groups" : ""}`}>
+      {sections.map((section, sectionIndex) => <React.Fragment key={headKey(section.group)}>
+        {groups.length > 0 && <GroupHead group={section.group} count={section.rows.length} index={sectionIndex} total={groups.length} d={d}
+          dragClass={drag.rowClass(headKey(section.group), items)} />}
+        {section.rows.map((row) => {
+          const index = rows.indexOf(row);
+          return <article className={`wk-cat${section.group ? " is-grouped" : ""}${drag.rowClass(row.key, items)}`} key={row.key} data-item-key={row.key} style={groupStyle(section.group)}>
+            {/* Same row layout as a Daily item: order, icon, name, Y, N, delete. */}
+            <header className="routine-preset-row wk-cat-row">
+              <OrderControl index={index} items={rows} drag={drag} label={row.label || noun} />
+              <ItemIconButton itemKey={`${kind}:${row.key}`} label={row.label || noun} />
+              <input className="routine-name-input wk-cat-name" aria-label={`${title} ${noun} 이름 ${index + 1}`} placeholder={`${noun} 이름`} maxLength={24} value={row.label} onChange={(e) => d.updateCategory(row.key, "label", e.target.value)} />
+              <div className="wk-cat-scores">
+                <ScoreInput choice="Y" label={row.label} value={row.yScore} onChange={(value) => d.updateCategory(row.key, "yScore", value)} />
+                <ScoreInput choice="N" label={row.label} value={row.nScore} onChange={(value) => d.updateCategory(row.key, "nScore", value)} />
+              </div>
+              <button type="button" className="routine-delete-button" disabled={all.length <= 1} aria-label={`${row.label} ${noun} 삭제`} onClick={() => d.removeCategory(row.key)}><Trash2 size={18} /></button>
+            </header>
+            <div className="wk-days">
+              {weekDays.map((day) => <WeeklyDay key={day.key} day={day} label={row.label} today={selectedWeekday === day.key} selectedDate={d.selectedDate}
+                value={plan[row.key]?.[day.key] || ""} onChange={(value) => d.updateWeeklyPlan(row.key, day.key, value)} />)}
+            </div>
+          </article>;
+        })}
+      </React.Fragment>)}
     </div>
   </div>;
 }
 
 export default function RoutineEditor({ kind, heading = false, toggle = null }) {
-  return kind === "weekly" || kind === "edu" ? <WeeklyEditor key={kind} kind={kind} heading={heading} toggle={toggle} /> : <PresetEditor key={kind} kind={kind} heading={heading} toggle={toggle} />;
+  return kind === "weekly" ? <WeeklyEditor key={kind} kind={kind} heading={heading} toggle={toggle} /> : <PresetEditor key={kind} kind={kind} heading={heading} toggle={toggle} />;
 }

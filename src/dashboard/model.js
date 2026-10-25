@@ -159,6 +159,25 @@ export function normalizePresets(savedPresets) {
     }));
 }
 
+// Weekly category groups live beside the categories (not on them) so an older
+// app that rewrites categories keeps the grouping. members: categoryKey -> groupKey.
+export const weeklyGroupColors = ["blue", "green", "orange", "purple", "rose", "teal", "amber", "slate"];
+
+export function normalizeWeeklyGroups(source) {
+  const seen = new Set();
+  const groups = (Array.isArray(source?.groups) ? source.groups : [])
+    .filter((group) => group && typeof group.key === "string" && group.key && !seen.has(group.key) && seen.add(group.key))
+    .map((group) => ({
+      key: group.key,
+      name: String(group.name ?? ""),
+      color: weeklyGroupColors.includes(group.color) ? group.color : weeklyGroupColors[0],
+    }));
+  const members = source?.members && typeof source.members === "object" && !Array.isArray(source.members)
+    ? Object.fromEntries(Object.entries(source.members).filter(([key, value]) => key && typeof value === "string" && value))
+    : {};
+  return { groups, members };
+}
+
 export function normalizeWeeklyPlan(plan, categories) {
   const normalized = createEmptyWeeklyPlan(categories);
   categories.forEach((category) => {
@@ -713,6 +732,7 @@ export function createFallbackState() {
     presets: clonePresets(),
     categories,
     weeklyPlan: createEmptyWeeklyPlan(categories),
+    weeklyGroups: normalizeWeeklyGroups(),
     dateMarkers: normalizeDateMarkers(),
     work: normalizeWork(),
     school: normalizeSchool(),
@@ -755,6 +775,7 @@ export function normalizeState(source) {
     "presets",
     "categories",
     "weeklyPlan",
+    "weeklyGroups",
     "dateMarkers",
     "work",
     "school",
@@ -792,6 +813,7 @@ export function normalizeState(source) {
     presets: normalizePresets(source?.presets),
     categories,
     weeklyPlan: normalizeWeeklyPlan(source?.weeklyPlan, categories),
+    weeklyGroups: normalizeWeeklyGroups(source?.weeklyGroups),
     dateMarkers: normalizeDateMarkers(source?.dateMarkers),
     work: normalizeWork(source?.work),
     school: normalizeSchool(source?.school),

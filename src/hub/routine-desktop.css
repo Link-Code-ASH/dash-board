@@ -71,7 +71,7 @@ html body #root .hub-app .hub-content-modern .routine-weekly-editor .weekly-item
  #root .hub-app .routine-weekly-editor .weekly-item-divider:is(:hover,:focus-within) button { opacity:1; }
 }
 #root .hub-app .routine-editor-empty { padding:30px 0; text-align:center; font-size:16px; color:#8a97a9; }
-#root .hub-app .routine-editor-tabs { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; margin-bottom:14px; }
+#root .hub-app .routine-editor-tabs { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; margin-bottom:14px; }
 #root .hub-app .routine-editor-tabs button { display:flex; align-items:center; justify-content:center; gap:7px; min-height:44px; padding:8px 6px; border:1px solid #dde4eb; border-radius:5px; background:#f6f8fb; color:#8795a8; font-size:15px; }
 #root .hub-app .routine-editor-tabs button[aria-pressed="true"] { background:#e8eff8; border-color:#b8c9de; color:#55779d; }
 @container routine-panel (min-width:800px) {

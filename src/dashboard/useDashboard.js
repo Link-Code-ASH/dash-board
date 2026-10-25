@@ -26,6 +26,8 @@ import {
   noteTabColors,
   scoreNumber,
   createEmptyWeeklyPlan,
+  normalizeWeeklyGroups,
+  weeklyGroupColors,
   normalizeDateMarkers,
   normalizeCalendarDuties,
   normalizeCarryPenalties,
@@ -1398,11 +1400,82 @@ export function useDashboard(selectedDate, setSelectedDate) {
     });
   };
 
-  const addCategory = () => {
+  const weeklyGroupsOf = (draft) => {
+    draft.weeklyGroups = normalizeWeeklyGroups(draft.weeklyGroups);
+    return draft.weeklyGroups;
+  };
+
+  // groupKey puts the new category at the end of that group.
+  const addCategory = (groupKey = "") => {
     saveData((draft) => {
       const category = { key: createKey("cat"), label: `New Category ${draft.categories.length + 1}`, yScore: 5, nScore: -2 };
-      draft.categories.push(category);
+      const groups = weeklyGroupsOf(draft);
+      if (groupKey && groups.groups.some((group) => group.key === groupKey)) {
+        groups.members[category.key] = groupKey;
+        const last = draft.categories.map((item) => groups.members[item.key]).lastIndexOf(groupKey);
+        draft.categories.splice(last < 0 ? draft.categories.length : last + 1, 0, category);
+      } else {
+        draft.categories.push(category);
+      }
       draft.weeklyPlan[category.key] = createEmptyWeeklyPlan([category])[category.key];
+      return draft;
+    });
+  };
+
+  const addWeeklyGroup = () => {
+    saveData((draft) => {
+      const groups = weeklyGroupsOf(draft);
+      const used = new Set(groups.groups.map((group) => group.color));
+      const color = weeklyGroupColors.find((item) => !used.has(item)) || weeklyGroupColors[groups.groups.length % weeklyGroupColors.length];
+      groups.groups.push({ key: createKey("wgroup"), name: `Group ${groups.groups.length + 1}`, color });
+      return draft;
+    });
+  };
+
+  const updateWeeklyGroup = (key, field, value) => {
+    saveData((draft) => {
+      const group = weeklyGroupsOf(draft).groups.find((item) => item.key === key);
+      if (!group) return draft;
+      if (field === "name") group.name = String(value);
+      if (field === "color" && weeklyGroupColors.includes(value)) group.color = value;
+      return draft;
+    });
+  };
+
+  const moveWeeklyGroup = (key, step) => {
+    saveData((draft) => {
+      const list = weeklyGroupsOf(draft).groups;
+      const from = list.findIndex((group) => group.key === key);
+      const to = from + step;
+      if (from < 0 || to < 0 || to >= list.length) return draft;
+      const [group] = list.splice(from, 1);
+      list.splice(to, 0, group);
+      return draft;
+    });
+  };
+
+  // Removing a group keeps its categories; they just become ungrouped.
+  const removeWeeklyGroup = (key) => {
+    saveData((draft) => {
+      const groups = weeklyGroupsOf(draft);
+      groups.groups = groups.groups.filter((group) => group.key !== key);
+      for (const [category, group] of Object.entries(groups.members)) if (group === key) delete groups.members[category];
+      return draft;
+    });
+  };
+
+  // The editor shows categories grouped; after a drag it hands back the shown
+  // order and each category's group, and the stored list follows that order.
+  const arrangeWeeklyCategories = (order, members) => {
+    saveData((draft) => {
+      const groups = weeklyGroupsOf(draft);
+      const byKey = new Map(draft.categories.map((category) => [category.key, category]));
+      const sorted = order.map((key) => byKey.get(key)).filter(Boolean);
+      draft.categories = [...sorted, ...draft.categories.filter((category) => !order.includes(category.key))];
+      for (const [category, group] of Object.entries(members)) {
+        if (group && groups.groups.some((item) => item.key === group)) groups.members[category] = group;
+        else delete groups.members[category];
+      }
       return draft;
     });
   };
@@ -1435,6 +1508,7 @@ export function useDashboard(selectedDate, setSelectedDate) {
       if (draft.categories.length <= 1) return draft;
       draft.categories = draft.categories.filter((category) => category.key !== key);
       delete draft.weeklyPlan[key];
+      if (draft.weeklyGroups?.members) delete draft.weeklyGroups.members[key];
       return draft;
     });
   };
@@ -1867,6 +1941,11 @@ export function useDashboard(selectedDate, setSelectedDate) {
     moveCategory,
     removeCategory,
     updateWeeklyPlan,
+    addWeeklyGroup,
+    updateWeeklyGroup,
+    moveWeeklyGroup,
+    removeWeeklyGroup,
+    arrangeWeeklyCategories,
     updateCalendarNote,
     updateCalendarEntries,
     toggleCalendarDuty,

@@ -3,6 +3,7 @@ import { ChevronDown, ChevronLeft, ChevronRight, RotateCcw } from "lucide-react"
 import { useDashboardData } from "../context.jsx";
 import { todayKey } from "../routing.js";
 import ItemIconButton from "../ItemIconButton.jsx";
+import { groupStyle, groupWeeklyCategories } from "../weeklyGroups.js";
 import {
   formatScore,
   getWeeklyPlanEntry,
@@ -187,9 +188,11 @@ export function RoutineTasks({ compact = false }) {
       };
     })
     .filter((card) => card.scheduled || card.selectedChoice);
-  const weeklyCards = planCards(d.data.categories, d.data.weeklyPlan, "plan", "Weekly");
-  // EDU checks keep the "school:" key they always had, so past days still show them.
-  const eduCards = planCards(d.data.schoolPresets || [], d.data.schoolWeeklyPlan, "school", "EDU");
+  // Weekly cards follow the Planner's group order and carry the group colour.
+  const { sections } = groupWeeklyCategories(d.data.categories, d.data.weeklyGroups);
+  const groupByKey = new Map(sections.flatMap((section) => section.rows.map((row) => [row.key, section.group])));
+  const weeklyCards = planCards(sections.flatMap((section) => section.rows), d.data.weeklyPlan, "plan", "Weekly")
+    .map((card) => ({ ...card, group: groupByKey.get(card.key) || null }));
   const groups = [
     {
       id: "daily",
@@ -197,7 +200,6 @@ export function RoutineTasks({ compact = false }) {
       cards: presetCards(d.data.presets, "Daily", "daily"),
     },
     { id: "weekly", title: "Weekly", cards: weeklyCards },
-    { id: "edu", title: "EDU", cards: eduCards },
   ];
   return (
     <div className={`hub-task-groups ${compact ? "is-compact" : ""}`}>
@@ -219,15 +221,16 @@ export function RoutineTasks({ compact = false }) {
             {group.cards.length ? (
               group.cards.map((card) => (
                 <article
-                  className={`hub-task ${card.selectedChoice ? (card.selectedChoice === "N" ? "selected-negative" : "selected-positive") : ""}`}
+                  className={`hub-task ${card.selectedChoice ? (card.selectedChoice === "N" ? "selected-negative" : "selected-positive") : ""}${card.group ? " has-group" : ""}`}
                   key={card.key}
+                  style={groupStyle(card.group)}
                 >
                   <ItemIconButton
                     itemKey={`${group.id}:${card.key}`}
                     label={card.label || card.value || group.title}
                   />
                   <div className="hub-task-copy">
-                    {card.label && <small>{card.label}</small>}
+                    {(card.label || card.group) && <small>{card.group && <i className="hub-task-group-dot" title={card.group.name} aria-hidden="true" />}{card.label}</small>}
                     <strong>{card.value || "항목"}</strong>
                   </div>
                   <div

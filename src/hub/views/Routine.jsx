@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { CalendarDays, Repeat2, CalendarRange, GraduationCap } from "lucide-react";
+import { CalendarDays, Repeat2, CalendarRange } from "lucide-react";
 import { ScheduleIcon, navigationStrokeWidth } from "../icons.jsx";
 import Calendar from "./Calendar.jsx";
 import { DateHeading, PanelToggle, usePanelOpen } from "./shared.jsx";
@@ -9,7 +9,6 @@ import { useDashboardData } from "../context.jsx";
 const editors = [
   { id: "daily", label: "Daily", Icon: Repeat2 },
   { id: "weekly", label: "Weekly", Icon: CalendarRange },
-  { id: "edu", label: "EDU", Icon: GraduationCap },
 ];
 
 function EditorPanel({ kind, label }) {
@@ -39,7 +38,6 @@ export default function Routine({ route, navigate }) {
     {calendar ? <Calendar route={route} navigate={navigate} /> : desktop ? <div className="routine-desktop-workspace">
       <EditorPanel kind="daily" label="Daily" />
       <EditorPanel kind="weekly" label="Weekly" />
-      <EditorPanel kind="edu" label="EDU" />
     </div> : <section className="routine-workspace" aria-label="루틴 편집">
       <nav className="routine-editor-tabs" aria-label="편집할 루틴">
         {editors.map(({ id, label, Icon }) => <button key={id} type="button"

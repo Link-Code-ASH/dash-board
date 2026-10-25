@@ -509,7 +509,7 @@ html body #root .hub-app.hub-app.hub-desktop .routine-desktop-workspace .routine
   html body #root .hub-app.hub-app.hub-desktop .routine-editor-panel[data-kind="daily"] :is(.routine-preset-list, .routine-table-heads) { grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: 28px; }
   html body #root .hub-app.hub-app.hub-desktop .routine-editor-panel[data-kind="daily"] .routine-table-head.is-tertiary { display: grid; }
 }
-html body #root .hub-app.hub-app .routine-editor-tabs { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+html body #root .hub-app.hub-app .routine-editor-tabs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 
 /* Phone: shorter memo boxes (they scroll inside) and one-line Daily rows. */
 html body #root .hub-app.hub-app.hub-mobile .flow-view { --hub-memo-height: 170px; }
@@ -954,3 +954,54 @@ html body #root .hub-app.hub-app :is(.routine-preset-row, .wk-cat):is(.is-drop-b
 html body #root .hub-app.hub-app :is(.routine-preset-row, .wk-cat):is(.is-drop-before, .is-drop-after)::after { content: ""; position: absolute; z-index: 3; left: 0; right: 0; height: 3px; border-radius: 2px; background: var(--fp-accent); pointer-events: none; }
 html body #root .hub-app.hub-app :is(.routine-preset-row, .wk-cat).is-drop-before::after { top: -2px; }
 html body #root .hub-app.hub-app :is(.routine-preset-row, .wk-cat).is-drop-after::after { bottom: -2px; }
+
+/* ---------- Planner Weekly: category groups ----------
+   Groups (e.g. Physical / Digital) are title bars inside the Weekly list.
+   Each group has a colour: its title and dot use the strong shade, its
+   categories' title cells the light tint. Hovering the dot (tapping on touch
+   screens) opens a card of colour swatches. No edge stripes. */
+html body #root .hub-app.hub-app .wk-group-head { display: flex; align-items: center; gap: 8px; min-height: 40px; margin-top: 14px; padding: 4px 6px 4px 8px; border-radius: 10px; background: var(--wk-group-tint, #f5f7fa); }
+html body #root .hub-app.hub-app .wk-list > .wk-group-head:first-child { margin-top: 0; }
+html body #root .hub-app.hub-app .wk-group-head.is-loose { background: #f5f7fa; }
+html body #root .hub-app.hub-app .wk-group-head > small { flex: none; display: grid; place-items: center; min-width: 22px; height: 20px; padding: 0 6px; border-radius: 999px; background: #ffffffb3; color: var(--wk-group-ink, var(--fp-muted)); font-size: 11px; font-weight: 800; line-height: 1; }
+html body #root .hub-app.hub-app .wk-group-title { flex: 0 1 auto; min-width: 0; padding-left: 4px; color: var(--fp-muted); font-size: 13px; font-weight: 800; line-height: 32px; }
+html body #root .hub-app.hub-app .wk-editor .wk-group-name { flex: 0 1 auto; width: auto; min-width: 72px; max-width: 260px; field-sizing: content; height: 32px !important; min-height: 32px !important; padding: 0 6px !important; border: 1px solid transparent !important; border-radius: 6px !important; background: transparent !important; box-shadow: none !important; color: var(--wk-group-ink) !important; font: 800 15px/30px var(--hub-font-body) !important; letter-spacing: .01em; }
+html body #root .hub-app.hub-app .wk-editor .wk-group-name:is(:hover, :focus) { border-color: #ffffff !important; background: #ffffffb3 !important; }
+html body #root .hub-app.hub-app .wk-group-tools { flex: none; display: flex; margin-left: auto; align-items: center; gap: 2px; }
+html body #root .hub-app.hub-app .wk-group-tools button { display: grid; place-items: center; width: 28px; min-width: 28px; height: 28px; min-height: 28px; padding: 0; border: 0; border-radius: 6px; background: transparent; box-shadow: none; color: var(--wk-group-ink); line-height: 0; }
+html body #root .hub-app.hub-app .wk-group-tools button:hover:not(:disabled) { background: #ffffffcc; }
+html body #root .hub-app.hub-app .wk-group-tools button:disabled { opacity: .3; }
+@media (hover: hover) and (pointer: fine) {
+  html body #root .hub-app.hub-app .wk-group-tools { opacity: 0; transition: opacity 120ms ease; }
+  html body #root .hub-app.hub-app .wk-group-head:is(:hover, :focus-within) .wk-group-tools { opacity: 1; }
+}
+html body #root .hub-app.hub-app .wk-color-picker { position: relative; flex: none; display: inline-flex; }
+html body #root .hub-app.hub-app .wk-color-dot { display: grid; place-items: center; width: 28px; min-width: 28px; height: 28px; min-height: 28px; padding: 0; border: 0; border-radius: 999px; background: transparent; box-shadow: none; line-height: 0; }
+html body #root .hub-app.hub-app .wk-color-dot:hover { background: #ffffffcc; }
+html body #root .hub-app.hub-app .wk-color-dot i { display: block; width: 14px; height: 14px; border-radius: 999px; background: var(--wk-group-ink); box-shadow: 0 0 0 3px #ffffffcc; }
+html body #root .hub-app.hub-app .wk-color-pop { position: absolute; top: calc(100% + 8px); left: -6px; z-index: 30; display: grid; grid-template-columns: repeat(4, 28px); gap: 6px; padding: 8px; border: 1px solid var(--fp-line); border-radius: 12px; background: #fff; box-shadow: 0 10px 28px #1d253324, 0 2px 6px #1d253314; opacity: 0; visibility: hidden; transform: translateY(-4px); transition: opacity 140ms ease, transform 140ms ease, visibility 0s linear 140ms; }
+html body #root .hub-app.hub-app .wk-color-pop::before { content: ""; position: absolute; left: 0; right: 0; top: -10px; height: 10px; }
+html body #root .hub-app.hub-app .wk-color-pop::after { content: ""; position: absolute; top: -5px; left: 16px; width: 8px; height: 8px; border-top: 1px solid var(--fp-line); border-left: 1px solid var(--fp-line); background: #fff; transform: rotate(45deg); }
+@media (hover: hover) { html body #root .hub-app.hub-app .wk-color-picker:hover .wk-color-pop { opacity: 1; visibility: visible; transform: none; transition-delay: 0s; } }
+html body #root .hub-app.hub-app .wk-color-picker.is-open .wk-color-pop { opacity: 1; visibility: visible; transform: none; transition-delay: 0s; }
+html body #root .hub-app.hub-app .wk-color-pop button { display: block; width: 28px; min-width: 28px; height: 28px; min-height: 28px; padding: 0; border: 0; border-radius: 999px; background: var(--swatch); box-shadow: none; }
+html body #root .hub-app.hub-app .wk-color-pop button:hover { transform: scale(1.08); }
+html body #root .hub-app.hub-app .wk-color-pop button[aria-pressed="true"] { box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--swatch); }
+html body #root .hub-app.hub-app.hub-mobile .wk-color-pop { grid-template-columns: repeat(4, 36px); }
+html body #root .hub-app.hub-app.hub-mobile .wk-color-pop button { width: 36px; min-width: 36px; height: 36px; min-height: 36px; }
+html body #root .hub-app.hub-app.hub-mobile .wk-group-tools button,
+html body #root .hub-app.hub-app.hub-mobile .wk-color-dot { width: 36px; min-width: 36px; height: 36px; min-height: 36px; }
+html body #root .hub-app.hub-app .wk-group-head:is(.is-drop-before, .is-drop-after) { position: relative; }
+html body #root .hub-app.hub-app .wk-group-head.is-drop-after::after { content: ""; position: absolute; z-index: 3; left: 0; right: 0; bottom: -2px; height: 3px; border-radius: 2px; background: var(--fp-accent); pointer-events: none; }
+/* Stacked layout (narrow panels, phones): a grouped category's title row is tinted. */
+html body #root .hub-app.hub-app .wk-cat.is-grouped > .wk-cat-row { border-radius: 10px; background: var(--wk-group-tint); }
+html body #root .hub-app.hub-app .wk-list.has-groups > .wk-group-head + .wk-cat { padding-top: 6px; }
+/* Timetable layout (wide panels): group bars span the whole table. */
+@container routine-panel (min-width: 761px) {
+  html body #root .hub-app.hub-app:not(.hub-mobile) .wk-editor .wk-group-head { margin: 0; border-top: 1px solid var(--fp-line); border-radius: 0; padding-left: 10px; }
+  html body #root .hub-app.hub-app:not(.hub-mobile) .wk-editor .wk-list > .wk-group-head:first-child { border-top: 0; }
+  html body #root .hub-app.hub-app:not(.hub-mobile) .wk-editor .wk-cat.is-grouped > .wk-cat-row { border-radius: 0; background: var(--wk-group-tint); }
+  html body #root .hub-app.hub-app:not(.hub-mobile) .wk-editor .wk-list.has-groups > .wk-group-head + .wk-cat { padding-top: 0; }
+}
+/* Today's Tasks: a Weekly task from a group shows the group's colour dot. */
+html body #root .hub-app.hub-app .hub-task-group-dot { display: inline-block; width: 8px; height: 8px; margin-right: 6px; border-radius: 999px; background: var(--wk-group-ink); vertical-align: 1px; }
