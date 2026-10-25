@@ -4,6 +4,8 @@ import { createSession, judgeCard, swipeDirection, undoCard } from "./session.js
 import { sessionStageChanges } from "./sessionStages.js";
 import { exampleSegments } from "./furigana.js";
 import { wordTopicGroups } from "./topicGroups.js";
+import SpeakButton from "./SpeakButton.jsx";
+import { speechText } from "./speech.js";
 
 export default function Flashcards({ words, onExit, onSaveStages = async () => {} }) {
   const [session, setSession] = useState(() => createSession(words));
@@ -73,7 +75,7 @@ export default function Flashcards({ words, onExit, onSaveStages = async () => {
       <div className={`lingo-card-shell ${drag ? "is-dragging" : ""}`} style={{ "--drag": `${drag}px`, "--rotation": `${drag / 18}deg` }}>
       <div key={word.id} className={`lingo-card-turn ${flipped ? "is-flipped" : ""}`}>
       {[false, true].map((back) => <div key={back ? "back" : "front"} className={`lingo-card-face ${back ? "lingo-card-back" : "lingo-card-front"}`} aria-hidden={flipped !== back} inert={flipped !== back}>
-      <CardToolbar word={word} currentStage={currentStage} saving={saving} onStageChange={(event) => {
+      <CardToolbar word={word} back={back} currentStage={currentStage} saving={saving} onStageChange={(event) => {
           const nextStage = Number(event.target.value);
           setDraftStages((current) => {
             const next = new Map(current);
@@ -127,9 +129,14 @@ export default function Flashcards({ words, onExit, onSaveStages = async () => {
   </section>;
 }
 
-function CardToolbar({ word, currentStage, saving, onStageChange }) {
+function CardToolbar({ word, back, currentStage, saving, onStageChange }) {
+  const sentence = speechText(word.example, word.exampleReading);
   return <div className="lingo-card-toolbar">
     <CategoryBadges word={word} />
+    <span className="lingo-card-speak">
+      <SpeakButton text={speechText(word.japanese, word.reading)} label={`${word.japanese} 발음 듣기`} size={17}>단어</SpeakButton>
+      {back && <SpeakButton text={sentence} label="예문 듣기" size={17}>예문</SpeakButton>}
+    </span>
     <select className="lingo-card-stage-select" aria-label="이 단어의 단계" value={currentStage} disabled={saving} onChange={onStageChange}>
       {[1, 2, 3, 4, 5].map((value) => <option key={value} value={value}>{value}단계</option>)}
     </select>

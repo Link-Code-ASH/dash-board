@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { BookOpen, BookPlus, Library, Plus, Minus, Search, Play, RefreshCw, Download, Star, Pencil, Trash2, Check, X, FolderMinus, Shuffle, ArrowDownAZ } from "lucide-react";
 import { useLingo } from "../../../lingo/LingoProvider.jsx";
+import SpeakButton from "../../../lingo/SpeakButton.jsx";
+import { speechText } from "../../../lingo/speech.js";
 import { JLPT_LEVELS, setStages } from "../../../lingo/model.js";
 import { collectWordEntries, filterWordEntries, UNCATEGORIZED } from "../../../lingo/filter.js";
 import { compareTopicGroups, wordTopicGroups } from "../../../lingo/topicGroups.js";
@@ -244,7 +246,7 @@ export default function Japanese() {
           <div className="lingo-word-controls"><label className="lingo-word-check"><input type="checkbox" aria-label={`${wordLabel} 선택`} checked={selected.has(key)} disabled={busy} onChange={() => setSelected((current) => {
             const next = new Set(current); next.has(key) ? next.delete(key) : next.add(key); return next;
           })} /></label><button className="lingo-favorite-toggle" aria-label={`${wordLabel} 즐겨찾기 ${word.favorite ? "해제" : "추가"}`} aria-pressed={word.favorite} title={word.favorite ? "즐겨찾기 해제" : "즐겨찾기 추가"} disabled={busy} onClick={() => favorite([entry], !word.favorite)}><Star size={18} fill={word.favorite ? "currentColor" : "none"} /></button></div>
-          <div className="lingo-word-japanese"><strong lang="ja">{word.japanese}</strong>{word.reading && <small lang="ja">{word.reading}</small>}{showSource(entry) && <small className="lingo-word-source"><BookOpen size={12} />{deckName}</small>}</div>
+          <div className="lingo-word-japanese"><span className="lingo-word-say"><strong lang="ja">{word.japanese}</strong><SpeakButton text={speechText(word.japanese, word.reading)} label={`${word.japanese} 발음 듣기`} /></span>{word.reading && <small lang="ja">{word.reading}</small>}{showSource(entry) && <small className="lingo-word-source"><BookOpen size={12} />{deckName}</small>}</div>
           <div className="lingo-word-meaning"><span>{word.meaning}</span><div className="lingo-word-tags">{word.partsOfSpeech.map((part) => <span key={`part:${part}`}>{part}</span>)}{word.jlpt && <span className="lingo-level-tag">{word.jlpt}</span>}{wordTopicGroups(word).map((topic) => <span key={`topic:${topic}`} className="lingo-topic-tag" title={word.topics.join(", ")}>{topic}</span>)}</div>{word.example && <small lang="ja">{word.example}</small>}</div>
           <select aria-label={`${wordLabel} 단계`} value={word.stage} disabled={busy} onChange={(e) => assign([entry], Number(e.target.value))}>{[1, 2, 3, 4, 5].map((value) => <option key={value} value={value}>{value}단계</option>)}</select>
         </div>; })}</div>
