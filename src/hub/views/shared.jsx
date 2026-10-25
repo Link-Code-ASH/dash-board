@@ -3,7 +3,7 @@ import { ChevronDown, ChevronLeft, ChevronRight, RotateCcw } from "lucide-react"
 import { useDashboardData } from "../context.jsx";
 import { todayKey } from "../routing.js";
 import ItemIconButton from "../ItemIconButton.jsx";
-import { groupStyle, groupWeeklyCategories } from "../weeklyGroups.js";
+import { groupStyle, groupWeeklyCategories, splitFixedScore } from "../weeklyGroups.js";
 import {
   formatScore,
   getWeeklyPlanEntry,
@@ -159,16 +159,18 @@ export function RoutineTasks({ compact = false }) {
   const planCards = (rows, plan, prefix, fallback) => rows
     .map((row) => {
       const label = row.label ?? row.name ?? "";
-      const value = getWeeklyPlanEntry(plan?.[row.key]?.[d.weekday.key], d.selectedDate).value;
+      // A task ending in "(2)" always scores Y 2 instead of the category's score or range.
+      const { text: value, score: fixedScore } = splitFixedScore(getWeeklyPlanEntry(plan?.[row.key]?.[d.weekday.key], d.selectedDate).value);
+      const yScore = fixedScore ?? row.yScore;
       const planKey = `${prefix}:${d.selectedDate}:${row.key}`;
-      const range = getCategoryScoreRange(row);
+      const range = fixedScore === null ? getCategoryScoreRange(row) : [];
       return {
         key: row.key,
         label,
         value,
         scheduled: getWeeklyPlanItems(plan?.[row.key]?.[d.weekday.key]).some((item) => item.trim()),
         scoreRange: range.length > 1 ? range : null,
-        yScore: row.yScore,
+        yScore,
         nScore: row.nScore,
         selectedChoice:
           d.entries.find((entry) => entry.planKey === planKey)?.choice || "",
@@ -181,7 +183,7 @@ export function RoutineTasks({ compact = false }) {
               choice === "N"
                 ? row.nScore
                 : choice === "Y"
-                  ? row.yScore
+                  ? yScore
                   : choice,
             ),
           }),

@@ -31,3 +31,12 @@ test("categories are shown group by group, ungrouped last", () => {
   assert.equal(plain.length, 1);
   assert.equal(plain[0].group, null);
 });
+
+test("a trailing (n) fixes a weekly task's score", async () => {
+  const { splitFixedScore } = await import("../src/hub/weeklyGroups.js");
+  assert.deepEqual(splitFixedScore("헬스 (2)"), { text: "헬스", score: 2 });
+  assert.deepEqual(splitFixedScore("독서（-1）"), { text: "독서", score: -1 });
+  assert.deepEqual(splitFixedScore("수영(3) 가기"), { text: "수영(3) 가기", score: null });
+  assert.deepEqual(splitFixedScore("(2)"), { text: "(2)", score: null });
+  assert.deepEqual(splitFixedScore(""), { text: "", score: null });
+});

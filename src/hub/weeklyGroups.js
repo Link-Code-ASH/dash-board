@@ -28,3 +28,12 @@ export function groupWeeklyCategories(categories, weeklyGroups) {
   if (loose.length || groups.length) sections.push({ group: null, rows: loose });
   return { groups, sections, groupOf };
 }
+
+// "Run 5km (2)" -> { text: "Run 5km", score: 2 }. Only a number in brackets at
+// the very end counts; anything else leaves the text alone (score null).
+export function splitFixedScore(value) {
+  const text = String(value ?? "");
+  const match = text.match(/^(.*?)\s*[(（]\s*([+-]?\d+(?:\.\d+)?)\s*[)）]\s*$/s);
+  if (!match || !match[1].trim()) return { text, score: null };
+  return { text: match[1], score: Number(match[2]) };
+}

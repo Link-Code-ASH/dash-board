@@ -266,7 +266,7 @@ function WeeklyEditor({ kind, heading, toggle }) {
     <div className="routine-editor-actions">{heading && <h2><CalendarRange size={18} />{title}<small>{rows.length}</small></h2>}<span className="routine-editor-tools">
       <button className="routine-add-button wk-group-add" type="button" aria-label="그룹 추가" title="그룹 추가" onClick={() => d.addWeeklyGroup()}><FolderPlus size={17} /><span className="routine-add-label">그룹</span></button>
       <button className="routine-add-button" type="button" aria-label={`${title} ${noun} 추가`} title={`${noun} 추가`} onClick={() => d.addCategory()}><Plus size={17} /><span className="routine-add-label">{noun} 추가</span></button>{toggle}</span></div>
-    <p className="wk-guide">요일 칸에 적은 할 일은 그 요일 <b>Today's Tasks</b>에 나와요. 한 칸에 여러 개를 넣으면 주마다 번갈아 나와요.{groups.length ? " 카테고리를 끌어서 다른 그룹으로 옮길 수 있어요." : ""}</p>
+    <p className="wk-guide">요일 칸에 적은 할 일은 그 요일 <b>Today's Tasks</b>에 나와요. 한 칸에 여러 개를 넣으면 주마다 번갈아 나와요. 끝에 <b>(2)</b>처럼 적으면 그 할 일은 무조건 Y 2점이에요.{groups.length ? " 카테고리를 끌어서 다른 그룹으로 옮길 수 있어요." : ""}</p>
     <div className="routine-table-heads wk-table-heads" aria-hidden="true">
       <div className="routine-table-head"><span>항목</span><span>Y</span><span>N</span></div>
     </div>
