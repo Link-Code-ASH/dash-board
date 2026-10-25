@@ -1003,5 +1003,9 @@ html body #root .hub-app.hub-app .wk-list.has-groups > .wk-group-head + .wk-cat 
   html body #root .hub-app.hub-app:not(.hub-mobile) .wk-editor .wk-cat.is-grouped > .wk-cat-row { border-radius: 0; background: var(--wk-group-tint); }
   html body #root .hub-app.hub-app:not(.hub-mobile) .wk-editor .wk-list.has-groups > .wk-group-head + .wk-cat { padding-top: 0; }
 }
-/* Today's Tasks: a Weekly task from a group shows the group's colour dot. */
-html body #root .hub-app.hub-app .hub-task-group-dot { display: inline-block; width: 8px; height: 8px; margin-right: 6px; border-radius: 999px; background: var(--wk-group-ink); vertical-align: 1px; }
+/* Today's Tasks: Weekly tasks are listed group by group under a small
+   coloured title (dot + name), quiet enough not to compete with the tasks. */
+html body #root .hub-app.hub-app .hub-task-subgroup { display: flex; align-items: center; gap: 6px; margin: 10px 0 2px; padding: 0 2px; color: var(--wk-group-ink, var(--fp-muted)); font-size: 11.5px; font-weight: 700; line-height: 18px; letter-spacing: .02em; }
+html body #root .hub-app.hub-app .hub-task-list > .hub-task-subgroup:first-child { margin-top: 2px; }
+html body #root .hub-app.hub-app .hub-task-subgroup i { flex: none; width: 7px; height: 7px; border-radius: 999px; background: var(--wk-group-ink); }
+html body #root .hub-app.hub-app .hub-task-subgroup.is-loose { color: var(--fp-muted); }

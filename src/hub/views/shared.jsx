@@ -219,7 +219,14 @@ export function RoutineTasks({ compact = false }) {
           </h3>
           <div className="hub-task-list">
             {group.cards.length ? (
-              group.cards.map((card) => (
+              group.cards.map((card, index) => (
+                <React.Fragment key={card.key}>
+                {/* Weekly groups: a small coloured title where a new group starts. */}
+                {group.id === "weekly" && group.cards.some((item) => item.group) && (index === 0 || group.cards[index - 1].group !== card.group) && (
+                  <p className={`hub-task-subgroup${card.group ? "" : " is-loose"}`} style={groupStyle(card.group)}>
+                    {card.group ? <><i aria-hidden="true" />{card.group.name || "그룹"}</> : "기타"}
+                  </p>
+                )}
                 <article
                   className={`hub-task ${card.selectedChoice ? (card.selectedChoice === "N" ? "selected-negative" : "selected-positive") : ""}${card.group ? " has-group" : ""}`}
                   key={card.key}
@@ -230,7 +237,7 @@ export function RoutineTasks({ compact = false }) {
                     label={card.label || card.value || group.title}
                   />
                   <div className="hub-task-copy">
-                    {(card.label || card.group) && <small>{card.group && <i className="hub-task-group-dot" title={card.group.name} aria-hidden="true" />}{card.label}</small>}
+                    {card.label && <small>{card.label}</small>}
                     <strong>{card.value || "항목"}</strong>
                   </div>
                   <div
@@ -273,6 +280,7 @@ export function RoutineTasks({ compact = false }) {
                     </button>
                   </div>
                 </article>
+                </React.Fragment>
               ))
             ) : (
               <p className="hub-empty-inline">등록된 일정이 없습니다.</p>
