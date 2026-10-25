@@ -141,6 +141,9 @@ export default function Japanese() {
   const allFavorites = visible.length > 0 && visible.every((entry) => entry.word.favorite);
   const pages = Math.max(1, Math.ceil(visible.length / pageSize));
   const currentPage = Math.min(page, pages);
+  const pageEntries = visible.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  // "Only this page": exactly the words shown now are selected, nothing else.
+  const pageOnly = pageEntries.length > 0 && selected.size === pageEntries.length && pageEntries.every((entry) => selected.has(entry.key));
   const action = async (run) => {
     if (busy) return;
     setBusy(true); setError("");
@@ -225,9 +228,10 @@ export default function Japanese() {
               onClick={() => { setShuffleSeed(1 + Math.floor(Math.random() * 2147483646)); setPage(1); }}><Shuffle size={15} />{shuffleSeed ? "다시 섞기" : "섞기"}</button>
             {shuffleSeed > 0 && <button type="button" className="lingo-shuffle-off" title="원래 순서로" onClick={() => { setShuffleSeed(0); setPage(1); }}><ArrowDownAZ size={15} />순서대로</button>}
           </div><button className="lingo-bulk-favorite" disabled={busy || !visible.length} aria-pressed={allFavorites} onClick={() => favorite(visible, !allFavorites)}><Star size={16} fill={allFavorites ? "currentColor" : "none"} />{allFavorites ? "전체 즐겨찾기 해제" : "결과 전체 즐겨찾기"}</button></div>
-        <div className="lingo-selection"><label><input type="checkbox" checked={allChecked} disabled={busy || !visible.length} onChange={() => setSelected((current) => {
+        <div className="lingo-selection"><div className="lingo-select-scopes"><label><input type="checkbox" checked={allChecked} disabled={busy || !visible.length} onChange={() => setSelected((current) => {
           const next = new Set(current); visible.forEach((entry) => allChecked ? next.delete(entry.key) : next.add(entry.key)); return next;
         })} />검색 결과 전체 선택 ({visible.length})</label>
+          {visible.length > pageEntries.length && <label><input type="checkbox" checked={pageOnly} disabled={busy || !pageEntries.length} onChange={() => setSelected(pageOnly ? new Set() : new Set(pageEntries.map((entry) => entry.key)))} />이 페이지만 선택 ({pageEntries.length})</label>}</div>
           <div className="lingo-actions"><span>{selectedEntries.length}개 선택</span>
             {selectedEntries.length > 0 && <button onClick={() => setSelected(new Set())}>선택 해제</button>}
             <select aria-label="선택한 단어 단계 지정" value="" disabled={busy || !selectedEntries.length} onChange={(e) => assign(selectedEntries, Number(e.target.value))}>
@@ -236,7 +240,7 @@ export default function Japanese() {
               : <BookPicker books={books} count={selectedEntries.length} disabled={busy || !selectedEntries.length} onPick={(id) => putInBook(id, selectedEntries)} onCreate={(name) => createBook(name, selectedEntries.map((entry) => entry.key))} />}
             <button className="lingo-primary" disabled={!selectedEntries.length || busy} onClick={() => setSessionWords(selectedEntries.map(({ key, deckId: sourceId, word }) => ({ ...word, id: key, deckId: sourceId, sourceWordId: word.id })))}><Play size={15} />학습 시작</button></div>
         </div>
-        <div className="lingo-word-results"><div className="lingo-word-list">{visible.slice((currentPage - 1) * pageSize, currentPage * pageSize).map((entry) => { const { key, word, deckName } = entry; const wordLabel = `${word.japanese}${showSource(entry) ? ` (${deckName})` : ""}`; return <div className="lingo-word-row" key={key}>
+        <div className="lingo-word-results"><div className="lingo-word-list">{pageEntries.map((entry) => { const { key, word, deckName } = entry; const wordLabel = `${word.japanese}${showSource(entry) ? ` (${deckName})` : ""}`; return <div className="lingo-word-row" key={key}>
           <div className="lingo-word-controls"><label className="lingo-word-check"><input type="checkbox" aria-label={`${wordLabel} 선택`} checked={selected.has(key)} disabled={busy} onChange={() => setSelected((current) => {
             const next = new Set(current); next.has(key) ? next.delete(key) : next.add(key); return next;
           })} /></label><button className="lingo-favorite-toggle" aria-label={`${wordLabel} 즐겨찾기 ${word.favorite ? "해제" : "추가"}`} aria-pressed={word.favorite} title={word.favorite ? "즐겨찾기 해제" : "즐겨찾기 추가"} disabled={busy} onClick={() => favorite([entry], !word.favorite)}><Star size={18} fill={word.favorite ? "currentColor" : "none"} /></button></div>

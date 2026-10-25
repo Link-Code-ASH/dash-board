@@ -46,7 +46,8 @@ html:has(#root .hub-app .lingo-library) { scrollbar-gutter: stable; }
 #root .hub-app .lingo-workspace button.lingo-bulk-favorite:hover { background: #f8f0dd; }
 #root .hub-app .lingo-bulk-favorite svg { width: 15px; height: 15px; flex-shrink: 0; }
 #root .hub-app .lingo-selection { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 18px 0; font-size: 12px; color: #75827f; }
-#root .hub-app .lingo-selection > label { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+#root .hub-app .lingo-select-scopes { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 20px; }
+#root .hub-app .lingo-select-scopes > label { display: flex; align-items: center; gap: 8px; cursor: pointer; }
 #root .hub-app .lingo-selection select { max-width: 115px; font-size: 12px; }
 #root .hub-app .lingo-word-results { min-height: 240px; min-width: 0; }
 #root .hub-app .lingo-word-row { display: grid; grid-template-columns: 72px minmax(90px, 1fr) minmax(100px, 1.5fr) 85px; gap: 12px; align-items: center; padding: 16px 0; border-top: 1px solid #edf0ed; }
