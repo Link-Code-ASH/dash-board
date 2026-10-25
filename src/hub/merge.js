@@ -50,6 +50,15 @@ function reordered(base, branch) {
   return !sameOrder(base.filter((id) => branchSet.has(id)), branch.filter((id) => baseSet.has(id)));
 }
 
+const markerText = (value) => typeof value === "string" ? value : "";
+function markerSlots(markers) {
+  if (!Array.isArray(markers)) return undefined;
+  return Array.from({ length: Math.max(8, markers.length) }, (_, index) => {
+    const marker = record(markers[index]) ? markers[index] : {};
+    return { ...marker, text: markerText(marker.text), date: markerText(marker.date), time: markerText(marker.time) };
+  });
+}
+
 /** Merge acyclic JSON-like dashboard values; undefined means absent/deleted. */
 export function mergeDashboard(base, local, remote) {
   const conflicts = [];
@@ -174,6 +183,14 @@ export function mergeDashboard(base, local, remote) {
         if (value !== undefined) result.push([key, value]);
       }
       return Object.fromEntries(result);
+    }
+    // Date Markers are 8 fixed slots with no ids. Merge them slot by slot and
+    // field by field (after filling in the same 8-slot shape on every side), so
+    // a time set in one window survives a name edit, or a stale copy, in another.
+    if (path === "/dateMarkers" && [before, here, there].every((value) => value === undefined || Array.isArray(value))
+      && Array.isArray(here) && Array.isArray(there)) {
+      const [b, l, r] = [before, here, there].map(markerSlots);
+      return l.map((slot, index) => merge(b?.[index], slot, r[index], pointer(path, index)));
     }
     if (Array.isArray(here) && Array.isArray(there) && (Array.isArray(before) || before === undefined)) {
       const key = identityKey([before || [], here, there]);
