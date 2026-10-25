@@ -405,7 +405,8 @@ html body #root .hub-app.hub-app .routine-view .hub-segments button[aria-current
 /* ---------- Screen sizes ----------
    One grid, three widths. The schedule always leads; Date Marker is last.
    Narrow / phone: 1 column (schedule, tasks, memo, markers).
-   Laptop (content >= 900px): 2 columns, schedule on top, tasks | memo.
+   Laptop (content >= 900px): schedule on top, then a narrow tasks column
+   and a wide memo column.
    Monitor (content >= 1500px): schedule + memo on the left, tasks and
    Date Marker in a right-hand column. */
 html body #root .hub-app.hub-app .flow-layout { display: grid; grid-template-columns: minmax(0, 1fr); grid-template-areas: "schedule" "tasks" "memo" "markers"; align-items: start; gap: 20px; }
@@ -418,7 +419,8 @@ html body #root .hub-app.hub-app.hub-desktop .flow-desk-day { min-height: 128px;
 html body #root .hub-app.hub-app.hub-desktop .flow-view { --hub-memo-height: 190px; }
 @container hub-content (min-width: 900px) {
   html body #root .hub-app.hub-app.hub-desktop .flow-layout {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    /* Today's Tasks keeps a narrow column; the memo desk takes the rest. */
+    grid-template-columns: minmax(320px, 360px) minmax(0, 1fr);
     grid-template-areas: "schedule schedule" "tasks memo" "markers memo";
     grid-template-rows: auto auto 1fr;
   }
