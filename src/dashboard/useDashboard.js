@@ -434,7 +434,7 @@ export function useDashboard(selectedDate, setSelectedDate) {
       await persistDashboard(normalized);
       if (!isCurrentAccount(userId, generation)) return false;
       rememberAccountSnapshot(userId, normalized, row.revision);
-      updateAccount((current) => ({ ...current, connected: true, cloudAvailable: true, busy: false, status: "Google 계정과 동기화 중입니다." }));
+      updateAccount((current) => ({ ...current, connected: true, cloudAvailable: true, busy: false, status: "Google 계정과 연결됨 · 고친 내용은 자동으로 저장돼요." }));
       setAccountGate(false);
       return true;
     });
