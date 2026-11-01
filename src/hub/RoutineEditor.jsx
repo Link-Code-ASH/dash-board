@@ -152,7 +152,7 @@ function PresetEditor({ kind, heading, toggle }) {
 function WeeklyDay({ day, label, value, today, onChange, selectedDate }) {
   const items = getWeeklyPlanItems(value);
   const filled = items.map((item) => item.trim()).filter(Boolean);
-  const current = filled.length > 1 ? ((getWeekSerial(selectedDate) % filled.length) + filled.length) % filled.length : -1;
+  const current = filled.length ? ((getWeekSerial(selectedDate) % filled.length) + filled.length) % filled.length : -1;
   const refs = useRef([]);
   useLayoutEffect(() => {
     for (const node of refs.current) {
@@ -180,7 +180,7 @@ function WeeklyDay({ day, label, value, today, onChange, selectedDate }) {
       if (item.trim()) filledIndex += 1;
       const isCurrent = item.trim() && filledIndex === current;
       return <div className={`wk-entry ${isCurrent ? "is-current" : ""}`} key={index}>
-        {filled.length > 1 && item.trim() && <b className="wk-turn" title={isCurrent ? "이번 주에 나오는 항목" : "다른 주에 나오는 항목"}>{filledIndex + 1}</b>}
+        {item.trim() && <b className="wk-turn" title={filled.length === 1 ? "매주 나오는 항목" : isCurrent ? "이번 주에 나오는 항목" : "다른 주에 나오는 항목"}>{filledIndex + 1}</b>}
         <textarea ref={(node) => { refs.current[index] = node; }} rows={1} maxLength={180} placeholder="+ 할 일" aria-label={`${label} ${day.full} ${index + 1}`}
           value={item} onChange={(e) => update(index, e.target.value)} onKeyDown={(e) => e.stopPropagation()} />
         {index > 0 && <button type="button" className="wk-entry-remove" aria-label="이 항목 합치기" title="위 항목과 합치기" onClick={() => merge(index)}>×</button>}
