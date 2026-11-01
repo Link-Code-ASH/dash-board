@@ -553,6 +553,9 @@ html body #root .hub-app.hub-app .wk-entry { display: flex; align-items: flex-st
 html body #root .hub-app.hub-app .wk-entry + .wk-entry { padding-top: 4px; border-top: 1px dashed var(--fp-line); }
 html body #root .hub-app.hub-app .wk-turn { flex: none; display: grid; place-items: center; width: 17px; height: 17px; margin-top: 2px; border-radius: 999px; background: var(--fp-line-soft); color: var(--fp-muted); font-size: 10px; font-weight: 800; }
 html body #root .hub-app.hub-app .wk-entry.is-current .wk-turn { background: var(--fp-accent); color: #fff; }
+/* A day's only task: a plain dot in the badge's place, centred on the first text line (22px). */
+html body #root .hub-app.hub-app .wk-entry .wk-turn.is-solo { width: 17px; height: 17px; margin-top: 2px; background: transparent; }
+html body #root .hub-app.hub-app .wk-entry .wk-turn.is-solo::before { content: ""; width: 7px; height: 7px; border-radius: 999px; background: var(--fp-accent); }
 html body #root .hub-app.hub-app .wk-day:has(.wk-turn) .wk-entry:not(.is-current) textarea { color: var(--fp-muted) !important; }
 html body #root .hub-app.hub-app .wk-editor .wk-entry textarea { flex: 1; min-width: 0; width: 100%; min-height: 22px !important; height: 22px; margin: 0; padding: 0 !important; border: 0 !important; border-radius: 0 !important; background: transparent !important; box-shadow: none !important; outline: 0; color: var(--fp-ink) !important; font: 500 14px/22px var(--hub-font-body) !important; resize: none !important; overflow: hidden; }
 html body #root .hub-app.hub-app .wk-editor .wk-entry textarea::placeholder { color: #b4bdc9; font-weight: 500; }
