@@ -178,6 +178,35 @@ export function normalizeWeeklyGroups(source) {
   return { groups, members };
 }
 
+// WorkOut: a short list done in turn (not by weekday). log maps a date to the
+// item done that day; the next turn is the item after the latest one done.
+// cursor { key, date } lets the person pick whose turn it is from a date on.
+export function normalizeWorkout(source) {
+  const seen = new Set();
+  const items = (Array.isArray(source?.items) ? source.items : [])
+    .filter((item) => item && typeof item.key === "string" && item.key && !seen.has(item.key) && seen.add(item.key))
+    .map((item) => ({ key: item.key, name: String(item.name ?? "") }));
+  const log = source?.log && typeof source.log === "object" && !Array.isArray(source.log)
+    ? Object.fromEntries(Object.entries(source.log).filter(([date, key]) => /^\d{4}-\d{2}-\d{2}$/.test(date) && typeof key === "string" && key))
+    : {};
+  const cursor = source?.cursor && typeof source.cursor.key === "string" && /^\d{4}-\d{2}-\d{2}$/.test(source.cursor.date || "")
+    ? { key: source.cursor.key, date: source.cursor.date } : null;
+  return { items, log, cursor };
+}
+
+/** { item, done } for a date: the item done that day, or whose turn it is. */
+export function getWorkoutTurn(source, dateKey) {
+  const { items, log, cursor } = normalizeWorkout(source);
+  if (!items.length) return { item: null, done: false };
+  const byKey = (key) => items.find((item) => item.key === key) || null;
+  if (log[dateKey] && byKey(log[dateKey])) return { item: byKey(log[dateKey]), done: true };
+  const last = Object.keys(log).filter((date) => date < dateKey && byKey(log[date])).sort().pop();
+  if (cursor && byKey(cursor.key) && cursor.date <= dateKey && (!last || cursor.date > last)) return { item: byKey(cursor.key), done: false };
+  if (!last) return { item: items[0], done: false };
+  const index = items.findIndex((item) => item.key === log[last]);
+  return { item: items[(index + 1) % items.length], done: false };
+}
+
 export function normalizeWeeklyPlan(plan, categories) {
   const normalized = createEmptyWeeklyPlan(categories);
   categories.forEach((category) => {
@@ -733,6 +762,7 @@ export function createFallbackState() {
     categories,
     weeklyPlan: createEmptyWeeklyPlan(categories),
     weeklyGroups: normalizeWeeklyGroups(),
+    workout: normalizeWorkout(),
     dateMarkers: normalizeDateMarkers(),
     work: normalizeWork(),
     school: normalizeSchool(),
@@ -776,6 +806,7 @@ export function normalizeState(source) {
     "categories",
     "weeklyPlan",
     "weeklyGroups",
+    "workout",
     "dateMarkers",
     "work",
     "school",
@@ -814,6 +845,7 @@ export function normalizeState(source) {
     categories,
     weeklyPlan: normalizeWeeklyPlan(source?.weeklyPlan, categories),
     weeklyGroups: normalizeWeeklyGroups(source?.weeklyGroups),
+    workout: normalizeWorkout(source?.workout),
     dateMarkers: normalizeDateMarkers(source?.dateMarkers),
     work: normalizeWork(source?.work),
     school: normalizeSchool(source?.school),

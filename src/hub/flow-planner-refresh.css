@@ -511,7 +511,7 @@ html body #root .hub-app.hub-app.hub-desktop .routine-desktop-workspace .routine
   html body #root .hub-app.hub-app.hub-desktop .routine-editor-panel[data-kind="daily"] :is(.routine-preset-list, .routine-table-heads) { grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: 28px; }
   html body #root .hub-app.hub-app.hub-desktop .routine-editor-panel[data-kind="daily"] .routine-table-head.is-tertiary { display: grid; }
 }
-html body #root .hub-app.hub-app .routine-editor-tabs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+html body #root .hub-app.hub-app .routine-editor-tabs { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 
 /* Phone: shorter memo boxes (they scroll inside) and one-line Daily rows. */
 html body #root .hub-app.hub-app.hub-mobile .flow-view { --hub-memo-height: 170px; }
@@ -1014,3 +1014,28 @@ html body #root .hub-app.hub-app .hub-task-subgroup { display: flex; align-items
 html body #root .hub-app.hub-app .hub-task-list > .hub-task-subgroup:first-child { margin-top: 2px; }
 html body #root .hub-app.hub-app .hub-task-subgroup i { flex: none; width: 7px; height: 7px; border-radius: 999px; background: var(--wk-group-ink); }
 html body #root .hub-app.hub-app .hub-task-subgroup.is-loose { color: var(--fp-muted); }
+
+/* ---------- Planner WorkOut ----------
+   Rows like Daily (order, icon, name, delete); where Daily has Y/N, a row
+   shows "오늘 차례" (or "오늘 완료") on the item whose turn it is, and a
+   quiet "차례로" button on the others. Wide panels list items in columns. */
+html body #root .hub-app.hub-app.hub-app .routine-preset-row.workout-row { grid-template-columns: 24px 30px minmax(0, 1fr) 74px 28px; }
+html body #root .hub-app.hub-app.hub-app.hub-mobile .routine-preset-row.workout-row { grid-template-columns: 28px 36px minmax(0, 1fr) 78px 36px; }
+html body #root .hub-app.hub-app .workout-row :is(.workout-turn, .workout-pick) { display: inline-flex; align-items: center; justify-content: center; gap: 3px; justify-self: stretch; height: 28px; min-height: 28px; padding: 0 6px; border-radius: 999px; font-size: 12px; font-weight: 800; line-height: 1; white-space: nowrap; }
+html body #root .hub-app.hub-app .workout-row .workout-turn { background: var(--fp-accent); color: #fff; }
+html body #root .hub-app.hub-app .workout-row .workout-turn.is-done { background: var(--fp-plus-soft); color: var(--fp-plus); }
+html body #root .hub-app.hub-app .workout-row .workout-pick { border: 1px solid transparent; background: transparent; box-shadow: none; color: var(--fp-muted); font-weight: 700; }
+html body #root .hub-app.hub-app .workout-row .workout-pick:hover { border-color: var(--fp-line); background: var(--fp-accent-soft); color: var(--fp-accent); }
+@media (hover: hover) and (pointer: fine) {
+  html body #root .hub-app.hub-app .workout-row .workout-pick { opacity: 0; transition: opacity 120ms ease; }
+  html body #root .hub-app.hub-app .workout-row:is(:hover, :focus-within) .workout-pick { opacity: 1; }
+}
+html body #root .hub-app.hub-app.hub-mobile .workout-row :is(.workout-turn, .workout-pick) { height: 36px; min-height: 36px; }
+html body #root .hub-app.hub-app .workout-recent { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; margin: 12px 0 0; color: var(--fp-ink-2); font-size: 13px; }
+html body #root .hub-app.hub-app .workout-recent > span:first-child { color: var(--fp-muted); font-size: 12px; font-weight: 800; }
+html body #root .hub-app.hub-app .workout-recent b { margin-right: 5px; color: var(--fp-muted); font-weight: 700; font-variant-numeric: tabular-nums; }
+@container routine-panel (min-width: 761px) {
+  html body #root .hub-app.hub-app.hub-desktop .routine-editor-panel[data-kind="workout"] .routine-preset-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: 28px; }
+}
+/* Today's Tasks: the WorkOut card has one round check instead of Y/N. */
+html body #root .hub-app.hub-app .flow-routines .hub-task-actions .yes.workout-done { display: grid; place-items: center; width: 40px; min-width: 40px; padding: 0; }

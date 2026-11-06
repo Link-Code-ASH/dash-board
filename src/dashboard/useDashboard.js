@@ -27,6 +27,7 @@ import {
   scoreNumber,
   createEmptyWeeklyPlan,
   normalizeWeeklyGroups,
+  normalizeWorkout,
   weeklyGroupColors,
   normalizeDateMarkers,
   normalizeCalendarDuties,
@@ -1513,6 +1514,47 @@ export function useDashboard(selectedDate, setSelectedDate) {
     });
   };
 
+  const workoutOf = (draft) => {
+    draft.workout = normalizeWorkout(draft.workout);
+    return draft.workout;
+  };
+  const addWorkoutItem = () => saveData((draft) => {
+    const workout = workoutOf(draft);
+    workout.items.push({ key: createKey("workout"), name: "" });
+    return draft;
+  });
+  const updateWorkoutItem = (key, name) => saveData((draft) => {
+    const item = workoutOf(draft).items.find((entry) => entry.key === key);
+    if (item) item.name = String(name);
+    return draft;
+  });
+  const moveWorkoutItem = (fromKey, toKey) => saveData((draft) => {
+    const { items } = workoutOf(draft);
+    const from = items.findIndex((item) => item.key === fromKey);
+    const to = items.findIndex((item) => item.key === toKey);
+    if (from < 0 || to < 0 || from === to) return draft;
+    const [item] = items.splice(from, 1);
+    items.splice(to, 0, item);
+    return draft;
+  });
+  // Past days that used a removed item keep their record (shown as done).
+  const removeWorkoutItem = (key) => saveData((draft) => {
+    const workout = workoutOf(draft);
+    workout.items = workout.items.filter((item) => item.key !== key);
+    if (workout.cursor?.key === key) workout.cursor = null;
+    return draft;
+  });
+  const toggleWorkoutDone = (dateKey, itemKey) => saveData((draft) => {
+    const workout = workoutOf(draft);
+    if (workout.log[dateKey]) delete workout.log[dateKey];
+    else if (itemKey) workout.log[dateKey] = itemKey;
+    return draft;
+  });
+  const setWorkoutNext = (dateKey, itemKey) => saveData((draft) => {
+    workoutOf(draft).cursor = { key: itemKey, date: dateKey };
+    return draft;
+  });
+
   const updateWeeklyPlan = (categoryKey, dayKey, value) => {
     saveData((draft) => {
       if (!draft.weeklyPlan[categoryKey]) draft.weeklyPlan[categoryKey] = createEmptyWeeklyPlan([{ key: categoryKey }])[categoryKey];
@@ -1946,6 +1988,12 @@ export function useDashboard(selectedDate, setSelectedDate) {
     moveWeeklyGroup,
     removeWeeklyGroup,
     arrangeWeeklyCategories,
+    addWorkoutItem,
+    updateWorkoutItem,
+    moveWorkoutItem,
+    removeWorkoutItem,
+    toggleWorkoutDone,
+    setWorkoutNext,
     updateCalendarNote,
     updateCalendarEntries,
     toggleCalendarDuty,

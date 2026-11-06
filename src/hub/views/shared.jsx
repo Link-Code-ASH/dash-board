@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { ChevronDown, ChevronLeft, ChevronRight, RotateCcw } from "lucide-react";
+import { Check, ChevronDown, ChevronLeft, ChevronRight, RotateCcw } from "lucide-react";
 import { useDashboardData } from "../context.jsx";
 import { todayKey } from "../routing.js";
 import ItemIconButton from "../ItemIconButton.jsx";
@@ -8,6 +8,7 @@ import {
   formatScore,
   getWeeklyPlanEntry,
   getWeeklyPlanItems,
+  getWorkoutTurn,
 } from "../../dashboard/model.js";
 import {
   createPresetPlanCard,
@@ -195,6 +196,13 @@ export function RoutineTasks({ compact = false }) {
   const groupByKey = new Map(sections.flatMap((section) => section.rows.map((row) => [row.key, section.group])));
   const weeklyCards = planCards(sections.flatMap((section) => section.rows), d.data.weeklyPlan, "plan", "Weekly")
     .map((card) => ({ ...card, group: groupByKey.get(card.key) || null }));
+  // WorkOut: one card, whose turn it is today; checking it moves the turn on.
+  const turn = getWorkoutTurn(d.data.workout, d.selectedDate);
+  const workoutCards = turn.item ? [{
+    key: turn.item.key, label: "", value: turn.item.name || "운동", workout: true,
+    selectedChoice: turn.done ? "Y" : "",
+    onToggle: () => d.toggleWorkoutDone(d.selectedDate, turn.item.key),
+  }] : [];
   const groups = [
     {
       id: "daily",
@@ -202,6 +210,7 @@ export function RoutineTasks({ compact = false }) {
       cards: presetCards(d.data.presets, "Daily", "daily"),
     },
     { id: "weekly", title: "Weekly", cards: weeklyCards },
+    { id: "workout", title: "WorkOut", cards: workoutCards },
   ];
   return (
     <div className={`hub-task-groups ${compact ? "is-compact" : ""}`}>
@@ -246,7 +255,17 @@ export function RoutineTasks({ compact = false }) {
                     className="hub-task-actions"
                     aria-label={`${card.value || card.label} 점수`}
                   >
-                    {card.scoreRange ? (
+                    {card.workout ? (
+                      <button
+                        className="yes workout-done"
+                        aria-pressed={Boolean(card.selectedChoice)}
+                        aria-label={card.selectedChoice ? `${card.value} 완료 취소` : `${card.value} 완료`}
+                        title={card.selectedChoice ? "완료 취소" : "했어요"}
+                        onClick={card.onToggle}
+                      >
+                        <Check size={16} strokeWidth={2.4} />
+                      </button>
+                    ) : card.scoreRange ? (
                       <ScorePicker
                         label={card.value || card.label}
                         range={card.scoreRange}
@@ -272,14 +291,14 @@ export function RoutineTasks({ compact = false }) {
                         </button>
                       ))
                     )}
-                    <button
+                    {!card.workout && <button
                       className="no"
                       aria-pressed={card.selectedChoice === "N"}
                       onClick={() => card.onToggle("N")}
                     >
                       <span>N</span>
                       <small>{formatScore(card.nScore)}</small>
-                    </button>
+                    </button>}
                   </div>
                 </article>
                 </React.Fragment>

@@ -1,8 +1,8 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { Plus, Trash2, GripVertical, Repeat2, CalendarRange, ChevronUp, ChevronDown, FolderPlus } from "lucide-react";
+import { Plus, Trash2, GripVertical, Repeat2, CalendarRange, ChevronUp, ChevronDown, FolderPlus, Dumbbell, Check } from "lucide-react";
 import { useDashboardData } from "./context.jsx";
 import ItemIconButton from "./ItemIconButton.jsx";
-import { weekDays, getWeekdayKey, getWeekSerial, getWeeklyPlanItems, encodeWeeklyPlanItems, weeklyGroupColors } from "../dashboard/model.js";
+import { weekDays, getWeekdayKey, getWeekSerial, getWeeklyPlanItems, encodeWeeklyPlanItems, weeklyGroupColors, normalizeWorkout, getWorkoutTurn, addDays } from "../dashboard/model.js";
 import { groupStyle, groupWeeklyCategories, weeklyGroupPalette } from "./weeklyGroups.js";
 
 function ScoreInput({ value, choice, label, onChange }) {
@@ -307,6 +307,45 @@ function WeeklyEditor({ kind, heading, toggle }) {
   </div>;
 }
 
+const shortDate = (dateKey) => `${Number(dateKey.slice(5, 7))}/${Number(dateKey.slice(8, 10))}`;
+
+// WorkOut: items done in turn. The item whose turn it is on the selected day
+// is marked; "차례로" makes another item next from that day on.
+function WorkoutEditor({ kind, heading, toggle }) {
+  const d = useDashboardData();
+  const title = "WorkOut";
+  const workout = normalizeWorkout(d.data.workout);
+  const items = workout.items;
+  const root = useNewItemFocus(items);
+  const drag = useRowDrag(root, d.moveWorkoutItem);
+  const turn = getWorkoutTurn(workout, d.selectedDate);
+  // Once today's turn is done, picking the next one applies from tomorrow.
+  const nextFrom = turn.done ? addDays(d.selectedDate, 1) : d.selectedDate;
+  const recent = Object.entries(workout.log).filter(([date]) => date <= d.selectedDate).sort(([a], [b]) => b.localeCompare(a)).slice(0, 4);
+  return <div className="routine-config-editor workout-editor" ref={root} aria-label={`${title} 편집`}>
+    <div className="routine-editor-actions">{heading && <h2><Dumbbell size={18} />{title}<small>{items.length}</small></h2>}<span className="routine-editor-tools"><button className="routine-add-button" type="button" aria-label="운동 추가" title="운동 추가" onClick={() => d.addWorkoutItem()}><Plus size={17} /><span className="routine-add-label">운동 추가</span></button>{toggle}</span></div>
+    <p className="wk-guide">적은 순서대로 돌아가요. <b>Today's Tasks</b>에 차례인 운동이 하나 나오고, 체크하면 다음 운동이 차례가 돼요. 안 간 날은 차례가 그대로 남아요.</p>
+    <div className="routine-preset-list">
+      {items.map((item, index) => {
+        const isTurn = turn.item?.key === item.key;
+        return <article className={`routine-preset-row workout-row${isTurn ? " is-turn" : ""}${drag.rowClass(item.key, items)}`} key={item.key} data-item-key={item.key}>
+          <OrderControl index={index} items={items} drag={drag} label={item.name || "운동"} />
+          <ItemIconButton itemKey={`${kind}:${item.key}`} label={item.name || "운동"} />
+          <input className="routine-name-input" aria-label={`운동 이름 ${index + 1}`} placeholder="운동 이름 (예: 하체)" maxLength={32} value={item.name}
+            onChange={(e) => d.updateWorkoutItem(item.key, e.target.value)} />
+          {isTurn
+            ? <span className={`workout-turn${turn.done ? " is-done" : ""}`}>{turn.done ? <><Check size={13} />오늘 완료</> : "오늘 차례"}</span>
+            : <button type="button" className="workout-pick" title={turn.done ? "내일부터 이 운동이 차례" : "오늘부터 이 운동이 차례"} onClick={() => d.setWorkoutNext(nextFrom, item.key)}>차례로</button>}
+          <button className="routine-delete-button" type="button" aria-label={`${item.name || "운동"} 삭제`} onClick={() => d.removeWorkoutItem(item.key)}><Trash2 size={18} /></button>
+        </article>;
+      })}
+    </div>
+    {!items.length && <p className="routine-editor-empty">운동을 차례대로 추가해 보세요. (예: 하체 → 등 → 가슴)</p>}
+    {recent.length > 0 && <p className="workout-recent"><span>최근</span>{recent.map(([date, key]) => <span key={date}><b>{shortDate(date)}</b>{items.find((item) => item.key === key)?.name || "삭제된 운동"}</span>)}</p>}
+  </div>;
+}
+
 export default function RoutineEditor({ kind, heading = false, toggle = null }) {
+  if (kind === "workout") return <WorkoutEditor key={kind} kind={kind} heading={heading} toggle={toggle} />;
   return kind === "weekly" ? <WeeklyEditor key={kind} kind={kind} heading={heading} toggle={toggle} /> : <PresetEditor key={kind} kind={kind} heading={heading} toggle={toggle} />;
 }
