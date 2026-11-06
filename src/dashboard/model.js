@@ -194,6 +194,23 @@ export function normalizeWorkout(source) {
   return { items, log, cursor };
 }
 
+// WorkOut fields: each field ("헬스", "유산소" ...) rotates on its own.
+// Stored under its own key so older app versions, which only know the single
+// `workout` list, can't drop the extra fields when they save. The first time,
+// the single list becomes the first field (same item keys, log and icons).
+export function normalizeWorkoutLists(source, legacy) {
+  if (!Array.isArray(source?.lists)) {
+    const single = normalizeWorkout(legacy);
+    return { lists: single.items.length || Object.keys(single.log).length ? [{ key: "workout", name: "", ...single }] : [] };
+  }
+  const seen = new Set();
+  return {
+    lists: source.lists
+      .filter((list) => list && typeof list.key === "string" && list.key && !seen.has(list.key) && seen.add(list.key))
+      .map((list) => ({ key: list.key, name: String(list.name ?? ""), ...normalizeWorkout(list) })),
+  };
+}
+
 /** { item, done } for a date: the item done that day, or whose turn it is. */
 export function getWorkoutTurn(source, dateKey) {
   const { items, log, cursor } = normalizeWorkout(source);
@@ -763,6 +780,7 @@ export function createFallbackState() {
     weeklyPlan: createEmptyWeeklyPlan(categories),
     weeklyGroups: normalizeWeeklyGroups(),
     workout: normalizeWorkout(),
+    workoutLists: normalizeWorkoutLists({ lists: [] }),
     dateMarkers: normalizeDateMarkers(),
     work: normalizeWork(),
     school: normalizeSchool(),
@@ -807,6 +825,7 @@ export function normalizeState(source) {
     "weeklyPlan",
     "weeklyGroups",
     "workout",
+    "workoutLists",
     "dateMarkers",
     "work",
     "school",
@@ -846,6 +865,7 @@ export function normalizeState(source) {
     weeklyPlan: normalizeWeeklyPlan(source?.weeklyPlan, categories),
     weeklyGroups: normalizeWeeklyGroups(source?.weeklyGroups),
     workout: normalizeWorkout(source?.workout),
+    workoutLists: normalizeWorkoutLists(source?.workoutLists, source?.workout),
     dateMarkers: normalizeDateMarkers(source?.dateMarkers),
     work: normalizeWork(source?.work),
     school: normalizeSchool(source?.school),

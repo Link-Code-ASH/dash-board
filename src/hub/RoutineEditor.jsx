@@ -2,7 +2,7 @@ import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Plus, Trash2, GripVertical, Repeat2, CalendarRange, ChevronUp, ChevronDown, FolderPlus, Dumbbell, Check } from "lucide-react";
 import { useDashboardData } from "./context.jsx";
 import ItemIconButton from "./ItemIconButton.jsx";
-import { weekDays, getWeekdayKey, getWeekSerial, getWeeklyPlanItems, encodeWeeklyPlanItems, weeklyGroupColors, normalizeWorkout, getWorkoutTurn, addDays } from "../dashboard/model.js";
+import { weekDays, getWeekdayKey, getWeekSerial, getWeeklyPlanItems, encodeWeeklyPlanItems, weeklyGroupColors, normalizeWorkoutLists, getWorkoutTurn, addDays } from "../dashboard/model.js";
 import { groupStyle, groupWeeklyCategories, weeklyGroupPalette } from "./weeklyGroups.js";
 
 function ScoreInput({ value, choice, label, onChange }) {
@@ -311,37 +311,64 @@ const shortDate = (dateKey) => `${Number(dateKey.slice(5, 7))}/${Number(dateKey.
 
 // WorkOut: items done in turn. The item whose turn it is on the selected day
 // is marked; "차례로" makes another item next from that day on.
-function WorkoutEditor({ kind, heading, toggle }) {
-  const d = useDashboardData();
-  const title = "WorkOut";
-  const workout = normalizeWorkout(d.data.workout);
-  const items = workout.items;
+// One WorkOut field: its own ordered list, turn and recent days.
+function WorkoutList({ kind, list, index, total, d }) {
+  const items = list.items;
   const root = useNewItemFocus(items);
-  const drag = useRowDrag(root, d.moveWorkoutItem);
-  const turn = getWorkoutTurn(workout, d.selectedDate);
+  const drag = useRowDrag(root, (from, to) => d.moveWorkoutItem(list.key, from, to));
+  const turn = getWorkoutTurn(list, d.selectedDate);
   // Once today's turn is done, picking the next one applies from tomorrow.
   const nextFrom = turn.done ? addDays(d.selectedDate, 1) : d.selectedDate;
-  const recent = Object.entries(workout.log).filter(([date]) => date <= d.selectedDate).sort(([a], [b]) => b.localeCompare(a)).slice(0, 4);
-  return <div className="routine-config-editor workout-editor" ref={root} aria-label={`${title} 편집`}>
-    <div className="routine-editor-actions">{heading && <h2><Dumbbell size={18} />{title}<small>{items.length}</small></h2>}<span className="routine-editor-tools"><button className="routine-add-button" type="button" aria-label="운동 추가" title="운동 추가" onClick={() => d.addWorkoutItem()}><Plus size={17} /><span className="routine-add-label">운동 추가</span></button>{toggle}</span></div>
-    <p className="wk-guide">적은 순서대로 돌아가요. <b>Today's Tasks</b>에 차례인 운동이 하나 나오고, 체크하면 다음 운동이 차례가 돼요. 안 간 날은 차례가 그대로 남아요.</p>
+  const recent = Object.entries(list.log).filter(([date]) => date <= d.selectedDate).sort(([a], [b]) => b.localeCompare(a)).slice(0, 3);
+  const name = list.name || "분야";
+  return <section className="workout-list" ref={root} aria-label={`${name} 운동`}>
+    <div className="workout-list-head">
+      <input className="workout-list-name" aria-label="분야 이름" placeholder="분야 이름 (예: 헬스)" maxLength={24} value={list.name}
+        onChange={(e) => d.updateWorkoutList(list.key, e.target.value)} />
+      <small>{items.length}</small>
+      <span className="workout-list-tools">
+        {total > 1 && <>
+          <button type="button" aria-label={`${name} 앞으로`} title="앞으로" disabled={index === 0} onClick={() => d.moveWorkoutList(list.key, -1)}><ChevronUp size={16} /></button>
+          <button type="button" aria-label={`${name} 뒤로`} title="뒤로" disabled={index === total - 1} onClick={() => d.moveWorkoutList(list.key, 1)}><ChevronDown size={16} /></button>
+        </>}
+        <button type="button" aria-label={`${name}에 운동 추가`} title="운동 추가" onClick={() => d.addWorkoutItem(list.key)}><Plus size={16} /></button>
+        <button type="button" aria-label={`${name} 분야 삭제`} title="분야 삭제" onClick={() => d.removeWorkoutList(list.key)}><Trash2 size={15} /></button>
+      </span>
+    </div>
     <div className="routine-preset-list">
-      {items.map((item, index) => {
+      {items.map((item, itemIndex) => {
         const isTurn = turn.item?.key === item.key;
         return <article className={`routine-preset-row workout-row${isTurn ? " is-turn" : ""}${drag.rowClass(item.key, items)}`} key={item.key} data-item-key={item.key}>
-          <OrderControl index={index} items={items} drag={drag} label={item.name || "운동"} />
+          <OrderControl index={itemIndex} items={items} drag={drag} label={item.name || "운동"} />
           <ItemIconButton itemKey={`${kind}:${item.key}`} label={item.name || "운동"} />
-          <input className="routine-name-input" aria-label={`운동 이름 ${index + 1}`} placeholder="운동 이름 (예: 하체)" maxLength={32} value={item.name}
-            onChange={(e) => d.updateWorkoutItem(item.key, e.target.value)} />
+          <input className="routine-name-input" aria-label={`${name} 운동 이름 ${itemIndex + 1}`} placeholder="운동 이름 (예: 하체)" maxLength={32} value={item.name}
+            onChange={(e) => d.updateWorkoutItem(list.key, item.key, e.target.value)} />
           {isTurn
             ? <span className={`workout-turn${turn.done ? " is-done" : ""}`}>{turn.done ? <><Check size={13} />오늘 완료</> : "오늘 차례"}</span>
-            : <button type="button" className="workout-pick" title={turn.done ? "내일부터 이 운동이 차례" : "오늘부터 이 운동이 차례"} onClick={() => d.setWorkoutNext(nextFrom, item.key)}>차례로</button>}
-          <button className="routine-delete-button" type="button" aria-label={`${item.name || "운동"} 삭제`} onClick={() => d.removeWorkoutItem(item.key)}><Trash2 size={18} /></button>
+            : <button type="button" className="workout-pick" title={turn.done ? "내일부터 이 운동이 차례" : "오늘부터 이 운동이 차례"} onClick={() => d.setWorkoutNext(list.key, nextFrom, item.key)}>차례로</button>}
+          <button className="routine-delete-button" type="button" aria-label={`${item.name || "운동"} 삭제`} onClick={() => d.removeWorkoutItem(list.key, item.key)}><Trash2 size={18} /></button>
         </article>;
       })}
     </div>
-    {!items.length && <p className="routine-editor-empty">운동을 차례대로 추가해 보세요. (예: 하체 → 등 → 가슴)</p>}
+    {!items.length && <button type="button" className="workout-list-empty" onClick={() => d.addWorkoutItem(list.key)}><Plus size={15} />운동 추가</button>}
     {recent.length > 0 && <p className="workout-recent"><span>최근</span>{recent.map(([date, key]) => <span key={date}><b>{shortDate(date)}</b>{items.find((item) => item.key === key)?.name || "삭제된 운동"}</span>)}</p>}
+  </section>;
+}
+
+function WorkoutEditor({ kind, heading, toggle }) {
+  const d = useDashboardData();
+  const title = "WorkOut";
+  const { lists } = normalizeWorkoutLists(d.data.workoutLists, d.data.workout);
+  const root = useNewItemFocus(lists);
+  return <div className="routine-config-editor workout-editor" ref={root} aria-label={`${title} 편집`}>
+    <div className="routine-editor-actions">{heading && <h2><Dumbbell size={18} />{title}<small>{lists.length}</small></h2>}<span className="routine-editor-tools"><button className="routine-add-button" type="button" aria-label="분야 추가" title="분야 추가" onClick={() => d.addWorkoutList()}><Plus size={17} /><span className="routine-add-label">분야 추가</span></button>{toggle}</span></div>
+    <p className="wk-guide">분야마다 적은 순서대로 돌아가요. <b>Today's Tasks</b>에 분야별로 차례인 운동이 하나씩 나오고, 체크하면 다음 날부터 다음 운동이 차례가 돼요. 안 간 날은 차례가 그대로 남아요.</p>
+    <div className="workout-lists">
+      {lists.map((list, index) => <div className="workout-list-slot" key={list.key} data-item-key={list.key}>
+        <WorkoutList kind={kind} list={list} index={index} total={lists.length} d={d} />
+      </div>)}
+    </div>
+    {!lists.length && <p className="routine-editor-empty">분야를 추가하고 운동을 차례대로 적어 보세요. (예: 헬스 → 하체, 등, 가슴)</p>}
   </div>;
 }
 

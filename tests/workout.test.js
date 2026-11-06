@@ -28,3 +28,28 @@ test("old payloads get an empty WorkOut and keep other data", () => {
   assert.deepEqual(state.workout, { items: [], log: {}, cursor: null });
   assert.equal(getWorkoutTurn(state.workout, "2026-11-06").item, null);
 });
+
+test("the single WorkOut list becomes the first field, keeping items, log and keys", () => {
+  const workout = { items, log: { "2026-11-05": "a" }, cursor: null };
+  const state = normalizeState({ workout });
+  assert.equal(state.workoutLists.lists.length, 1);
+  assert.deepEqual(state.workoutLists.lists[0], { key: "workout", name: "", ...workout });
+  assert.deepEqual(state.workout, workout);
+  assert.equal(getWorkoutTurn(state.workoutLists.lists[0], "2026-11-06").item.key, "b");
+  // An empty old list does not become a field.
+  assert.deepEqual(normalizeState({}).workoutLists, { lists: [] });
+});
+
+test("fields rotate on their own and survive a reload", () => {
+  const workoutLists = { lists: [
+    { key: "gym", name: "헬스", items, log: { "2026-11-05": "a" } },
+    { key: "run", name: "유산소", items: [{ key: "r1", name: "달리기" }, { key: "r2", name: "수영" }], log: {} },
+    { key: "gym", name: "중복" },
+  ] };
+  const state = normalizeState(normalizeState({ workoutLists, workout: { items: [{ key: "old", name: "옛 목록" }] } }));
+  assert.deepEqual(state.workoutLists.lists.map((list) => list.name), ["헬스", "유산소"]);
+  assert.equal(getWorkoutTurn(state.workoutLists.lists[0], "2026-11-06").item.name, "등");
+  assert.equal(getWorkoutTurn(state.workoutLists.lists[1], "2026-11-06").item.name, "달리기");
+  // Deleting every field stays deleted (the old list does not come back).
+  assert.deepEqual(normalizeState({ workoutLists: { lists: [] }, workout: { items } }).workoutLists, { lists: [] });
+});

@@ -27,7 +27,7 @@ import {
   scoreNumber,
   createEmptyWeeklyPlan,
   normalizeWeeklyGroups,
-  normalizeWorkout,
+  normalizeWorkoutLists,
   weeklyGroupColors,
   normalizeDateMarkers,
   normalizeCalendarDuties,
@@ -1514,46 +1514,60 @@ export function useDashboard(selectedDate, setSelectedDate) {
     });
   };
 
-  const workoutOf = (draft) => {
-    draft.workout = normalizeWorkout(draft.workout);
-    return draft.workout;
+  // WorkOut fields, each with its own rotation (see normalizeWorkoutLists).
+  const workoutListsOf = (draft) => {
+    draft.workoutLists = normalizeWorkoutLists(draft.workoutLists, draft.workout);
+    return draft.workoutLists.lists;
   };
-  const addWorkoutItem = () => saveData((draft) => {
-    const workout = workoutOf(draft);
-    workout.items.push({ key: createKey("workout"), name: "" });
+  const withWorkoutList = (listKey, change) => saveData((draft) => {
+    const list = workoutListsOf(draft).find((entry) => entry.key === listKey);
+    if (list) change(list);
     return draft;
   });
-  const updateWorkoutItem = (key, name) => saveData((draft) => {
-    const item = workoutOf(draft).items.find((entry) => entry.key === key);
+  const addWorkoutList = () => saveData((draft) => {
+    workoutListsOf(draft).push({ key: createKey("workout-list"), name: "", items: [{ key: createKey("workout"), name: "" }], log: {}, cursor: null });
+    return draft;
+  });
+  const updateWorkoutList = (listKey, name) => withWorkoutList(listKey, (list) => { list.name = String(name); });
+  const moveWorkoutList = (listKey, direction) => saveData((draft) => {
+    const lists = workoutListsOf(draft);
+    const from = lists.findIndex((list) => list.key === listKey);
+    const to = from + direction;
+    if (from < 0 || to < 0 || to >= lists.length) return draft;
+    const [list] = lists.splice(from, 1);
+    lists.splice(to, 0, list);
+    return draft;
+  });
+  const removeWorkoutList = (listKey) => {
+    const list = normalizeWorkoutLists(data.workoutLists, data.workout).lists.find((entry) => entry.key === listKey);
+    if (list?.items.some((item) => item.name.trim()) && !window.confirm(`${list.name || "이"} 분야를 삭제할까요? 운동 목록과 기록이 함께 지워져요.`)) return;
+    saveData((draft) => {
+      draft.workoutLists = { lists: workoutListsOf(draft).filter((entry) => entry.key !== listKey) };
+      return draft;
+    });
+  };
+  const addWorkoutItem = (listKey) => withWorkoutList(listKey, (list) => { list.items.push({ key: createKey("workout"), name: "" }); });
+  const updateWorkoutItem = (listKey, key, name) => withWorkoutList(listKey, (list) => {
+    const item = list.items.find((entry) => entry.key === key);
     if (item) item.name = String(name);
-    return draft;
   });
-  const moveWorkoutItem = (fromKey, toKey) => saveData((draft) => {
-    const { items } = workoutOf(draft);
+  const moveWorkoutItem = (listKey, fromKey, toKey) => withWorkoutList(listKey, ({ items }) => {
     const from = items.findIndex((item) => item.key === fromKey);
     const to = items.findIndex((item) => item.key === toKey);
-    if (from < 0 || to < 0 || from === to) return draft;
+    if (from < 0 || to < 0 || from === to) return;
     const [item] = items.splice(from, 1);
     items.splice(to, 0, item);
-    return draft;
   });
   // Past days that used a removed item keep their record (shown as done).
-  const removeWorkoutItem = (key) => saveData((draft) => {
-    const workout = workoutOf(draft);
-    workout.items = workout.items.filter((item) => item.key !== key);
-    if (workout.cursor?.key === key) workout.cursor = null;
-    return draft;
+  const removeWorkoutItem = (listKey, key) => withWorkoutList(listKey, (list) => {
+    list.items = list.items.filter((item) => item.key !== key);
+    if (list.cursor?.key === key) list.cursor = null;
   });
-  const toggleWorkoutDone = (dateKey, itemKey) => saveData((draft) => {
-    const workout = workoutOf(draft);
-    if (workout.log[dateKey]) delete workout.log[dateKey];
-    else if (itemKey) workout.log[dateKey] = itemKey;
-    return draft;
+  const toggleWorkoutDone = (listKey, dateKey, itemKey) => withWorkoutList(listKey, (list) => {
+    if (list.log[dateKey]) delete list.log[dateKey];
+    else if (itemKey) list.log[dateKey] = itemKey;
   });
-  const setWorkoutNext = (dateKey, itemKey) => saveData((draft) => {
-    workoutOf(draft).cursor = { key: itemKey, date: dateKey };
-    return draft;
-  });
+  const setWorkoutNext = (listKey, dateKey, itemKey) => withWorkoutList(listKey, (list) => { list.cursor = { key: itemKey, date: dateKey }; });
 
   const updateWeeklyPlan = (categoryKey, dayKey, value) => {
     saveData((draft) => {
@@ -1988,6 +2002,10 @@ export function useDashboard(selectedDate, setSelectedDate) {
     moveWeeklyGroup,
     removeWeeklyGroup,
     arrangeWeeklyCategories,
+    addWorkoutList,
+    updateWorkoutList,
+    moveWorkoutList,
+    removeWorkoutList,
     addWorkoutItem,
     updateWorkoutItem,
     moveWorkoutItem,

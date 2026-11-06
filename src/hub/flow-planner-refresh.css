@@ -1034,8 +1034,28 @@ html body #root .hub-app.hub-app.hub-mobile .workout-row :is(.workout-turn, .wor
 html body #root .hub-app.hub-app .workout-recent { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; margin: 12px 0 0; color: var(--fp-ink-2); font-size: 13px; }
 html body #root .hub-app.hub-app .workout-recent > span:first-child { color: var(--fp-muted); font-size: 12px; font-weight: 800; }
 html body #root .hub-app.hub-app .workout-recent b { margin-right: 5px; color: var(--fp-muted); font-weight: 700; font-variant-numeric: tabular-nums; }
+/* Fields ("헬스", "유산소" ...): a soft title bar over each list, side by side
+   in up to three columns on wide panels, stacked on narrow ones. */
+html body #root .hub-app.hub-app .workout-lists { display: grid; gap: 16px; }
+html body #root .hub-app.hub-app .workout-list { min-width: 0; }
+html body #root .hub-app.hub-app.hub-app .workout-list .routine-preset-list { grid-template-columns: minmax(0, 1fr); }
+html body #root .hub-app.hub-app .workout-list-head { display: flex; align-items: center; gap: 8px; min-height: 40px; margin-bottom: 2px; padding: 4px 6px 4px 8px; border-radius: 10px; background: #f5f7fa; }
+html body #root .hub-app.hub-app .workout-list-head > small { flex: none; display: grid; place-items: center; min-width: 22px; height: 20px; padding: 0 6px; border-radius: 999px; background: #ffffffb3; color: var(--fp-muted); font-size: 11px; font-weight: 800; line-height: 1; }
+html body #root .hub-app.hub-app .workout-editor .workout-list-name { flex: 0 1 auto; width: auto; min-width: 40px; max-width: 220px; field-sizing: content; height: 32px !important; min-height: 32px !important; padding: 0 6px !important; border: 1px solid transparent !important; border-radius: 6px !important; background: transparent !important; box-shadow: none !important; color: var(--fp-ink) !important; font: 800 15px/30px var(--hub-font-body) !important; }
+html body #root .hub-app.hub-app .workout-editor .workout-list-name:is(:hover, :focus) { border-color: #ffffff !important; background: #ffffffb3 !important; }
+html body #root .hub-app.hub-app .workout-list-tools { flex: none; display: flex; margin-left: auto; align-items: center; gap: 2px; }
+html body #root .hub-app.hub-app .workout-list-tools button { display: grid; place-items: center; width: 28px; min-width: 28px; height: 28px; min-height: 28px; padding: 0; border: 0; border-radius: 6px; background: transparent; box-shadow: none; color: var(--fp-ink-2); line-height: 0; }
+html body #root .hub-app.hub-app .workout-list-tools button:hover:not(:disabled) { background: #ffffffcc; }
+html body #root .hub-app.hub-app .workout-list-tools button:disabled { opacity: .3; }
+html body #root .hub-app.hub-app.hub-mobile .workout-list-tools button { width: 36px; min-width: 36px; height: 36px; min-height: 36px; }
+@media (hover: hover) and (pointer: fine) {
+  html body #root .hub-app.hub-app .workout-list-tools { opacity: 0; transition: opacity 120ms ease; }
+  html body #root .hub-app.hub-app .workout-list-head:is(:hover, :focus-within) .workout-list-tools { opacity: 1; }
+}
+html body #root .hub-app.hub-app .workout-list-empty { display: inline-flex; align-items: center; gap: 5px; height: 32px; min-height: 32px; margin-top: 8px; padding: 0 12px; border: 1px dashed var(--fp-line); border-radius: 8px; background: transparent; box-shadow: none; color: var(--fp-muted); font-size: 13px; font-weight: 700; }
+html body #root .hub-app.hub-app .workout-list-empty:hover { border-color: var(--fp-accent); color: var(--fp-accent); }
 @container routine-panel (min-width: 761px) {
-  html body #root .hub-app.hub-app.hub-desktop .routine-editor-panel[data-kind="workout"] .routine-preset-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: 28px; }
+  html body #root .hub-app.hub-app .workout-lists { grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: 28px; row-gap: 20px; }
 }
 /* Today's Tasks: the WorkOut card has one round check instead of Y/N. */
 html body #root .hub-app.hub-app .flow-routines .hub-task-actions .yes.workout-done { display: grid; place-items: center; width: 40px; min-width: 40px; padding: 0; }

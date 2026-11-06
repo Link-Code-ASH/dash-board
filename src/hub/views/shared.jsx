@@ -9,6 +9,7 @@ import {
   getWeeklyPlanEntry,
   getWeeklyPlanItems,
   getWorkoutTurn,
+  normalizeWorkoutLists,
 } from "../../dashboard/model.js";
 import {
   createPresetPlanCard,
@@ -196,13 +197,15 @@ export function RoutineTasks({ compact = false }) {
   const groupByKey = new Map(sections.flatMap((section) => section.rows.map((row) => [row.key, section.group])));
   const weeklyCards = planCards(sections.flatMap((section) => section.rows), d.data.weeklyPlan, "plan", "Weekly")
     .map((card) => ({ ...card, group: groupByKey.get(card.key) || null }));
-  // WorkOut: one card, whose turn it is today; checking it moves the turn on.
-  const turn = getWorkoutTurn(d.data.workout, d.selectedDate);
-  const workoutCards = turn.item ? [{
-    key: turn.item.key, label: "", value: turn.item.name || "운동", workout: true,
-    selectedChoice: turn.done ? "Y" : "",
-    onToggle: () => d.toggleWorkoutDone(d.selectedDate, turn.item.key),
-  }] : [];
+  // WorkOut: one card per field, whose turn it is today; checking it moves the turn on.
+  const workoutCards = normalizeWorkoutLists(d.data.workoutLists, d.data.workout).lists.flatMap((list) => {
+    const turn = getWorkoutTurn(list, d.selectedDate);
+    return turn.item ? [{
+      key: turn.item.key, label: list.name, value: turn.item.name || "운동", workout: true,
+      selectedChoice: turn.done ? "Y" : "",
+      onToggle: () => d.toggleWorkoutDone(list.key, d.selectedDate, turn.item.key),
+    }] : [];
+  });
   const groups = [
     {
       id: "daily",
