@@ -919,12 +919,16 @@ html body #root .hub-app.hub-app.hub-mobile .flow-markers .mk-edit { grid-column
 html body #root .hub-app.hub-app.hub-mobile .flow-markers .mk-edit-tools button { width: 36px; min-width: 36px; height: 36px; min-height: 36px; }
 html body #root .hub-app.hub-app .flow-routines .hub-task-groups .hub-task { min-height: 40px; }
 /* Star + score pill: a narrow column cannot hold the date, the star and the
-   corner pill on one line, so when a day has both the pill moves to the
-   bottom-right corner and the star keeps its usual spot. */
+   corner pill on one line. The check and score always stay in the top-right
+   corner (same spot every day); when a day has both, the star moves to the
+   bottom-right corner and its note opens upward. */
 html body #root .hub-app.hub-app.hub-desktop .flow-desk-day header > button:first-child { flex: 0 1 auto; }
 html body #root .hub-app.hub-app.hub-desktop .flow-desk-day:has(.flow-desk-score :is(strong, .flow-desk-mark)) .flow-desk-marker:last-of-type { margin-right: 0; }
 html body #root .hub-app.hub-app.hub-desktop .flow-desk-day:has(.flow-desk-marker):has(.flow-desk-score :is(strong, .flow-desk-mark)) { padding-bottom: 34px; }
-html body #root .hub-app.hub-app.hub-desktop .flow-desk-day:has(.flow-desk-marker) .flow-desk-score { top: auto; bottom: 8px; right: 8px; }
+html body #root .hub-app.hub-app.hub-desktop .flow-desk-day:has(.flow-desk-score :is(strong, .flow-desk-mark)) .flow-desk-marker { position: absolute; z-index: 2; top: auto; bottom: 8px; right: 8px; }
+html body #root .hub-app.hub-app.hub-desktop .flow-desk-day:has(.flow-desk-score :is(strong, .flow-desk-mark)) .flow-desk-marker:nth-of-type(3) { right: 36px; }
+html body #root .hub-app.hub-app.hub-desktop .flow-desk-day:has(.flow-desk-score :is(strong, .flow-desk-mark)) .flow-desk-marker:nth-of-type(4) { right: 64px; }
+html body #root .hub-app.hub-app.hub-desktop .flow-desk-day:has(.flow-desk-score :is(strong, .flow-desk-mark)) .flow-desk-marker .flow-desk-marker-tip { top: auto; bottom: calc(100% + 6px); left: auto; right: -2px; transform: none; }
 /* Weekly rows show order and delete controls the same way Daily rows do. */
 html body #root .hub-app.hub-app .wk-cat-row :is(.routine-order-controls, .routine-delete-button) { opacity: 1; }
 html body #root .hub-app.hub-app .wk-cat-row .routine-delete-button:disabled { opacity: .3; }
@@ -1059,3 +1063,14 @@ html body #root .hub-app.hub-app .workout-list-empty:hover { border-color: var(-
 }
 /* Today's Tasks: the WorkOut card has one round check instead of Y/N. */
 html body #root .hub-app.hub-app .flow-routines .hub-task-actions .yes.workout-done { display: grid; place-items: center; width: 40px; min-width: 40px; padding: 0; }
+/* Score pill beside the date: on a day with a score the filled date chip
+   already marks today, so the "오늘" tag steps aside for the pill. In very
+   narrow columns the pill sits on its own line just under the date. */
+html body #root .hub-app.hub-app.hub-desktop .flow-desk-day { container: flow-day / inline-size; }
+/* The pill sits on the same centre line as the date chip. */
+html body #root .hub-app.hub-app.hub-desktop .flow-desk-day .flow-desk-score { top: 16px; }
+html body #root .hub-app.hub-app.hub-desktop .flow-desk-day:has(.flow-desk-score :is(strong, .flow-desk-mark)) .flow-desk-today { display: none; }
+@container flow-day (max-width: 132px) {
+  html body #root .hub-app.hub-app.hub-desktop .flow-desk-day .flow-desk-score { position: static; order: 1; align-self: flex-end; height: 22px; margin: -4px 0 6px; }
+  html body #root .hub-app.hub-app.hub-desktop .flow-desk-day .flow-desk-events { order: 2; }
+}
