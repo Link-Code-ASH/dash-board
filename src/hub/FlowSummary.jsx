@@ -42,7 +42,7 @@ export function FlowScore() {
               <Check size={16} strokeWidth={3} aria-hidden="true" />
             </label>
             <label className={`fs-check is-penalty ${d.carryPenaltyMarked ? "is-checked" : ""}`} title="빨간 체크 (−2)">
-              <input type="checkbox" checked={d.carryPenaltyMarked} onChange={(e) => { if (e.target.checked) celebrate(e.target.closest("label"), { tone: "minus", burst: false }); d.toggleCarryPenalty(e); }} aria-label="선택 날짜 빨간 체크, −2점" />
+              <input type="checkbox" checked={d.carryPenaltyMarked} onChange={(e) => { if (e.target.checked) celebrate(e.target.closest("label"), { ring: false }); d.toggleCarryPenalty(e); }} aria-label="선택 날짜 빨간 체크, −2점" />
               <Check size={16} strokeWidth={3} aria-hidden="true" />
             </label>
           </div>

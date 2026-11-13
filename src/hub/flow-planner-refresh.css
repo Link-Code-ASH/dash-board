@@ -1098,16 +1098,20 @@ html body #root .hub-app.hub-app .wk-entry:is(.is-drop-before, .is-drop-after) {
 html body #root .hub-app.hub-app .wk-entry:is(.is-drop-before, .is-drop-after)::after { content: ""; position: absolute; z-index: 3; left: 0; right: 0; height: 3px; border-radius: 2px; background: var(--fp-accent); pointer-events: none; }
 html body #root .hub-app.hub-app .wk-entry.is-drop-before::after { top: -3px; }
 html body #root .hub-app.hub-app .wk-entry.is-drop-after::after { bottom: -3px; }
-/* ---------- Check-in animations (see celebrate.js) ----------
-   Particles live on a fixed layer at the pressed button's centre. The task
-   progress bar slides to its new length instead of jumping. */
-.hub-burst { position: fixed; z-index: 9999; width: 0; height: 0; pointer-events: none; }
-.hub-burst > i { position: absolute; left: 0; top: 0; display: block; transform: translate(-50%, -50%); }
-.hub-burst-ring { border: 2px solid; border-radius: 999px; opacity: 0; }
-.hub-burst-dot { width: 7px; height: 7px; border-radius: 999px; }
-.hub-burst-star { width: 12px; height: 12px; background: currentColor; clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%); }
+/* ---------- Check-in feedback (see celebrate.js) ----------
+   A soft press and one thin fading outline in the button's own colour; rows
+   and buttons ease into their checked colours instead of switching, and the
+   task progress bar slides to its new length. */
+html body #root .hub-app.hub-app .flow-routines .hub-task-group h3 > span { transition: color 320ms ease; }
+html body #root .hub-app.hub-app .flow-routines .hub-task-group.is-complete h3 > span { color: var(--fp-plus); }
+.hub-press-ring { position: fixed; z-index: 9999; box-sizing: border-box; border: 1.5px solid; pointer-events: none; opacity: 0; }
+html body #root .hub-app.hub-app .flow-routines .hub-task { transition: background-color 260ms ease; }
+html body #root .hub-app.hub-app .flow-routines .hub-task :is(strong, small) { transition: color 260ms ease; }
+html body #root .hub-app.hub-app .flow-routines .hub-task-actions button { transition: background-color 220ms ease, color 220ms ease, border-color 220ms ease, box-shadow 220ms ease; }
 @property --done { syntax: "<percentage>"; inherits: true; initial-value: 0%; }
-html body #root .hub-app.hub-app .flow-routines .hub-task-group h3 { transition: --done 420ms cubic-bezier(.3, .9, .3, 1); }
+html body #root .hub-app.hub-app .flow-routines .hub-task-group h3 { transition: --done 520ms cubic-bezier(.2, .7, .2, 1); }
 @media (prefers-reduced-motion: reduce) {
-  html body #root .hub-app.hub-app .flow-routines .hub-task-group h3 { transition: none; }
+  html body #root .hub-app.hub-app .flow-routines .hub-task-group h3,
+  html body #root .hub-app.hub-app .flow-routines .hub-task,
+  html body #root .hub-app.hub-app .flow-routines .hub-task :is(strong, small, .hub-task-actions button) { transition: none; }
 }

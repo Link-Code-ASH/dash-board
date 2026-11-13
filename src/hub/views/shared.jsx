@@ -209,16 +209,16 @@ export function RoutineTasks({ compact = false }) {
       onToggle: () => d.toggleWorkoutDone(list.key, d.selectedDate, turn.item.key),
     }] : [];
   });
-  // Checking pops the pressed button with a little burst; finishing a whole
-  // group gets a bigger one from its count. Unchecking stays quiet.
+  // Checking gives the pressed button a soft press and fading outline;
+  // finishing a whole group lets its count settle too. Unchecking stays quiet.
   const cheer = (button, card, group, choice) => {
     if (String(card.selectedChoice) === String(choice)) return;
-    if (choice === "N") { celebrate(button, { tone: "minus", burst: false }); return; }
-    celebrate(button, { tone: card.workout ? "gold" : "plus" });
+    if (choice === "N") { celebrate(button, { ring: false }); return; }
+    celebrate(button);
     const doneAfter = group.cards.filter((item) => item.selectedChoice).length + (card.selectedChoice ? 0 : 1);
     if (doneAfter === group.cards.length) {
       const count = button?.closest(".hub-task-group")?.querySelector("h3 > span");
-      setTimeout(() => celebrate(count, { tone: "gold", big: true }), 180);
+      setTimeout(() => celebrate(count, { big: true, ring: false }), 200);
     }
   };
   const groups = [
@@ -234,7 +234,7 @@ export function RoutineTasks({ compact = false }) {
     <div className={`hub-task-groups ${compact ? "is-compact" : ""}`}>
       {!groups.some((group) => group.cards.length) && <p className="hub-empty-inline">Planner에서 루틴을 추가해주세요.</p>}
       {groups.filter((group) => group.cards.length).map((group) => (
-        <section className="hub-task-group" data-kind={group.id} key={group.id}>
+        <section className={`hub-task-group${group.cards.every((card) => card.selectedChoice) ? " is-complete" : ""}`} data-kind={group.id} key={group.id}>
           <h3
             style={{
               "--done": `${(group.cards.filter((card) => card.selectedChoice).length / group.cards.length) * 100}%`,
