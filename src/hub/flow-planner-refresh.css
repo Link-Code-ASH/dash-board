@@ -1086,3 +1086,15 @@ html body #root .hub-app.hub-app.hub-desktop .flow-desk-day:has(.flow-desk-score
   html body #root .hub-app.hub-app.hub-desktop .flow-desk-day .flow-desk-score { position: static; order: 1; align-self: flex-end; height: 22px; margin: -4px 0 6px; }
   html body #root .hub-app.hub-app.hub-desktop .flow-desk-day .flow-desk-events { order: 2; }
 }
+/* Weekly turns: the number badge is a drag handle for reordering a day's
+   turns (tasks and rest weeks); a blue line shows where it will land. */
+html body #root .hub-app.hub-app .wk-turn.is-handle { position: relative; cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; }
+html body #root .hub-app.hub-app .wk-turn.is-handle::after { content: ""; position: absolute; inset: -6px; }
+html body #root .hub-app.hub-app .wk-turn.is-handle:hover { box-shadow: 0 0 0 2px var(--fp-accent-soft); }
+html body #root .hub-app.hub-app .wk-turn.is-handle:focus-visible { outline: 2px solid var(--fp-accent); outline-offset: 1px; }
+html body #root .hub-app.hub-app.hub-mobile .wk-turn.is-handle::after { inset: -10px; }
+html body #root .hub-app.hub-app .wk-entry.is-dragging { opacity: .45; }
+html body #root .hub-app.hub-app .wk-entry:is(.is-drop-before, .is-drop-after) { position: relative; }
+html body #root .hub-app.hub-app .wk-entry:is(.is-drop-before, .is-drop-after)::after { content: ""; position: absolute; z-index: 3; left: 0; right: 0; height: 3px; border-radius: 2px; background: var(--fp-accent); pointer-events: none; }
+html body #root .hub-app.hub-app .wk-entry.is-drop-before::after { top: -3px; }
+html body #root .hub-app.hub-app .wk-entry.is-drop-after::after { bottom: -3px; }

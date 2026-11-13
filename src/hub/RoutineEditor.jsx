@@ -177,18 +177,71 @@ function WeeklyDay({ day, label, value, today, onChange, selectedDate }) {
     save(next.length ? next : [""], Math.max(target, 0));
   };
   const hasTask = filled.some((item) => !isWeeklyRest(item));
+  // Drag a numbered badge (or press up/down on it) to change the order of turns.
+  const root = useRef(null);
+  const [drag, setDrag] = useState(null);
+  const reorder = (from, to) => {
+    if (from === to || to < 0 || to >= items.length) return;
+    const next = [...items];
+    const [item] = next.splice(from, 1);
+    next.splice(to, 0, item);
+    save(next);
+  };
+  const startDrag = (event, from) => {
+    if (event.button !== 0 && event.pointerType === "mouse") return;
+    event.preventDefault();
+    event.stopPropagation();
+    let to = from;
+    const pick = (y) => {
+      const rows = [...(root.current?.querySelectorAll("[data-entry]") || [])];
+      if (!rows.length) return;
+      const gap = (row) => { const box = row.getBoundingClientRect(); return Math.max(box.top - y, 0, y - box.bottom); };
+      const hit = Number(rows.reduce((best, row) => gap(row) < gap(best) ? row : best).dataset.entry);
+      if (hit !== to) { to = hit; setDrag({ from, to }); }
+    };
+    const onMove = (e) => { e.preventDefault(); pick(e.clientY); };
+    const stop = (commit) => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onCancel);
+      window.removeEventListener("keydown", onKey);
+      document.documentElement.classList.remove("is-row-dragging");
+      setDrag(null);
+      if (commit) reorder(from, to);
+    };
+    const onUp = () => stop(true);
+    const onCancel = () => stop(false);
+    const onKey = (e) => { if (e.key === "Escape") stop(false); };
+    window.addEventListener("pointermove", onMove, { passive: false });
+    window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onCancel);
+    window.addEventListener("keydown", onKey);
+    document.documentElement.classList.add("is-row-dragging");
+    setDrag({ from, to });
+  };
+  const dropClass = (index) => !drag ? "" : index === drag.from ? " is-dragging" : index !== drag.to ? "" : drag.from > index ? " is-drop-before" : " is-drop-after";
   let filledIndex = -1;
-  return <div className={`wk-day ${today ? "is-today" : ""} ${filled.length ? "" : "is-empty"}`} role="group" aria-label={`${label} ${day.full}`}>
+  return <div className={`wk-day ${today ? "is-today" : ""} ${filled.length ? "" : "is-empty"}`} role="group" aria-label={`${label} ${day.full}`} ref={root}>
     <span className="wk-day-name">{day.label}{today && <em>오늘</em>}</span>
     {items.map((item, index) => {
       if (item.trim()) filledIndex += 1;
       const isCurrent = item.trim() && filledIndex === current;
       const rest = isWeeklyRest(item);
       const removable = rest ? items.length > 1 : index > 0 && (!item.trim() || aboveTask(index) >= 0);
-      return <div className={`wk-entry ${isCurrent ? "is-current" : ""}${rest ? " is-rest" : ""}`} key={index}>
+      return <div className={`wk-entry ${isCurrent ? "is-current" : ""}${rest ? " is-rest" : ""}${dropClass(index)}`} key={index} data-entry={index}>
         {item.trim() && (filled.length === 1
           ? <b className="wk-turn is-solo" title="매주 나오는 항목" aria-hidden="true" />
-          : <b className="wk-turn" title={isCurrent ? "이번 주에 나오는 항목" : "다른 주에 나오는 항목"}>{filledIndex + 1}</b>)}
+          : <b className="wk-turn is-handle" role="button" tabIndex={0}
+            title={`${isCurrent ? "이번 주에 나오는 항목" : "다른 주에 나오는 항목"} · 끌어서 순서 바꾸기`}
+            aria-label={`${filledIndex + 1}번째 차례, 순서 옮기기 (끌거나 위아래 화살표)`}
+            onPointerDown={(e) => startDrag(e, index)}
+            onKeyDown={(e) => {
+              const step = e.key === "ArrowUp" ? -1 : e.key === "ArrowDown" ? 1 : 0;
+              if (!step) return;
+              e.preventDefault();
+              e.stopPropagation();
+              reorder(index, index + step);
+            }}>{filledIndex + 1}</b>)}
         {rest
           ? <span className="wk-rest" title={isCurrent ? "이번 주는 쉬어요" : "이 차례에는 쉬어요"}><Coffee size={12} strokeWidth={2.2} aria-hidden="true" />쉬는 주</span>
           : <textarea ref={(node) => { refs.current[index] = node; }} rows={1} maxLength={180} placeholder="+ 할 일" aria-label={`${label} ${day.full} ${index + 1}`}
@@ -279,7 +332,7 @@ function WeeklyEditor({ kind, heading, toggle }) {
     <div className="routine-editor-actions">{heading && <h2><CalendarRange size={18} />{title}<small>{rows.length}</small></h2>}<span className="routine-editor-tools">
       <button className="routine-add-button wk-group-add" type="button" aria-label="그룹 추가" title="그룹 추가" onClick={() => d.addWeeklyGroup()}><FolderPlus size={17} /><span className="routine-add-label">그룹</span></button>
       <button className="routine-add-button" type="button" aria-label={`${title} ${noun} 추가`} title={`${noun} 추가`} onClick={() => d.addCategory()}><Plus size={17} /><span className="routine-add-label">{noun} 추가</span></button>{toggle}</span></div>
-    <p className="wk-guide">요일 칸에 적은 할 일은 그 요일 <b>Today's Tasks</b>에 나와요. 한 칸에 여러 개를 넣으면 주마다 번갈아 나와요. <b>+ 쉬는 주</b>를 넣으면 그 차례에는 아무것도 안 나와요 (2주에 한 번 등). 끝에 <b>(2)</b>처럼 적으면 그 할 일은 무조건 Y 2점이에요.{groups.length ? " 카테고리를 끌어서 다른 그룹으로 옮길 수 있어요." : ""}</p>
+    <p className="wk-guide">요일 칸에 적은 할 일은 그 요일 <b>Today's Tasks</b>에 나와요. 한 칸에 여러 개를 넣으면 주마다 번갈아 나와요. <b>+ 쉬는 주</b>를 넣으면 그 차례에는 아무것도 안 나와요 (2주에 한 번 등). 번호를 끌면 순서가 바뀌어요. 끝에 <b>(2)</b>처럼 적으면 그 할 일은 무조건 Y 2점이에요.{groups.length ? " 카테고리를 끌어서 다른 그룹으로 옮길 수 있어요." : ""}</p>
     <div className="routine-table-heads wk-table-heads" aria-hidden="true">
       <div className="routine-table-head"><span>항목</span><span>Y</span><span>N</span></div>
     </div>
