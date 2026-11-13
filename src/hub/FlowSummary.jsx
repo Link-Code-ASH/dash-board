@@ -38,11 +38,11 @@ export function FlowScore() {
           </span>
           <div className="fs-checks">
             <label className={`fs-check is-attempt ${d.routineTried ? "is-checked" : ""}`} title="초록 체크">
-              <input type="checkbox" checked={d.routineTried} onChange={(e) => { if (e.target.checked) celebrate(e.target.closest("label")); d.toggleRoutineAttempt(e); }} aria-label="선택 날짜 초록 체크" />
+              <input type="checkbox" checked={d.routineTried} onChange={(e) => { celebrate(e.target.closest("label"), { on: e.target.checked }); d.toggleRoutineAttempt(e); }} aria-label="선택 날짜 초록 체크" />
               <Check size={16} strokeWidth={3} aria-hidden="true" />
             </label>
             <label className={`fs-check is-penalty ${d.carryPenaltyMarked ? "is-checked" : ""}`} title="빨간 체크 (−2)">
-              <input type="checkbox" checked={d.carryPenaltyMarked} onChange={(e) => { if (e.target.checked) celebrate(e.target.closest("label"), { ring: false }); d.toggleCarryPenalty(e); }} aria-label="선택 날짜 빨간 체크, −2점" />
+              <input type="checkbox" checked={d.carryPenaltyMarked} onChange={(e) => { celebrate(e.target.closest("label"), { on: e.target.checked }); d.toggleCarryPenalty(e); }} aria-label="선택 날짜 빨간 체크, −2점" />
               <Check size={16} strokeWidth={3} aria-hidden="true" />
             </label>
           </div>

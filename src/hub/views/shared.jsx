@@ -209,17 +209,11 @@ export function RoutineTasks({ compact = false }) {
       onToggle: () => d.toggleWorkoutDone(list.key, d.selectedDate, turn.item.key),
     }] : [];
   });
-  // Checking gives the pressed button a soft press and fading outline;
-  // finishing a whole group lets its count settle too. Unchecking stays quiet.
-  const cheer = (button, card, group, choice) => {
-    if (String(card.selectedChoice) === String(choice)) return;
-    if (choice === "N") { celebrate(button, { ring: false }); return; }
-    celebrate(button);
-    const doneAfter = group.cards.filter((item) => item.selectedChoice).length + (card.selectedChoice ? 0 : 1);
-    if (doneAfter === group.cards.length) {
-      const count = button?.closest(".hub-task-group")?.querySelector("h3 > span");
-      setTimeout(() => celebrate(count, { big: true, ring: false }), 200);
-    }
+  // Every press gets a clear ripple from where it was pressed; checking also
+  // pulses an outline in the new colour (see celebrate.js).
+  const cheer = (event, card, choice) => {
+    const button = event?.currentTarget || event;
+    celebrate(button, { point: event?.currentTarget ? event : null, on: String(card.selectedChoice) !== String(choice) });
   };
   const groups = [
     {
@@ -279,7 +273,7 @@ export function RoutineTasks({ compact = false }) {
                         aria-pressed={Boolean(card.selectedChoice)}
                         aria-label={card.selectedChoice ? `${card.value} 완료 취소` : `${card.value} 완료`}
                         title={card.selectedChoice ? "완료 취소" : "했어요"}
-                        onClick={(e) => { cheer(e.currentTarget, card, group, "Y"); card.onToggle(); }}
+                        onClick={(e) => { cheer(e, card, "Y"); card.onToggle(); }}
                       >
                         <Check size={16} strokeWidth={2.4} />
                       </button>
@@ -289,7 +283,7 @@ export function RoutineTasks({ compact = false }) {
                         range={card.scoreRange}
                         selected={card.selectedChoice && card.selectedChoice !== "N" ? card.selectedChoice : ""}
                         onPick={card.onToggle}
-                        onCheer={(button) => cheer(button, card, group, "picked")}
+                        onCheer={(button) => cheer(button, card, "picked")}
                       />
                     ) : (
                       ["Y"].map((choice) => (
@@ -299,7 +293,7 @@ export function RoutineTasks({ compact = false }) {
                           aria-pressed={
                             String(card.selectedChoice) === String(choice)
                           }
-                          onClick={(e) => { cheer(e.currentTarget, card, group, choice); card.onToggle(choice); }}
+                          onClick={(e) => { cheer(e, card, choice); card.onToggle(choice); }}
                         >
                           <span>
                             {choice === "Y" ? "Y" : formatScore(choice)}
@@ -313,7 +307,7 @@ export function RoutineTasks({ compact = false }) {
                     {!card.workout && <button
                       className="no"
                       aria-pressed={card.selectedChoice === "N"}
-                      onClick={(e) => { cheer(e.currentTarget, card, group, "N"); card.onToggle("N"); }}
+                      onClick={(e) => { cheer(e, card, "N"); card.onToggle("N"); }}
                     >
                       <span>N</span>
                       <small>{formatScore(card.nScore)}</small>
