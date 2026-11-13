@@ -1,8 +1,8 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { Plus, Trash2, GripVertical, Repeat2, CalendarRange, ChevronUp, ChevronDown, FolderPlus, Dumbbell, Check } from "lucide-react";
+import { Plus, Trash2, GripVertical, Repeat2, CalendarRange, ChevronUp, ChevronDown, FolderPlus, Dumbbell, Check, Coffee } from "lucide-react";
 import { useDashboardData } from "./context.jsx";
 import ItemIconButton from "./ItemIconButton.jsx";
-import { weekDays, getWeekdayKey, getWeekSerial, getWeeklyPlanItems, encodeWeeklyPlanItems, weeklyGroupColors, normalizeWorkoutLists, getWorkoutTurn, addDays } from "../dashboard/model.js";
+import { weekDays, getWeekdayKey, getWeekSerial, getWeeklyPlanItems, encodeWeeklyPlanItems, isWeeklyRest, WEEKLY_REST, weeklyGroupColors, normalizeWorkoutLists, getWorkoutTurn, addDays } from "../dashboard/model.js";
 import { groupStyle, groupWeeklyCategories, weeklyGroupPalette } from "./weeklyGroups.js";
 
 function ScoreInput({ value, choice, label, onChange }) {
@@ -166,29 +166,40 @@ function WeeklyDay({ day, label, value, today, onChange, selectedDate }) {
     if (focus >= 0) requestAnimationFrame(() => refs.current[focus]?.focus());
   };
   const update = (index, text) => save(items.map((item, i) => i === index ? text : item));
-  // Removing an extra entry folds its text into the one above, so nothing typed is lost.
-  const merge = (index) => {
+  // Removing an extra entry folds its text into the nearest task above, so
+  // nothing typed is lost. A rest turn or an empty entry is simply dropped.
+  const aboveTask = (index) => { for (let i = index - 1; i >= 0; i -= 1) if (!isWeeklyRest(items[i])) return i; return -1; };
+  const remove = (index) => {
     const next = [...items];
     const [removed] = next.splice(index, 1);
-    next[index - 1] = [next[index - 1], removed].filter(Boolean).join("\n");
-    save(next, index - 1);
+    const target = aboveTask(index);
+    if (removed.trim() && !isWeeklyRest(removed) && target >= 0) next[target] = [next[target], removed].filter(Boolean).join("\n");
+    save(next.length ? next : [""], Math.max(target, 0));
   };
+  const hasTask = filled.some((item) => !isWeeklyRest(item));
   let filledIndex = -1;
   return <div className={`wk-day ${today ? "is-today" : ""} ${filled.length ? "" : "is-empty"}`} role="group" aria-label={`${label} ${day.full}`}>
     <span className="wk-day-name">{day.label}{today && <em>오늘</em>}</span>
     {items.map((item, index) => {
       if (item.trim()) filledIndex += 1;
       const isCurrent = item.trim() && filledIndex === current;
-      return <div className={`wk-entry ${isCurrent ? "is-current" : ""}`} key={index}>
+      const rest = isWeeklyRest(item);
+      const removable = rest ? items.length > 1 : index > 0 && (!item.trim() || aboveTask(index) >= 0);
+      return <div className={`wk-entry ${isCurrent ? "is-current" : ""}${rest ? " is-rest" : ""}`} key={index}>
         {item.trim() && (filled.length === 1
           ? <b className="wk-turn is-solo" title="매주 나오는 항목" aria-hidden="true" />
           : <b className="wk-turn" title={isCurrent ? "이번 주에 나오는 항목" : "다른 주에 나오는 항목"}>{filledIndex + 1}</b>)}
-        <textarea ref={(node) => { refs.current[index] = node; }} rows={1} maxLength={180} placeholder="+ 할 일" aria-label={`${label} ${day.full} ${index + 1}`}
-          value={item} onChange={(e) => update(index, e.target.value)} onKeyDown={(e) => e.stopPropagation()} />
-        {index > 0 && <button type="button" className="wk-entry-remove" aria-label="이 항목 합치기" title="위 항목과 합치기" onClick={() => merge(index)}>×</button>}
+        {rest
+          ? <span className="wk-rest" title={isCurrent ? "이번 주는 쉬어요" : "이 차례에는 쉬어요"}><Coffee size={12} strokeWidth={2.2} aria-hidden="true" />쉬는 주</span>
+          : <textarea ref={(node) => { refs.current[index] = node; }} rows={1} maxLength={180} placeholder="+ 할 일" aria-label={`${label} ${day.full} ${index + 1}`}
+            value={item} onChange={(e) => update(index, e.target.value)} onKeyDown={(e) => e.stopPropagation()} />}
+        {removable && <button type="button" className="wk-entry-remove" aria-label={rest ? "쉬는 주 빼기" : "이 항목 합치기"} title={rest ? "쉬는 주 빼기" : "위 항목과 합치기"} onClick={() => remove(index)}>×</button>}
       </div>;
     })}
-    {filled.length > 0 && <button type="button" className="wk-rotate-add" title="주마다 번갈아 나올 항목 추가" onClick={() => save([...items, ""], items.length)}>+ 번갈아</button>}
+    {hasTask && <span className="wk-day-adds">
+      <button type="button" className="wk-rotate-add" title="주마다 번갈아 나올 항목 추가" onClick={() => save([...items, ""], items.length)}>+ 번갈아</button>
+      <button type="button" className="wk-rotate-add is-rest" title="이 차례에는 아무것도 안 나와요 (예: 2주에 한 번)" onClick={() => save([...items, WEEKLY_REST])}>+ 쉬는 주</button>
+    </span>}
   </div>;
 }
 
@@ -268,7 +279,7 @@ function WeeklyEditor({ kind, heading, toggle }) {
     <div className="routine-editor-actions">{heading && <h2><CalendarRange size={18} />{title}<small>{rows.length}</small></h2>}<span className="routine-editor-tools">
       <button className="routine-add-button wk-group-add" type="button" aria-label="그룹 추가" title="그룹 추가" onClick={() => d.addWeeklyGroup()}><FolderPlus size={17} /><span className="routine-add-label">그룹</span></button>
       <button className="routine-add-button" type="button" aria-label={`${title} ${noun} 추가`} title={`${noun} 추가`} onClick={() => d.addCategory()}><Plus size={17} /><span className="routine-add-label">{noun} 추가</span></button>{toggle}</span></div>
-    <p className="wk-guide">요일 칸에 적은 할 일은 그 요일 <b>Today's Tasks</b>에 나와요. 한 칸에 여러 개를 넣으면 주마다 번갈아 나와요. 끝에 <b>(2)</b>처럼 적으면 그 할 일은 무조건 Y 2점이에요.{groups.length ? " 카테고리를 끌어서 다른 그룹으로 옮길 수 있어요." : ""}</p>
+    <p className="wk-guide">요일 칸에 적은 할 일은 그 요일 <b>Today's Tasks</b>에 나와요. 한 칸에 여러 개를 넣으면 주마다 번갈아 나와요. <b>+ 쉬는 주</b>를 넣으면 그 차례에는 아무것도 안 나와요 (2주에 한 번 등). 끝에 <b>(2)</b>처럼 적으면 그 할 일은 무조건 Y 2점이에요.{groups.length ? " 카테고리를 끌어서 다른 그룹으로 옮길 수 있어요." : ""}</p>
     <div className="routine-table-heads wk-table-heads" aria-hidden="true">
       <div className="routine-table-head"><span>항목</span><span>Y</span><span>N</span></div>
     </div>

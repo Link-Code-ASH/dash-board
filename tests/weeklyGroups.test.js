@@ -40,3 +40,17 @@ test("a trailing (n) fixes a weekly task's score", async () => {
   assert.deepEqual(splitFixedScore("(2)"), { text: "(2)", score: null });
   assert.deepEqual(splitFixedScore(""), { text: "", score: null });
 });
+
+test("a rest turn (\".\") leaves the task out that week", async () => {
+  const { getWeeklyPlanEntry, encodeWeeklyPlanItems, isWeeklyRest } = await import("../src/dashboard/model.js");
+  const value = encodeWeeklyPlanItems(["청소", " . "]);
+  const weeks = ["2026-11-13", "2026-11-20"];
+  const entries = weeks.map((date) => getWeeklyPlanEntry(value, date));
+  assert.deepEqual(entries.map((entry) => entry.rest).sort(), [false, true]);
+  const task = entries.find((entry) => !entry.rest);
+  assert.equal(task.value, "청소");
+  assert.equal(entries.find((entry) => entry.rest).value, "");
+  assert.equal(isWeeklyRest("."), true);
+  assert.equal(isWeeklyRest("1.5"), false);
+  assert.equal(getWeeklyPlanEntry(encodeWeeklyPlanItems(["청소"]), weeks[0]).rest, false);
+});

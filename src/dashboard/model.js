@@ -1127,11 +1127,17 @@ export function encodeWeeklyPlanItems(items) {
   return `${WEEKLY_PLAN_V2_PREFIX}${JSON.stringify(items.map((item) => String(item ?? "")))}`;
 }
 
+// A "." entry is a rest turn: in that week the task does not come up
+// (e.g. "청소" + "." = every other week).
+export const WEEKLY_REST = ".";
+export const isWeeklyRest = (item) => String(item ?? "").trim() === WEEKLY_REST;
+
 export function getWeeklyPlanEntry(rawValue, dateKey) {
   const items = getWeeklyPlanItems(rawValue).map((item) => item.trim()).filter(Boolean);
-  if (!items.length) return { cycleNumber: "", value: "Not Set" };
+  if (!items.length) return { cycleNumber: "", value: "Not Set", rest: false };
   const itemIndex = ((getWeekSerial(dateKey) % items.length) + items.length) % items.length;
-  return { cycleNumber: items.length > 1 ? itemIndex + 1 : "", value: items[itemIndex] };
+  const rest = isWeeklyRest(items[itemIndex]);
+  return { cycleNumber: items.length > 1 ? itemIndex + 1 : "", value: rest ? "" : items[itemIndex], rest };
 }
 
 export function getWeekdayKey(dateKey) {

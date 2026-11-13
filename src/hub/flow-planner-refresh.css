@@ -562,6 +562,18 @@ html body #root .hub-app.hub-app .wk-editor .wk-entry textarea::placeholder { co
 html body #root .hub-app.hub-app .wk-entry-remove { flex: none; display: grid; place-items: center; width: 18px; min-width: 18px; height: 18px; min-height: 18px; padding: 0; border: 0; border-radius: 4px; background: var(--fp-line-soft); color: var(--fp-muted); font-size: 13px; line-height: 1; box-shadow: none; }
 html body #root .hub-app.hub-app .wk-rotate-add { align-self: flex-start; margin-top: auto; min-height: 0; padding: 1px 6px; border: 0; border-radius: 6px; background: transparent; color: var(--fp-accent); font-size: 11px; font-weight: 700; box-shadow: none; }
 html body #root .hub-app.hub-app .wk-rotate-add:hover { background: var(--fp-accent-soft); }
+/* Rest turn ("쉬는 주", stored as "."): a quiet pill in place of a task, so a
+   task can come up every other week. This week's rest gets the accent tint. */
+html body #root .hub-app.hub-app .wk-rest { flex: 0 1 auto; display: inline-flex; align-items: center; gap: 4px; min-width: 0; height: 22px; padding: 0 9px 0 7px; border-radius: 999px; background: var(--fp-line-soft); color: var(--fp-muted); font-size: 12px; font-weight: 700; line-height: 1; white-space: nowrap; }
+html body #root .hub-app.hub-app .wk-rest svg { flex: none; width: 12px !important; height: 12px !important; }
+html body #root .hub-app.hub-app .wk-entry.is-current .wk-rest { background: var(--fp-accent-soft); color: var(--fp-accent); }
+html body #root .hub-app.hub-app .wk-entry.is-rest { align-items: center; }
+html body #root .hub-app.hub-app .wk-entry.is-rest .wk-turn { margin-top: 0; }
+html body #root .hub-app.hub-app .wk-entry.is-rest .wk-entry-remove { margin-left: auto; }
+html body #root .hub-app.hub-app .wk-day-adds { display: flex; flex-wrap: wrap; gap: 2px; margin-top: auto; }
+html body #root .hub-app.hub-app .wk-day-adds .wk-rotate-add { margin-top: 0; }
+html body #root .hub-app.hub-app .wk-rotate-add.is-rest { color: var(--fp-muted); }
+html body #root .hub-app.hub-app .wk-rotate-add.is-rest:hover { background: var(--fp-line-soft); color: var(--fp-ink-2); }
 /* Narrow panels and phones: days become rows (day name | plan). */
 @container routine-panel (max-width: 760px) {
   html body #root .hub-app.hub-app .wk-days { grid-template-columns: minmax(0, 1fr); gap: 4px; }

@@ -162,7 +162,8 @@ export function RoutineTasks({ compact = false }) {
     .map((row) => {
       const label = row.label ?? row.name ?? "";
       // A task ending in "(2)" always scores Y 2 instead of the category's score or range.
-      const { text: value, score: fixedScore } = splitFixedScore(getWeeklyPlanEntry(plan?.[row.key]?.[d.weekday.key], d.selectedDate).value);
+      const entry = getWeeklyPlanEntry(plan?.[row.key]?.[d.weekday.key], d.selectedDate);
+      const { text: value, score: fixedScore } = splitFixedScore(entry.value);
       const yScore = fixedScore ?? row.yScore;
       const planKey = `${prefix}:${d.selectedDate}:${row.key}`;
       const range = fixedScore === null ? getCategoryScoreRange(row) : [];
@@ -170,7 +171,8 @@ export function RoutineTasks({ compact = false }) {
         key: row.key,
         label,
         value,
-        scheduled: getWeeklyPlanItems(plan?.[row.key]?.[d.weekday.key]).some((item) => item.trim()),
+        // A rest week ("쉬는 주") leaves the task out of Today's Tasks.
+        scheduled: !entry.rest && getWeeklyPlanItems(plan?.[row.key]?.[d.weekday.key]).some((item) => item.trim()),
         scoreRange: range.length > 1 ? range : null,
         yScore,
         nScore: row.nScore,
