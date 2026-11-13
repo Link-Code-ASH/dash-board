@@ -3,6 +3,7 @@ import { Check, ChevronDown, ChevronLeft, ChevronRight, RotateCcw } from "lucide
 import { useDashboardData } from "../context.jsx";
 import { todayKey } from "../routing.js";
 import ItemIconButton from "../ItemIconButton.jsx";
+import { celebrate } from "../celebrate.js";
 import { groupStyle, groupWeeklyCategories, splitFixedScore } from "../weeklyGroups.js";
 import {
   formatScore,
@@ -104,7 +105,7 @@ export function DateHeading({ title }) {
 
 // Y score range ("1-3"): the Y button opens a small box of score chips on
 // hover (or tap on touch screens); picking the chosen score again clears it.
-function ScorePicker({ label, range, selected, onPick }) {
+function ScorePicker({ label, range, selected, onPick, onCheer }) {
   const [open, setOpen] = useState(false);
   const root = useRef(null);
   useEffect(() => {
@@ -135,7 +136,7 @@ function ScorePicker({ label, range, selected, onPick }) {
             type="button"
             key={score}
             aria-pressed={String(score) === selected}
-            onClick={() => { onPick(String(score)); setOpen(false); }}
+            onClick={() => { if (String(score) !== selected) onCheer?.(root.current?.querySelector(".yes")); onPick(String(score)); setOpen(false); }}
           >
             {formatScore(score)}
           </button>
@@ -208,6 +209,18 @@ export function RoutineTasks({ compact = false }) {
       onToggle: () => d.toggleWorkoutDone(list.key, d.selectedDate, turn.item.key),
     }] : [];
   });
+  // Checking pops the pressed button with a little burst; finishing a whole
+  // group gets a bigger one from its count. Unchecking stays quiet.
+  const cheer = (button, card, group, choice) => {
+    if (String(card.selectedChoice) === String(choice)) return;
+    if (choice === "N") { celebrate(button, { tone: "minus", burst: false }); return; }
+    celebrate(button, { tone: card.workout ? "gold" : "plus" });
+    const doneAfter = group.cards.filter((item) => item.selectedChoice).length + (card.selectedChoice ? 0 : 1);
+    if (doneAfter === group.cards.length) {
+      const count = button?.closest(".hub-task-group")?.querySelector("h3 > span");
+      setTimeout(() => celebrate(count, { tone: "gold", big: true }), 180);
+    }
+  };
   const groups = [
     {
       id: "daily",
@@ -266,7 +279,7 @@ export function RoutineTasks({ compact = false }) {
                         aria-pressed={Boolean(card.selectedChoice)}
                         aria-label={card.selectedChoice ? `${card.value} 완료 취소` : `${card.value} 완료`}
                         title={card.selectedChoice ? "완료 취소" : "했어요"}
-                        onClick={card.onToggle}
+                        onClick={(e) => { cheer(e.currentTarget, card, group, "Y"); card.onToggle(); }}
                       >
                         <Check size={16} strokeWidth={2.4} />
                       </button>
@@ -276,6 +289,7 @@ export function RoutineTasks({ compact = false }) {
                         range={card.scoreRange}
                         selected={card.selectedChoice && card.selectedChoice !== "N" ? card.selectedChoice : ""}
                         onPick={card.onToggle}
+                        onCheer={(button) => cheer(button, card, group, "picked")}
                       />
                     ) : (
                       ["Y"].map((choice) => (
@@ -285,7 +299,7 @@ export function RoutineTasks({ compact = false }) {
                           aria-pressed={
                             String(card.selectedChoice) === String(choice)
                           }
-                          onClick={() => card.onToggle(choice)}
+                          onClick={(e) => { cheer(e.currentTarget, card, group, choice); card.onToggle(choice); }}
                         >
                           <span>
                             {choice === "Y" ? "Y" : formatScore(choice)}
@@ -299,7 +313,7 @@ export function RoutineTasks({ compact = false }) {
                     {!card.workout && <button
                       className="no"
                       aria-pressed={card.selectedChoice === "N"}
-                      onClick={() => card.onToggle("N")}
+                      onClick={(e) => { cheer(e.currentTarget, card, group, "N"); card.onToggle("N"); }}
                     >
                       <span>N</span>
                       <small>{formatScore(card.nScore)}</small>

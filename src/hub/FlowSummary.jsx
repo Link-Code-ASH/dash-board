@@ -3,6 +3,7 @@ import { Check, Minus, Plus, RotateCcw } from "lucide-react";
 import { useDashboardData } from "./context.jsx";
 import { formatScore } from "../dashboard/model.js";
 import "./flow-summary.css";
+import { celebrate } from "./celebrate.js";
 
 const signedScore = (score) => formatScore(score).replace(/^-/, "−");
 const scoreTone = (score) => score > 0 ? "positive" : score < 0 ? "negative" : "neutral";
@@ -37,11 +38,11 @@ export function FlowScore() {
           </span>
           <div className="fs-checks">
             <label className={`fs-check is-attempt ${d.routineTried ? "is-checked" : ""}`} title="초록 체크">
-              <input type="checkbox" checked={d.routineTried} onChange={d.toggleRoutineAttempt} aria-label="선택 날짜 초록 체크" />
+              <input type="checkbox" checked={d.routineTried} onChange={(e) => { if (e.target.checked) celebrate(e.target.closest("label")); d.toggleRoutineAttempt(e); }} aria-label="선택 날짜 초록 체크" />
               <Check size={16} strokeWidth={3} aria-hidden="true" />
             </label>
             <label className={`fs-check is-penalty ${d.carryPenaltyMarked ? "is-checked" : ""}`} title="빨간 체크 (−2)">
-              <input type="checkbox" checked={d.carryPenaltyMarked} onChange={d.toggleCarryPenalty} aria-label="선택 날짜 빨간 체크, −2점" />
+              <input type="checkbox" checked={d.carryPenaltyMarked} onChange={(e) => { if (e.target.checked) celebrate(e.target.closest("label"), { tone: "minus", burst: false }); d.toggleCarryPenalty(e); }} aria-label="선택 날짜 빨간 체크, −2점" />
               <Check size={16} strokeWidth={3} aria-hidden="true" />
             </label>
           </div>

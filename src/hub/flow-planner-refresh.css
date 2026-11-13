@@ -1098,3 +1098,16 @@ html body #root .hub-app.hub-app .wk-entry:is(.is-drop-before, .is-drop-after) {
 html body #root .hub-app.hub-app .wk-entry:is(.is-drop-before, .is-drop-after)::after { content: ""; position: absolute; z-index: 3; left: 0; right: 0; height: 3px; border-radius: 2px; background: var(--fp-accent); pointer-events: none; }
 html body #root .hub-app.hub-app .wk-entry.is-drop-before::after { top: -3px; }
 html body #root .hub-app.hub-app .wk-entry.is-drop-after::after { bottom: -3px; }
+/* ---------- Check-in animations (see celebrate.js) ----------
+   Particles live on a fixed layer at the pressed button's centre. The task
+   progress bar slides to its new length instead of jumping. */
+.hub-burst { position: fixed; z-index: 9999; width: 0; height: 0; pointer-events: none; }
+.hub-burst > i { position: absolute; left: 0; top: 0; display: block; transform: translate(-50%, -50%); }
+.hub-burst-ring { border: 2px solid; border-radius: 999px; opacity: 0; }
+.hub-burst-dot { width: 7px; height: 7px; border-radius: 999px; }
+.hub-burst-star { width: 12px; height: 12px; background: currentColor; clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%); }
+@property --done { syntax: "<percentage>"; inherits: true; initial-value: 0%; }
+html body #root .hub-app.hub-app .flow-routines .hub-task-group h3 { transition: --done 420ms cubic-bezier(.3, .9, .3, 1); }
+@media (prefers-reduced-motion: reduce) {
+  html body #root .hub-app.hub-app .flow-routines .hub-task-group h3 { transition: none; }
+}
