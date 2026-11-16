@@ -32,18 +32,21 @@ export function portraitOf(hero) {
   const model = buildHero({ ...hero, accessory: hero.accessory || "none" }, { tilt: 0.12 });
   model.children.filter((child) => child.material?.transparent).forEach((child) => model.remove(child)); // no ground spot
   model.rotation.y = -0.3;
+  model.sway?.(0);
   scene.add(model);
   const box = new THREE.Box3().setFromObject(model);
   const center = box.getCenter(new THREE.Vector3());
   const size = box.getSize(new THREE.Vector3());
-  center.y += size.y * 0.03; // a little towards the face
-  const distance = Math.max(size.x, size.y) * 2.3;
+  // Head and shoulders: the top two thirds of the figure, centred a little below the eyes.
+  center.y = box.max.y - size.y * 0.34;
+  const distance = Math.max(size.x * 1.1, size.y * 0.7) * 2.3;
   camera.position.set(center.x + distance * 0.1, center.y + distance * 0.22, center.z + distance);
   camera.lookAt(center);
   const perPixel = (2 * distance * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2))) / SIZE;
   ink.render(scene, camera, { perPixel, depthStep: Math.max(0.03, perPixel * 4) });
   const url = renderer.domElement.toDataURL("image/png");
   scene.remove(model);
+  model.dispose?.();
   cache.set(key, url);
   return url;
 }

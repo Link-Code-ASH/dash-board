@@ -429,7 +429,7 @@ export class World {
       this.hero.scale.multiplyScalar(0.92);
       // The hero keeps its soft contact spot instead of a sun shadow, so walking never redraws the shadow map.
       this.hero.traverse((child) => { if (child.isMesh) child.castShadow = false; });
-      if (old) { this.hero.position.copy(old.position); this.hero.rotation.y = old.rotation.y; this.scene.remove(old); }
+      if (old) { this.hero.position.copy(old.position); this.hero.rotation.y = old.rotation.y; this.scene.remove(old); old.dispose?.(); }
       this.scene.add(this.hero);
       this.heroSignature = signature;
       this.heroMood = hero.genes.mood;
@@ -766,6 +766,9 @@ export class World {
     state.blink = (state.blink ?? 2 + Math.random() * 3) - dt;
     this.hero.blink?.(state.blink < 0);
     if (state.blink < -0.12) state.blink = 2.5 + Math.random() * 3.5;
+    // Hair settles while standing and trails a little while walking.
+    state.stride = (state.stride || 0) + ((state.mode === "walk" ? 1 : 0) - (state.stride || 0)) * Math.min(1, dt * 4);
+    this.hero.sway?.(t, state.stride, state.phase || 0);
     if (state.mode === "rest") {
       state.wait -= dt;
       body.position.y = 0;
