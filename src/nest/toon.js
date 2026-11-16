@@ -15,10 +15,21 @@ export function toonGradient() {
   gradient.needsUpdate = true;
   return gradient;
 }
+let gentleGradient;
+// A softer ramp for skin: shade stays light so faces never look bruised.
+function softGradient() {
+  if (gentleGradient) return gentleGradient;
+  const data = new Uint8Array([196, 196, 196, 255, 236, 236, 236, 255, 255, 255, 255, 255]);
+  gentleGradient = new THREE.DataTexture(data, 3, 1, THREE.RGBAFormat);
+  gentleGradient.minFilter = gentleGradient.magFilter = THREE.NearestFilter;
+  gentleGradient.generateMipmaps = false;
+  gentleGradient.needsUpdate = true;
+  return gentleGradient;
+}
 const materials = new Map();
-export function toon(color) {
-  const key = `t${color}`;
-  if (!materials.has(key)) materials.set(key, new THREE.MeshToonMaterial({ color, gradientMap: toonGradient() }));
+export function toon(color, gentle = false) {
+  const key = `${gentle ? "g" : "t"}${color}`;
+  if (!materials.has(key)) materials.set(key, new THREE.MeshToonMaterial({ color, gradientMap: gentle ? softGradient() : toonGradient() }));
   return materials.get(key);
 }
 export function flat(color) {
@@ -34,8 +45,8 @@ export function geo(key, make) {
 export const sphere = () => geo("sphere", () => new THREE.SphereGeometry(1, 20, 14));
 // A mesh with a toon fill. Ink lines come from the screen pass in ink.js; { line: false } marks a detail
 // painted onto its object (eyes, cheeks, trims) that draws no lines of its own.
-export function part(geometry, color, { line = true, basic = false, shadow = true } = {}) {
-  const mesh = new THREE.Mesh(geometry, basic ? flat(color) : toon(color));
+export function part(geometry, color, { line = true, basic = false, shadow = true, gentle = false } = {}) {
+  const mesh = new THREE.Mesh(geometry, basic ? flat(color) : toon(color, gentle));
   mesh.castShadow = shadow && !basic;
   mesh.receiveShadow = !basic;
   if (!line) mesh.userData.ink = false;

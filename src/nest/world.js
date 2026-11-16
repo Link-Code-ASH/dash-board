@@ -774,8 +774,8 @@ export class World {
       body.scale.set(1 / Math.sqrt(breathe), breathe, 1 / Math.sqrt(breathe));
       // While resting, turn to look at the viewer and glance around now and then.
       state.glance = (state.glance ?? 0) - dt;
-      // A 3/4 turn rather than straight on, so the tail and the side of the body show too.
-      if (state.glance <= 0) { state.look = (Math.random() < 0.5 ? -1 : 1) * (0.45 + Math.random() * 0.4); state.glance = 1.5 + Math.random() * 3; }
+      // A slight turn rather than dead straight on, so the hero looks alive but the face stays in view.
+      if (state.glance <= 0) { state.look = (Math.random() < 0.5 ? -1 : 1) * (0.2 + Math.random() * 0.35); state.glance = 1.5 + Math.random() * 3; }
       // The tail sits on the side turned towards the viewer.
       if (this.hero.tail) { const tail = this.hero.tail; tail.scale.x = state.look > 0 ? -1 : 1; tail.position.x = tail.userData.x * tail.scale.x; tail.rotation.z = Math.sin(t * 2.4) * 0.18 * tail.scale.x; }
       let diff = this.view.angle + (state.look || 0) - this.hero.rotation.y;
