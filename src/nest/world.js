@@ -4,7 +4,7 @@
 import * as THREE from "three";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import { FLOORS, LAND_MAX, edgesBetween, findPath, footprint, hashString, objectTiles, seededRandom, tileKey, walkable } from "./model.js";
-import { flat, outline, part, toon } from "./toon.js";
+import { flat, outline, part, setOutlineViewport, toon } from "./toon.js";
 import { buildObject, buildPost, buildWall } from "./objects.js";
 import { buildCreature } from "./creature.js";
 
@@ -153,6 +153,8 @@ export class World {
   render() {
     // Shadows are redrawn only when something that casts one has moved.
     if (this.shadowDirty) { this.renderer.shadowMap.needsUpdate = true; this.shadowDirty = false; }
+    const size = this.renderer.getDrawingBufferSize(this.bufferSize ||= new THREE.Vector2());
+    setOutlineViewport(size.x, size.y, this.renderer.getPixelRatio());
     this.renderer.render(this.scene, this.camera);
   }
 

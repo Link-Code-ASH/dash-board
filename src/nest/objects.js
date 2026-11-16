@@ -334,14 +334,14 @@ export function buildWall(type, height) {
   }
   // Baseboards on both faces and a cap on top.
   if (type !== "door") for (const side of [-1, 1]) add(block(WALL.base, [0, 0.06, side * (t / 2 + 0.008)], [1, 0.12, 0.016], { line: false }));
-  add(block(WALL.top, [0, height + 0.02, 0], [1.02, 0.05, t + 0.05], { line: false }));
+  add(block(WALL.top, [0, height + 0.02, 0], [1.02, 0.05, t + 0.05]));
   return group;
 }
 // A square post where walls meet, hiding the seams at corners and ends.
 export function buildPost(height) {
   const group = new THREE.Group();
   group.add(block(WALL.color, [0, height / 2, 0], [0.2, height, 0.2]));
-  group.add(block(WALL.top, [0, height + 0.03, 0], [0.24, 0.06, 0.24], { line: false }));
+  group.add(block(WALL.top, [0, height + 0.03, 0], [0.24, 0.06, 0.24]));
   group.add(block(WALL.base, [0, 0.06, 0], [0.22, 0.12, 0.22], { line: false }));
   return group;
 }

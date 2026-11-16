@@ -1,6 +1,7 @@
 // Small 3D portraits of a creature (front view, toon look) as image URLs for the panel, header and hero chooser.
 import * as THREE from "three";
 import { buildCreature } from "./creature.js";
+import { setOutlineViewport } from "./toon.js";
 
 let stage;
 const cache = new Map();
@@ -34,6 +35,7 @@ export function portraitOf(creature) {
   const distance = Math.max(size.x, size.y) * 2.35;
   camera.position.set(center.x + distance * 0.18, center.y + distance * 0.22, center.z + distance);
   camera.lookAt(center);
+  setOutlineViewport(192, 192, 1.3);
   renderer.render(scene, camera);
   const url = renderer.domElement.toDataURL("image/png");
   scene.remove(model);
