@@ -92,8 +92,9 @@ test("records keep unknown fields and fix bad values", () => {
   assert.equal(hero.genes.body, "round");
   assert.equal(hero.genes.color, "gold");
   assert.equal(hero.extra, 1);
-  const land = validateItem({ version: 1, id: "land", kind: "land", size: 99, floors: { "1,1": "wood", "2,2": "grass", bad: "x" }, walls: { "h:1,1": "door", "q:1": "wall" } });
-  assert.equal(land.size, 32);
+  const land = validateItem({ version: 1, id: "land", kind: "land", size: 999, floors: { "1,1": "wood", "2,2": "grass", bad: "x" }, walls: { "h:1,1": "door", "q:1": "wall" } });
+  assert.equal(land.size, 64);
+  assert.equal(validateItem({ version: 1, id: "land", kind: "land", size: 16 }).size, 32, "older 16×16 lots grow to the new start size");
   assert.deepEqual(land.floors, { "1,1": "wood" });
   assert.deepEqual(land.walls, { "h:1,1": "door" });
   assert.equal(validateItem({ version: 1, id: "o", kind: "decor", type: "tree", x: 2.6, z: -3, rot: 5 }).rot, 1);

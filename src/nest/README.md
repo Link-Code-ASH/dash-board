@@ -4,7 +4,7 @@ An idle housing game: one hero creature lives on a tile lot with a yard and a ho
 
 ## Play
 - First visit: pick one of three hero candidates (fixed per account, so every device offers the same three) and name it.
-- The lot starts at 16×16 tiles and grows by 2 rows/columns per expansion up to 32×32 (`expandCost`).
+- The lot starts at 32×32 tiles and grows by 4 rows/columns per expansion up to 64×64 (`expandCost`). Older 16×16 lots are read as 32×32.
 - 마당 / 집 tabs: paint floors, draw walls along grid lines (wall, window, door), place yard things and furniture on tiles,
   select / drag / rotate / remove placed things. Doors let the hero through; walls and windows do not.
 - The eye button lowers all walls to look inside the house (on by default in the 집 tab).

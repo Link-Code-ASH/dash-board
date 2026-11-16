@@ -6,9 +6,9 @@ const MINUTE = 60000;
 export const HOUR = 60 * MINUTE;
 export const SEED_EVERY_MS = 2 * MINUTE; // the hero finds one seed this often
 export const START_SEEDS = 800;
-export const LAND_START = 16; // tiles per side at the start
-export const LAND_MAX = 32;
-export const LAND_STEP = 2; // each expansion adds this many rows and columns (on the far sides)
+export const LAND_START = 32; // tiles per side at the start
+export const LAND_MAX = 64;
+export const LAND_STEP = 4; // each expansion adds this many rows and columns (on the far sides)
 export const MUTATION = 0.1; // chance per trait of a brand-new random value (kept for breeding later)
 
 // Every trait value has a weight; low weights are rare. Ids are stored, labels may change freely.

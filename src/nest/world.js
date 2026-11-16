@@ -134,7 +134,7 @@ export class World {
   placeCamera() {
     const { angle, zoom, target } = this.view;
     // At zoom 1 the whole lot (a diamond seen from the corner) fits the view, on wide and narrow screens alike.
-    const size = this.size || 16;
+    const size = this.size || 32;
     const aspect = this.aspect || 1;
     const across = size * Math.SQRT2 + 1;
     const halfH = Math.max(across * 0.72, across / aspect) / 2 / zoom;
@@ -156,13 +156,17 @@ export class World {
     if (this.reduced) { this.view.angle = this.view.angleGoal; this.placeCamera(); }
     this.wake();
   }
+  // Zoom 1 shows the whole lot; zooming in stops at about 6 tiles across.
+  clampZoom(value) { return Math.min(Math.max(3, (this.size || 32) / 6), Math.max(0.9, value)); }
   zoomBy(factor) {
-    this.view.zoom = Math.min(3.2, Math.max(0.6, this.view.zoom * factor));
+    this.view.zoom = this.clampZoom(this.view.zoom * factor);
     this.placeCamera();
   }
   recenter() {
-    this.view.target.set(this.size / 2, 0, this.size / 2);
-    this.view.zoom = 1;
+    // Start close enough to see the hero well (about 24 tiles across), centred on the hero.
+    const hero = this.hero?.position;
+    this.view.target.set(hero ? hero.x : this.size / 2, 0, hero ? hero.z : this.size / 2);
+    this.view.zoom = this.clampZoom(this.size / 24);
     this.placeCamera();
   }
 
@@ -178,12 +182,13 @@ export class World {
       this.soil.scale.set(this.size, 0.7, this.size);
       this.soil.position.set(this.size / 2, -0.45, this.size / 2);
       this.buildGrid();
-      if (first) this.recenter(); else this.placeCamera();
+      if (!first) this.placeCamera();
     }
     this.paintTiles();
     this.buildWalls();
     this.syncObjects(objects);
     this.syncHero(hero);
+    if (first) this.recenter();
     this.grid.visible = this.tool.mode !== "look";
     this.select(this.selectedId);
     this.wake();
@@ -430,7 +435,7 @@ export class World {
       if (pointers.has(event.pointerId)) pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
       if (gesture?.kind === "pinch" && pointers.size >= 2) {
         const [a, b] = [...pointers.values()];
-        this.view.zoom = Math.min(3.2, Math.max(0.6, gesture.zoom * Math.hypot(a.x - b.x, a.y - b.y) / gesture.distance));
+        this.view.zoom = this.clampZoom(gesture.zoom * Math.hypot(a.x - b.x, a.y - b.y) / gesture.distance);
         this.placeCamera();
         return;
       }
