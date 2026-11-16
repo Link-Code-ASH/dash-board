@@ -73,7 +73,12 @@ html body #root .hub-app .ns-room {
     min-height: 360px;
     border-radius: 20px;
     overflow: hidden;
-    background: linear-gradient(180deg, #cfe9f7 0%, #e8f5ef 70%, #f4f8ea 100%);
+    background: linear-gradient(180deg, #c7d9f4 0%, #e6dcef 48%, #f8e2d6 78%, #fbe9cf 100%);
+    /* A faint warm vignette over the scene (below the view tools) */
+    &::after {
+      content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none; border-radius: inherit;
+      background: radial-gradient(120% 95% at 50% 45%, transparent 62%, rgba(92, 52, 40, 0.14) 100%);
+    }
     border: 1px solid var(--line);
   }
   & .ns-stage { position: absolute; inset: 0; touch-action: none; cursor: grab; }
@@ -94,7 +99,7 @@ html body #root .hub-app .ns-room {
     & .ns-btn { height: 30px; border-radius: 999px; }
   }
   & .ns-view-tools {
-    position: absolute; right: 12px; bottom: 12px; display: flex; gap: 4px; padding: 4px;
+    position: absolute; right: 12px; bottom: 12px; z-index: 2; display: flex; gap: 4px; padding: 4px;
     border-radius: 14px; background: rgba(255, 255, 255, 0.92); box-shadow: 0 6px 20px -12px rgba(40, 40, 30, 0.5);
     & button {
       display: inline-grid; place-items: center; width: 34px; height: 34px; padding: 0; border: 0; border-radius: 10px;
@@ -233,6 +238,17 @@ html body #root .hub-app .ns-room {
   & .ns-tag-uncommon { background: #e7f0ff; color: #3b67b0; }
   & .ns-tag-new { background: #eaf6e1; color: #3f7a26; }
 
+  & .ns-look { display: flex; flex-direction: column; gap: 10px; margin-top: 4px; }
+  & .ns-look-row { display: flex; flex-direction: column; gap: 6px; }
+  & .ns-look-key { font-size: 11.5px; font-weight: 700; color: var(--muted); }
+  & .ns-swatches { display: flex; flex-wrap: wrap; gap: 8px; padding: 2px; }
+  & .ns-dot {
+    display: block; flex: none; width: 28px; height: 28px; min-width: 28px; min-height: 28px; max-height: 28px;
+    padding: 0; border-radius: 50%; border: 2px solid #fff;
+    background: var(--c); box-shadow: 0 0 0 1px var(--line); transition: box-shadow 0.15s;
+    &:hover { box-shadow: 0 0 0 1px #cfc8bd; }
+    &[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--leaf); }
+  }
   & .ns-chips { display: flex; flex-wrap: wrap; gap: 6px; }
   & .ns-chip {
     display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 32px; padding: 0 11px;

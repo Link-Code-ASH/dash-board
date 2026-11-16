@@ -19,8 +19,8 @@ An idle housing game: one hero creature lives on a tile lot with a yard and a ho
 - Removing a thing only sets `deletedAt`. Never hard-delete rows or change field meanings; add fields and let `validateItem` fill defaults.
 - Genes and `inheritGenes` stay in `model.js` for a later breeding feature.
 
-## Rendering (`world.js`, `objects.js`, `creature.js`, `toon.js`, `ink.js`)
-three.js, loaded only when Nest opens. Sun shadow map (redrawn only after edits or camera moves; the hero uses a contact spot), instanced grass tufts and flowers, swaying leaves, drifting clouds, blinking hero that turns 3/4 to the viewer at rest (tail on the near side, wagging), 3D portraits (`portrait.js`). Orthographic camera (rotate in 90° steps, pan by drag, zoom by wheel/pinch/buttons),
+## Rendering (`world.js`, `objects.js`, `person.js`, `toon.js`, `ink.js`)
+three.js, loaded only when Nest opens. Sun shadow map (redrawn only after edits or camera moves; the hero uses a contact spot), instanced grass tufts and flowers, swaying leaves, drifting clouds, the hero is a two-head-tall person (`person.js`, look = skin/hair/hair colour/outfit/outfit colour/eyes in `hero.look`, free to change; heroes saved before looks get one fixed by `bornAt`), blinking, swinging arms and legs when walking, turning 3/4 to the viewer at rest; `creature.js` keeps the old creature builder for later pets or breeding. Late-afternoon light (low honey sun, lavender sky fill, warm bounce) with a soft colour grade in the ink pass, 3D portraits (`portrait.js`). Orthographic camera (rotate in 90° steps, pan by drag, zoom by wheel/pinch/buttons),
 toon gradient material, instanced floor tiles (flat tops only),
 ink lines from a screen pass (`ink.js`): the scene is drawn once for colour (MSAA) and once into a float buffer of
 normal, depth and an object/part code, then every pixel near a change of object, part, fold or real depth step is inked

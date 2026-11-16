@@ -7,7 +7,7 @@ import { FLOORS, LAND_MAX, edgesBetween, findPath, footprint, hashString, object
 import { flat, part, toon } from "./toon.js";
 import { InkPass } from "./ink.js";
 import { buildObject, buildPost, buildWall } from "./objects.js";
-import { buildCreature } from "./creature.js";
+import { buildHero } from "./person.js";
 
 const WALL_HIGH = 2;
 const WALL_LOW = 0.35;
@@ -41,14 +41,15 @@ export class World {
     this.camera = new THREE.OrthographicCamera(-1, 1, 1, -1, -100, 200);
     this.view = { turn: 0, angle: Math.PI / 4, zoom: 1, target: new THREE.Vector3(8, 0, 8) };
     // Soft sky light plus a warm sun that casts the only shadow map.
-    this.scene.add(new THREE.HemisphereLight(0xe8f4ff, 0xd8c8a8, 1.35));
-    this.sun = new THREE.DirectionalLight(0xfff0d8, 2.1);
+    // Late-afternoon light: a low honey sun, a lavender sky fill (so shade reads cool) and a warm bounce from below.
+    this.scene.add(new THREE.HemisphereLight(0xd3d9ff, 0xf3cda4, 1.15));
+    this.sun = new THREE.DirectionalLight(0xffd9a6, 2.55);
     this.sun.castShadow = true;
     const mapSize = mobile() ? 1024 : 2048;
     this.sun.shadow.mapSize.set(mapSize, mapSize);
     this.sun.shadow.bias = -0.0004;
     this.sun.shadow.normalBias = 0.03;
-    this.sun.shadow.intensity = 0.55;
+    this.sun.shadow.intensity = 0.62;
     this.sun.shadow.radius = 3;
     this.scene.add(this.sun, this.sun.target);
 
@@ -193,7 +194,7 @@ export class World {
     this.camera.lookAt(target);
     // The sun's shadow box follows what is on screen, so one map stays sharp on any lot size.
     const reach = Math.min(48, Math.max(this.camera.right, this.camera.top) * 1.35 + 2);
-    this.sun.position.set(target.x - 14, 26, target.z + 9);
+    this.sun.position.set(target.x - 17, 19, target.z + 11); // low enough for long, soft evening shadows
     this.sun.target.position.copy(target);
     Object.assign(this.sun.shadow.camera, { left: -reach, right: reach, top: reach, bottom: -reach, near: 1, far: 80 });
     this.sun.shadow.camera.updateProjectionMatrix();
@@ -420,11 +421,11 @@ export class World {
   }
   syncHero(hero) {
     if (!hero) { if (this.hero) this.scene.remove(this.hero); this.hero = null; return; }
-    const signature = `${JSON.stringify(hero.genes)}|${hero.accessory}`;
+    const signature = `${JSON.stringify(hero.genes)}|${JSON.stringify(hero.look || null)}|${hero.bornAt}|${hero.sex}|${hero.accessory}`;
     if (this.heroSignature !== signature) {
       const old = this.hero;
-      this.hero = buildCreature(hero);
-      this.hero.userData = { kind: "hero", id: hero.id };
+      this.hero = buildHero(hero);
+      this.hero.userData = { kind: "hero", id: hero.id, person: true };
       this.hero.scale.multiplyScalar(0.92);
       // The hero keeps its soft contact spot instead of a sun shadow, so walking never redraws the shadow map.
       this.hero.traverse((child) => { if (child.isMesh) child.castShadow = false; });
@@ -768,7 +769,8 @@ export class World {
     if (state.mode === "rest") {
       state.wait -= dt;
       body.position.y = 0;
-      const breathe = 1 + Math.sin(t * 2) * 0.025;
+      this.swingLimbs(0, dt);
+      const breathe = 1 + Math.sin(t * 2) * 0.012;
       body.scale.set(1 / Math.sqrt(breathe), breathe, 1 / Math.sqrt(breathe));
       // While resting, turn to look at the viewer and glance around now and then.
       state.glance = (state.glance ?? 0) - dt;
@@ -806,12 +808,22 @@ export class World {
     let diff = heading - this.hero.rotation.y;
     diff = Math.atan2(Math.sin(diff), Math.cos(diff));
     this.hero.rotation.y += diff * Math.min(1, dt * 8);
-    const hop = Math.abs(Math.sin(t * speed * 7));
-    body.position.y = hop * 0.1;
-    const squash = 1 + (hop < 0.25 ? -0.05 : 0.025);
+    // A light trot: a small bob each step while arms and legs swing in turn.
+    state.phase = (state.phase || 0) + dt * speed * 6.5;
+    this.swingLimbs(Math.sin(state.phase), dt, true);
+    const hop = Math.abs(Math.sin(state.phase));
+    body.position.y = hop * 0.035;
+    const squash = 1 + (hop < 0.25 ? -0.015 : 0.008);
     body.scale.set(1 / Math.sqrt(squash), squash, 1 / Math.sqrt(squash));
   }
 
+  swingLimbs(swing, dt, walking = false) {
+    const limbs = this.hero?.limbs;
+    if (!limbs) return;
+    const ease = walking ? 1 : Math.min(1, dt * 6);
+    limbs.legs.forEach((leg, i) => { const goal = (i ? -1 : 1) * swing * 0.55; leg.rotation.x += (goal - leg.rotation.x) * ease; });
+    limbs.arms.forEach((arm, i) => { const goal = (i ? 1 : -1) * swing * 0.6; arm.rotation.x += (goal - arm.rotation.x) * ease; });
+  }
   dispose() {
     this.running = false;
     cancelAnimationFrame(this.frame);

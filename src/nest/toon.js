@@ -6,8 +6,9 @@ export const INK = 0x3b302c;
 let gradient;
 export function toonGradient() {
   if (gradient) return gradient;
-  // Three bands: a cool shade, a soft mid tone and full light.
-  const data = new Uint8Array([125, 125, 135, 255, 205, 205, 208, 255, 255, 255, 255, 255]);
+  // Three bands: shade, a soft mid tone and full light.
+  // Only the red channel is read; the light colours themselves tint each band.
+  const data = new Uint8Array([150, 150, 150, 255, 214, 214, 214, 255, 255, 255, 255, 255]);
   gradient = new THREE.DataTexture(data, 3, 1, THREE.RGBAFormat);
   gradient.minFilter = gradient.magFilter = THREE.NearestFilter;
   gradient.generateMipmaps = false;

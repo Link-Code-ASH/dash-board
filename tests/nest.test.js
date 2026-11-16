@@ -122,3 +122,17 @@ test("floors painted on two devices merge, and both keep one hero", async () => 
   assert.deepEqual(floors, { "1,1": "wood", "5,5": "stone" });
   assert.equal([...cloud.rows.values()].filter((row) => row.payload.kind === "hero").length, 1);
 });
+
+test("nest hero looks: saved looks are cleaned, old heroes get a fixed look", async () => {
+  const { lookOf, cleanLook, validateItem, newHero, heroCandidates } = await import("../src/nest/model.js");
+  const old = { bornAt: "2026-11-16T06:02:44.486Z", sex: "m", name: "찌리" };
+  assert.deepEqual(lookOf(old), lookOf({ ...old, name: "다른 이름" }));
+  assert.equal(cleanLook({ hair: "nope", skin: "tan" }).hair, "short");
+  assert.equal(cleanLook({ hair: "nope", skin: "tan" }).skin, "tan");
+  const hero = newHero(heroCandidates("owner")[0], Date.parse("2026-11-16T00:00:00Z"));
+  assert.ok(hero.look && hero.look.outfit);
+  const saved = validateItem({ ...hero, look: { ...hero.look, outfit: "bogus" } });
+  assert.equal(saved.look.outfit, "tee");
+  const legacy = validateItem({ ...hero, look: undefined });
+  assert.equal("look" in legacy, false);
+});

@@ -4,14 +4,13 @@ import {
 } from "lucide-react";
 import NestProvider, { useNest } from "./NestProvider.jsx";
 import {
-  ACCESSORIES, FLOORS, GENES, GENE_KEYS, HERO_ID, LAND_ID, LAND_MAX, LAND_STEP, OBJECTS, WALLS, accessoryInfo,
-  canPlace, edgeInside, expandCost, findHero, findLand, floorInfo, footprint, formatDuration, geneLabel, geneValue,
-  heroCandidates, newHero, newLand, newObject, objectInfo, objectTiles, objects as placedObjects, rarity, seedBalance, seedsPerHour,
+  ACCESSORIES, FLOORS, HERO_ID, LOOKS, LOOK_KEYS, LAND_ID, LAND_MAX, LAND_STEP, OBJECTS, WALLS, accessoryInfo,
+  canPlace, edgeInside, expandCost, findHero, findLand, floorInfo, footprint, formatDuration, geneLabel,
+  heroCandidates, lookOf, lookValue, newHero, newLand, newObject, objectInfo, objectTiles, objects as placedObjects, seedBalance, seedsPerHour,
   wallInfo, SEED_EVERY_MS,
 } from "./model.js";
 import "./nest.css";
 
-const RARITY_LABEL = { rare: "희귀", uncommon: "드묾" };
 const SEX = { f: "♀", m: "♂" };
 const stamp = (item) => ({ ...item, updatedAt: new Date().toISOString() });
 
@@ -24,38 +23,40 @@ function useClock(interval = 15000) {
   return Date.now();
 }
 
-// A rendered 3D portrait; a plain colour dot stands in for the moment it takes to draw.
-function Avatar({ genes, accessory = "none", size = 30 }) {
-  const color = geneValue("color", genes.color).hex;
+// A rendered 3D portrait; a plain skin-coloured dot stands in for the moment it takes to draw.
+function Avatar({ hero, size = 30 }) {
+  const look = lookOf(hero);
   const [url, setUrl] = useState("");
-  const key = `${JSON.stringify(genes)}|${accessory}`;
+  const key = `${JSON.stringify(look)}|${hero.genes?.size}|${hero.accessory || "none"}`;
   useEffect(() => {
     let live = true;
-    import("./portrait.js").then(({ portraitOf }) => { if (live) setUrl(portraitOf({ genes, accessory })); }).catch(() => {});
+    import("./portrait.js").then(({ portraitOf }) => { if (live) setUrl(portraitOf({ ...hero, look })); }).catch(() => {});
     return () => { live = false; };
   }, [key]);
   if (url) return <img className="ns-portrait" src={url} width={size} height={size} alt="" aria-hidden="true" />;
-  return <span className="ns-avatar" style={{ "--c": color, width: size, height: size }} aria-hidden="true"><i /><i /></span>;
+  return <span className="ns-avatar" style={{ "--c": lookValue("skin", look.skin).hex, width: size, height: size }} aria-hidden="true"><i /><i /></span>;
 }
 const Cost = ({ value, sign = "" }) => <span className="ns-cost"><Sprout size={12} />{sign}{value}</span>;
+const COLOR_KEYS = new Set(["skin", "hairColor", "outfitColor"]);
 
-function Traits({ genes }) {
+// Hair, clothes and the rest can be changed freely at any time.
+function LookEditor({ hero, onChange }) {
+  const look = lookOf(hero);
+  const set = (key, id) => onChange(HERO_ID, (item) => ({ ...item, look: { ...lookOf(item), [key]: id } }));
   return (
-    <ul className="ns-traits">
-      {GENE_KEYS.map((key) => {
-        const level = rarity(key, genes[key]);
-        return (
-          <li key={key}>
-            <span className="ns-trait-key">{GENES[key].label}</span>
-            <span className="ns-trait-value">
-              {key === "color" && <span className="ns-swatch" style={{ background: geneValue("color", genes.color).hex }} />}
-              {geneLabel(key, genes[key])}
-              {RARITY_LABEL[level] && <span className={`ns-tag ns-tag-${level}`}>{RARITY_LABEL[level]}</span>}
-            </span>
-          </li>
-        );
-      })}
-    </ul>
+    <div className="ns-look">
+      {LOOK_KEYS.map((key) => (
+        <div className="ns-look-row" key={key}>
+          <span className="ns-look-key">{LOOKS[key].label}</span>
+          <div className={COLOR_KEYS.has(key) ? "ns-swatches" : "ns-chips"}>
+            {LOOKS[key].values.map((option) => COLOR_KEYS.has(key)
+              ? <button key={option.id} className="ns-dot" style={{ "--c": option.hex }} aria-pressed={look[key] === option.id}
+                  aria-label={option.label} title={option.label} onClick={() => set(key, option.id)} />
+              : <button key={option.id} className="ns-chip" aria-pressed={look[key] === option.id} onClick={() => set(key, option.id)}>{option.label}</button>)}
+          </div>
+        </div>
+      ))}
+    </div>
   );
 }
 
@@ -119,10 +120,11 @@ function HeroChooser({ owner, onPick }) {
       <div className="ns-candidates">
         {candidates.map((candidate, i) => (
           <button key={i} className="ns-candidate" aria-pressed={index === i} onClick={() => choose(i)}>
-            <Avatar genes={candidate.genes} size={96} />
+            <Avatar hero={candidate} size={96} />
             <span className="ns-candidate-name">{candidate.name} <span className={`ns-sex ns-sex-${candidate.sex}`}>{SEX[candidate.sex]}</span></span>
             <span className="ns-candidate-traits">
-              {["body", "ears", "tail", "mood"].map((key) => geneLabel(key, candidate.genes[key])).filter((label) => label !== "없음").join(" · ")}
+              {[LOOKS.hair.values, LOOKS.outfit.values].map((values, i) => values.find((value) => value.id === candidate.look[i ? "outfit" : "hair"])?.label)
+                .concat(geneLabel("mood", candidate.genes.mood)).join(" · ")}
             </span>
           </button>
         ))}
@@ -148,12 +150,13 @@ function HeroPanel({ hero, balance, onChange }) {
   return (
     <div className="ns-detail">
       <div className="ns-detail-head">
-        <Avatar genes={hero.genes} accessory={hero.accessory} size={56} />
+        <Avatar hero={hero} size={56} />
         <input className="ns-name" value={name} maxLength={20} aria-label="이름" onChange={(event) => setName(event.target.value)}
           onBlur={saveName} onKeyDown={(event) => { if (event.key === "Enter") event.currentTarget.blur(); }} />
         <span className={`ns-sex ns-sex-${hero.sex}`}>{SEX[hero.sex]}</span>
       </div>
-      <Traits genes={hero.genes} />
+      <p className="ns-meta">성격 · {geneLabel("mood", hero.genes.mood)}</p>
+      <LookEditor hero={hero} onChange={onChange} />
       <h4 className="ns-sub">꾸미기</h4>
       <div className="ns-chips">
         {ACCESSORIES.map((option) => (
@@ -362,7 +365,7 @@ function NestRoom() {
     <div className="ns-room">
       <header className="ns-head">
         <h1 className="ns-title">Nest</h1>
-        {hero && <span className="ns-hero-chip"><Avatar genes={hero.genes} accessory={hero.accessory} size={30} />{hero.name}</span>}
+        {hero && <span className="ns-hero-chip"><Avatar hero={hero} size={30} />{hero.name}</span>}
         <span className="ns-spacer" />
         {land && <span className="ns-pill">{land.size}×{land.size}칸</span>}
         <span className="ns-seeds" title={`시간당 ${rate}개`}><Sprout size={15} /><b>{Math.max(0, balance)}</b></span>

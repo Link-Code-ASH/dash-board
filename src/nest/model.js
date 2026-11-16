@@ -51,6 +51,58 @@ export const GENES = {
 };
 export const GENE_KEYS = Object.keys(GENES);
 
+// ---------- the hero's look (a person) ----------
+// The hero is a small two-head-tall person. Looks are free to change at any time; ids are stored, labels may change.
+// A hero saved before looks existed gets one derived from its birth time, so it never changes between devices.
+export const LOOKS = {
+  skin: { label: "피부", values: [
+    { id: "porcelain", label: "뽀얀", hex: "#ffe6d3" }, { id: "peach", label: "복숭아", hex: "#fad3b5" },
+    { id: "honey", label: "꿀빛", hex: "#e8b48a" }, { id: "tan", label: "구릿빛", hex: "#c98d63" }, { id: "cocoa", label: "코코아", hex: "#94613f" },
+  ] },
+  hair: { label: "머리", values: [
+    { id: "short", label: "짧은 머리" }, { id: "bob", label: "단발" }, { id: "long", label: "긴 머리" },
+    { id: "ponytail", label: "포니테일" }, { id: "buns", label: "양갈래 똥머리" }, { id: "spiky", label: "삐죽 머리" }, { id: "curly", label: "뽀글 머리" },
+  ] },
+  hairColor: { label: "머리 색", values: [
+    { id: "black", label: "흑발", hex: "#3d3230" }, { id: "brown", label: "갈색", hex: "#7a4e33" }, { id: "chestnut", label: "밤색", hex: "#a8673f" },
+    { id: "blonde", label: "금발", hex: "#f0cd78" }, { id: "pink", label: "분홍", hex: "#f3a5bf" }, { id: "mint", label: "민트", hex: "#93d6bd" },
+    { id: "silver", label: "은발", hex: "#dcd8e2" }, { id: "blue", label: "파랑", hex: "#6f90d8" },
+  ] },
+  outfit: { label: "옷", values: [
+    { id: "tee", label: "반팔 티" }, { id: "hoodie", label: "후드티" }, { id: "overalls", label: "멜빵바지" }, { id: "dress", label: "원피스" },
+  ] },
+  outfitColor: { label: "옷 색", values: [
+    { id: "cream", label: "크림", hex: "#f6ecd8" }, { id: "coral", label: "코랄", hex: "#f08a78" }, { id: "butter", label: "버터", hex: "#f6d36b" },
+    { id: "sage", label: "세이지", hex: "#9cc79a" }, { id: "sky", label: "하늘", hex: "#8fc0ea" }, { id: "lilac", label: "라일락", hex: "#bfa8ea" },
+    { id: "navy", label: "네이비", hex: "#4f5f93" }, { id: "rose", label: "장미", hex: "#e77d9e" },
+  ] },
+  eyes: { label: "눈", values: [
+    { id: "dot", label: "콩알 눈" }, { id: "big", label: "초롱 눈" }, { id: "sleepy", label: "졸린 눈" }, { id: "sparkle", label: "반짝 눈" },
+  ] },
+};
+export const LOOK_KEYS = Object.keys(LOOKS);
+export const lookValue = (key, id) => LOOKS[key]?.values.find((value) => value.id === id) || LOOKS[key]?.values[0];
+export function randomLook(random = Math.random, sex = "f") {
+  const pick = (key) => LOOKS[key].values[Math.floor(random() * LOOKS[key].values.length)].id;
+  const look = Object.fromEntries(LOOK_KEYS.map((key) => [key, pick(key)]));
+  // A gentle lean so starters feel varied: more short/spiky hair and fewer dresses for boys, and the reverse.
+  if (sex === "m" && random() < 0.6) look.hair = ["short", "spiky", "curly"][Math.floor(random() * 3)];
+  if (sex === "m" && look.outfit === "dress") look.outfit = ["tee", "hoodie", "overalls"][Math.floor(random() * 3)];
+  if (look.eyes === "sleepy" && random() < 0.6) look.eyes = "big";
+  if (sex === "f" && random() < 0.4) look.hair = ["bob", "long", "ponytail", "buns"][Math.floor(random() * 4)];
+  return look;
+}
+export function cleanLook(value) {
+  if (!value || typeof value !== "object") return null;
+  const look = {};
+  for (const key of LOOK_KEYS) look[key] = LOOKS[key].values.some((option) => option.id === value[key]) ? value[key] : LOOKS[key].values[0].id;
+  return look;
+}
+// The look to draw: the saved one, or one fixed by who the hero is.
+export function lookOf(hero) {
+  return cleanLook(hero?.look) || randomLook(seededRandom(`look:${hero?.bornAt || ""}`), hero?.sex);
+}
+
 export const geneValue = (key, id) => GENES[key]?.values.find((value) => value.id === id) || GENES[key]?.values[0];
 export const geneLabel = (key, id) => geneValue(key, id)?.label || "";
 // Rare = the trait's weight is a small share of its gene's total.
@@ -177,12 +229,15 @@ export const LAND_ID = "land";
 export function heroCandidates(owner) {
   return [0, 1, 2].map((index) => {
     const random = seededRandom(`hero:${owner}:${index}`);
-    return { genes: randomGenes(random), sex: random() < 0.5 ? "f" : "m", name: nameFor(`${owner}:${index}`) };
+    const genes = randomGenes(random);
+    const sex = random() < 0.5 ? "f" : "m";
+    return { genes, sex, look: randomLook(seededRandom(`look:${owner}:${index}`), sex), name: nameFor(`${owner}:${index}`) };
   });
 }
-export function newHero({ genes, sex, name }, now = Date.now()) {
+export function newHero({ genes, sex, name, look }, now = Date.now()) {
   const at = iso(now);
   return { version: VERSION, id: HERO_ID, kind: "hero", name: (name || "").trim().slice(0, 20) || nameFor(at), sex, genes,
+    ...(look ? { look: cleanLook(look) } : {}),
     accessory: "none", bornAt: at, createdAt: at, updatedAt: at, deletedAt: null };
 }
 export function newLand(now = Date.now()) {
@@ -375,6 +430,7 @@ export function validateItem(value) {
     item.name = text(item.name).trim().slice(0, 20) || nameFor(item.id);
     item.bornAt = text(item.bornAt, item.createdAt);
     if (!ACCESSORIES.some((option) => option.id === item.accessory)) item.accessory = "none";
+    if ("look" in item) { const look = cleanLook(item.look); if (look) item.look = look; else delete item.look; }
   } else if (item.kind === "land") {
     item.size = Math.min(LAND_MAX, Math.max(LAND_START, int(item.size, LAND_START)));
     const floors = item.floors && typeof item.floors === "object" ? item.floors : {};
