@@ -20,6 +20,6 @@ An idle housing game: one hero creature lives on a tile lot with a yard and a ho
 - Genes and `inheritGenes` stay in `model.js` for a later breeding feature.
 
 ## Rendering (`world.js`, `objects.js`, `creature.js`, `toon.js`)
-three.js, loaded only when Nest opens. Orthographic camera (rotate in 90° steps, pan by drag, zoom by wheel/pinch/buttons),
-toon gradient material + inverted-hull outlines, instanced floor tiles, blob shadows instead of shadow maps,
-pixel ratio ≤ 1.5, 30 fps while moving / 10 fps when calm, paused when hidden or off screen.
+three.js, loaded only when Nest opens. Sun shadow map (redrawn only after edits or camera moves; the hero uses a contact spot), instanced grass tufts and flowers, swaying leaves, drifting clouds, blinking hero that faces the viewer at rest, 3D portraits (`portrait.js`). Orthographic camera (rotate in 90° steps, pan by drag, zoom by wheel/pinch/buttons),
+toon gradient material + inverted-hull outlines, instanced floor tiles,
+pixel ratio ≤ 1.5, 30 fps while moving / 12 fps when calm, paused when hidden or off screen.

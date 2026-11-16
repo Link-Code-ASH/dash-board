@@ -1,4 +1,4 @@
-// Shared toon look: stepped lighting, inverted-hull outlines, cached materials/geometries, blob shadows.
+// Shared toon look: stepped lighting, inverted-hull outlines, cached materials/geometries, sun shadows.
 import * as THREE from "three";
 
 export const INK = 0x3b302c;
@@ -7,7 +7,8 @@ const OUTLINE = 0.028;
 let gradient;
 export function toonGradient() {
   if (gradient) return gradient;
-  const data = new Uint8Array([110, 110, 110, 255, 200, 200, 200, 255, 255, 255, 255, 255]);
+  // Three bands: a cool shade, a soft mid tone and full light.
+  const data = new Uint8Array([125, 125, 135, 255, 205, 205, 208, 255, 255, 255, 255, 255]);
   gradient = new THREE.DataTexture(data, 3, 1, THREE.RGBAFormat);
   gradient.minFilter = gradient.magFilter = THREE.NearestFilter;
   gradient.generateMipmaps = false;
@@ -50,8 +51,10 @@ export function geo(key, make) {
 }
 export const sphere = () => geo("sphere", () => new THREE.SphereGeometry(1, 20, 14));
 // A mesh with a toon fill and (optionally) a dark outline shell.
-export function part(geometry, color, { line = true, basic = false } = {}) {
+export function part(geometry, color, { line = true, basic = false, shadow = true } = {}) {
   const mesh = new THREE.Mesh(geometry, basic ? flat(color) : toon(color));
+  mesh.castShadow = shadow && !basic;
+  mesh.receiveShadow = !basic;
   if (line) {
     const shell = new THREE.Mesh(geometry, outline());
     shell.raycast = () => {};
@@ -74,6 +77,7 @@ export const shade = (hex, amount) => {
 };
 
 let shadowTexture;
+// A soft contact spot under the hero, on top of the sun shadow.
 export function blobShadow(radius) {
   if (!shadowTexture) {
     const canvas = document.createElement("canvas");

@@ -71,6 +71,10 @@ export function buildCreature(creature) {
   const eyeY = spec.y + sy * 0.18;
   const eyeX = sx * 0.34;
   const faceZ = (x, y) => Math.sqrt(Math.max(0, 1 - (x / sx) ** 2 - ((y - spec.y) / sy) ** 2)) * sz + 0.005;
+  // Open eyes sit in one group around eye height, so a blink is a single vertical squash.
+  const eyes = new THREE.Group();
+  eyes.position.y = eyeY;
+  body.add(eyes);
   for (const side of [-1, 1]) {
     const x = side * eyeX;
     const z = faceZ(x, eyeY);
@@ -78,10 +82,10 @@ export function buildCreature(creature) {
       const lid = part(geo("lid", () => new THREE.TorusGeometry(0.075, 0.018, 6, 12, Math.PI)), INK, { line: false, basic: true });
       body.add(place(lid, [x, eyeY - 0.02, z - 0.01], [1, 1, 1], [0, 0, Math.PI]));
     } else {
-      const size = genes.eyes === "dot" ? 0.06 : genes.eyes === "big" ? 0.1 : 0.095;
-      body.add(place(part(sphere(), INK, { line: false, basic: true }), [x, eyeY, z - size * 0.35], [size, size * 1.15, size * 0.6]));
-      if (genes.eyes !== "dot") body.add(place(part(sphere(), 0xffffff, { line: false, basic: true }), [x + size * 0.3, eyeY + size * 0.4, z + size * 0.2], [size * 0.32]));
-      if (genes.eyes === "sparkle") body.add(place(part(sphere(), 0xffffff, { line: false, basic: true }), [x - size * 0.3, eyeY - size * 0.35, z + size * 0.2], [size * 0.18]));
+      const size = genes.eyes === "dot" ? 0.07 : genes.eyes === "big" ? 0.115 : 0.1;
+      eyes.add(place(part(sphere(), INK, { line: false, basic: true }), [x, 0, z - size * 0.35], [size, size * 1.18, size * 0.6]));
+      eyes.add(place(part(sphere(), 0xffffff, { line: false, basic: true }), [x + size * 0.3, size * 0.42, z + size * 0.2], [size * (genes.eyes === "dot" ? 0.26 : 0.34)]));
+      if (genes.eyes === "sparkle") eyes.add(place(part(sphere(), 0xffffff, { line: false, basic: true }), [x - size * 0.3, -size * 0.35, z + size * 0.2], [size * 0.18]));
     }
     const cheekY = spec.y + sy * -0.02;
     const cheekX = side * sx * 0.55;
@@ -127,6 +131,7 @@ export function buildCreature(creature) {
   const size = { small: 0.82, medium: 1, large: 1.18 }[genes.size] || 1;
   root.userData = { kind: "hero", id: creature.id, top };
   root.scale.setScalar(size);
+  root.eyes = genes.eyes === "sleepy" ? null : eyes;
   return root;
 }
 function addAccessory(body, accessory, { top, front, sx, y, sy }) {

@@ -24,8 +24,17 @@ function useClock(interval = 15000) {
   return Date.now();
 }
 
-function Avatar({ genes, size = 30 }) {
+// A rendered 3D portrait; a plain colour dot stands in for the moment it takes to draw.
+function Avatar({ genes, accessory = "none", size = 30 }) {
   const color = geneValue("color", genes.color).hex;
+  const [url, setUrl] = useState("");
+  const key = `${JSON.stringify(genes)}|${accessory}`;
+  useEffect(() => {
+    let live = true;
+    import("./portrait.js").then(({ portraitOf }) => { if (live) setUrl(portraitOf({ genes, accessory })); }).catch(() => {});
+    return () => { live = false; };
+  }, [key]);
+  if (url) return <img className="ns-portrait" src={url} width={size} height={size} alt="" aria-hidden="true" />;
   return <span className="ns-avatar" style={{ "--c": color, width: size, height: size }} aria-hidden="true"><i /><i /></span>;
 }
 const Cost = ({ value, sign = "" }) => <span className="ns-cost"><Sprout size={12} />{sign}{value}</span>;
@@ -110,7 +119,7 @@ function HeroChooser({ owner, onPick }) {
       <div className="ns-candidates">
         {candidates.map((candidate, i) => (
           <button key={i} className="ns-candidate" aria-pressed={index === i} onClick={() => choose(i)}>
-            <Avatar genes={candidate.genes} size={44} />
+            <Avatar genes={candidate.genes} size={96} />
             <span className="ns-candidate-name">{candidate.name} <span className={`ns-sex ns-sex-${candidate.sex}`}>{SEX[candidate.sex]}</span></span>
             <span className="ns-candidate-traits">
               {["body", "ears", "tail", "mood"].map((key) => geneLabel(key, candidate.genes[key])).filter((label) => label !== "없음").join(" · ")}
@@ -139,7 +148,7 @@ function HeroPanel({ hero, balance, onChange }) {
   return (
     <div className="ns-detail">
       <div className="ns-detail-head">
-        <Avatar genes={hero.genes} size={40} />
+        <Avatar genes={hero.genes} accessory={hero.accessory} size={56} />
         <input className="ns-name" value={name} maxLength={20} aria-label="이름" onChange={(event) => setName(event.target.value)}
           onBlur={saveName} onKeyDown={(event) => { if (event.key === "Enter") event.currentTarget.blur(); }} />
         <span className={`ns-sex ns-sex-${hero.sex}`}>{SEX[hero.sex]}</span>
@@ -353,7 +362,7 @@ function NestRoom() {
     <div className="ns-room">
       <header className="ns-head">
         <h1 className="ns-title">Nest</h1>
-        {hero && <span className="ns-hero-chip"><Avatar genes={hero.genes} size={22} />{hero.name}</span>}
+        {hero && <span className="ns-hero-chip"><Avatar genes={hero.genes} accessory={hero.accessory} size={30} />{hero.name}</span>}
         <span className="ns-spacer" />
         {land && <span className="ns-pill">{land.size}×{land.size}칸</span>}
         <span className="ns-seeds" title={`시간당 ${rate}개`}><Sprout size={15} /><b>{Math.max(0, balance)}</b></span>

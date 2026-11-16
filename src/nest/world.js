@@ -1,10 +1,11 @@
 // Nest 3D lot: an orthographic toon view of the tile lot, its yard, walls, furniture and the hero.
-// Kept light: instanced floor tiles, capped pixel ratio, 30 fps while something moves (10 fps when calm),
-// no shadow maps, and the loop stops while the page or the view is hidden.
+// Kept light: instanced tiles and grass, capped pixel ratio, 30 fps while something moves (12 fps when calm),
+// one sun shadow map that is only redrawn when something moved, and the loop stops while hidden.
 import * as THREE from "three";
-import { FLOORS, LAND_MAX, edgesBetween, findPath, footprint, tileKey, walkable } from "./model.js";
+import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
+import { FLOORS, LAND_MAX, edgesBetween, findPath, footprint, hashString, objectTiles, seededRandom, tileKey, walkable } from "./model.js";
 import { flat, outline, part, toon } from "./toon.js";
-import { buildObject, buildWall } from "./objects.js";
+import { buildObject, buildPost, buildWall } from "./objects.js";
 import { buildCreature } from "./creature.js";
 
 const WALL_HIGH = 2;
@@ -12,7 +13,11 @@ const WALL_LOW = 0.35;
 const SPEED = { calm: 1.1, lively: 2, shy: 1.2, foodie: 1.3, curious: 1.7 };
 const REST = { calm: [4, 9], lively: [1, 3], shy: [3, 7], foodie: [2, 6], curious: [1.5, 4] };
 const floorColor = Object.fromEntries(FLOORS.map((floor) => [floor.id, new THREE.Color(floor.color)]));
-const grassAlt = new THREE.Color("#95d27a");
+const GRASS_TINTS = ["#a8dc88", "#9bd57d", "#b4e396", "#8fcf72"].map((hex) => new THREE.Color(hex));
+const FLOWER_TINTS = ["#ffffff", "#ffd34d", "#ff9fc0", "#c6b2f0"].map((hex) => new THREE.Color(hex));
+// Small per-tile colour drift so big lawns and floors do not look like flat paint.
+const tileNoise = (x, z) => (hashString(`${x}:${z}`) % 1000) / 1000;
+const mobile = () => Math.min(window.innerWidth, window.innerHeight) < 600;
 
 const center = (object) => {
   const [w, d] = footprint(object.type, object.rot);
@@ -26,19 +31,32 @@ export class World {
     this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "low-power" });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
+    this.renderer.shadowMap.enabled = true;
+    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    this.renderer.shadowMap.autoUpdate = false;
     container.appendChild(this.renderer.domElement);
     this.scene = new THREE.Scene();
     this.camera = new THREE.OrthographicCamera(-1, 1, 1, -1, -100, 200);
     this.view = { turn: 0, angle: Math.PI / 4, zoom: 1, target: new THREE.Vector3(8, 0, 8) };
-    this.scene.add(new THREE.HemisphereLight(0xffffff, 0xb7d6a0, 1.5));
-    const sun = new THREE.DirectionalLight(0xffffff, 1.8);
-    sun.position.set(-4, 10, 6);
-    this.scene.add(sun);
+    // Soft sky light plus a warm sun that casts the only shadow map.
+    this.scene.add(new THREE.HemisphereLight(0xe8f4ff, 0xd8c8a8, 1.35));
+    this.sun = new THREE.DirectionalLight(0xfff0d8, 2.1);
+    this.sun.castShadow = true;
+    const mapSize = mobile() ? 1024 : 2048;
+    this.sun.shadow.mapSize.set(mapSize, mapSize);
+    this.sun.shadow.bias = -0.0004;
+    this.sun.shadow.normalBias = 0.03;
+    this.sun.shadow.intensity = 0.55;
+    this.sun.shadow.radius = 3;
+    this.scene.add(this.sun, this.sun.target);
 
-    // Ground: soil block + instanced floor tiles + grid lines for editing.
-    this.soil = part(new THREE.BoxGeometry(1, 1, 1), 0xc79b72);
-    this.soil.raycast = () => {};
-    this.scene.add(this.soil);
+    // Ground: a floating chunk (grass lip, soil, stone), instanced floor tiles, grass and flowers, grid for editing.
+    this.island = new THREE.Group();
+    const layer = (color, height) => { const mesh = part(new THREE.BoxGeometry(1, 1, 1), color, { shadow: false }); mesh.raycast = () => {}; mesh.userData.height = height; this.island.add(mesh); return mesh; };
+    this.lip = layer(0x7fc469, 0.2);
+    this.soil = layer(0xc79b72, 0.8);
+    this.stone = layer(0xa8927c, 0.6);
+    this.scene.add(this.island);
     const tileMaterial = new THREE.MeshToonMaterial({ color: 0xffffff, gradientMap: toon(0xffffff).gradientMap });
     this.tiles = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 0.1, 1), tileMaterial, LAND_MAX * LAND_MAX);
     this.tiles.raycast = () => {};
@@ -46,7 +64,17 @@ export class World {
     this.tiles.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(LAND_MAX * LAND_MAX * 3).fill(1), 3);
     this.tiles.count = 0;
     this.tiles.frustumCulled = false; // its bounds change as the lot grows
+    this.tiles.receiveShadow = true;
     this.scene.add(this.tiles);
+    const blade = (angle, lean) => { const g = new THREE.ConeGeometry(0.05, 0.3, 3); g.translate(0, 0.15, 0); g.rotateZ(lean); g.rotateY(angle); return g; };
+    const tuft = mergeGeometries([blade(0, 0.15), blade(2.1, -0.25), blade(4.2, 0.3), blade(1, 0)].map((g) => g.toNonIndexed()));
+    this.grass = new THREE.InstancedMesh(tuft, new THREE.MeshToonMaterial({ color: 0xffffff, gradientMap: toon(0xffffff).gradientMap }), LAND_MAX * LAND_MAX);
+    this.grass.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(LAND_MAX * LAND_MAX * 3).fill(1), 3);
+    this.flowers = new THREE.InstancedMesh(new THREE.SphereGeometry(0.045, 8, 6), new THREE.MeshToonMaterial({ color: 0xffffff, gradientMap: toon(0xffffff).gradientMap }), LAND_MAX * LAND_MAX);
+    this.flowers.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(LAND_MAX * LAND_MAX * 3).fill(1), 3);
+    for (const mesh of [this.grass, this.flowers]) { mesh.count = 0; mesh.frustumCulled = false; mesh.raycast = () => {}; this.scene.add(mesh); }
+    this.clouds = this.buildClouds();
+    this.scene.add(this.clouds);
     this.grid = new THREE.LineSegments(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ color: 0x3b302c, transparent: true, opacity: 0.12 }));
     this.grid.visible = false;
     this.scene.add(this.grid);
@@ -97,6 +125,7 @@ export class World {
     this.onVisibility = () => this.update();
     document.addEventListener("visibilitychange", this.onVisibility);
     this.update();
+    if (import.meta.env?.DEV) window.__nestWorld = this;
     if (import.meta.env?.DEV) window.__nestScreen = (x, z) => {
       const v = new THREE.Vector3(x, 0, z).project(this.camera);
       const rect = this.renderer.domElement.getBoundingClientRect();
@@ -115,13 +144,17 @@ export class World {
     if (!this.running) return;
     this.frame = requestAnimationFrame((t) => this.tick(t));
     const calm = this.heroState?.mode === "rest" && time - this.calmSince > 3000;
-    if (time - this.last < 1000 / (calm ? 10 : 30) - 2) return;
+    if (time - this.last < 1000 / (calm ? 12 : 30) - 2) return;
     this.last = time;
     const dt = Math.min(0.1, this.clock.getDelta());
     if (!this.reduced) this.step(dt, this.clock.elapsedTime);
     this.render();
   }
-  render() { this.renderer.render(this.scene, this.camera); }
+  render() {
+    // Shadows are redrawn only when something that casts one has moved.
+    if (this.shadowDirty) { this.renderer.shadowMap.needsUpdate = true; this.shadowDirty = false; }
+    this.renderer.render(this.scene, this.camera);
+  }
 
   // ---------- camera ----------
   resize() {
@@ -144,6 +177,13 @@ export class World {
     const distance = 60;
     this.camera.position.set(target.x + Math.sin(angle) * distance * 0.72, distance * 0.7, target.z + Math.cos(angle) * distance * 0.72);
     this.camera.lookAt(target);
+    // The sun's shadow box follows what is on screen, so one map stays sharp on any lot size.
+    const reach = Math.min(48, Math.max(this.camera.right, this.camera.top) * 1.35 + 2);
+    this.sun.position.set(target.x - 14, 26, target.z + 9);
+    this.sun.target.position.copy(target);
+    Object.assign(this.sun.shadow.camera, { left: -reach, right: reach, top: reach, bottom: -reach, near: 1, far: 80 });
+    this.sun.shadow.camera.updateProjectionMatrix();
+    this.shadowDirty = true;
     this.wake();
     this.render();
   }
@@ -179,14 +219,22 @@ export class World {
     this.items = [...objects, ...(hero ? [hero] : [])];
     if (grew) {
       this.size = land.size;
-      this.soil.scale.set(this.size, 0.7, this.size);
-      this.soil.position.set(this.size / 2, -0.45, this.size / 2);
+      let top = -0.02;
+      for (const [mesh, inset] of [[this.lip, -0.06], [this.soil, 0], [this.stone, 0.9]]) {
+        const height = mesh.userData.height;
+        mesh.scale.set(this.size - inset * 2, height, this.size - inset * 2);
+        mesh.position.set(this.size / 2, top - height / 2, this.size / 2);
+        top -= height;
+      }
+      this.clouds.userData.size = this.size;
+      this.placeClouds(this.clock.elapsedTime);
       this.buildGrid();
       if (!first) this.placeCamera();
     }
     this.paintTiles();
     this.buildWalls();
     this.syncObjects(objects);
+    this.scatterGrass();
     this.syncHero(hero);
     if (first) this.recenter();
     this.grid.visible = this.tool.mode !== "look";
@@ -201,12 +249,82 @@ export class World {
       matrix.makeTranslation(x + 0.5, -0.05, z + 0.5);
       this.tiles.setMatrixAt(index, matrix);
       const floor = this.land.floors[tileKey(x, z)] || "grass";
-      this.tiles.setColorAt(index, floor === "grass" && (x + z) % 2 ? grassAlt : floorColor[floor] || floorColor.grass);
+      const noise = tileNoise(x, z);
+      const color = (floorColor[floor] || floorColor.grass).clone();
+      // Grass drifts a little in light; wood shifts per plank row; checker kept very faint so tiles still read.
+      const drift = floor === "grass" ? (noise - 0.5) * 0.05 + ((x + z) % 2 ? 0.012 : 0) : floor === "wood" ? ((z % 2) ? 0.02 : -0.01) + (noise - 0.5) * 0.02 : (noise - 0.5) * 0.025;
+      color.offsetHSL(0, 0, drift);
+      this.tiles.setColorAt(index, color);
       index++;
     }
     this.tiles.count = index;
     this.tiles.instanceMatrix.needsUpdate = true;
     if (this.tiles.instanceColor) this.tiles.instanceColor.needsUpdate = true;
+  }
+  // Grass tufts and tiny flowers on free grass tiles (decoration only, never saved).
+  scatterGrass() {
+    const taken = new Set();
+    for (const item of this.items) if (item.kind === "decor") for (const [x, z] of objectTiles(item)) taken.add(tileKey(x, z));
+    const matrix = new THREE.Matrix4();
+    const quaternion = new THREE.Quaternion();
+    const scale = new THREE.Vector3();
+    const position = new THREE.Vector3();
+    let tufts = 0; let flowers = 0;
+    for (let x = 0; x < this.size; x++) for (let z = 0; z < this.size; z++) {
+      const key = tileKey(x, z);
+      if (this.land.floors[key] || taken.has(key)) continue;
+      const r = seededRandom(`grass:${key}`);
+      if (r() < 0.42) {
+        position.set(x + 0.15 + r() * 0.7, 0, z + 0.15 + r() * 0.7);
+        quaternion.setFromAxisAngle(new THREE.Vector3(0, 1, 0), r() * Math.PI * 2);
+        const s = 0.7 + r() * 0.6;
+        scale.set(s, s * (0.8 + r() * 0.5), s);
+        this.grass.setMatrixAt(tufts, matrix.compose(position, quaternion, scale));
+        this.grass.setColorAt(tufts, GRASS_TINTS[Math.floor(r() * GRASS_TINTS.length)]);
+        tufts++;
+      }
+      if (r() < 0.05) {
+        position.set(x + 0.2 + r() * 0.6, 0.05, z + 0.2 + r() * 0.6);
+        quaternion.identity();
+        scale.set(1, 0.7, 1);
+        this.flowers.setMatrixAt(flowers, matrix.compose(position, quaternion, scale));
+        this.flowers.setColorAt(flowers, FLOWER_TINTS[Math.floor(r() * FLOWER_TINTS.length)]);
+        flowers++;
+      }
+    }
+    this.grass.count = tufts; this.flowers.count = flowers;
+    for (const mesh of [this.grass, this.flowers]) { mesh.instanceMatrix.needsUpdate = true; mesh.instanceColor.needsUpdate = true; }
+  }
+  buildClouds() {
+    const group = new THREE.Group();
+    const r = seededRandom("clouds");
+    for (let i = 0; i < 9; i++) {
+      const cloud = new THREE.Group();
+      for (let j = 0; j < 4; j++) {
+        const puff = part(new THREE.IcosahedronGeometry(1, 1), 0xffffff, { shadow: false });
+        puff.receiveShadow = false;
+        const size = 0.9 + r() * 0.9;
+        puff.position.set(j * 1.1 - 1.6 + r() * 0.4, r() * 0.4, (r() - 0.5) * 0.8);
+        puff.scale.set(size, size * 0.6, size);
+        cloud.add(puff);
+      }
+      cloud.userData = { u: r(), v: r(), y: -2.2 - r() * 2.5, speed: 0.15 + r() * 0.2 };
+      group.add(cloud);
+    }
+    group.userData.size = 32;
+    return group;
+  }
+  // Clouds drift around and below the lot, wrapping around its edges.
+  placeClouds(t = 0) {
+    const size = this.clouds.userData.size || 32;
+    const span = size + 24;
+    for (const cloud of this.clouds.children) {
+      const { u, v, y, speed } = cloud.userData;
+      const along = ((u * span + t * speed) % span) - 12;
+      const side = v < 0.5 ? -6 - v * 10 : size + 6 + (v - 0.5) * 10;
+      if (v < 0.25 || v > 0.75) cloud.position.set(along, y, side);
+      else cloud.position.set(side, y, along);
+    }
   }
   buildGrid() {
     const points = [];
@@ -232,6 +350,26 @@ export class World {
       wall.userData = { kind: "wall", key: edge };
       this.wallGroup.add(wall);
     }
+    // Posts at every grid point a wall ends or turns.
+    const ends = new Map();
+    for (const edge of Object.keys(this.land.walls)) {
+      const [axis, rest] = edge.split(":");
+      const [x, z] = rest.split(",").map(Number);
+      for (const point of axis === "h" ? [[x, z], [x + 1, z]] : [[x, z], [x, z + 1]]) {
+        const key = point.join(",");
+        const entry = ends.get(key) || { point, axes: new Set(), count: 0 };
+        entry.axes.add(axis); entry.count++;
+        ends.set(key, entry);
+      }
+    }
+    for (const { point, axes, count } of ends.values()) {
+      if (count === 2 && axes.size === 1) continue; // straight run, no seam to hide
+      const post = buildPost(height);
+      post.position.set(point[0], 0, point[1]);
+      this.wallGroup.add(post);
+    }
+    this.wallGroup.traverse((child) => { if (child.isMesh && child.material.isMeshToonMaterial) { child.castShadow = true; child.receiveShadow = true; } });
+    this.shadowDirty = true;
   }
   setWallsLow(low) {
     this.wallsLow = low;
@@ -253,7 +391,7 @@ export class World {
         continue;
       }
       if (current) this.objectGroup.remove(current.object);
-      const object = buildObject(item.type);
+      const object = buildObject(item.type, item.id);
       const { x, z } = center(item);
       object.position.set(x, 0, z);
       object.rotation.y = -item.rot * Math.PI / 2;
@@ -263,6 +401,7 @@ export class World {
     }
     for (const [id, entry] of this.objects) if (!seen.has(id)) { this.objectGroup.remove(entry.object); this.objects.delete(id); }
     this.walk = walkable(this.items, this.land);
+    this.shadowDirty = true;
   }
   syncHero(hero) {
     if (!hero) { if (this.hero) this.scene.remove(this.hero); this.hero = null; return; }
@@ -271,7 +410,9 @@ export class World {
       const old = this.hero;
       this.hero = buildCreature(hero);
       this.hero.userData = { kind: "hero", id: hero.id };
-      this.hero.scale.multiplyScalar(0.7);
+      this.hero.scale.multiplyScalar(0.92);
+      // The hero keeps its soft contact spot instead of a sun shadow, so walking never redraws the shadow map.
+      this.hero.traverse((child) => { if (child.isMesh) child.castShadow = false; });
       if (old) { this.hero.position.copy(old.position); this.hero.rotation.y = old.rotation.y; this.scene.remove(old); }
       this.scene.add(this.hero);
       this.heroSignature = signature;
@@ -593,14 +734,33 @@ export class World {
       else this.view.angle += diff * Math.min(1, dt * 8);
       this.placeCamera();
     }
+    // Leaves and reeds lean a little in the wind; ponds shimmer; clouds drift.
+    for (const { object } of this.objects.values()) {
+      for (const [i, node] of object.sway.entries()) {
+        node.rotation.z = Math.sin(t * 1.1 + object.phase + i) * 0.035;
+        node.rotation.x = Math.cos(t * 0.9 + object.phase) * 0.02;
+      }
+      for (const run of object.animate) run(t + object.phase);
+    }
+    this.placeClouds(t);
     if (!this.hero || !this.heroState || !this.walk) return;
     const state = this.heroState;
     const body = this.hero.children[0];
+    // Blink every few seconds.
+    state.blink = (state.blink ?? 2 + Math.random() * 3) - dt;
+    if (this.hero.eyes) this.hero.eyes.scale.y = state.blink < 0 ? 0.12 : 1;
+    if (state.blink < -0.12) state.blink = 2.5 + Math.random() * 3.5;
     if (state.mode === "rest") {
       state.wait -= dt;
       body.position.y = 0;
       const breathe = 1 + Math.sin(t * 2) * 0.025;
       body.scale.set(1 / Math.sqrt(breathe), breathe, 1 / Math.sqrt(breathe));
+      // While resting, turn to look at the viewer and glance around now and then.
+      state.glance = (state.glance ?? 0) - dt;
+      if (state.glance <= 0) { state.look = (Math.random() - 0.5) * 1.1; state.glance = 1.5 + Math.random() * 3; }
+      let diff = this.view.angle + (state.look || 0) - this.hero.rotation.y;
+      diff = Math.atan2(Math.sin(diff), Math.cos(diff));
+      this.hero.rotation.y += diff * Math.min(1, dt * 3);
       if (state.wait <= 0) {
         const goal = { x: state.tile.x + Math.round((Math.random() - 0.5) * 12), z: state.tile.z + Math.round((Math.random() - 0.5) * 12) };
         const path = findPath(this.walk, state.tile, goal);

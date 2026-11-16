@@ -191,6 +191,7 @@ html body #root .hub-app .ns-room {
     & i:first-child { left: 30%; }
     & i:last-child { right: 30%; }
   }
+  & .ns-portrait { display: block; flex: none; object-fit: contain; }
   & .ns-swatch { display: inline-block; width: 12px; height: 12px; border-radius: 50%; border: 1.5px solid #3b302c; flex: none; }
   & .ns-sex { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; font-size: 13px; line-height: 1; flex: none; }
   & .ns-sex-f { background: #ffe4ec; color: #d24f7a; }
@@ -263,6 +264,7 @@ html body #root .hub-app .ns-room {
     & .ns-panel { max-height: none; min-height: 0; }
     & .ns-panel-body { overflow: visible; }
     & .ns-title { font-size: 20px; }
+    & .ns-view-tools { right: 8px; bottom: 8px; gap: 2px; padding: 3px; border-radius: 12px; & button { width: 30px; height: 30px; } }
   }
 }
 @media (prefers-reduced-motion: reduce) {
