@@ -32,6 +32,12 @@ export function toon(color, gentle = false) {
   if (!materials.has(key)) materials.set(key, new THREE.MeshToonMaterial({ color, gradientMap: gentle ? softGradient() : toonGradient() }));
   return materials.get(key);
 }
+// Both faces drawn: for open shells such as hair, whose inside can show at the edges.
+export function toonTwoSided(color) {
+  const key = `d${color}`;
+  if (!materials.has(key)) materials.set(key, new THREE.MeshToonMaterial({ color, gradientMap: toonGradient(), side: THREE.DoubleSide }));
+  return materials.get(key);
+}
 export function flat(color) {
   const key = `f${color}`;
   if (!materials.has(key)) materials.set(key, new THREE.MeshBasicMaterial({ color }));

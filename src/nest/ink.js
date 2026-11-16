@@ -102,7 +102,9 @@ const edgeFragment = `
     rgb = mix(vec3(luma), rgb, 1.08) * vec3(1.03, 1.0, 0.955);
     rgb += vec3(0.012, 0.006, 0.026) * (1.0 - smoothstep(0.0, 0.35, luma)) * alpha;
     rgb = max(rgb, 0.0);
-    rgb = mix(rgb, ink * max(alpha, line), line);
+    // Lines take on a deep shade of what they outline, which reads softer than flat black.
+    vec3 lineColor = mix(ink, rgb / max(alpha, 0.001) * 0.36, 0.5 * alpha);
+    rgb = mix(rgb, lineColor * max(alpha, line), line);
     alpha = max(alpha, line);
     gl_FragColor = vec4(rgb, alpha);
     #include <colorspace_fragment>

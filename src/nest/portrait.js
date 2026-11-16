@@ -3,13 +3,14 @@ import * as THREE from "three";
 import { buildHero } from "./person.js";
 import { InkPass } from "./ink.js";
 
+const SIZE = 256; // drawn larger than shown, so small avatars stay crisp
 let stage;
 const cache = new Map();
 
 function setup() {
   const renderer = new THREE.WebGLRenderer({ antialias: false, alpha: true, preserveDrawingBuffer: true });
   renderer.setPixelRatio(1);
-  renderer.setSize(192, 192, false);
+  renderer.setSize(SIZE, SIZE, false);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   const scene = new THREE.Scene();
   // The same late-afternoon light as the lot.
@@ -19,7 +20,7 @@ function setup() {
   scene.add(sun);
   const camera = new THREE.PerspectiveCamera(28, 1, 0.1, 50);
   const ink = new InkPass(renderer);
-  ink.setSize(192, 192, 1.4);
+  ink.setSize(SIZE, SIZE, 1.5);
   return { renderer, scene, camera, ink };
 }
 
@@ -39,7 +40,7 @@ export function portraitOf(hero) {
   const distance = Math.max(size.x, size.y) * 2.3;
   camera.position.set(center.x + distance * 0.1, center.y + distance * 0.22, center.z + distance);
   camera.lookAt(center);
-  const perPixel = (2 * distance * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2))) / 192;
+  const perPixel = (2 * distance * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2))) / SIZE;
   ink.render(scene, camera, { perPixel, depthStep: Math.max(0.03, perPixel * 4) });
   const url = renderer.domElement.toDataURL("image/png");
   scene.remove(model);

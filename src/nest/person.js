@@ -2,7 +2,8 @@
 // (skin, hair, hair colour, outfit, outfit colour, eyes) plus an accessory; limbs are exposed for walking.
 import * as THREE from "three";
 import { lookOf, lookValue } from "./model.js";
-import { INK, blobShadow, geo, part, place, shade, sphere } from "./toon.js";
+import { INK, blobShadow, geo, part, place, shade, sphere, toon, toonTwoSided } from "./toon.js";
+import { faceGeometry, faceTextures } from "./face.js";
 
 const SHOES = 0x6b5049;
 const DENIM = 0x6a80b3;
@@ -83,31 +84,13 @@ export function buildHero(hero, { tilt = 0.42 } = {}) {
   const r = HEAD.r;
   const [kx, ky, kz] = HEAD.squash;
   head.add(place(part(sphere(), skin, soft), [0, 0, 0], [r * kx, r * ky, r * kz]));
-  const faceZ = (x, y) => Math.sqrt(Math.max(0, 1 - (x / (r * kx)) ** 2 - (y / (r * ky)) ** 2)) * r * kz + 0.004;
-  const eyes = new THREE.Group();
-  const eyeY = -0.1;
-  eyes.position.y = eyeY;
-  head.add(eyes);
-  const paint = (color) => part(sphere(), color, { line: false, basic: true });
-  for (const side of [-1, 1]) {
-    const x = side * 0.155;
-    const z = faceZ(x, eyeY);
-    if (look.eyes === "sleepy") {
-      const lid = part(geo("lid", () => new THREE.TorusGeometry(0.045, 0.012, 6, 12, Math.PI)), EYE, { line: false, basic: true });
-      head.add(place(lid, [x, eyeY - 0.01, z - 0.006], [1, 1, 1], [0, 0, 0]));
-    } else {
-      const size = { dot: 0.05, big: 0.082, sparkle: 0.076 }[look.eyes] || 0.07;
-      eyes.add(place(paint(EYE), [x, 0, z - size * 0.3], [size * 0.82, size * 1.15, size * 0.45]));
-      eyes.add(place(paint(0xffffff), [x + side * size * 0.18 + size * 0.12, size * 0.42, z + size * 0.12], [size * 0.32]));
-      if (look.eyes !== "dot") eyes.add(place(paint(0xffffff), [x - size * 0.22, -size * 0.45, z + size * 0.1], [size * 0.15]));
-      if (look.eyes === "sparkle") eyes.add(place(paint(0xffffff), [x + size * 0.3, -size * 0.2, z + size * 0.1], [size * 0.1]));
-    }
-    const cheekX = side * 0.245;
-    head.add(place(paint(BLUSH), [cheekX, -0.19, faceZ(cheekX, -0.19) - 0.012], [0.07, 0.038, 0.02]));
-  }
-  // A tiny cat-like smile.
-  for (const side of [-1, 1]) head.add(place(part(geo("smile", () => new THREE.TorusGeometry(0.018, 0.007, 6, 10, Math.PI)), EYE, { line: false, basic: true }),
-    [side * 0.017, -0.19, faceZ(side * 0.017, -0.19)], [1, 1, 1], [0, 0, Math.PI]));
+  // The painted face sits a hair above the skin and is lit like it.
+  const faces = faceTextures(look.eyes);
+  const faceMaterial = new THREE.MeshToonMaterial({ map: faces.open, transparent: true, gradientMap: toon(0xffffff, true).gradientMap,
+    polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2, depthWrite: false });
+  const face = place(new THREE.Mesh(geo("face", faceGeometry), faceMaterial), [0, 0, 0], [r * kx * 1.004, r * ky * 1.004, r * kz * 1.004]);
+  face.raycast = () => {};
+  head.add(face);
   for (const side of [-1, 1]) head.add(place(part(sphere(), skin, soft), [side * r * kx * 0.98, -0.08, -0.01], [0.045, 0.065, 0.045]));
 
   // Hair and head accessories are modelled at R0 and scaled to this head.
@@ -121,58 +104,73 @@ export function buildHero(hero, { tilt = 0.42 } = {}) {
   const size = { small: 0.94, medium: 1, large: 1.06 }[hero.genes?.size] || 1;
   root.scale.setScalar(size);
   root.userData = { kind: "hero", id: hero.id, top: HEAD.y + r, person: true };
-  root.eyes = look.eyes === "sleepy" ? null : eyes;
+  root.blink = look.eyes === "sleepy" ? null : (closed) => { faceMaterial.map = closed ? faces.closed : faces.open; };
   root.limbs = { arms, legs };
   root.tail = null;
   return root;
 }
 
+// Hair is one smooth shell over the head whose lower edge follows a hairline: pointed bangs at the front, over
+// the ears at the sides and down to the nape (or lower) at the back. Extra volumes add buns, tails and curls.
+const HAIRLINES = {
+  short: { front: 77, tips: 13, side: 97, back: 124 },
+  bob: { front: 79, tips: 12, side: 124, back: 132, puff: 0.07 },
+  long: { front: 79, tips: 12, side: 128, back: 145, puff: 0.06 },
+  ponytail: { front: 75, tips: 12, side: 100, back: 121 },
+  buns: { front: 77, tips: 12, side: 100, back: 122 },
+  spiky: { front: 73, tips: 17, side: 96, back: 120, sharp: true },
+  curly: { front: 75, tips: 8, side: 104, back: 127, puff: 0.05, curl: true },
+};
+const smooth = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+function hairShell(style) {
+  return geo(`hair:${style}`, () => {
+    const line = HAIRLINES[style] || HAIRLINES.short;
+    const deg = Math.PI / 180;
+    const geometry = new THREE.SphereGeometry(1, 64, 40);
+    const position = geometry.attributes.position;
+    const v = new THREE.Vector3();
+    for (let i = 0; i < position.count; i++) {
+      v.fromBufferAttribute(position, i);
+      const phi = Math.atan2(v.x, v.z); // 0 at the front
+      const away = Math.abs(phi);
+      let theta = Math.acos(Math.max(-1, Math.min(1, v.y)));
+      // Bang tips at the centre and about 40 degrees either side.
+      const wave = Math.max(0, Math.cos(phi * 9)) ** (line.sharp ? 3 : 1.6) * (away < 0.95 ? 1 : 0);
+      let edge = line.front + line.tips * wave;
+      edge += (line.side - edge) * smooth(0.75, 1.45, away);
+      edge += (line.back - edge) * smooth(1.75, 2.7, away);
+      theta = Math.min(theta, edge * deg);
+      let radius = 1 + 0.035 * Math.cos(theta);
+      if (line.puff) radius += line.puff * Math.sin(theta) ** 2 * smooth(0.6, 1.4, away);
+      if (line.curl) radius += 0.025 * Math.sin(phi * 7) * Math.sin(theta * 5);
+      v.set(Math.sin(theta) * Math.sin(phi), Math.cos(theta), Math.sin(theta) * Math.cos(phi)).multiplyScalar(radius);
+      position.setXYZ(i, v.x, v.y, v.z);
+    }
+    geometry.computeVertexNormals();
+    return geometry;
+  });
+}
+
 function addHair(head, style, color) {
   const r = R0;
-  const dark = shade(color, -0.08);
+  const dark = shade(color, -0.07);
   const add = (mesh) => { head.add(mesh); return mesh; };
-  const big = style === "curly" ? 1.1 : 1.06;
-  // The cap tips back, so it sits low at the back of the head and stops above the eyes at the front.
-  add(place(part(cap(), color), [0, 0.015, -0.01], [r * big, r * big * 0.96, r * big], [-0.42, 0, 0]));
-  // Bangs, so the hairline reads as hair, not a helmet.
-  const bangs = (spread = 1, drop = 0) => {
-    // Three locks hang just below the cap's edge; their round ends make the scalloped hairline.
-    for (const [x, y, sx, rz] of [[-0.135, 0.075, 0.115, 0.45], [0, 0.06, 0.12, 0], [0.135, 0.075, 0.115, -0.45]]) {
-      const z = Math.sqrt(Math.max(0, R0 * R0 * 1.02 - x * x * spread * spread - y * y)) - 0.02;
-      add(place(part(sphere(), color), [x * spread, y - drop, z], [sx * spread, 0.085, 0.07], [0.35, x * 2.2, rz]));
-    }
-  };
-  if (style === "short" || style === "bob" || style === "long" || style === "ponytail") bangs(1, style === "short" ? 0 : 0.01);
-  if (style === "short") for (const side of [-1, 1]) add(place(part(sphere(), color), [side * 0.31, 0.02, -0.04], [0.08, 0.17, 0.14]));
-  if (style === "bob" || style === "long") {
-    for (const side of [-1, 1]) add(place(part(sphere(), color), [side * 0.3, -0.07, -0.03], [0.12, 0.25, 0.22]));
-    add(place(part(sphere(), color), [0, -0.06, -0.12], [0.36, 0.3, 0.28]));
-  }
-  if (style === "long") add(place(part(capsule(0.2, 0.22), color), [0, -0.34, -0.17], [1.2, 1, 0.55]));
+  const shell = add(place(part(hairShell(style), color), [0, 0.005, -0.005], [r * 1.06, r * 1.06, r * 1.06]));
+  shell.material = toonTwoSided(shade(color, -0.04));
+  if (style === "long") add(place(part(capsule(0.2, 0.2), color), [0, -0.33, -0.2], [1.25, 1, 0.5], [0.12, 0, 0]));
   if (style === "ponytail") {
-    for (const side of [-1, 1]) add(place(part(sphere(), color), [side * 0.3, -0.02, -0.04], [0.08, 0.17, 0.14]));
-    add(place(part(sphere(), 0xff8fa8), [0, 0.16, -0.36], [0.05]));
-    add(place(part(capsule(0.09, 0.2), color), [0, -0.02, -0.46], [1, 1, 0.9], [-0.35, 0, 0]));
+    add(place(part(sphere(), 0xff8fa8), [0, 0.12, -0.39], [0.05]));
+    add(place(part(capsule(0.1, 0.22), color), [0, -0.08, -0.47], [1, 1, 0.85], [-0.3, 0, 0]));
   }
-  if (style === "buns") {
-    bangs(0.9);
-    for (const side of [-1, 1]) {
-      add(place(part(sphere(), color), [side * 0.25, 0.27, -0.06], [0.12]));
-      add(place(part(sphere(), color), [side * 0.3, -0.04, -0.03], [0.08, 0.17, 0.14]));
-    }
-  }
+  if (style === "buns") for (const side of [-1, 1]) add(place(part(sphere(), color), [side * 0.25, 0.28, -0.06], [0.125]));
   if (style === "spiky") {
-    const spike = geo("hairSpike", () => new THREE.ConeGeometry(0.1, 0.28, 8));
-    for (const [x, y, z, rx, rz] of [[0, 0.42, 0.05, 0.35, 0], [-0.18, 0.36, 0.06, 0.35, 0.55], [0.18, 0.36, 0.06, 0.35, -0.55], [-0.29, 0.22, -0.1, -0.2, 1.0], [0.29, 0.22, -0.1, -0.2, -1.0], [0, 0.34, -0.24, -0.8, 0], [-0.08, 0.2, 0.3, 1.2, 0.3], [0.08, 0.2, 0.3, 1.2, -0.3]])
+    const spike = geo("hairSpike", () => new THREE.ConeGeometry(0.1, 0.26, 10));
+    for (const [x, y, z, rx, rz] of [[0, 0.41, 0.0, 0.1, 0], [-0.17, 0.35, 0.02, 0.2, 0.6], [0.17, 0.35, 0.02, 0.2, -0.6], [-0.27, 0.2, -0.12, -0.3, 1.1], [0.27, 0.2, -0.12, -0.3, -1.1], [0, 0.32, -0.25, -0.9, 0]])
       add(place(part(spike, color), [x, y, z], [1, 1, 1], [rx, 0, rz]));
-    for (const side of [-1, 1]) add(place(part(sphere(), color), [side * 0.31, 0.02, -0.04], [0.08, 0.16, 0.14]));
   }
-  if (style === "curly") {
-    for (let i = 0; i < 9; i++) {
-      const angle = (i / 9) * Math.PI * 2;
-      add(place(part(sphere(), i % 2 ? color : dark), [Math.cos(angle) * 0.3, 0.2 + Math.sin(i * 1.7) * 0.04, Math.sin(angle) * 0.28 - 0.03], [0.1]));
-    }
-    bangs(0.95);
+  if (style === "curly") for (let i = 0; i < 7; i++) {
+    const angle = Math.PI + (i / 6 - 0.5) * Math.PI * 1.3;
+    add(place(part(sphere(), i % 2 ? color : dark), [Math.sin(angle) * 0.33, 0.05 - Math.abs(i - 3) * 0.02, Math.cos(angle) * 0.33], [0.1]));
   }
 }
 

@@ -764,7 +764,7 @@ export class World {
     const body = this.hero.children[0];
     // Blink every few seconds.
     state.blink = (state.blink ?? 2 + Math.random() * 3) - dt;
-    if (this.hero.eyes) this.hero.eyes.scale.y = state.blink < 0 ? 0.12 : 1;
+    this.hero.blink?.(state.blink < 0);
     if (state.blink < -0.12) state.blink = 2.5 + Math.random() * 3.5;
     if (state.mode === "rest") {
       state.wait -= dt;
