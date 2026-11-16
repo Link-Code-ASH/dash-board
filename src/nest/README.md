@@ -19,7 +19,11 @@ An idle housing game: one hero creature lives on a tile lot with a yard and a ho
 - Removing a thing only sets `deletedAt`. Never hard-delete rows or change field meanings; add fields and let `validateItem` fill defaults.
 - Genes and `inheritGenes` stay in `model.js` for a later breeding feature.
 
-## Rendering (`world.js`, `objects.js`, `creature.js`, `toon.js`)
-three.js, loaded only when Nest opens. Sun shadow map (redrawn only after edits or camera moves; the hero uses a contact spot), instanced grass tufts and flowers, swaying leaves, drifting clouds, blinking hero that faces the viewer at rest, 3D portraits (`portrait.js`). Orthographic camera (rotate in 90° steps, pan by drag, zoom by wheel/pinch/buttons),
-toon gradient material + inverted-hull outlines, instanced floor tiles,
+## Rendering (`world.js`, `objects.js`, `creature.js`, `toon.js`, `ink.js`)
+three.js, loaded only when Nest opens. Sun shadow map (redrawn only after edits or camera moves; the hero uses a contact spot), instanced grass tufts and flowers, swaying leaves, drifting clouds, blinking hero that turns 3/4 to the viewer at rest (tail on the near side, wagging), 3D portraits (`portrait.js`). Orthographic camera (rotate in 90° steps, pan by drag, zoom by wheel/pinch/buttons),
+toon gradient material, instanced floor tiles (flat tops only),
+ink lines from a screen pass (`ink.js`): the scene is drawn once for colour (MSAA) and once into a float buffer of
+normal, depth and an object/part code, then every pixel near a change of object, part, fold or real depth step is inked
+at one fixed width, and FXAA smooths it. Tag nodes with `userData.inkKey` (share one object code), `inkSplit`
+(each child its own object), `ink: false` (painted-on detail, no lines inside) or `inkSolid` (transparent but counted).
 pixel ratio ≤ 1.5, 30 fps while moving / 12 fps when calm, paused when hidden or off screen.

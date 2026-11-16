@@ -324,6 +324,8 @@ export function buildWall(type, height) {
     add(block(WALL.color, [0, (height + 1.55) / 2, 0], [1, height - 1.55, t]));
     for (const x of [-0.42, 0.42]) add(block(WALL.color, [x, 1.175, 0], [0.16, 0.75, t]));
     const glass = place(new THREE.Mesh(box(), new THREE.MeshBasicMaterial({ color: 0xcdeaf7, transparent: true, opacity: 0.75 })), [0, 1.175, 0], [0.68, 0.75, 0.02]);
+    glass.userData.ink = false;
+    glass.userData.inkSolid = true; // counts as part of the wall for ink, so the panes read as one window
     add(glass);
     add(block(WALL.trim, [0, 1.175, 0], [0.04, 0.75, 0.05], { line: false }));
     add(block(WALL.trim, [0, 1.175, 0], [0.68, 0.04, 0.05], { line: false }));

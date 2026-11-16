@@ -114,12 +114,25 @@ export function buildCreature(creature) {
   }
   if (genes.ears === "horn") body.add(place(part(geo("horn", () => new THREE.ConeGeometry(0.09, 0.3, 10)), 0xfff3c4), [0, earY + 0.14, sz * 0.2], [1, 1, 1], [0.25, 0, 0]));
 
-  // Tail (back, -z)
-  const tailY = spec.y - sy * 0.35;
-  if (genes.tail === "nub") body.add(place(part(sphere(), color), [0, tailY, -sz * 0.97], [0.12]));
-  if (genes.tail === "fluffy") body.add(place(part(sphere(), shade(color, 0.16)), [0, tailY + 0.05, -sz * 1.02], [0.22, 0.2, 0.2]));
-  if (genes.tail === "curl") body.add(place(part(geo("curl", () => new THREE.TorusGeometry(0.13, 0.045, 6, 14, Math.PI * 1.6)), color), [0, tailY + 0.12, -sz * 1.02], [1, 1, 1], [0, Math.PI / 2, 0]));
-  if (genes.tail === "spike") body.add(place(part(geo("spike", () => new THREE.ConeGeometry(0.1, 0.32, 8)), dark), [0, tailY + 0.05, -sz * 1.05], [1, 1, 1], [-Math.PI / 2 - 0.4, 0, 0]));
+  // Tail: behind the body but big enough and off to one side, so it peeks out in a front or 3/4 view.
+  // It hangs from a pivot at the back so it can wag.
+  const tail = new THREE.Group();
+  tail.userData.x = sx * 0.18;
+  tail.position.set(sx * 0.18, spec.y - sy * 0.3, -sz * 0.86);
+  body.add(tail);
+  if (genes.tail === "nub") tail.add(place(part(sphere(), color), [0.02, 0, -0.06], [0.16]));
+  if (genes.tail === "fluffy") {
+    tail.add(place(part(sphere(), shade(color, 0.16)), [0.12, 0.16, -0.12], [0.26, 0.24, 0.24]));
+    tail.add(place(part(sphere(), shade(color, 0.16)), [0.26, 0.34, -0.1], [0.17]));
+  }
+  if (genes.tail === "curl") {
+    // Rises from low on the back and rolls into a curl beside the shoulder.
+    tail.add(place(part(geo("tailStem", () => new THREE.CylinderGeometry(0.055, 0.075, 0.42, 10)), color), [0.12, 0.08, -0.08], [1, 1, 1], [-0.3, 0, -0.95]));
+    tail.add(place(part(geo("curl", () => new THREE.TorusGeometry(0.15, 0.06, 8, 20, Math.PI * 1.6)), color), [0.38, 0.24, -0.1], [1, 1, 1], [0, 0.45, -0.9]));
+  }
+  if (genes.tail === "spike") {
+    tail.add(place(part(geo("spike", () => new THREE.ConeGeometry(0.12, 0.42, 10)), dark), [0.16, 0.2, -0.08], [1, 1, 1], [-0.35, 0, -0.75]));
+  }
 
   // Feet
   for (const side of [-1, 1]) body.add(place(part(sphere(), dark), [side * sx * 0.45, 0.06, sz * 0.35], [0.14, 0.07, 0.17]));
@@ -132,6 +145,7 @@ export function buildCreature(creature) {
   root.userData = { kind: "hero", id: creature.id, top };
   root.scale.setScalar(size);
   root.eyes = genes.eyes === "sleepy" ? null : eyes;
+  root.tail = tail.children.length ? tail : null;
   return root;
 }
 function addAccessory(body, accessory, { top, front, sx, y, sy }) {

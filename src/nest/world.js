@@ -4,7 +4,8 @@
 import * as THREE from "three";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import { FLOORS, LAND_MAX, edgesBetween, findPath, footprint, hashString, objectTiles, seededRandom, tileKey, walkable } from "./model.js";
-import { flat, outline, part, setOutlineViewport, toon } from "./toon.js";
+import { flat, part, toon } from "./toon.js";
+import { InkPass } from "./ink.js";
 import { buildObject, buildPost, buildWall } from "./objects.js";
 import { buildCreature } from "./creature.js";
 
@@ -28,13 +29,14 @@ export class World {
   constructor(container, handlers = {}) {
     this.container = container;
     this.handlers = handlers;
-    this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "low-power" });
+    this.renderer = new THREE.WebGLRenderer({ antialias: false, alpha: true, powerPreference: "low-power" });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.renderer.shadowMap.autoUpdate = false;
     container.appendChild(this.renderer.domElement);
+    this.ink = new InkPass(this.renderer);
     this.scene = new THREE.Scene();
     this.camera = new THREE.OrthographicCamera(-1, 1, 1, -1, -100, 200);
     this.view = { turn: 0, angle: Math.PI / 4, zoom: 1, target: new THREE.Vector3(8, 0, 8) };
@@ -56,15 +58,19 @@ export class World {
     this.lip = layer(0x7fc469, 0.2);
     this.soil = layer(0xc79b72, 0.8);
     this.stone = layer(0xa8927c, 0.6);
+    this.island.userData.inkKey = "ground";
     this.scene.add(this.island);
     const tileMaterial = new THREE.MeshToonMaterial({ color: 0xffffff, gradientMap: toon(0xffffff).gradientMap });
-    this.tiles = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 0.1, 1), tileMaterial, LAND_MAX * LAND_MAX);
+    // Tiles are flat tops only: side faces between neighbours would flicker through as specks of ink.
+    const tileTop = new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2);
+    this.tiles = new THREE.InstancedMesh(tileTop, tileMaterial, LAND_MAX * LAND_MAX);
     this.tiles.raycast = () => {};
     // Colours must exist before the first draw, or the shader is built without them.
     this.tiles.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(LAND_MAX * LAND_MAX * 3).fill(1), 3);
     this.tiles.count = 0;
     this.tiles.frustumCulled = false; // its bounds change as the lot grows
     this.tiles.receiveShadow = true;
+    this.tiles.userData.inkKey = "ground";
     this.scene.add(this.tiles);
     const blade = (angle, lean) => { const g = new THREE.ConeGeometry(0.05, 0.3, 3); g.translate(0, 0.15, 0); g.rotateZ(lean); g.rotateY(angle); return g; };
     const tuft = mergeGeometries([blade(0, 0.15), blade(2.1, -0.25), blade(4.2, 0.3), blade(1, 0)].map((g) => g.toNonIndexed()));
@@ -72,8 +78,9 @@ export class World {
     this.grass.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(LAND_MAX * LAND_MAX * 3).fill(1), 3);
     this.flowers = new THREE.InstancedMesh(new THREE.SphereGeometry(0.045, 8, 6), new THREE.MeshToonMaterial({ color: 0xffffff, gradientMap: toon(0xffffff).gradientMap }), LAND_MAX * LAND_MAX);
     this.flowers.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(LAND_MAX * LAND_MAX * 3).fill(1), 3);
-    for (const mesh of [this.grass, this.flowers]) { mesh.count = 0; mesh.frustumCulled = false; mesh.raycast = () => {}; this.scene.add(mesh); }
+    for (const mesh of [this.grass, this.flowers]) { mesh.count = 0; mesh.frustumCulled = false; mesh.raycast = () => {}; mesh.userData.inkKey = "ground"; mesh.userData.ink = false; this.scene.add(mesh); }
     this.clouds = this.buildClouds();
+    this.clouds.userData.inkSplit = true;
     this.scene.add(this.clouds);
     this.grid = new THREE.LineSegments(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ color: 0x3b302c, transparent: true, opacity: 0.12 }));
     this.grid.visible = false;
@@ -83,6 +90,7 @@ export class World {
     this.scene.add(this.wallGroup);
     this.objects = new Map();
     this.objectGroup = new THREE.Group();
+    this.objectGroup.userData.inkSplit = true;
     this.scene.add(this.objectGroup);
     this.hero = null;
 
@@ -153,9 +161,10 @@ export class World {
   render() {
     // Shadows are redrawn only when something that casts one has moved.
     if (this.shadowDirty) { this.renderer.shadowMap.needsUpdate = true; this.shadowDirty = false; }
-    const size = this.renderer.getDrawingBufferSize(this.bufferSize ||= new THREE.Vector2());
-    setOutlineViewport(size.x, size.y, this.renderer.getPixelRatio());
-    this.renderer.render(this.scene, this.camera);
+    // Two surfaces count as a depth step when they are a few pixels (and at least a few centimetres) apart.
+    const perPixel = (this.camera.top - this.camera.bottom) / (this.bufferHeight || 1);
+    this.ink.setLineScale(Math.min(1, Math.max(0.75, 0.65 + this.view.zoom * 0.12)));
+    this.ink.render(this.scene, this.camera, { perPixel, depthStep: Math.max(0.04, perPixel * 4) });
   }
 
   // ---------- camera ----------
@@ -163,6 +172,9 @@ export class World {
     const { clientWidth: width, clientHeight: height } = this.container;
     if (!width || !height) return;
     this.renderer.setSize(width, height, false);
+    const buffer = this.renderer.getDrawingBufferSize(new THREE.Vector2());
+    this.ink.setSize(buffer.x, buffer.y, this.renderer.getPixelRatio());
+    this.bufferHeight = buffer.y;
     this.aspect = width / height;
     this.placeCamera();
   }
@@ -248,7 +260,8 @@ export class World {
     const matrix = new THREE.Matrix4();
     let index = 0;
     for (let x = 0; x < this.size; x++) for (let z = 0; z < this.size; z++) {
-      matrix.makeTranslation(x + 0.5, -0.05, z + 0.5);
+      // A hair wider than a tile, so no pinhole cracks show the soil between tiles.
+      matrix.makeScale(1.004, 1, 1.004).setPosition(x + 0.5, 0, z + 0.5);
       this.tiles.setMatrixAt(index, matrix);
       const floor = this.land.floors[tileKey(x, z)] || "grass";
       const noise = tileNoise(x, z);
@@ -463,7 +476,7 @@ export class World {
     if (tool.mode === "place") {
       this.ghost = buildObject(tool.type);
       this.ghost.traverse((child) => {
-        if (child.material && child.material !== outline()) {
+        if (child.material) {
           child.material = child.material.clone();
           child.material.transparent = true;
           child.material.opacity = 0.6;
@@ -759,7 +772,10 @@ export class World {
       body.scale.set(1 / Math.sqrt(breathe), breathe, 1 / Math.sqrt(breathe));
       // While resting, turn to look at the viewer and glance around now and then.
       state.glance = (state.glance ?? 0) - dt;
-      if (state.glance <= 0) { state.look = (Math.random() - 0.5) * 1.1; state.glance = 1.5 + Math.random() * 3; }
+      // A 3/4 turn rather than straight on, so the tail and the side of the body show too.
+      if (state.glance <= 0) { state.look = (Math.random() < 0.5 ? -1 : 1) * (0.45 + Math.random() * 0.4); state.glance = 1.5 + Math.random() * 3; }
+      // The tail sits on the side turned towards the viewer.
+      if (this.hero.tail) { const tail = this.hero.tail; tail.scale.x = state.look > 0 ? -1 : 1; tail.position.x = tail.userData.x * tail.scale.x; tail.rotation.z = Math.sin(t * 2.4) * 0.18 * tail.scale.x; }
       let diff = this.view.angle + (state.look || 0) - this.hero.rotation.y;
       diff = Math.atan2(Math.sin(diff), Math.cos(diff));
       this.hero.rotation.y += diff * Math.min(1, dt * 3);
