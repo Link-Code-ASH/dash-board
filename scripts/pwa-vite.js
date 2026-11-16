@@ -11,6 +11,7 @@ export const apps = {
   mindfold: "Mindfold",
   stock: "Stock",
   contents: "Contents",
+  nest: "Nest",
 };
 
 const entryPattern = new RegExp(`^/(${Object.keys(apps).join("|")})(?:/|/index\\.html)?$`);

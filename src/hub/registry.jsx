@@ -6,6 +6,7 @@ import {
   NotebookPen,
   ChartNoAxesCombined,
   Trophy,
+  Egg,
 } from "lucide-react";
 import { ScheduleIcon } from "./icons.jsx";
 
@@ -58,5 +59,12 @@ export const modules = [
     icon: Trophy,
     path: "contents/",
     Component: lazy(() => import("../contents/Contents.jsx")),
+  },
+  {
+    id: "nest",
+    name: "Nest",
+    icon: Egg,
+    path: "nest/",
+    Component: lazy(() => import("../nest/Nest.jsx")),
   },
 ];
