@@ -34,7 +34,8 @@ function AccountLingo({ userId, loading, children }) {
     store.load().then(sync).catch(() => {});
     const unregister = registerBackupProvider({ id: "lingo", exportBackup: store.exportBackup,
       restoreBackup: async (value) => { await store.restoreBackup(value); void sync(); } });
-    const timer = setInterval(sync, 30000);
+    // Background tabs skip the poll; focus/visibility triggers a sync when the user returns.
+    const timer = setInterval(() => { if (document.visibilityState !== "hidden") void sync(); }, 30000);
     const onVisible = () => { if (document.visibilityState === "visible") void sync(); };
     window.addEventListener("online", sync);
     window.addEventListener("focus", sync);

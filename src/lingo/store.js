@@ -76,7 +76,7 @@ export function createLingoStore(owner, { storage, cloud, lock }) {
       if (!cloud) return;
       for (let attempt = 0; attempt < 3; attempt++) {
         let record = await read();
-        const rows = await cloud.read();
+        const rows = await cloud.read(new Map(record.entries.filter((entry) => entry.revision > 0).map((entry) => [entry.deck.id, entry.revision])));
         check();
         // Validate the entire remote response before touching the local snapshot.
         const remote = rows.map((row) => {

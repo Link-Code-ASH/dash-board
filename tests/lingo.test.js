@@ -100,7 +100,7 @@ function memoryStorage() {
 }
 function memoryCloud() {
   const rows = new Map();
-  return { rows, read: async () => copy([...rows.values()]), write: async (deck, revision) => {
+  return { rows, reads: [], read: async function (known = new Map()) { const out = copy([...rows.values()].filter((row) => known.get(row.deck_id) !== row.revision)); this.reads.push(out.length); return out; }, write: async (deck, revision) => {
     if ((rows.get(deck.id)?.revision || 0) !== revision) throw Object.assign(new Error("conflict"), { code: "LINGO_CONFLICT" });
     rows.set(deck.id, { deck_id: deck.id, payload: copy(deck), revision: revision + 1 });
     return revision + 1;
@@ -148,6 +148,19 @@ test("simultaneous imports of the same new word merge without duplicates", async
   await a.change("deck-1", add); await b.change("deck-1", add);
   await a.sync(); await b.sync();
   assert.equal(b.getSnapshot().decks[0].words.length, 3);
+});
+
+test("polling downloads only decks whose revision changed", async () => {
+  const cloud = memoryCloud(), a = makeStore(memoryStorage(), cloud, "egress-a"), b = makeStore(memoryStorage(), cloud, "egress-b");
+  await a.change("deck-1", fixture); await a.sync();
+  await b.sync(); assert.equal(b.getSnapshot().decks.length, 1);
+  cloud.reads.length = 0;
+  await a.sync(); await b.sync();
+  assert.deepEqual(cloud.reads, [0, 0], "unchanged decks must not be downloaded again");
+  await a.change("deck-1", (deck) => ({ ...deck, name: "renamed" })); await a.sync();
+  cloud.reads.length = 0; await b.sync();
+  assert.deepEqual(cloud.reads, [1]);
+  assert.equal(b.getSnapshot().decks[0].name, "renamed");
 });
 
 test("offline edits stay pending and sync after reconnection", async () => {
