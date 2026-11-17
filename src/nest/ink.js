@@ -134,7 +134,7 @@ export class InkPass {
     this.supported = renderer.capabilities.isWebGL2 !== false && renderer.extensions.has("EXT_color_buffer_float");
     this.precise = this.supported;
     // 8-bit sRGB targets keep dark tones smooth and can be multisampled everywhere.
-    this.color = new THREE.WebGLRenderTarget(1, 1, { samples: Math.min(4, gl.getParameter(gl.MAX_SAMPLES) || 0), colorSpace: THREE.SRGBColorSpace });
+    this.color = new THREE.WebGLRenderTarget(1, 1, { samples: Math.min(4, gl.getParameter(gl.MAX_SAMPLES) || 0), colorSpace: THREE.SRGBColorSpace, stencilBuffer: true });
     this.ink = new THREE.WebGLRenderTarget(1, 1, { type: THREE.FloatType, minFilter: THREE.NearestFilter, magFilter: THREE.NearestFilter });
     this.codeMaterial = new THREE.ShaderMaterial({ uniforms: { code: { value: 0 } }, vertexShader: idVertex, fragmentShader: idFragment, side: THREE.DoubleSide });
     this.codeMaterial.isInkCode = true;

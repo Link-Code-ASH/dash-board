@@ -31,7 +31,7 @@ export class World {
     // Blender-made objects load in the background; the lot swaps them in when they arrive.
     loadModels().then(() => { if (this.disposed || !this.objectList) return; this.syncObjects(this.objectList); this.shadowDirty = true; this.wake(); if (this.tool?.mode === "place") this.setTool(this.tool); });
     this.handlers = handlers;
-    this.renderer = new THREE.WebGLRenderer({ antialias: false, alpha: true, powerPreference: "low-power" });
+    this.renderer = new THREE.WebGLRenderer({ antialias: false, alpha: true, stencil: true, powerPreference: "low-power" });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.shadowMap.enabled = true;
@@ -779,6 +779,7 @@ export class World {
     // Hair settles while standing and trails a little while walking.
     state.stride = (state.stride || 0) + ((state.mode === "walk" ? 1 : 0) - (state.stride || 0)) * Math.min(1, dt * 4);
     this.hero.sway?.(t, state.stride, state.phase || 0);
+    this.updateDust(dt);
     if (state.mode === "rest") {
       state.wait -= dt;
       body.position.y = 0;
@@ -805,7 +806,7 @@ export class World {
     const next = state.path[0];
     if (!next) {
       const [min, max] = REST[this.heroMood] || REST.calm;
-      state.mode = "rest"; state.wait = min + Math.random() * (max - min);
+      state.mode = "rest"; state.wait = min + Math.random() * (max - min); state.stepIndex = undefined;
       body.scale.set(1, 1, 1);
       this.calmSince = performance.now();
       return;
@@ -824,10 +825,69 @@ export class World {
     // A light trot: a small bob each step while arms and legs swing in turn.
     state.phase = (state.phase || 0) + dt * speed * 6.5;
     this.swingLimbs(Math.sin(state.phase), dt, true);
+    // A puff of dust kicked up behind the back foot at every step; a bigger one on the first step.
+    const stepIndex = Math.floor(state.phase / Math.PI);
+    if (stepIndex !== state.stepIndex) { this.kickDust(heading, state.stepIndex === undefined || state.stride < 0.5); state.stepIndex = stepIndex; }
     const hop = Math.abs(Math.sin(state.phase));
     body.position.y = hop * 0.035;
     const squash = 1 + (hop < 0.25 ? -0.015 : 0.008);
     body.scale.set(1 / Math.sqrt(squash), squash, 1 / Math.sqrt(squash));
+  }
+
+  // Anime dust: little cream cloud puffs that pop out behind the feet, drift back and up, swell and then shrink
+  // away (no fading, so they keep their ink outline). One pool of meshes, inked together as one cloud.
+  kickDust(heading, big) {
+    if (!this.hero?.feet) return;
+    if (!this.dust) {
+      this.dust = new THREE.Group();
+      this.dust.userData.inkKey = "dust";
+      const geometry = new THREE.IcosahedronGeometry(1, 2);
+      const material = toon(0xf3ead8);
+      this.dustPuffs = Array.from({ length: 28 }, () => {
+        const mesh = new THREE.Mesh(geometry, material);
+        mesh.visible = false;
+        mesh.userData.ink = false; // one outline round the whole cloud, no lines between puffs
+        mesh.raycast = () => {};
+        this.dust.add(mesh);
+        return { mesh, age: 1, life: 1, size: 0, velocity: new THREE.Vector3() };
+      });
+      this.scene.add(this.dust);
+    }
+    const back = new THREE.Vector3(-Math.sin(heading), 0, -Math.cos(heading));
+    const side = new THREE.Vector3(back.z, 0, -back.x);
+    const foot = new THREE.Vector3();
+    // The foot further behind is the one pushing off.
+    const feet = this.hero.feet.map((bone) => bone.getWorldPosition(new THREE.Vector3()));
+    foot.copy(feet[0].dot(back) > feet[1].dot(back) ? feet[0] : feet[1]);
+    foot.y = 0.03;
+    const count = big ? 5 : 3;
+    for (let i = 0; i < count; i++) {
+      const puff = this.dustPuffs.reduce((oldest, item) => (item.age / item.life > oldest.age / oldest.life ? item : oldest));
+      const spread = (Math.random() - 0.5) * (big ? 0.24 : 0.12);
+      puff.mesh.position.copy(foot).addScaledVector(side, spread).addScaledVector(back, 0.09 + Math.random() * 0.06);
+      puff.velocity.copy(back).multiplyScalar(0.25 + Math.random() * 0.25).addScaledVector(side, spread * 1.5);
+      puff.velocity.y = 0.08 + Math.random() * 0.1;
+      puff.size = (big ? 0.085 : 0.065) * (0.8 + Math.random() * 0.4);
+      puff.life = 0.45 + Math.random() * 0.25;
+      puff.age = -i * 0.03;
+      puff.mesh.visible = false;
+    }
+  }
+  updateDust(dt) {
+    if (!this.dustPuffs) return;
+    for (const puff of this.dustPuffs) {
+      if (puff.age >= puff.life) { puff.mesh.visible = false; continue; }
+      puff.age += dt;
+      if (puff.age < 0) continue;
+      const k = Math.min(1, puff.age / puff.life);
+      puff.velocity.multiplyScalar(1 - Math.min(1, dt * 3.5));
+      puff.mesh.position.addScaledVector(puff.velocity, dt);
+      // Swell quickly, then shrink to nothing.
+      const scale = puff.size * Math.sin(Math.PI * Math.min(1, k ** 0.55));
+      // Gone once it has shrunk to a speck, so it never ends as a dot of ink.
+      puff.mesh.visible = k < 0.5 || scale > puff.size * 0.4;
+      puff.mesh.scale.set(scale, scale * 0.85, scale);
+    }
   }
 
   swingLimbs(swing, dt, walking = false) {

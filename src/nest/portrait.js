@@ -33,6 +33,7 @@ export async function portraitOf(hero) {
   const { renderer, scene, camera, ink } = stage;
   const model = buildHero({ ...hero, accessory: hero.accessory || "none" }, { tilt: 0.12 });
   model.children.filter((child) => child.material?.transparent).forEach((child) => model.remove(child)); // no ground spot
+  model.traverse((node) => { if (node.userData.groundShadow) node.visible = false; });
   model.rotation.y = -0.3;
   model.sway?.(0);
   scene.add(model);

@@ -86,6 +86,29 @@ function turner(bone) {
   };
 }
 
+// The hero's sun shadow, drawn without the shadow map (which is only redrawn after edits): the model's skinned
+// pieces are projected onto the ground along the sun (the lot's sun sits at −17, 19, 11 from the view target) and
+// darken what is under them. A stencil keeps overlapping pieces from darkening twice.
+let shadowMaterial;
+function groundShadowMaterial() {
+  if (shadowMaterial) return shadowMaterial;
+  shadowMaterial = new THREE.MeshBasicMaterial({
+    color: new THREE.Color(0.66, 0.71, 0.84), transparent: true, depthWrite: false,
+    blending: THREE.CustomBlending, blendEquation: THREE.AddEquation, blendSrc: THREE.ZeroFactor, blendDst: THREE.SrcColorFactor,
+    stencilWrite: true, stencilRef: 1, stencilFunc: THREE.NotEqualStencilFunc, stencilZPass: THREE.ReplaceStencilOp,
+  });
+  shadowMaterial.onBeforeCompile = (shader) => {
+    shader.vertexShader = shader.vertexShader.replace("#include <project_vertex>", `
+      vec4 groundPosition = modelMatrix * vec4( transformed, 1.0 );
+      groundPosition.xz += vec2( 17.0 / 19.0, -11.0 / 19.0 ) * groundPosition.y;
+      groundPosition.y = 0.012;
+      vec4 mvPosition = viewMatrix * groundPosition;
+      gl_Position = projectionMatrix * mvPosition;`);
+  };
+  shadowMaterial.customProgramCacheKey = () => "hero-ground-shadow";
+  return shadowMaterial;
+}
+
 // tilt: how far the face turns up; the lot's camera looks down steeply, a portrait's camera looks almost level.
 export function buildHero(hero, { tilt = 0.34 } = {}) {
   if (!model) throw new Error("hero model not loaded");
@@ -133,6 +156,20 @@ export function buildHero(hero, { tilt = 0.34 } = {}) {
     }
   });
   for (const node of unused) node.parent.remove(node);
+  // A sun shadow on the ground: each skinned piece drawn again, flattened along the sun (see groundShadowMaterial).
+  const casters = [];
+  body.traverse((node) => { if (node.isSkinnedMesh) casters.push(node); });
+  for (const node of casters) {
+    const shadow = new THREE.SkinnedMesh(node.geometry, groundShadowMaterial());
+    shadow.position.copy(node.position);
+    shadow.quaternion.copy(node.quaternion);
+    shadow.scale.copy(node.scale);
+    shadow.bind(node.skeleton, node.bindMatrix);
+    shadow.frustumCulled = false;
+    shadow.raycast = () => {};
+    shadow.userData.groundShadow = true;
+    node.parent.add(shadow);
+  }
 
   const turn = Object.fromEntries(Object.keys(bones).map((name) => [name, turner(bones[name])]));
   const head = new THREE.Group();
@@ -185,6 +222,7 @@ export function buildHero(hero, { tilt = 0.34 } = {}) {
   };
   root.dispose = () => {};
   // Seen small, the lines between clumps turn into scribbles: draw only the hair's outline then.
+  root.feet = [bones.foot_L, bones.foot_R];
   root.hairDetail = (fine) => { for (const node of hairMeshes) node.userData.ink = fine ? undefined : false; };
   return root;
 }
