@@ -30,7 +30,7 @@ function Avatar({ hero, size = 30 }) {
   const key = `${JSON.stringify(look)}|${hero.genes?.size}|${hero.accessory || "none"}`;
   useEffect(() => {
     let live = true;
-    import("./portrait.js").then(({ portraitOf }) => { if (live) setUrl(portraitOf({ ...hero, look })); }).catch(() => {});
+    import("./portrait.js").then(({ portraitOf }) => portraitOf({ ...hero, look })).then((url) => { if (live) setUrl(url); }).catch(() => {});
     return () => { live = false; };
   }, [key]);
   if (url) return <img className="ns-portrait" src={url} width={size} height={size} alt="" aria-hidden="true" />;

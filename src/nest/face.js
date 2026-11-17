@@ -1,16 +1,15 @@
 // The hero's face is painted, not modelled: a canvas drawing (eyes with iris, lashes and highlights, soft blush,
-// a small mouth) wrapped onto a patch of the head. A second drawing with closed eyes is swapped in to blink.
+// fine brows, a small mouth) on the face of the head model. A second drawing with closed eyes is swapped in to blink.
 import * as THREE from "three";
 
-// The patch covers this much of the head, in degrees: across from the left to the right of the face, and down
-// from the brow to the chin.
-export const FACE = { across: 140, from: 70, to: 135 };
+// The face is painted onto the front of the head model (hero.glb), whose face UVs are projected straight from
+// the front over a SPAN × SPAN window centred on the head: canvas x runs to the hero's left (viewer's right)
+// and canvas y runs down. Positions below are in model units from the head's centre.
+const SPAN = 0.4;
 const W = 512;
-const H = Math.round((W * (FACE.to - FACE.from)) / FACE.across);
-
+const H = 512;
 const cache = new Map();
-// Canvas position of a point given as degrees off the face's centre line and degrees down from the top of the head.
-const at = (side, down) => [((side + FACE.across / 2) / FACE.across) * W, ((down - FACE.from) / (FACE.to - FACE.from)) * H];
+const at = (x, y) => [(0.5 + x / SPAN) * W, (0.5 - y / SPAN) * H];
 
 const IRIS = {
   dot: null,
@@ -18,10 +17,10 @@ const IRIS = {
   sparkle: ["#28304f", "#4f67a8", "#9cc2ec"],
 };
 
-function drawEye(g, cx, cy, side, style, closed) {
+function drawEye(g, cx, cy, side, style, closed, size) {
   g.save();
   g.translate(cx, cy);
-  g.scale(2.05, 2.05);
+  g.scale(size, size);
   g.lineCap = "round";
   g.lineJoin = "round";
   if (closed || style === "sleepy") {
@@ -85,46 +84,55 @@ function drawEye(g, cx, cy, side, style, closed) {
   g.restore();
 }
 
-function paint(style, closed) {
+function paint(style, closed, skin) {
   const canvas = document.createElement("canvas");
   canvas.width = W;
   canvas.height = H;
   const g = canvas.getContext("2d");
-  const [lx, ly] = at(-25, 102);
-  const [rx, ry] = at(25, 102);
+  g.fillStyle = skin;
+  g.fillRect(0, 0, W, H);
   // Blush first, under everything: soft and wide.
-  for (const [bx, by] of [at(-36, 116), at(36, 116)]) {
-    const blush = g.createRadialGradient(bx, by, 2, bx, by, 40);
-    blush.addColorStop(0, "rgba(255, 134, 134, 0.55)");
-    blush.addColorStop(1, "rgba(255, 134, 134, 0)");
+  for (const [bx, by] of [at(-0.105, -0.09), at(0.105, -0.09)]) {
+    const blush = g.createRadialGradient(bx, by, 2, bx, by, 34);
+    blush.addColorStop(0, "rgba(255, 128, 128, 0.42)");
+    blush.addColorStop(1, "rgba(255, 128, 128, 0)");
     g.fillStyle = blush;
-    g.beginPath(); g.ellipse(bx, by, 44, 26, 0, 0, Math.PI * 2); g.fill();
+    g.beginPath(); g.ellipse(bx, by, 40, 22, 0, 0, Math.PI * 2); g.fill();
   }
-  drawEye(g, lx, ly, -1, style, closed);
-  drawEye(g, rx, ry, 1, style, closed);
-  // A small soft smile.
-  const [mx, my] = at(0, 115);
-  g.strokeStyle = "#7a3f3c";
-  g.lineWidth = 6;
+  // Fine brows, mostly hidden by the fringe.
+  g.strokeStyle = "rgba(74, 48, 44, 0.75)";
   g.lineCap = "round";
+  g.lineWidth = 4;
+  for (const side of [-1, 1]) {
+    const [x0, y0] = at(side * 0.04, 0.03);
+    const [x1, y1] = at(side * 0.102, 0.026);
+    g.beginPath(); g.moveTo(x0, y0); g.quadraticCurveTo((x0 + x1) / 2, y0 - 10, x1, y1); g.stroke();
+  }
+  const [lx, ly] = at(-0.07, -0.042);
+  const [rx, ry] = at(0.07, -0.042);
+  drawEye(g, lx, ly, -1, style, closed, 1.95);
+  drawEye(g, rx, ry, 1, style, closed, 1.95);
+  // A hint of a nose and a small soft smile.
+  const [nx, ny] = at(0.004, -0.092);
+  g.fillStyle = "rgba(196, 120, 100, 0.45)";
+  g.beginPath(); g.ellipse(nx, ny, 3.5, 2.5, 0, 0, Math.PI * 2); g.fill();
+  const [mx, my] = at(0, -0.118);
+  g.strokeStyle = "#8a4844";
+  g.lineWidth = 5;
   g.beginPath();
-  g.moveTo(mx - 11, my - 3);
-  g.quadraticCurveTo(mx, my + 8, mx + 11, my - 3);
+  g.moveTo(mx - 13, my - 3);
+  g.quadraticCurveTo(mx, my + 7, mx + 13, my - 3);
   g.stroke();
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
+  texture.flipY = false; // glTF UVs
   texture.anisotropy = 4;
   return texture;
 }
 
-// { open, closed } textures for an eye style, shared by every hero with that style.
-export function faceTextures(style) {
-  if (!cache.has(style)) cache.set(style, { open: paint(style, false), closed: paint(style, true) });
-  return cache.get(style);
-}
-
-// The patch: part of a unit sphere matching the head (scale it like the head).
-export function faceGeometry() {
-  const deg = THREE.MathUtils.degToRad;
-  return new THREE.SphereGeometry(1, 40, 20, Math.PI / 2 - deg(FACE.across / 2), deg(FACE.across), deg(FACE.from), deg(FACE.to - FACE.from));
+// { open, closed } face textures for an eye style on a skin colour (CSS colour), shared by every hero alike.
+export function faceTextures(style, skin) {
+  const key = `${style}|${skin}`;
+  if (!cache.has(key)) cache.set(key, { open: paint(style, false, skin), closed: paint(style, true, skin) });
+  return cache.get(key);
 }

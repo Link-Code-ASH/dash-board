@@ -7,7 +7,7 @@ import { FLOORS, LAND_MAX, edgesBetween, findPath, footprint, hashString, object
 import { flat, part, toon } from "./toon.js";
 import { InkPass } from "./ink.js";
 import { buildObject, buildPost, buildWall } from "./objects.js";
-import { buildHero } from "./person.js";
+import { buildHero, heroModelLoaded, loadHeroModel } from "./person.js";
 
 const WALL_HIGH = 2;
 const WALL_LOW = 0.35;
@@ -420,7 +420,13 @@ export class World {
     this.shadowDirty = true;
   }
   syncHero(hero) {
-    if (!hero) { if (this.hero) this.scene.remove(this.hero); this.hero = null; return; }
+    if (!hero) { if (this.hero) this.scene.remove(this.hero); this.hero = null; this.waitingHero = null; return; }
+    // The hero's model loads once; until then the lot shows without the hero.
+    if (!heroModelLoaded()) {
+      this.waitingHero = hero;
+      loadHeroModel().then(() => { const next = this.waitingHero; this.waitingHero = null; if (next && !this.disposed) { this.syncHero(next); this.wake(); } }).catch(() => {});
+      return;
+    }
     const signature = `${JSON.stringify(hero.genes)}|${JSON.stringify(hero.look || null)}|${hero.bornAt}|${hero.sex}|${hero.accessory}`;
     if (this.heroSignature !== signature) {
       const old = this.hero;
@@ -821,13 +827,13 @@ export class World {
   }
 
   swingLimbs(swing, dt, walking = false) {
-    const limbs = this.hero?.limbs;
-    if (!limbs) return;
-    const ease = walking ? 1 : Math.min(1, dt * 6);
-    limbs.legs.forEach((leg, i) => { const goal = (i ? -1 : 1) * swing * 0.55; leg.rotation.x += (goal - leg.rotation.x) * ease; });
-    limbs.arms.forEach((arm, i) => { const goal = (i ? 1 : -1) * swing * 0.6; arm.rotation.x += (goal - arm.rotation.x) * ease; });
+    if (!this.hero?.pose) return;
+    const state = this.heroState;
+    state.swing = walking ? swing : (state.swing || 0) * (1 - Math.min(1, dt * 6));
+    this.hero.pose(state.swing, Math.sin(this.clock.elapsedTime * 2));
   }
   dispose() {
+    this.disposed = true;
     this.running = false;
     cancelAnimationFrame(this.frame);
     this.observer.disconnect();

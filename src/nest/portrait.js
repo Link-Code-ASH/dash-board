@@ -1,6 +1,6 @@
 // Small 3D portraits of the hero (front view, toon look) as image URLs for the panel, header and hero chooser.
 import * as THREE from "three";
-import { buildHero } from "./person.js";
+import { buildHero, loadHeroModel } from "./person.js";
 import { InkPass } from "./ink.js";
 
 const SIZE = 256; // drawn larger than shown, so small avatars stay crisp
@@ -24,8 +24,10 @@ function setup() {
   return { renderer, scene, camera, ink };
 }
 
-export function portraitOf(hero) {
+export async function portraitOf(hero) {
   const key = `${JSON.stringify(hero.genes)}|${JSON.stringify(hero.look || null)}|${hero.bornAt}|${hero.sex}|${hero.accessory || "none"}`;
+  if (cache.has(key)) return cache.get(key);
+  await loadHeroModel();
   if (cache.has(key)) return cache.get(key);
   stage ||= setup();
   const { renderer, scene, camera, ink } = stage;
@@ -37,9 +39,9 @@ export function portraitOf(hero) {
   const box = new THREE.Box3().setFromObject(model);
   const center = box.getCenter(new THREE.Vector3());
   const size = box.getSize(new THREE.Vector3());
-  // Head and shoulders: the top two thirds of the figure, centred a little below the eyes.
-  center.y = box.max.y - size.y * 0.34;
-  const distance = Math.max(size.x * 1.1, size.y * 0.7) * 2.3;
+  // Head and shoulders: centred just under the chin.
+  center.y = box.max.y - size.y * 0.27;
+  const distance = size.y * 0.5 * 2.3;
   camera.position.set(center.x + distance * 0.1, center.y + distance * 0.22, center.z + distance);
   camera.lookAt(center);
   const perPixel = (2 * distance * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2))) / SIZE;

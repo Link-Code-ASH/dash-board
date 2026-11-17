@@ -1,127 +1,132 @@
-// The hero: a small person (about two and a half heads tall) in the same toon look as the lot. Built from the
-// hero's look (skin, hair, hair colour, outfit, outfit colour, eyes) plus an accessory; limbs are exposed for
-// walking and the hair is made of separate locks that sway (root.sway).
+// The hero: a slim, pretty person about three and a half heads tall, in the same toon look as the lot. The body
+// and head are a skinned model made in Blender (hero.glb, built by tools/nest/hero_model.py); the game recolours
+// its regions per look, paints the face, and adds hair (separate locks that sway, root.sway) and accessories.
+// Load the model once with loadHeroModel() before calling buildHero().
 import * as THREE from "three";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { clone as cloneSkinned } from "three/examples/jsm/utils/SkeletonUtils.js";
 import { lookOf, lookValue } from "./model.js";
-import { INK, blobShadow, geo, part, place, shade, sphere, toon, toonTwoSided } from "./toon.js";
-import { faceGeometry, faceTextures } from "./face.js";
+import { INK, geo, blobShadow, part, place, shade, sphere, toon, toonTwoSided } from "./toon.js";
+import { faceTextures } from "./face.js";
+import heroUrl from "./hero.glb?url";
 
 const SHOES = 0x6b5049;
-const DENIM = 0x6a80b3;
-const HEAD = { y: 1.13, r: 0.29, squash: [1.02, 1, 1] };
-const R0 = 0.36; // hair and head accessories are modelled for this radius and scaled to the head
-const capsule = (radius, length) => geo(`capsule:${radius}:${length}`, () => new THREE.CapsuleGeometry(radius, length, 6, 14));
-const cone = (top, bottom, height, segments = 18) => geo(`cone:${top}:${bottom}:${height}`, () => new THREE.CylinderGeometry(top, bottom, height, segments));
-const lathe = (key, points, segments = 24) => geo(key, () => {
-  const curve = new THREE.SplineCurve(points.map(([x, y]) => new THREE.Vector2(x, y)));
-  const geometry = new THREE.LatheGeometry(curve.getPoints(22), segments);
-  geometry.computeVertexNormals();
-  return geometry;
-});
-// Upper body: hips to shoulders, a little waist, rounded shoulders, closing at the neck.
-const torso = () => lathe("torso2", [[0.001, 0.43], [0.152, 0.43], [0.158, 0.47], [0.138, 0.56], [0.136, 0.63], [0.152, 0.71], [0.138, 0.77], [0.085, 0.815], [0.04, 0.83], [0.001, 0.832]]);
-// Shorts or the top of trousers, under the shirt's hem.
-const hips = () => lathe("hips2", [[0.001, 0.37], [0.105, 0.37], [0.136, 0.4], [0.146, 0.45], [0.13, 0.5], [0.001, 0.51]]);
-// An A-line skirt from the waist.
-const skirt = () => lathe("skirt", [[0.001, 0.335], [0.2, 0.335], [0.238, 0.345], [0.222, 0.4], [0.18, 0.5], [0.142, 0.6], [0.128, 0.64]]);
+const DENIM = 0x5f74a8;
+const SOCKS = 0xfaf4ee;
+const HEAD_CENTER = new THREE.Vector3(0, 1.2, 0); // in the model, Y up, front +Z
+const HEAD_SIZE = [0.19, 0.2, 0.185]; // the cranium's radii; hair is modelled at R0 and scaled to these
+const R0 = 0.36;
+
+let model = null;
+let loading = null;
+export function loadHeroModel() {
+  if (model) return Promise.resolve(model);
+  loading ||= new GLTFLoader().loadAsync(heroUrl).then((gltf) => { model = gltf.scene; return model; });
+  return loading;
+}
+export const heroModelLoaded = () => !!model;
+
+const hex = (value) => `#${new THREE.Color(value).getHexString()}`;
+
+// A group that follows `bone` but is laid out in the model's own space (Y up, front +Z), for hair and trinkets.
+function anchor(bone, root) {
+  root.updateMatrixWorld(true);
+  const group = new THREE.Group();
+  const inverse = new THREE.Matrix4().copy(root.matrixWorld).invert().multiply(bone.matrixWorld).invert();
+  inverse.decompose(group.position, group.quaternion, group.scale);
+  bone.add(group);
+  return group;
+}
+
+// Turns a bone about an axis given in the model's space, on top of its rest pose.
+function turner(bone) {
+  const rest = bone.quaternion.clone();
+  const parentWorld = new THREE.Quaternion();
+  bone.parent.getWorldQuaternion(parentWorld);
+  const toLocal = parentWorld.invert();
+  const q = new THREE.Quaternion();
+  const axis = new THREE.Vector3();
+  return (x, y = 0, z = 0) => {
+    bone.quaternion.copy(rest);
+    for (const [angle, ax] of [[x, [1, 0, 0]], [z, [0, 0, 1]], [y, [0, 1, 0]]]) {
+      if (!angle) continue;
+      axis.set(...ax).applyQuaternion(toLocal);
+      bone.quaternion.premultiply(q.setFromAxisAngle(axis, angle));
+    }
+  };
+}
 
 // tilt: how far the face turns up; the lot's camera looks down steeply, a portrait's camera looks almost level.
-export function buildHero(hero, { tilt = 0.3 } = {}) {
+export function buildHero(hero, { tilt = 0.34 } = {}) {
+  if (!model) throw new Error("hero model not loaded");
   const look = lookOf(hero);
   const skin = lookValue("skin", look.skin).hex;
   const hair = lookValue("hairColor", look.hairColor).hex;
   const cloth = lookValue("outfitColor", look.outfitColor).hex;
-  const root = new THREE.Group();
-  const body = new THREE.Group();
-  root.add(body);
-  const dress = look.outfit === "dress";
-  const overalls = look.outfit === "overalls";
-  const hoodie = look.outfit === "hoodie";
+  const outfit = look.outfit;
+  const dress = outfit === "dress";
+  const overalls = outfit === "overalls";
+  const hoodie = outfit === "hoodie";
   const shirt = overalls ? shade(cloth, 0.24) : cloth;
   const pants = overalls ? cloth : DENIM;
-  const soft = { gentle: true };
-  const flatter = [1, 1, 0.82]; // bodies are a little shallower front to back than across
+  const colours = {
+    skin, top: shirt, forearm: hoodie ? cloth : skin, bottom: dress ? SOCKS : pants, shin: dress ? skin : pants, shoes: SHOES,
+    skirt: cloth, hood: shade(cloth, -0.05), bib: cloth,
+  };
+  const shown = { skirt: dress, hood: hoodie, bib: overalls };
 
-  // Legs hang from hip pivots so they can swing; trousers to the ankle, bare legs under a dress.
-  const legs = [-1, 1].map((side) => {
-    const pivot = new THREE.Group();
-    pivot.position.set(side * 0.072, 0.42, 0);
-    if (dress) {
-      pivot.add(place(part(capsule(0.045, 0.3), skin, soft), [0, -0.2, 0]));
-      pivot.add(place(part(capsule(0.047, 0.05), 0xfaf4ee), [0, -0.33, 0])); // socks
-    } else pivot.add(place(part(capsule(0.052, 0.27), pants), [0, -0.18, 0]));
-    pivot.add(place(part(sphere(), SHOES), [0, -0.385, 0.03], [0.058, 0.045, 0.092]));
-    body.add(pivot);
-    return pivot;
+  const root = new THREE.Group();
+  const body = cloneSkinned(model);
+  root.add(body);
+  const faces = faceTextures(look.eyes, hex(skin));
+  const faceMaterial = new THREE.MeshToonMaterial({ map: faces.open, gradientMap: toon(0xffffff, true).gradientMap });
+  const bones = {};
+  body.traverse((node) => {
+    if (node.isBone) bones[node.name] = node;
+    if (!node.isMesh) return;
+    node.frustumCulled = false; // skinned: the rest-pose bounds don't follow the walk
+    const name = node.material.name;
+    if (name in shown && !shown[name]) node.visible = false;
+    node.material = name === "face" ? faceMaterial : name in colours ? toon(colours[name], name === "skin" || name === "forearm" && !hoodie || name === "shin" && dress) : toon(0xff00ff);
+    node.castShadow = false;
+    node.receiveShadow = true;
   });
 
-  // Body.
-  if (!dress) body.add(place(part(hips(), pants), [0, 0, 0], flatter));
-  body.add(place(part(torso(), shirt), [0, 0, 0], flatter));
-  body.add(place(part(cone(0.034, 0.04, 0.14, 14), skin, soft), [0, 0.87, -0.005]));
-  if (dress) {
-    body.add(place(part(skirt(), cloth), [0, 0, 0], [1, 1, 0.86]));
-    body.add(place(part(geo("sash", () => new THREE.TorusGeometry(0.133, 0.014, 6, 28)), shade(cloth, -0.12), { line: false }), [0, 0.635, 0], [1, 0.82, 1], [Math.PI / 2, 0, 0]));
-  }
-  if (overalls) {
-    body.add(place(part(geo("bib2", () => new THREE.BoxGeometry(0.16, 0.15, 0.03)), cloth), [0, 0.59, 0.108], [1, 1, 1], [-0.05, 0, 0]));
-    for (const side of [-1, 1]) {
-      body.add(place(part(geo("strap", () => new THREE.BoxGeometry(0.035, 0.2, 0.02)), cloth, { line: false }), [side * 0.07, 0.7, 0.1], [1, 1, 1], [-0.25, 0, 0]));
-      body.add(place(part(sphere(), 0xf5c542, { line: false }), [side * 0.055, 0.645, 0.126], [0.014]));
-    }
-  }
-  if (hoodie) {
-    body.add(place(part(geo("hood2", () => new THREE.TorusGeometry(0.085, 0.038, 8, 20)), shade(cloth, -0.05)), [0, 0.805, -0.05], [1, 1, 1], [Math.PI / 2 - 0.5, 0, 0]));
-    body.add(place(part(geo("pocket2", () => new THREE.BoxGeometry(0.13, 0.05, 0.02)), shade(cloth, -0.06), { line: false }), [0, 0.5, 0.123]));
-  }
-  if (look.outfit === "tee") body.add(place(part(geo("collar2", () => new THREE.TorusGeometry(0.048, 0.011, 6, 16)), shade(cloth, -0.1), { line: false }), [0, 0.818, 0.012], [1, 1, 1], [Math.PI / 2 - 0.2, 0, 0]));
-
-  // Arms from the shoulders: a sleeve, then the forearm (bare unless it's a hoodie) and a round hand.
-  const sleeve = dress || look.outfit === "tee" ? cloth : shirt;
-  const arms = [-1, 1].map((side) => {
-    const pivot = new THREE.Group();
-    pivot.position.set(side * 0.158, 0.765, 0);
-    pivot.rotation.z = side * 0.12;
-    if (dress) pivot.add(place(part(sphere(), sleeve), [0, -0.035, 0], [0.058, 0.07, 0.055]));
-    else pivot.add(place(part(capsule(0.043, 0.1), sleeve), [0, -0.07, 0]));
-    pivot.add(place(part(capsule(0.036, 0.13), hoodie ? sleeve : skin, hoodie ? undefined : soft), [0, -0.2, 0]));
-    pivot.add(place(part(sphere(), skin, soft), [0, -0.315, 0.005], [0.043]));
-    body.add(pivot);
-    return pivot;
-  });
-
-  // Head and face (front is +z).
+  // Head pose, hair and trinkets.
+  const turn = Object.fromEntries(["head", "neck", "chest", "spine", "hips", "upperarm_L", "upperarm_R", "forearm_L", "forearm_R", "thigh_L", "thigh_R", "shin_L", "shin_R"].map((name) => [name, turner(bones[name])]));
   const head = new THREE.Group();
-  head.position.y = HEAD.y;
-  head.rotation.x = -tilt; // chin up towards the camera, so the face stays in view
-  body.add(head);
-  const r = HEAD.r;
-  const [kx, ky, kz] = HEAD.squash;
-  head.add(place(part(sphere(), skin, soft), [0, 0, 0], [r * kx, r * ky, r * kz]));
-  // The painted face sits a hair above the skin and is lit like it.
-  const faces = faceTextures(look.eyes);
-  const faceMaterial = new THREE.MeshToonMaterial({ map: faces.open, transparent: true, gradientMap: toon(0xffffff, true).gradientMap,
-    polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2, depthWrite: false });
-  const face = place(new THREE.Mesh(geo("face", faceGeometry), faceMaterial), [0, 0, 0], [r * kx * 1.004, r * ky * 1.004, r * kz * 1.004]);
-  face.raycast = () => {};
-  head.add(face);
-  for (const side of [-1, 1]) head.add(place(part(sphere(), skin, soft), [side * r * kx * 0.97, -0.045, -0.01], [0.032, 0.048, 0.032]));
+  head.position.copy(HEAD_CENTER);
+  head.scale.set(HEAD_SIZE[0] / R0, HEAD_SIZE[1] / R0, HEAD_SIZE[2] / R0).multiplyScalar(1.05); // hair with a little volume
+  anchor(bones.head, root).add(head);
+  const locks = addHair(head, look.hair, hair, tilt);
+  const chest = anchor(bones.chest, root);
+  addAccessory(head, chest, hero.accessory);
+  turn.head(-tilt * 0.65);
+  turn.neck(-tilt * 0.35);
 
-  // Hair and head accessories are modelled at R0 and scaled to this head.
-  const crown = new THREE.Group();
-  crown.scale.set((r * kx) / R0, (r * ky) / R0, (r * kz) / R0);
-  head.add(crown);
-  const locks = addHair(crown, look.hair, hair, tilt);
-  addAccessory(crown, body, hero.accessory);
-
-  root.add(blobShadow(0.26));
-  const size = { small: 0.94, medium: 1, large: 1.06 }[hero.genes?.size] || 1;
+  root.add(blobShadow(0.22));
+  const size = { small: 0.95, medium: 1, large: 1.05 }[hero.genes?.size] || 1;
   root.scale.setScalar(size);
-  root.userData = { kind: "hero", id: hero.id, top: HEAD.y + r * 1.1, person: true };
+  root.userData = { kind: "hero", id: hero.id, top: HEAD_CENTER.y + HEAD_SIZE[1] * 1.15, person: true };
   root.blink = look.eyes === "sleepy" ? null : (closed) => { faceMaterial.map = closed ? faces.closed : faces.open; };
-  root.limbs = { arms, legs };
+  // swing: −1…1 through the walk cycle (0 standing); arms and legs swing in turn and knees bend on the way through.
+  root.pose = (swing, breathe = 0) => {
+    const lift = Math.max(0, swing);
+    const drop = Math.max(0, -swing);
+    turn["thigh_L"](swing * 0.5);
+    turn["thigh_R"](-swing * 0.5);
+    turn["shin_L"](-0.55 * drop * drop - 0.1 * Math.abs(swing));
+    turn["shin_R"](-0.55 * lift * lift - 0.1 * Math.abs(swing));
+    turn["upperarm_L"](-swing * 0.45, 0, 0.06);
+    turn["upperarm_R"](swing * 0.45, 0, -0.06);
+    turn["forearm_L"](-0.15 - 0.2 * lift);
+    turn["forearm_R"](-0.15 - 0.2 * drop);
+    turn.chest(breathe * 0.025, swing * 0.06);
+    turn.hips(0, -swing * 0.08);
+  };
+  root.pose(0);
+  root.limbs = null;
   root.tail = null;
-  // t: seconds; walk: 0 standing to 1 walking; step: the walk cycle's phase.
   root.sway = (t, walk = 0, step = 0) => swayLocks(locks, t, walk, step);
   root.dispose = () => locks.forEach((lock) => lock.mesh.geometry.dispose());
   return root;
@@ -421,8 +426,8 @@ function addAccessory(head, body, accessory) {
     }
   }
   if (accessory === "scarf") {
-    body.add(place(part(geo("scarf2", () => new THREE.TorusGeometry(0.068, 0.034, 8, 22)), 0xe25b5b), [0, 0.83, 0], [1, 1, 0.95], [Math.PI / 2, 0, 0]));
-    body.add(place(part(geo("scarfEnd2", () => new THREE.BoxGeometry(0.05, 0.13, 0.025)), 0xe25b5b), [0.05, 0.74, 0.115], [1, 1, 1], [0.15, 0, 0.12]));
+    body.add(place(part(geo("scarf3", () => new THREE.TorusGeometry(0.052, 0.026, 8, 22)), 0xe25b5b), [0, 0.955, 0.004], [1, 1, 0.95], [Math.PI / 2, 0, 0]));
+    body.add(place(part(geo("scarfEnd3", () => new THREE.BoxGeometry(0.04, 0.1, 0.02)), 0xe25b5b), [0.03, 0.89, 0.07], [1, 1, 1], [0.2, 0, 0.12]));
   }
   if (accessory === "glasses") {
     for (const side of [-1, 1]) head.add(place(part(geo("lens", () => new THREE.TorusGeometry(0.068, 0.012, 6, 16)), INK, { line: false, basic: true }), [side * 0.133, -0.086, 0.344]));

@@ -19,12 +19,16 @@ export const LINE_PX = 2; // full line width in CSS pixels, the same at every zo
 
 const idVertex = `
   #include <common>
+  #include <skinning_pars_vertex>
   varying vec3 vNormal;
   varying float vDepth;
   void main() {
     #include <beginnormal_vertex>
+    #include <skinbase_vertex>
+    #include <skinnormal_vertex>
     #include <defaultnormal_vertex>
     #include <begin_vertex>
+    #include <skinning_vertex>
     #include <project_vertex>
     vNormal = normalize(transformedNormal);
     vDepth = -mvPosition.z;
