@@ -34,7 +34,8 @@ function AccountNest({ userId, loading, children }) {
     store.load().then(sync).catch(() => {});
     const unregister = registerBackupProvider({ id: "nest", exportBackup: store.exportBackup,
       restoreBackup: async (value) => { await store.restoreBackup(value); void sync(); } });
-    const timer = setInterval(sync, 60000);
+    // Once a minute while the page is in view; a hidden tab checks again as soon as it comes back.
+    const timer = setInterval(() => { if (document.visibilityState !== "hidden") void sync(); }, 60000);
     const onVisible = () => { if (document.visibilityState === "visible") void sync(); };
     window.addEventListener("online", sync);
     window.addEventListener("focus", sync);

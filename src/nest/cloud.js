@@ -5,8 +5,31 @@ const timeout = () => AbortSignal.timeout(20000);
 // One row per creature, egg or decoration in `nest_items` (supabase/nest.sql), with optimistic revisions.
 export function cloudAdapter(userId) {
   return {
-    async read() {
+    // Just ids and revisions: a few bytes per row, enough to tell what changed since the last sync.
+    async revisions() {
       const rows = [];
+      for (let offset = 0; ; offset += 1000) {
+        const { data, error } = await accountClient.from("nest_items")
+          .select("item_id,revision").eq("user_id", userId).order("item_id")
+          .range(offset, offset + 999).abortSignal(timeout());
+        if (error) throw error;
+        rows.push(...data);
+        if (data.length < 1000) return rows;
+      }
+    },
+    // Whole rows, only for the given ids (or every row when ids is left out).
+    async read(ids) {
+      const rows = [];
+      if (ids) {
+        for (let start = 0; start < ids.length; start += 100) {
+          const { data, error } = await accountClient.from("nest_items")
+            .select("item_id,payload,revision").eq("user_id", userId).in("item_id", ids.slice(start, start + 100))
+            .abortSignal(timeout());
+          if (error) throw error;
+          rows.push(...data);
+        }
+        return rows;
+      }
       for (let offset = 0; ; offset += 500) {
         const { data, error } = await accountClient.from("nest_items")
           .select("item_id,payload,revision").eq("user_id", userId).order("item_id")

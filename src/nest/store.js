@@ -76,7 +76,18 @@ export function createNestStore(owner, { storage, cloud, lock }) {
       if (!cloud) return;
       for (let attempt = 0; attempt < 3; attempt++) {
         let record = await read();
-        const rows = await cloud.read();
+        // Ask only for ids and revisions first, then download just the rows that changed elsewhere.
+        let rows;
+        if (cloud.revisions) {
+          const known = new Map(record.entries.map((entry) => [entry.item.id, entry.revision]));
+          const changed = (await cloud.revisions()).filter((row) => known.get(row.item_id) !== row.revision).map((row) => row.item_id);
+          check();
+          if (!changed.length && !record.entries.some((entry) => entry.dirty)) {
+            publish(record, record.recovery.length ? "동기화됨 · 충돌 복구 사본 있음" : "계정에 동기화됨");
+            return;
+          }
+          rows = changed.length ? await cloud.read(changed) : [];
+        } else rows = await cloud.read();
         check();
         // Validate the entire remote response before touching the local snapshot.
         const remote = rows.map((row) => {

@@ -15,7 +15,11 @@ function memoryStorage() {
 }
 function memoryCloud() {
   const rows = new Map();
-  return { rows, read: async () => copy([...rows.values()]), write: async (value, revision) => {
+  const downloads = [];
+  return { rows, downloads,
+    revisions: async () => [...rows.values()].map(({ item_id, revision }) => ({ item_id, revision })),
+    read: async (ids) => { const picked = [...rows.values()].filter((row) => !ids || ids.includes(row.item_id)); downloads.push(picked.map((row) => row.item_id)); return copy(picked); },
+    write: async (value, revision) => {
     if ((rows.get(value.id)?.revision || 0) !== revision) throw Object.assign(new Error("conflict"), { code: "NEST_CONFLICT" });
     rows.set(value.id, { item_id: value.id, payload: copy(value), revision: revision + 1 });
     return revision + 1;
@@ -135,4 +139,27 @@ test("nest hero looks: saved looks are cleaned, old heroes get a fixed look", as
   assert.equal(saved.look.outfit, "tee");
   const legacy = validateItem({ ...hero, look: undefined });
   assert.equal("look" in legacy, false);
+});
+
+test("nest sync downloads only rows that changed on another device", async () => {
+  const cloud = memoryCloud();
+  const a = createNestStore("u", { storage: memoryStorage(), cloud, lock: accountLock });
+  const b = createNestStore("u", { storage: memoryStorage(), cloud, lock: accountLock });
+  const hero = newHero(heroCandidates("u")[0], T0);
+  const land = newLand(T0);
+  await a.load();
+  await a.changeMany([hero, land].map((item) => ({ id: item.id, transform: (current) => current || item })));
+  await a.sync();
+  await b.load();
+  await b.sync();
+  assert.deepEqual(cloud.downloads.at(-1).sort(), ["hero", "land"].sort());
+  cloud.downloads.length = 0;
+  await b.sync();
+  await a.sync();
+  assert.equal(cloud.downloads.length, 0, "nothing changed, nothing downloaded");
+  await a.changeMany([{ id: "land", transform: (item) => ({ ...item, floors: { "2,2": "wood" } }) }]);
+  await a.sync();
+  await b.sync();
+  assert.deepEqual(cloud.downloads, [["land"]]);
+  assert.deepEqual(b.getSnapshot().items.find((item) => item.id === "land").floors, { "2,2": "wood" });
 });
