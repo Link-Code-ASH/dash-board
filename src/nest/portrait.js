@@ -36,12 +36,10 @@ export async function portraitOf(hero) {
   model.rotation.y = -0.3;
   model.sway?.(0);
   scene.add(model);
-  const box = new THREE.Box3().setFromObject(model);
-  const center = box.getCenter(new THREE.Vector3());
-  const size = box.getSize(new THREE.Vector3());
-  // Head and shoulders: centred just under the chin.
-  center.y = box.max.y - size.y * 0.27;
-  const distance = size.y * 0.5 * 2.3;
+  // Head and shoulders. (A skinned model's bounds are its rest pose, so the framing is set from its known size.)
+  const scale = model.scale.y;
+  const center = new THREE.Vector3(0, 1.3 * scale, 0);
+  const distance = 1.3 * scale;
   camera.position.set(center.x + distance * 0.1, center.y + distance * 0.22, center.z + distance);
   camera.lookAt(center);
   const perPixel = (2 * distance * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2))) / SIZE;

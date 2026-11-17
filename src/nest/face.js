@@ -121,7 +121,7 @@ function paint(style, closed, skin) {
   g.fillStyle = skin;
   g.fillRect(0, 0, W, H);
   // Blush first, under everything: soft and wide.
-  for (const [bx, by] of [at(-0.105, -0.09), at(0.105, -0.09)]) {
+  for (const [bx, by] of [at(-0.1, -0.108), at(0.1, -0.108)]) {
     const blush = g.createRadialGradient(bx, by, 2, bx, by, 34);
     blush.addColorStop(0, "rgba(255, 128, 128, 0.42)");
     blush.addColorStop(1, "rgba(255, 128, 128, 0)");
@@ -133,23 +133,23 @@ function paint(style, closed, skin) {
   g.lineCap = "round";
   g.lineWidth = 4;
   for (const side of [-1, 1]) {
-    const [x0, y0] = at(side * 0.04, 0.04);
-    const [x1, y1] = at(side * 0.108, 0.036);
+    const [x0, y0] = at(side * 0.034, 0.03);
+    const [x1, y1] = at(side * 0.1, 0.026);
     g.beginPath(); g.moveTo(x0, y0); g.quadraticCurveTo((x0 + x1) / 2, y0 - 10, x1, y1); g.stroke();
   }
-  const [lx, ly] = at(-0.074, -0.044);
-  const [rx, ry] = at(0.074, -0.044);
-  drawEye(g, lx, ly, -1, style, closed, 2.25);
-  drawEye(g, rx, ry, 1, style, closed, 2.25);
+  const [lx, ly] = at(-0.066, -0.058);
+  const [rx, ry] = at(0.066, -0.058);
+  drawEye(g, lx, ly, -1, style, closed, 2.5);
+  drawEye(g, rx, ry, 1, style, closed, 2.5);
   // A hint of a nose and a small soft smile.
-  const [nx, ny] = at(0.004, -0.092);
+  const [nx, ny] = at(0.003, -0.128);
   g.fillStyle = "rgba(196, 120, 100, 0.45)";
   g.beginPath(); g.ellipse(nx, ny, 3.5, 2.5, 0, 0, Math.PI * 2); g.fill();
   // A small open smile.
-  const [mx, my] = at(0, -0.118);
+  const [mx, my] = at(0, -0.16);
   g.save();
   g.translate(mx, my);
-  g.scale(1.35, 1.35);
+  g.scale(1.05, 1.05);
   g.fillStyle = "#7a2c32";
   g.beginPath();
   g.moveTo(-12, -4);

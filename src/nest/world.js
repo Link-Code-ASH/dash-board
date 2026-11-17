@@ -834,7 +834,7 @@ export class World {
     if (!this.hero?.pose) return;
     const state = this.heroState;
     state.swing = walking ? swing : (state.swing || 0) * (1 - Math.min(1, dt * 6));
-    this.hero.pose(state.swing, Math.sin(this.clock.elapsedTime * 2));
+    this.hero.pose(state.swing, Math.sin(this.clock.elapsedTime * 2), walking ? state.phase : null);
   }
   dispose() {
     this.disposed = true;
