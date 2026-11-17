@@ -2,8 +2,22 @@
 // (before rotation), standing on y = 0. One tile = 1 unit. A seed (the object's id) gives each copy small
 // differences in size, tilt and colour, so a row of trees or flowers never looks stamped.
 import * as THREE from "three";
-import { flat, geo, part, place, shade, sphere } from "./toon.js";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { flat, geo, part, place, shade, sphere, toon } from "./toon.js";
 import { seededRandom } from "./model.js";
+import pondUrl from "./pond.glb?url";
+
+// Things modelled in Blender (tools/nest/*_model.py). Until a model has loaded, the procedural builder below
+// stands in; modelVersion(type) changes once it arrives so the lot rebuilds that object.
+const MODELS = { pond: pondUrl };
+const models = {};
+let loadingModels = null;
+export function loadModels() {
+  loadingModels ||= Promise.all(Object.entries(MODELS).map(([type, url]) =>
+    new GLTFLoader().loadAsync(url).then((gltf) => { models[type] = gltf.scene; }).catch(() => {})));
+  return loadingModels;
+}
+export const modelVersion = (type) => (models[type] ? "m" : "p");
 
 const box = () => geo("box", () => new THREE.BoxGeometry(1, 1, 1));
 const round = () => geo("roundbox", () => roundedBox(1, 1, 1, 0.12));
@@ -284,12 +298,66 @@ function glow(color, size, [x, y, z]) {
   return sprite;
 }
 
+// Materials for the Blender pieces, by material name.
+const vertexToon = new Map();
+function vertexColoured(kind) {
+  if (!vertexToon.has(kind)) vertexToon.set(kind, new THREE.MeshToonMaterial({ vertexColors: true, gradientMap: toon(0xffffff).gradientMap }));
+  return vertexToon.get(kind);
+}
+let lawnMaterial;
+const POND_COLOURS = { stone: 0xcac4b8, stoneDark: 0xa7a194, pad: 0x67b95e, padLight: 0x84cb70, petal: 0xffa9c4, petalLight: 0xffd3e1,
+  heart: 0xffd34d, reed: 0x7cc46a, reedDark: 0x5ea655, cattail: 0x8a5e40 };
+const MODEL_DRESSING = {
+  pond(add, scene, r, sway, animate) {
+    const bob = [];
+    scene.traverse((node) => {
+      if (!node.isMesh) return;
+      const name = node.material.name;
+      node.castShadow = /^(stone|reed|cattail|petal|heart)/.test(name);
+      node.receiveShadow = true;
+      if (name === "water" || name === "shore") node.material = vertexColoured(name);
+      else if (name === "foam") { node.material = flat(0xeaf8fc); node.userData.ink = false; node.receiveShadow = false; }
+      else if (name === "lawn") {
+        // The grass bank melts into the lot: same colour and ink object as the ground, drawn over it.
+        lawnMaterial ||= new THREE.MeshToonMaterial({ color: 0x9bd77f, gradientMap: toon(0xffffff).gradientMap, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 });
+        node.material = lawnMaterial;
+        node.userData.inkKey = "ground";
+        // Light it like the flat lot (normals straight up), so the slope shows no shading band or crease line.
+        const normals = node.geometry.attributes.normal;
+        for (let i = 0; i < normals.count; i++) normals.setXYZ(i, 0, 1, 0);
+        normals.needsUpdate = true;
+      } else node.material = toon(POND_COLOURS[name] ?? 0xff00ff);
+      if (/^(pad|petal|heart)/.test(name)) bob.push(node);
+    });
+    add(scene);
+    const reeds = scene.getObjectByName("reeds");
+    if (reeds) sway.push(reeds);
+    // Sun glints on the water that come and go.
+    const glints = [[-0.1, -0.25, 0.16], [0.42, 0.22, 0.11], [-0.62, -0.05, 0.09]].map(([x, z, size], i) => {
+      const glint = place(new THREE.Mesh(geo("glint", () => new THREE.CircleGeometry(1, 20)),
+        new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0, depthWrite: false })), [x, 0.036, z], [size, size * 0.22, 1], [-Math.PI / 2, 0, 0]);
+      add(glint);
+      return { glint, size, phase: i * 2.1 + r() };
+    });
+    animate.push((t) => {
+      for (const { glint, size, phase } of glints) {
+        const k = Math.max(0, Math.sin(t * 0.9 + phase));
+        glint.material.opacity = 0.75 * k * k;
+        glint.scale.set(size * (0.6 + 0.4 * k), size * 0.22, 1);
+      }
+      for (const [i, node] of bob.entries()) node.position.y = Math.sin(t * 1.4 + i * 0.7) * 0.004;
+    });
+  },
+};
+
 export function buildObject(type, seed = type) {
   const group = new THREE.Group();
   const add = (mesh) => { group.add(mesh); return mesh; };
   const sway = [];
   const animate = [];
-  (BUILDERS[type] || BUILDERS.bush)(add, seededRandom(`obj:${seed}`), sway, animate);
+  const r = seededRandom(`obj:${seed}`);
+  if (models[type] && MODEL_DRESSING[type]) MODEL_DRESSING[type](add, models[type].clone(), r, sway, animate);
+  else (BUILDERS[type] || BUILDERS.bush)(add, r, sway, animate);
   group.sway = sway;
   group.animate = animate;
   group.phase = seededRandom(`phase:${seed}`)() * Math.PI * 2;

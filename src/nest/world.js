@@ -6,7 +6,7 @@ import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js
 import { FLOORS, LAND_MAX, edgesBetween, findPath, footprint, hashString, objectTiles, seededRandom, tileKey, walkable } from "./model.js";
 import { flat, part, toon } from "./toon.js";
 import { InkPass } from "./ink.js";
-import { buildObject, buildPost, buildWall } from "./objects.js";
+import { buildObject, buildPost, buildWall, loadModels, modelVersion } from "./objects.js";
 import { buildHero, heroModelLoaded, loadHeroModel } from "./person.js";
 
 const WALL_HIGH = 2;
@@ -28,6 +28,8 @@ const center = (object) => {
 export class World {
   constructor(container, handlers = {}) {
     this.container = container;
+    // Blender-made objects load in the background; the lot swaps them in when they arrive.
+    loadModels().then(() => { if (this.disposed || !this.objectList) return; this.syncObjects(this.objectList); this.shadowDirty = true; this.wake(); if (this.tool?.mode === "place") this.setTool(this.tool); });
     this.handlers = handlers;
     this.renderer = new THREE.WebGLRenderer({ antialias: false, alpha: true, powerPreference: "low-power" });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
@@ -249,6 +251,7 @@ export class World {
     }
     this.paintTiles();
     this.buildWalls();
+    this.objectList = objects;
     this.syncObjects(objects);
     this.scatterGrass();
     this.syncHero(hero);
@@ -398,9 +401,9 @@ export class World {
     for (const item of list) {
       seen.add(item.id);
       const current = this.objects.get(item.id);
-      const signature = `${item.type}|${item.x}|${item.z}|${item.rot}`;
+      const signature = `${item.type}|${modelVersion(item.type)}|${item.x}|${item.z}|${item.rot}`;
       if (current?.signature === signature) continue;
-      if (current && current.type === item.type) {
+      if (current && current.type === item.type && current.model === modelVersion(item.type)) {
         const { x, z } = center(item);
         current.object.position.set(x, 0, z);
         current.object.rotation.y = -item.rot * Math.PI / 2;
@@ -414,7 +417,7 @@ export class World {
       object.rotation.y = -item.rot * Math.PI / 2;
       object.userData = { kind: "object", id: item.id };
       this.objectGroup.add(object);
-      this.objects.set(item.id, { object, signature, type: item.type });
+      this.objects.set(item.id, { object, signature, type: item.type, model: modelVersion(item.type) });
     }
     for (const [id, entry] of this.objects) if (!seen.has(id)) { this.objectGroup.remove(entry.object); this.objects.delete(id); }
     this.walk = walkable(this.items, this.land);
