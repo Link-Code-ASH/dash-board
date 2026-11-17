@@ -94,3 +94,34 @@ export function blobShadow(radius) {
   mesh.raycast = () => {};
   return mesh;
 }
+
+// Anime-style cel shading for characters: two flat tones with a hard edge, the shadow tone tinted (warm rose on
+// skin, cool lavender on hair and clothes) instead of just darker. three's toon shader reads only the red channel
+// of a gradient map; here it reads all three so the shadow can carry a colour.
+const celGradients = new Map();
+function celGradient(kind) {
+  if (celGradients.has(kind)) return celGradients.get(kind);
+  const shadow = kind === "skin" ? [228, 178, 188] : [168, 162, 214];
+  const data = new Uint8Array([...shadow, 255, ...shadow, 255, 255, 255, 255, 255, 255, 255, 255, 255]);
+  const texture = new THREE.DataTexture(data, 4, 1, THREE.RGBAFormat);
+  texture.minFilter = texture.magFilter = THREE.NearestFilter;
+  texture.generateMipmaps = false;
+  texture.needsUpdate = true;
+  celGradients.set(kind, texture);
+  return texture;
+}
+const tintedGradient = (shader) => {
+  shader.fragmentShader = shader.fragmentShader.replace("#include <gradientmap_pars_fragment>",
+    THREE.ShaderChunk.gradientmap_pars_fragment.replace("texture2D( gradientMap, coord ).r )", "texture2D( gradientMap, coord ).rgb )"));
+};
+export function celMaterial(color, { kind = "cloth", twoSided = false, map = null } = {}) {
+  const material = new THREE.MeshToonMaterial({ color, map, gradientMap: celGradient(kind), side: twoSided ? THREE.DoubleSide : THREE.FrontSide });
+  material.onBeforeCompile = tintedGradient;
+  material.customProgramCacheKey = () => "cel";
+  return material;
+}
+export function cel(color, kind = "cloth", twoSided = false) {
+  const key = `c${kind}${twoSided ? 2 : 1}${color}`;
+  if (!materials.has(key)) materials.set(key, celMaterial(color, { kind, twoSided }));
+  return materials.get(key);
+}

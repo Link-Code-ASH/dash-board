@@ -164,6 +164,7 @@ export class World {
     if (this.shadowDirty) { this.renderer.shadowMap.needsUpdate = true; this.shadowDirty = false; }
     // Two surfaces count as a depth step when they are a few pixels (and at least a few centimetres) apart.
     const perPixel = (this.camera.top - this.camera.bottom) / (this.bufferHeight || 1);
+    this.hero?.hairDetail?.(0.5 / perPixel > 110);
     this.ink.setLineScale(Math.min(1, Math.max(0.75, 0.65 + this.view.zoom * 0.12)));
     this.ink.render(this.scene, this.camera, { perPixel, depthStep: Math.max(0.04, perPixel * 4) });
   }

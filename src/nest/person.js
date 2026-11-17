@@ -6,7 +6,7 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { clone as cloneSkinned } from "three/examples/jsm/utils/SkeletonUtils.js";
 import { lookOf, lookValue } from "./model.js";
-import { INK, geo, blobShadow, part, place, shade, sphere, toon, toonTwoSided } from "./toon.js";
+import { INK, geo, blobShadow, cel, celMaterial, part, place, shade, sphere, toon, toonTwoSided } from "./toon.js";
 import { faceTextures } from "./face.js";
 import heroUrl from "./hero.glb?url";
 
@@ -79,7 +79,7 @@ export function buildHero(hero, { tilt = 0.34 } = {}) {
   const body = cloneSkinned(model);
   root.add(body);
   const faces = faceTextures(look.eyes, hex(skin));
-  const faceMaterial = new THREE.MeshToonMaterial({ map: faces.open, gradientMap: toon(0xffffff, true).gradientMap });
+  const faceMaterial = celMaterial(0xffffff, { kind: "skin", map: faces.open });
   const bones = {};
   body.traverse((node) => {
     if (node.isBone) bones[node.name] = node;
@@ -87,7 +87,8 @@ export function buildHero(hero, { tilt = 0.34 } = {}) {
     node.frustumCulled = false; // skinned: the rest-pose bounds don't follow the walk
     const name = node.material.name;
     if (name in shown && !shown[name]) node.visible = false;
-    node.material = name === "face" ? faceMaterial : name in colours ? toon(colours[name], name === "skin" || name === "forearm" && !hoodie || name === "shin" && dress) : toon(0xff00ff);
+    const skinny = name === "skin" || name === "forearm" && !hoodie || name === "shin" && dress;
+    node.material = name === "face" ? faceMaterial : cel(colours[name] ?? 0xff00ff, skinny ? "skin" : "cloth");
     node.castShadow = false;
     node.receiveShadow = true;
   });
@@ -96,7 +97,8 @@ export function buildHero(hero, { tilt = 0.34 } = {}) {
   const turn = Object.fromEntries(["head", "neck", "chest", "spine", "hips", "upperarm_L", "upperarm_R", "forearm_L", "forearm_R", "thigh_L", "thigh_R", "shin_L", "shin_R"].map((name) => [name, turner(bones[name])]));
   const head = new THREE.Group();
   head.position.copy(HEAD_CENTER);
-  head.scale.set(HEAD_SIZE[0] / R0, HEAD_SIZE[1] / R0, HEAD_SIZE[2] / R0).multiplyScalar(1.05); // hair with a little volume
+  head.userData.inkKey = `hair:${hero.id}`; // the hair is inked as its own object, so it always meets the face with a line
+  head.scale.set(HEAD_SIZE[0] / R0, HEAD_SIZE[1] / R0, HEAD_SIZE[2] / R0).multiplyScalar(1.1); // anime hair has volume well beyond the skull
   anchor(bones.head, root).add(head);
   const locks = addHair(head, look.hair, hair, tilt);
   const chest = anchor(bones.chest, root);
@@ -115,8 +117,8 @@ export function buildHero(hero, { tilt = 0.34 } = {}) {
     const drop = Math.max(0, -swing);
     turn["thigh_L"](swing * 0.5);
     turn["thigh_R"](-swing * 0.5);
-    turn["shin_L"](-0.55 * drop * drop - 0.1 * Math.abs(swing));
-    turn["shin_R"](-0.55 * lift * lift - 0.1 * Math.abs(swing));
+    turn["shin_L"](-0.95 * drop * drop - 0.15 * Math.abs(swing));
+    turn["shin_R"](-0.95 * lift * lift - 0.15 * Math.abs(swing));
     turn["upperarm_L"](-swing * 0.45, 0, 0.06);
     turn["upperarm_R"](swing * 0.45, 0, -0.06);
     turn["forearm_L"](-0.15 - 0.2 * lift);
@@ -129,6 +131,8 @@ export function buildHero(hero, { tilt = 0.34 } = {}) {
   root.tail = null;
   root.sway = (t, walk = 0, step = 0) => swayLocks(locks, t, walk, step);
   root.dispose = () => locks.forEach((lock) => lock.mesh.geometry.dispose());
+  // Seen small, the lines between locks turn into scribbles: draw only the hair's outline then.
+  root.hairDetail = (fine) => head.traverse((node) => { if (node.isMesh) node.userData.ink = fine ? undefined : false; });
   return root;
 }
 
@@ -266,33 +270,33 @@ function styleLocks(style) {
     }
   };
   if (style === "short") {
-    bangs(6, -46, 42, 80, { sweep: 20, flick: 0.015, width: 0.2 });
+    bangs(6, -46, 42, 86, { sweep: 20, flick: 0.015, width: 0.2 });
     frame(100, 0, { flick: 0.018, width: 0.14 });
     around(9, 86, 274, 108, { flick: 0.022, width: 0.24 });
   } else if (style === "bob") {
-    bangs(7, -48, 48, 83, { sweep: 8, flick: -0.004, width: 0.19 });
+    bangs(7, -48, 48, 87, { sweep: 8, flick: -0.004, width: 0.19 });
     frame(118, 0.05, { flick: -0.02, width: 0.16 });
     around(10, 84, 276, 120, { hang: 0.06, flick: -0.03, width: 0.25, thick: 0.07 });
   } else if (style === "long") {
-    bangs(6, -46, 40, 83, { sweep: 24, flick: 0.004, width: 0.2 });
+    bangs(6, -46, 40, 87, { sweep: 24, flick: 0.004, width: 0.2 });
     frame(118, 0.2, { flick: 0.015, width: 0.15 });
     around(11, 86, 274, 112, { hang: 0.5, flick: 0.03, drape: 0.06, width: 0.24, thick: 0.065 });
   } else if (style === "ponytail") {
-    bangs(5, -42, 40, 80, { sweep: 18, width: 0.21 });
+    bangs(5, -42, 40, 86, { sweep: 18, width: 0.21 });
     frame(112, 0.06, { flick: 0.02, width: 0.13 });
   } else if (style === "buns") {
-    bangs(6, -44, 42, 81, { sweep: 12, width: 0.2 });
+    bangs(6, -44, 42, 86, { sweep: 12, width: 0.2 });
     frame(114, 0.08, { flick: 0.015, width: 0.13 });
     around(9, 86, 274, 104, { width: 0.24, thick: 0.05 });
   } else if (style === "spiky") {
-    bangs(5, -40, 38, 77, { sweep: 26, flick: 0.035, width: 0.22 });
+    bangs(5, -40, 38, 84, { sweep: 26, flick: 0.035, width: 0.22 });
     frame(98, 0, { flick: 0.03, width: 0.15 });
     around(8, 84, 276, 104, { flick: 0.06, width: 0.26 });
     // A few bold tufts sticking up and out at the crown.
     for (const [t, p] of [[12, 150], [12, 210], [14, 95], [14, -95]])
       list.push({ t0: t, p0: p, t1: t + 34, p1: p, R: R * 1.02, flick: 0.09, width: 0.3, thick: 0.1, kind: "spike", sharp: true });
   } else if (style === "curly") {
-    bangs(6, -46, 44, 79, { sweep: 8, flick: 0.025, width: 0.2 });
+    bangs(6, -46, 44, 85, { sweep: 8, flick: 0.025, width: 0.2 });
     frame(112, 0.05, { flick: 0.03, width: 0.16 });
     around(11, 84, 276, 116, { hang: 0.08, flick: 0.04, width: 0.22, thick: 0.08, wave: 9 });
   }
@@ -325,11 +329,11 @@ const UNDER = { short: 104, bob: 116, long: 112, ponytail: 110, buns: 104, spiky
 
 function addHair(head, style, color, tilt) {
   const add = (mesh) => { head.add(mesh); return mesh; };
-  const tones = [toonTwoSided(color), toonTwoSided(shade(color, -0.035))];
+  const tones = [cel(color, "cloth", true), cel(shade(color, -0.035), "cloth", true)];
   // An under layer a shade darker, so a gap between locks reads as depth, and the smooth crown the locks come
   // out from under (for a ponytail it covers the whole head, combed back).
   const under = add(place(part(hairShell(70, 94, UNDER[style] || 108), color), [0, 0, 0], [R0 * 1.03, R0 * 1.03, R0 * 1.03]));
-  under.material = toonTwoSided(shade(color, -0.1));
+  under.material = cel(shade(color, -0.1), "cloth", true);
   const ponytail = style === "ponytail";
   const cap = add(place(part(hairShell(ponytail ? 66 : 22, ponytail ? 92 : 22, ponytail ? 112 : 22), color), [0, 0, 0], [R0 * 1.07, R0 * 1.07, R0 * 1.07]));
   cap.material = tones[0];
@@ -350,6 +354,13 @@ function addHair(head, style, color, tilt) {
     mesh.receiveShadow = true;
     keep(mesh, points, spec.kind, i * 0.9 + spec.p1 * 0.02);
   });
+  // A single springy strand standing up from the crown.
+  if (style !== "spiky") {
+    const top = R0 * 1.05;
+    const points = upright([new THREE.Vector3(0.01, top - 0.01, -0.03), new THREE.Vector3(0.025, top + 0.07, -0.01), new THREE.Vector3(0.06, top + 0.13, 0.04), new THREE.Vector3(0.1, top + 0.11, 0.1)], 0);
+    const mesh = add(new THREE.Mesh(lockGeometry(points, 0.055, 0.03, { sharp: true }), tones[0]));
+    keep(mesh, points, "tail", 0.7);
+  }
   if (style === "ponytail") {
     const tie = new THREE.Vector3(0, 0.16, -0.37);
     add(place(part(geo("tie2", () => new THREE.TorusGeometry(0.045, 0.02, 8, 16)), 0xff8fa8), [tie.x, tie.y, tie.z], [1, 1, 1], [1.1, 0, 0]));
